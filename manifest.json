@@ -1,0 +1,18 @@
+{
+  "name": "Evolution Lab - Progressive Overload",
+  "short_name": "Evolution Lab",
+  "description": "Plataforma integral de planificación de entrenamiento y seguimiento de sobrecarga progresiva.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a1a2e",
+  "theme_color": "#0f172a",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
