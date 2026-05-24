@@ -4513,15 +4513,15 @@ let variableDefinitions = {
                 </div>
             `;
         });
-        let hasStatic = exercise.imageData && exercise.imageData.startsWith('data:');
-        let hasAnimated = exercise.gifData && exercise.gifData.startsWith('data:');
+        let hasStatic = !!exercise.imageData;
+        let hasAnimated = !!exercise.gifData;
         
         let imgHtml = `
             <div class="img-placeholder-wrapper" style="${(hasStatic || hasAnimated) ? 'display:none;' : 'display:flex;'}">
                 <div class="img-placeholder">📷 Sin imagen</div>
             </div>
             <img class="exercise-media img-preview" 
-                 src="${hasStatic ? exercise.imageData : (hasAnimated ? exercise.gifData : '')}" 
+                 src="${(navigator.onLine && hasStatic) ? exercise.imageData : (hasAnimated ? exercise.gifData : (hasStatic ? exercise.imageData : ''))}" 
                  data-static="${hasStatic ? exercise.imageData : ''}" 
                  data-animated="${hasAnimated ? exercise.gifData : ''}" 
                  style="${(hasStatic || hasAnimated) ? 'display:block;' : 'display:none;'}" 
@@ -5479,9 +5479,14 @@ function addGlobalVariable() {
                     mediaEl.src = animatedSrc;
                     mediaEl.style.display = 'block';
                     if (placeholderEl) placeholderEl.style.display = 'none';
-                } else if (staticSrc && staticSrc.startsWith('data:')) {
+                } else if (staticSrc) {
                     // Si está online (o no hay animación offline), mostrar foto estática
                     mediaEl.src = staticSrc;
+                    mediaEl.style.display = 'block';
+                    if (placeholderEl) placeholderEl.style.display = 'none';
+                } else if (animatedSrc) {
+                    // Si no hay foto estática pero sí animación
+                    mediaEl.src = animatedSrc;
                     mediaEl.style.display = 'block';
                     if (placeholderEl) placeholderEl.style.display = 'none';
                 } else {
