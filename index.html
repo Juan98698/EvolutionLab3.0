@@ -2132,6 +2132,7 @@
   <div id="clienteNombreHeader" style="display:none; font-size:13px; color:rgba(255,255,255,0.5); background:rgba(255,255,255,0.08); padding:4px 12px; border-radius:99px; white-space:nowrap;"></div>
   <button id="generarLinkBtn" class="btn export-btn" style="display:none; font-family:'Orbitron',sans-serif; font-size:9px; padding:6px 12px;">⬇️ Exportar Cliente</button>
   <button id="registrarAtletaBtn" class="btn" style="display:none; font-family:'Orbitron',sans-serif; font-size:9px; padding:6px 12px; background:linear-gradient(135deg, #00d4ff, #7b2ff7); border:none; margin-left:8px; color:white;">👥 Registrar Atleta</button>
+  <button id="cerrarSesionBtn" class="btn" style="font-family:'Orbitron',sans-serif; font-size:9px; padding:6px 12px; margin-left:8px; background:rgba(255,68,68,0.08); border:1px solid rgba(255,68,68,0.3); color:#ff6b6b; display:inline-block; transition: all 0.2s ease;">🚪 Cerrar Sesión</button>
 </header>
 <!-- Panel generador de HTML (solo entrenador) -->
 <div id="panelGenerarLink" style="display:none; background:var(--bg); border-bottom:1px solid var(--border); padding:1rem;">
@@ -2540,6 +2541,23 @@
     });
   }
 
+  // Lógica del botón Cerrar Sesión
+  document.addEventListener('DOMContentLoaded', () => {
+    const logoutBtn = document.getElementById('cerrarSesionBtn');
+    if (logoutBtn) {
+      logoutBtn.onclick = async () => {
+        if (supabase) {
+          toast("Cerrando sesión...", "info");
+          await supabase.auth.signOut();
+          localStorage.removeItem('pwa_client_url');
+          window.location.replace('/login.html');
+        } else {
+          window.location.replace('/login.html');
+        }
+      };
+    }
+  });
+
   async function cargarHistorialDesdeSupabase() {
     if (!supabase || !window.currentUser || !navigator.onLine) return;
 
@@ -2611,11 +2629,28 @@
   }
 
   function comprobarRolYAdaptarUI(user) {
+    console.log("Comprobando rol para el usuario ID:", user.id, "Email:", user.email);
+    
     // Buscar perfil en Supabase para saber si es entrenador o cliente
     supabase.from('profiles').select('rol, nombre').eq('id', user.id).single().then(({ data, error }) => {
-      if (!error && data) {
+      if (error) {
+        console.error("Error al obtener perfil desde Supabase:", error);
+        toast("Error al cargar perfil: " + error.message, "error");
+        
+        // Mostrar aviso visual con detalles técnicos para ayudar al usuario
+        const saludo = document.getElementById('dashboardGreeting');
+        if (saludo) {
+          saludo.innerHTML = `Hola, Atleta 👋 <div style="font-size: 11px; font-weight: 500; color: #ff4d4d; margin-top: 4px;">⚠️ Error de Base de Datos: ${error.message}. Asegúrate de que el ID en 'profiles' coincida con tu Auth ID: ${user.id}</div>`;
+        }
+        return;
+      }
+      
+      if (data) {
+        console.log("Perfil obtenido de Supabase:", data);
         window.userProfile = data;
-        const MODO_CLIENTE = data.rol === 'cliente';
+        
+        // Actualizar la variable global MODO_CLIENTE y window.MODO_CLIENTE
+        MODO_CLIENTE = (data.rol === 'cliente');
         window.MODO_CLIENTE = MODO_CLIENTE;
         
         // Adaptar saludo y vista de entrenador/cliente
@@ -2626,6 +2661,7 @@
 
         // Si es cliente, ocultar paneles de entrenador
         if (MODO_CLIENTE) {
+          console.log("El usuario es CLIENTE. Ocultando paneles de entrenador.");
           const panelGen = document.getElementById('panelGenerarLink');
           if (panelGen) panelGen.style.setProperty('display', 'none', 'important');
           const exportBtn = document.getElementById('generarLinkBtn');
@@ -2637,8 +2673,10 @@
           });
         } else {
           // Si es entrenador, mostrar botones
+          console.log("El usuario es ENTRENADOR. Mostrando paneles y botones de edición.");
           const genBtn = document.getElementById('generarLinkBtn');
           if (genBtn) genBtn.style.display = 'inline-block';
+          
           const regBtn = document.getElementById('registrarAtletaBtn');
           if (regBtn) {
             regBtn.style.display = 'inline-block';
@@ -2649,8 +2687,28 @@
               }
             };
           }
+          
+          // Asegurarse de que los paneles de edición de entrenador estén visibles
+          document.querySelectorAll('#addGlobalDayBtn, #addCustomVarBtn, #exportHtmlBtn, .add-day-btn, .btn-remove-day, .exercise-actions, .btn-add-ex, .btn-rem-ex, .img-upload-label, .gif-upload-label, .global-vars-panel button, #quickAddVarBtn, .remove-var-btn, .hidden-file-upload, .hidden-gif-upload, .video-url-input').forEach(el => {
+            el.style.removeProperty('display');
+          });
+        }
+        
+        // Volver a renderizar la aplicación para aplicar todos los cambios de rol en la UI
+        renderFullApp();
+        
+      } else {
+        console.warn("No se encontró fila de perfil para el usuario en Supabase.");
+        toast("No se encontró tu perfil en la base de datos.", "error");
+        
+        const saludo = document.getElementById('dashboardGreeting');
+        if (saludo) {
+          saludo.innerHTML = `Hola, Atleta 👋 <div style="font-size: 11px; font-weight: 500; color: #ff4d4d; margin-top: 4px;">⚠️ Perfil no encontrado. Asegúrate de crear una fila en la tabla 'profiles' con el ID: ${user.id}</div>`;
         }
       }
+    }).catch(err => {
+      console.error("Excepción en comprobarRolYAdaptarUI:", err);
+      toast("Error de conexión: " + err.message, "error");
     });
   }
 
@@ -2793,7 +2851,7 @@
   // ================= CONFIGURACIÓN =================
   var _urlParams = new URLSearchParams(window.location.search);
   var _clienteId = window.INJECTED_CLIENT_ID || (_urlParams.get('c') ? _urlParams.get('c').trim().toLowerCase().replace(/[^a-z0-9_-]/g, '') : '');
-  const MODO_CLIENTE = _clienteId !== '';
+  let MODO_CLIENTE = _clienteId !== '';
   if (MODO_CLIENTE) {
     try {
       localStorage.setItem('pwa_client_url', window.location.pathname + window.location.search);
@@ -4585,6 +4643,12 @@ Un registro completo convierte cada sesi&oacute;n en informaci&oacute;n &uacute;
         if (panelGen) panelGen.remove();
         const exportBtn = cloneDoc.getElementById('generarLinkBtn');
         if (exportBtn) exportBtn.remove();
+        const regBtnClone = cloneDoc.getElementById('registrarAtletaBtn');
+        if (regBtnClone) regBtnClone.remove();
+        const panelRegClone = cloneDoc.getElementById('panelRegistrarCliente');
+        if (panelRegClone) panelRegClone.remove();
+        const cerrarSesionClone = cloneDoc.getElementById('cerrarSesionBtn');
+        if (cerrarSesionClone) cerrarSesionClone.remove();
         
         // Ocultar configurador de días (solo para entrenador)
         const weekdayCfg = cloneDoc.getElementById('weekdayConfigSection');
