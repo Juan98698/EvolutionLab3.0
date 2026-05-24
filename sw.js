@@ -1,4 +1,4 @@
-const CACHE_NAME = 'evolution-lab-v1';
+const CACHE_NAME = 'evolution-lab-v2';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
