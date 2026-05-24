@@ -2494,6 +2494,11 @@
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
     const isIOS = ((/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)) && !window.MSStream);
 
+    // Failsafe: Si ya está en modo standalone, significa que está instalada, por lo que marcamos como descartada permanentemente.
+    if (isStandalone) {
+      localStorage.setItem('pwa_install_dismissed', 'true');
+    }
+
     const isDismissed = localStorage.getItem('pwa_install_dismissed') === 'true';
 
     if (pwaCloseBtn) {
@@ -2532,6 +2537,9 @@
               deferredPrompt.prompt();
               const { outcome } = await deferredPrompt.userChoice;
               console.log('Opción del usuario:', outcome);
+              if (outcome === 'accepted') {
+                localStorage.setItem('pwa_install_dismissed', 'true');
+              }
               deferredPrompt = null;
               if (pwaBanner) pwaBanner.style.setProperty('display', 'none', 'important');
             }
@@ -2541,6 +2549,7 @@
 
       window.addEventListener('appinstalled', () => {
         console.log('PWA instalada con éxito');
+        localStorage.setItem('pwa_install_dismissed', 'true');
         if (pwaBanner) pwaBanner.style.setProperty('display', 'none', 'important');
       });
     }
