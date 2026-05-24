@@ -2131,6 +2131,7 @@
   <span class="session-count" id="headerCount">0 sesiones</span>
   <div id="clienteNombreHeader" style="display:none; font-size:13px; color:rgba(255,255,255,0.5); background:rgba(255,255,255,0.08); padding:4px 12px; border-radius:99px; white-space:nowrap;"></div>
   <button id="generarLinkBtn" class="btn export-btn" style="display:none; font-family:'Orbitron',sans-serif; font-size:9px; padding:6px 12px;">⬇️ Exportar Cliente</button>
+  <button id="registrarAtletaBtn" class="btn" style="display:none; font-family:'Orbitron',sans-serif; font-size:9px; padding:6px 12px; background:linear-gradient(135deg, #00d4ff, #7b2ff7); border:none; margin-left:8px; color:white;">👥 Registrar Atleta</button>
 </header>
 <!-- Panel generador de HTML (solo entrenador) -->
 <div id="panelGenerarLink" style="display:none; background:var(--bg); border-bottom:1px solid var(--border); padding:1rem;">
@@ -2149,6 +2150,38 @@
       <button class="btn btn-ghost" onclick="cerrarPanelLink()" style="white-space:nowrap;">Cerrar</button>
     </div>
     <div style="margin-top:8px; font-size:12px; color:var(--text3);">💡 Esto descargará un archivo HTML con todas las reglas incrustadas. Súbelo a tu GitHub (ej. github pages) con este nombre.</div>
+  </div>
+</div>
+
+<!-- Panel de Registro de Clientes en Supabase (solo entrenador) -->
+<div id="panelRegistrarCliente" style="display:none; background:var(--bg); border-bottom:1px solid var(--border); padding:1rem;">
+  <div style="max-width:620px; margin:0 auto;">
+    <div style="font-size:13px; font-weight:700; margin-bottom:10px; color:var(--text2); text-transform:uppercase; letter-spacing:0.05em;">👤 Registrar Nuevo Atleta en Supabase</div>
+    <div style="display:flex; gap:10px; flex-wrap:wrap; align-items:flex-end;">
+      <div style="flex:1; min-width:130px;">
+        <label style="font-size:10px; color:var(--text2); font-weight:600; display:block; margin-bottom:4px;">NOMBRE COMPLETO</label>
+        <input type="text" id="regNombre" placeholder="ej: Juan Manuel" style="width:100%; height:38px; border-radius:var(--radius); border:1px solid var(--border2); padding:0 8px; background:var(--bg2); color:white; font-size:13px; outline:none;">
+      </div>
+      <div style="flex:1; min-width:150px;">
+        <label style="font-size:10px; color:var(--text2); font-weight:600; display:block; margin-bottom:4px;">CORREO ELECTRÓNICO</label>
+        <input type="email" id="regEmail" placeholder="ej: atleta@correo.com" style="width:100%; height:38px; border-radius:var(--radius); border:1px solid var(--border2); padding:0 8px; background:var(--bg2); color:white; font-size:13px; outline:none;">
+      </div>
+      <div style="width:120px;">
+        <label style="font-size:10px; color:var(--text2); font-weight:600; display:block; margin-bottom:4px;">CONTRASEÑA TEMPORAL</label>
+        <input type="text" id="regPass" placeholder="Evolution123!" style="width:100%; height:38px; border-radius:var(--radius); border:1px solid var(--border2); padding:0 8px; background:var(--bg2); color:white; font-size:13px; outline:none;" value="Evolution123!">
+      </div>
+      <div style="width:110px;">
+        <label style="font-size:10px; color:var(--text2); font-weight:600; display:block; margin-bottom:4px;">OBJETIVO</label>
+        <input type="text" id="regObjetivo" placeholder="Hipertrofia" style="width:100%; height:38px; border-radius:var(--radius); border:1px solid var(--border2); padding:0 8px; background:var(--bg2); color:white; font-size:13px; outline:none;">
+      </div>
+      <div style="width:80px;">
+        <label style="font-size:10px; color:var(--text2); font-weight:600; display:block; margin-bottom:4px;">VIGENCIA</label>
+        <input type="number" id="regVigencia" value="28" style="width:100%; height:38px; border-radius:var(--radius); border:1px solid var(--border2); padding:0 8px; background:var(--bg2); color:white; font-size:13px; outline:none;">
+      </div>
+      <button class="btn btn-primary" onclick="ejecutarRegistroAtleta()" style="white-space:nowrap; background:linear-gradient(135deg, #00d4ff, #7b2ff7); border:none; height:38px; padding:0 16px; border-radius:var(--radius); color:white; font-weight:bold; cursor:pointer;">👥 Registrar</button>
+      <button class="btn btn-ghost" onclick="cerrarPanelRegistro()" style="white-space:nowrap; height:38px; padding:0 12px; border-radius:var(--radius); border:1px solid var(--border2); background:transparent; color:var(--text2); cursor:pointer;">Cerrar</button>
+    </div>
+    <div style="margin-top:8px; font-size:11px; color:var(--text3);">💡 Esto registrará la cuenta del atleta de forma segura en Supabase. El atleta recibirá una confirmación y podrá entrar con su correo.</div>
   </div>
 </div>
 <div class="container">
@@ -2472,7 +2505,209 @@
 
 <div id="toast"></div>
 <datalist id="ejercicios_sugeridos"></datalist>
+<!-- Supabase JS Client CDN -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.8/dist/umd/supabase.js"></script>
 <script>
+  // ===== INICIALIZACIÓN Y CONTROL DE ACCESO (SUPABASE) =====
+  const SUPABASE_URL = localStorage.getItem('supabase_url');
+  const SUPABASE_KEY = localStorage.getItem('supabase_anon_key');
+  let supabase = null;
+
+  // Middleware de acceso: Si no hay credenciales, ir a login.html
+  if (!SUPABASE_URL || !SUPABASE_KEY) {
+    window.location.replace('/login.html');
+  } else {
+    try {
+      supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    } catch(e) {
+      console.error("Error al inicializar Supabase:", e);
+      window.location.replace('/login.html');
+    }
+  }
+
+  // Verificar la sesión activa de Supabase
+  if (supabase) {
+    supabase.auth.getSession().then(({ data, error }) => {
+      if (error || !data.session) {
+        window.location.replace('/login.html');
+      } else {
+        // Guardar información del usuario logueado en una variable global
+        window.currentUser = data.session.user;
+        console.log("Usuario autenticado:", window.currentUser.email);
+        comprobarRolYAdaptarUI(window.currentUser);
+        cargarHistorialDesdeSupabase();
+      }
+    });
+  }
+
+  async function cargarHistorialDesdeSupabase() {
+    if (!supabase || !window.currentUser || !navigator.onLine) return;
+
+    try {
+      console.log("Cargando historial desde Supabase...");
+      
+      // 1. Obtener sesiones del cliente
+      const { data: histData, error: histError } = await supabase
+        .from('sesiones_historial')
+        .select('*')
+        .eq('cliente_id', window.currentUser.id);
+
+      if (histError) throw histError;
+      if (!histData || histData.length === 0) return;
+
+      const sessionIds = histData.map(s => s.id);
+
+      // 2. Obtener detalles de los ejercicios de estas sesiones
+      const { data: ejData, error: ejError } = await supabase
+        .from('sesiones_ejercicios')
+        .select('*')
+        .in('sesion_id', sessionIds);
+
+      if (ejError) throw ejError;
+
+      // 3. Mapear a la estructura local
+      const sessionsMap = {};
+      
+      histData.forEach(h => {
+        sessionsMap[h.id] = {
+          id: h.id, // Conserva el UUID de Supabase
+          fecha: h.fecha,
+          notas_sesion: h.notas_generales || "",
+          ejercicios: []
+        };
+      });
+
+      if (ejData) {
+        ejData.forEach(e => {
+          if (sessionsMap[e.sesion_id]) {
+            sessionsMap[e.sesion_id].ejercicios.push({
+              id_ej: e.id,
+              nombre: e.nombre_ejercicio,
+              peso: Number(e.peso),
+              repsArray: e.series_reps,
+              rpe: Number(e.rpe_rir),
+              descanso: Number(e.descanso),
+              notas_ej: ""
+            });
+          }
+        });
+      }
+
+      // 4. Actualizar la variable global e historial local
+      const sesionesSupabase = Object.values(sessionsMap);
+      sesionesSupabase.sort((a, b) => a.fecha.localeCompare(b.fecha));
+
+      sesiones = sesionesSupabase;
+      storageSet(STORAGE_KEY, JSON.stringify(sesiones));
+      
+      // Sincronizar IDs y redibujar
+      updateNextIds();
+      renderFullApp();
+      updateSelect();
+
+    } catch (e) {
+      console.error("Error al cargar historial desde Supabase:", e);
+    }
+  }
+
+  function comprobarRolYAdaptarUI(user) {
+    // Buscar perfil en Supabase para saber si es entrenador o cliente
+    supabase.from('profiles').select('rol, nombre').eq('id', user.id).single().then(({ data, error }) => {
+      if (!error && data) {
+        window.userProfile = data;
+        const MODO_CLIENTE = data.rol === 'cliente';
+        window.MODO_CLIENTE = MODO_CLIENTE;
+        
+        // Adaptar saludo y vista de entrenador/cliente
+        const saludo = document.getElementById('dashboardGreeting');
+        if (saludo) {
+          saludo.innerHTML = `Hola, ${data.nombre.split(' ')[0]} 👋`;
+        }
+
+        // Si es cliente, ocultar paneles de entrenador
+        if (MODO_CLIENTE) {
+          const panelGen = document.getElementById('panelGenerarLink');
+          if (panelGen) panelGen.style.setProperty('display', 'none', 'important');
+          const exportBtn = document.getElementById('generarLinkBtn');
+          if (exportBtn) exportBtn.style.setProperty('display', 'none', 'important');
+          
+          // Ocultar botones de edición de plan
+          document.querySelectorAll('#addGlobalDayBtn, #addCustomVarBtn, #exportHtmlBtn, .add-day-btn, .btn-remove-day, .exercise-actions, .btn-add-ex, .btn-rem-ex, .img-upload-label, .gif-upload-label, .global-vars-panel button, #quickAddVarBtn, .remove-var-btn, .hidden-file-upload, .hidden-gif-upload, .video-url-input').forEach(el => {
+            el.style.setProperty('display', 'none', 'important');
+          });
+        } else {
+          // Si es entrenador, mostrar botones
+          const genBtn = document.getElementById('generarLinkBtn');
+          if (genBtn) genBtn.style.display = 'inline-block';
+          const regBtn = document.getElementById('registrarAtletaBtn');
+          if (regBtn) {
+            regBtn.style.display = 'inline-block';
+            regBtn.onclick = () => {
+              const panel = document.getElementById('panelRegistrarCliente');
+              if (panel) {
+                panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+              }
+            };
+          }
+        }
+      }
+    });
+  }
+
+  window.cerrarPanelRegistro = function() {
+    const p = document.getElementById('panelRegistrarCliente');
+    if (p) p.style.display = 'none';
+  };
+
+  window.ejecutarRegistroAtleta = async function() {
+    const nombre = document.getElementById('regNombre').value.trim();
+    const email = document.getElementById('regEmail').value.trim();
+    const password = document.getElementById('regPass').value.trim();
+    const objetivo = document.getElementById('regObjetivo').value.trim();
+    const vigencia = document.getElementById('regVigencia').value.trim();
+
+    if (!nombre || !email || !password) {
+      toast('Por favor, ingresa Nombre, Correo y Contraseña.', 'error');
+      return;
+    }
+
+    toast('Registrando atleta en Supabase...', 'info');
+
+    try {
+      // Instancia temporal de Supabase sin persistir sesión para no desloguear al entrenador actual!
+      const tempSupabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+        auth: { persistSession: false }
+      });
+
+      const { data, error } = await tempSupabase.auth.signUp({
+        email: email,
+        password: password,
+        options: {
+          data: {
+            nombre: nombre,
+            rol: 'cliente',
+            objetivo: objetivo,
+            vigencia_dias: parseInt(vigencia) || 28
+          }
+        }
+      });
+
+      if (error) throw error;
+
+      toast('¡Atleta registrado con éxito! El perfil se ha creado automáticamente.', 'success');
+      cerrarPanelRegistro();
+
+      // Limpiar inputs
+      document.getElementById('regNombre').value = '';
+      document.getElementById('regEmail').value = '';
+      document.getElementById('regObjetivo').value = '';
+
+    } catch (e) {
+      console.error(e);
+      toast('Error al registrar: ' + e.message, 'error');
+    }
+  };
+
   // ===== REGISTRO DE SERVICE WORKER (PWA) =====
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', function() {
@@ -3381,7 +3616,135 @@
     if (!ej.repsArray.length) return 0;
     return Math.max(...ej.repsArray.map(reps => ej.peso * (1 + reps / 30)));
   }
-  function saveData() { storageSet(STORAGE_KEY, JSON.stringify(sesiones)); }
+  async function saveData() {
+    // 1. Guardar localmente (asegura funcionamiento offline instantáneo en localStorage)
+    storageSet(STORAGE_KEY, JSON.stringify(sesiones));
+
+    // 2. Si hay conexión y usuario logueado en Supabase, sincronizar de fondo
+    const ultimaSesion = sesiones[sesiones.length - 1];
+    if (ultimaSesion) {
+      if (navigator.onLine && supabase && window.currentUser) {
+        toast('Guardando en la nube...', 'info');
+        const exito = await sincronizarSesionRemota(ultimaSesion);
+        if (exito) {
+          toast('¡Sincronizado con Supabase!', 'success');
+        } else {
+          toast('Guardado localmente. Pendiente de sincronizar.', 'info');
+          encolarSesionOffline(ultimaSesion);
+        }
+      } else {
+        toast('Guardado localmente (Offline).', 'info');
+        encolarSesionOffline(ultimaSesion);
+      }
+    }
+  }
+
+  // Módulo de Sincronización Offline (Sync Queue)
+  function encolarSesionOffline(sesion) {
+    try {
+      let queue = JSON.parse(localStorage.getItem('evolution_sync_queue') || '[]');
+      // Evitar duplicados en la cola
+      if (!queue.some(s => s.fecha === sesion.fecha && s.notas_sesion === sesion.notas_sesion)) {
+        queue.push(sesion);
+        localStorage.setItem('evolution_sync_queue', JSON.stringify(queue));
+      }
+    } catch(e) {
+      console.error("Error al encolar sesión offline:", e);
+    }
+  }
+
+  async function sincronizarSesionRemota(sesion) {
+    if (!supabase || !window.currentUser) return false;
+
+    try {
+      // 1. Insertar sesión padre
+      const { data: histData, error: histError } = await supabase
+        .from('sesiones_historial')
+        .insert({
+          cliente_id: window.currentUser.id,
+          fecha: sesion.fecha,
+          notas_generales: sesion.notas_sesion
+        })
+        .select('id')
+        .single();
+
+      if (histError) throw histError;
+      const sesionId = histData.id;
+
+      // 2. Preparar e insertar los ejercicios detallados
+      const ejerciciosInsert = sesion.ejercicios.map(ej => {
+        const vol = ej.peso * ej.repsArray.reduce((a, b) => a + b, 0);
+        
+        // Calcular mejor 1RM
+        let rmEst = 0;
+        if (ej.repsArray.length > 0) {
+          const r = ej.repsArray[0];
+          // Usamos promedio de Brzycki y Epley
+          const epley = ej.peso * (1 + r / 30);
+          const brzycki = ej.peso / (1.0278 - 0.0278 * r);
+          rmEst = (epley + brzycki) / 2;
+        }
+
+        return {
+          sesion_id: sesionId,
+          nombre_ejercicio: ej.nombre,
+          series_reps: ej.repsArray,
+          peso: ej.peso,
+          rpe_rir: ej.rpe,
+          descanso: ej.descanso,
+          volumen: vol,
+          rm_estimado: rmEst
+        };
+      });
+
+      const { error: ejError } = await supabase
+        .from('sesiones_ejercicios')
+        .insert(ejerciciosInsert);
+
+      if (ejError) throw ejError;
+      return true;
+
+    } catch(e) {
+      console.error("Error al sincronizar sesión remota:", e);
+      return false;
+    }
+  }
+
+  async function sincronizarColaPendiente() {
+    if (!navigator.onLine || !supabase || !window.currentUser) return;
+    
+    try {
+      let queue = JSON.parse(localStorage.getItem('evolution_sync_queue') || '[]');
+      if (queue.length === 0) return;
+
+      toast(`Sincronizando ${queue.length} sesión(es) pendiente(s)...`, 'info');
+      let successCount = 0;
+      let remainingQueue = [];
+
+      for (let sesion of queue) {
+        const exito = await sincronizarSesionRemota(sesion);
+        if (exito) {
+          successCount++;
+        } else {
+          remainingQueue.push(sesion);
+        }
+      }
+
+      localStorage.setItem('evolution_sync_queue', JSON.stringify(remainingQueue));
+
+      if (successCount > 0) {
+        toast(`¡Sincronización exitosa! ${successCount} sesión(es) subida(s) a la nube.`, 'success');
+      }
+    } catch(e) {
+      console.error("Error al sincronizar cola pendiente:", e);
+    }
+  }
+
+  // Escuchar reconexión a internet
+  window.addEventListener('online', () => {
+    console.log("Conexión restablecida. Iniciando sincronización de fondo...");
+    setTimeout(sincronizarColaPendiente, 2000); // Dar 2 segundos para estabilizar la red
+  });
   function updateNextIds() {
     nextSesionId = sesiones.length ? Math.max(...sesiones.map(s => s.id)) + 1 : 1;
     let maxEj = 0;

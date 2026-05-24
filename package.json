@@ -2,8 +2,8 @@
   "name": "evolution-lab",
   "version": "1.0.0",
   "scripts": {
-  "build": "shx rm -rf src_temp public && shx mkdir -p src_temp/clientes public && shx cp index.html src_temp/ && shx cp fondo.jpg manifest.json sw.js icon.png public/ && shx cp -r clientes src_temp/ && html-minifier-terser --input-dir src_temp --output-dir public --file-ext html --collapse-whitespace --remove-comments --minify-css true --minify-js true"
-},
+    "build": "shx rm -rf src_temp public && shx mkdir -p src_temp/clientes public && shx cp index.html login.html src_temp/ && shx cp fondo.jpg manifest.json sw.js icon.png public/ && shx cp -r clientes src_temp/ && html-minifier-terser --input-dir src_temp --output-dir public --file-ext html --collapse-whitespace --remove-comments --minify-css true --minify-js true"
+  },
   "devDependencies": {
     "html-minifier-terser": "^7.2.0",
     "shx": "^0.4.0"

@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Evolution Lab - Iniciar Sesión</title>
+    <link rel="icon" type="image/png" href="/icon.png">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Supabase JS CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.8/dist/umd/supabase.js"></script>
+
+    <style>
+        :root {
+            --bg: #0b0f19;
+            --card-bg: rgba(15, 23, 42, 0.45);
+            --border: rgba(255, 255, 255, 0.08);
+            --accent: #7b2ff7;
+            --accent-glow: rgba(123, 47, 247, 0.4);
+            --cyan: #00d4ff;
+            --text: #f8fafc;
+            --text-muted: #94a3b8;
+            --radius: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            background-image: 
+                radial-gradient(at 10% 10%, rgba(123, 47, 247, 0.15) 0px, transparent 50%),
+                radial-gradient(at 90% 90%, rgba(0, 212, 255, 0.12) 0px, transparent 50%),
+                url('/fondo.jpg');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: var(--text);
+            overflow-x: hidden;
+        }
+
+        /* Contenedor principal con efecto cristal (Glassmorphism) */
+        .login-card {
+            background: var(--card-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            width: 100%;
+            max-width: 440px;
+            padding: 40px 32px;
+            box-shadow: 
+                0 20px 50px -10px rgba(0, 0, 0, 0.5),
+                0 0 40px rgba(123, 47, 247, 0.15);
+            animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 35px;
+        }
+
+        .logo-symbol {
+            background: linear-gradient(135deg, var(--cyan), var(--accent));
+            width: 52px;
+            height: 52px;
+            border-radius: 12px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            margin-bottom: 15px;
+            box-shadow: 0 0 20px var(--accent-glow);
+        }
+
+        .title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            background: linear-gradient(135deg, #ffffff 40%, var(--cyan) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 6px;
+        }
+
+        .subtitle {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 8px;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 16px;
+        }
+
+        .form-control {
+            width: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 12px 16px 12px 42px;
+            color: var(--text);
+            font-size: 14px;
+            font-family: inherit;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            border-color: var(--cyan);
+            box-shadow: 0 0 12px rgba(0, 212, 255, 0.2);
+            background: rgba(15, 23, 42, 0.85);
+        }
+
+        .btn-submit {
+            width: 100%;
+            background: linear-gradient(135deg, var(--cyan) 0%, var(--accent) 100%);
+            color: white;
+            border: none;
+            padding: 14px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 700;
+            font-family: 'Orbitron', sans-serif;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            cursor: pointer;
+            box-shadow: 0 4px 20px var(--accent-glow);
+            transition: all 0.2s ease;
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-submit:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 24px rgba(123, 47, 247, 0.5);
+        }
+
+        .btn-submit:active {
+            transform: translateY(0);
+        }
+
+        .btn-submit:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .alert-error {
+            background: rgba(239, 68, 68, 0.15);
+            border: 1px solid rgba(239, 68, 68, 0.3);
+            border-radius: 8px;
+            padding: 10px 14px;
+            color: #fca5a5;
+            font-size: 12px;
+            margin-bottom: 20px;
+            display: none;
+            align-items: center;
+            gap: 8px;
+            animation: shake 0.3s ease;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-4px); }
+            75% { transform: translateX(4px); }
+        }
+
+        .footer-note {
+            text-align: center;
+            margin-top: 25px;
+            font-size: 11px;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        /* Configuración de credenciales de Supabase */
+        .config-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(11, 15, 25, 0.95);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 20px;
+        }
+
+        .config-box {
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            width: 100%;
+            max-width: 480px;
+            padding: 30px;
+            box-shadow: 0 0 30px var(--accent-glow);
+        }
+
+        .config-box h3 {
+            font-family: 'Orbitron', sans-serif;
+            margin-bottom: 12px;
+            color: var(--cyan);
+        }
+
+        .config-box p {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        /* Loader */
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            display: none;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="login-card">
+        <div class="header">
+            <div class="logo-symbol">📲</div>
+            <h1 class="title">Evolution Lab</h1>
+            <p class="subtitle">Ingresa a tu plan de entrenamiento</p>
+        </div>
+
+        <div id="errorAlert" class="alert-error">
+            <span>⚠️</span>
+            <span id="errorMessage">Correo o contraseña incorrectos.</span>
+        </div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label for="email">Correo Electrónico</label>
+                <div class="input-wrapper">
+                    <span class="input-icon">✉️</span>
+                    <input type="email" id="email" class="form-control" placeholder="ejemplo@correo.com" required autocomplete="username">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Contraseña</label>
+                <div class="input-wrapper">
+                    <span class="input-icon">🔒</span>
+                    <input type="password" id="password" class="form-control" placeholder="••••••••••••" required autocomplete="current-password">
+                </div>
+            </div>
+
+            <button type="submit" id="submitBtn" class="btn-submit">
+                <div id="btnSpinner" class="spinner"></div>
+                <span id="btnText">Entrar</span>
+            </button>
+        </form>
+
+        <div class="footer-note">
+            🔬 Diseñado bajo evidencia científica<br>
+            👑 Exclusivo por Evolution Lab
+        </div>
+    </div>
+
+    <!-- Modal de Configuración Inicial de Supabase -->
+    <div id="configOverlay" class="config-overlay">
+        <div class="config-box">
+            <h3>⚙️ CONFIGURACIÓN DE SUPABASE</h3>
+            <p>Introduce las credenciales de tu proyecto de Supabase para conectar la base de datos y la autenticación. Puedes obtenerlas en tu panel de Supabase en <strong>Project Settings > API</strong>.</p>
+            
+            <form id="configForm">
+                <div class="form-group">
+                    <label for="supabaseUrl">SUPABASE URL</label>
+                    <input type="url" id="supabaseUrl" class="form-control" placeholder="https://xxxxxx.supabase.co" required style="padding-left: 14px;">
+                </div>
+                <div class="form-group">
+                    <label for="supabaseKey">SUPABASE ANON KEY</label>
+                    <input type="text" id="supabaseKey" class="form-control" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6..." required style="padding-left: 14px;">
+                </div>
+                <button type="submit" class="btn-submit">💾 Guardar y Conectar</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Cargar credenciales desde localStorage
+        let SUPABASE_URL = localStorage.getItem('supabase_url');
+        let SUPABASE_KEY = localStorage.getItem('supabase_anon_key');
+
+        let supabase = null;
+
+        // Si no existen las credenciales, mostrar el modal de configuración
+        if (!SUPABASE_URL || !SUPABASE_KEY) {
+            document.getElementById('configOverlay').style.display = 'flex';
+        } else {
+            inicializarSupabase();
+        }
+
+        // Manejar el formulario de configuración
+        document.getElementById('configForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const urlVal = document.getElementById('supabaseUrl').value.trim();
+            const keyVal = document.getElementById('supabaseKey').value.trim();
+
+            localStorage.setItem('supabase_url', urlVal);
+            localStorage.setItem('supabase_anon_key', keyVal);
+
+            SUPABASE_URL = urlVal;
+            SUPABASE_KEY = keyVal;
+
+            document.getElementById('configOverlay').style.display = 'none';
+            inicializarSupabase();
+        });
+
+        function inicializarSupabase() {
+            try {
+                // El objeto 'supabase' se carga desde el CDN de Supabase
+                supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+                
+                // Comprobar si ya hay una sesión activa, si es así redirigir
+                supabase.auth.getSession().then(({ data }) => {
+                    if (data.session) {
+                        window.location.replace('/index.html');
+                    }
+                });
+            } catch (err) {
+                console.error("Error al inicializar Supabase:", err);
+                alert("Error al inicializar Supabase. Verifica tus credenciales.");
+                localStorage.removeItem('supabase_url');
+                localStorage.removeItem('supabase_anon_key');
+                window.location.reload();
+            }
+        }
+
+        // Manejar formulario de inicio de sesión
+        document.getElementById('loginForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if (!supabase) return;
+
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+
+            const submitBtn = document.getElementById('submitBtn');
+            const spinner = document.getElementById('btnSpinner');
+            const btnText = document.getElementById('btnText');
+            const errorAlert = document.getElementById('errorAlert');
+            const errorMsg = document.getElementById('errorMessage');
+
+            // Reset UI
+            errorAlert.style.display = 'none';
+            submitBtn.disabled = true;
+            spinner.style.display = 'block';
+            btnText.textContent = 'Verificando...';
+
+            try {
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email: email,
+                    password: password
+                });
+
+                if (error) {
+                    throw error;
+                }
+
+                // Login exitoso, guardar credenciales en caché y redirigir
+                console.log('Inicio de sesión exitoso:', data.user);
+                btnText.textContent = 'Acceso concedido';
+                setTimeout(() => {
+                    window.location.replace('/index.html');
+                }, 500);
+
+            } catch (err) {
+                console.error("Error de login:", err);
+                errorMsg.textContent = err.message || "Correo o contraseña incorrectos.";
+                errorAlert.style.display = 'flex';
+                
+                // Restaurar botón
+                submitBtn.disabled = false;
+                spinner.style.display = 'none';
+                btnText.textContent = 'Entrar';
+            }
+        });
+    </script>
+</body>
+</html>
