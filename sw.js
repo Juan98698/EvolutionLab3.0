@@ -50,7 +50,7 @@ self.addEventListener('fetch', event => {
     requestUrl.pathname.includes('/clientes/')
   ) {
     event.respondWith(
-      fetch(event.request)
+      fetch(event.request, { cache: 'no-cache' })
         .then(response => {
           // Guardar copia actualizada en caché
           const responseClone = response.clone();
