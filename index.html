@@ -5357,6 +5357,60 @@ let variableDefinitions = {
     // --------------------------------------------------------------
     // MANEJADORES DE EVENTOS
     // --------------------------------------------------------------
+  function actualizarBibliotecaEjercicios() {
+    try {
+      let library = JSON.parse(localStorage.getItem('evolution_exercise_library') || '{}');
+      let updated = false;
+      for (let day of trainingDays) {
+        for (let ex of day.exercises) {
+          const nameClean = ex.name.trim().toLowerCase();
+          if (nameClean && (ex.imageData || ex.gifData || ex.videoUrl)) {
+            if (!library[nameClean] || 
+                (ex.imageData && library[nameClean].imageData !== ex.imageData) ||
+                (ex.gifData && library[nameClean].gifData !== ex.gifData) ||
+                (ex.videoUrl && library[nameClean].videoUrl !== ex.videoUrl)) {
+              
+              library[nameClean] = {
+                imageData: ex.imageData || library[nameClean]?.imageData || "",
+                gifData: ex.gifData || library[nameClean]?.gifData || "",
+                videoUrl: ex.videoUrl || library[nameClean]?.videoUrl || ""
+              };
+              updated = true;
+            }
+          }
+        }
+      }
+      if (updated) {
+        localStorage.setItem('evolution_exercise_library', JSON.stringify(library));
+        console.log("📂 [Biblioteca de Ejercicios] Biblioteca actualizada y sincronizada:", library);
+      }
+    } catch(e) {
+      console.error("Error al actualizar biblioteca de ejercicios:", e);
+    }
+  }
+  window.actualizarBibliotecaEjercicios = actualizarBibliotecaEjercicios;
+
+  function actualizarDatalistEjercicios() {
+    let datalist = document.getElementById('evolution-exercise-list');
+    if (!datalist) {
+        datalist = document.createElement('datalist');
+        datalist.id = 'evolution-exercise-list';
+        document.body.appendChild(datalist);
+    }
+    try {
+        const library = JSON.parse(localStorage.getItem('evolution_exercise_library') || '{}');
+        let html = '';
+        Object.keys(library).forEach(name => {
+            const prettyName = name.replace(/\b\w/g, c => c.toUpperCase());
+            html += `<option value="${escapeHtml(prettyName)}">`;
+        });
+        datalist.innerHTML = html;
+    } catch(e) {
+        console.error("Error al actualizar datalist de ejercicios:", e);
+    }
+  }
+  window.actualizarDatalistEjercicios = actualizarDatalistEjercicios;
+
     function attachAllEvents() {
         // Eliminar día
         document.querySelectorAll('.btn-remove-day').forEach(btn => {
@@ -5408,57 +5462,6 @@ let variableDefinitions = {
                 }
             };
         });
-  function actualizarBibliotecaEjercicios() {
-    try {
-      let library = JSON.parse(localStorage.getItem('evolution_exercise_library') || '{}');
-      let updated = false;
-      for (let day of trainingDays) {
-        for (let ex of day.exercises) {
-          const nameClean = ex.name.trim().toLowerCase();
-          if (nameClean && (ex.imageData || ex.gifData || ex.videoUrl)) {
-            if (!library[nameClean] || 
-                (ex.imageData && library[nameClean].imageData !== ex.imageData) ||
-                (ex.gifData && library[nameClean].gifData !== ex.gifData) ||
-                (ex.videoUrl && library[nameClean].videoUrl !== ex.videoUrl)) {
-              
-              library[nameClean] = {
-                imageData: ex.imageData || library[nameClean]?.imageData || "",
-                gifData: ex.gifData || library[nameClean]?.gifData || "",
-                videoUrl: ex.videoUrl || library[nameClean]?.videoUrl || ""
-              };
-              updated = true;
-            }
-          }
-        }
-      }
-      if (updated) {
-        localStorage.setItem('evolution_exercise_library', JSON.stringify(library));
-        console.log("📂 [Biblioteca de Ejercicios] Biblioteca actualizada y sincronizada:", library);
-      }
-    } catch(e) {
-      console.error("Error al actualizar biblioteca de ejercicios:", e);
-    }
-  }
-
-  function actualizarDatalistEjercicios() {
-    let datalist = document.getElementById('evolution-exercise-list');
-    if (!datalist) {
-        datalist = document.createElement('datalist');
-        datalist.id = 'evolution-exercise-list';
-        document.body.appendChild(datalist);
-    }
-    try {
-        const library = JSON.parse(localStorage.getItem('evolution_exercise_library') || '{}');
-        let html = '';
-        Object.keys(library).forEach(name => {
-            const prettyName = name.replace(/\b\w/g, c => c.toUpperCase());
-            html += `<option value="${escapeHtml(prettyName)}">`;
-        });
-        datalist.innerHTML = html;
-    } catch(e) {
-        console.error("Error al actualizar datalist de ejercicios:", e);
-    }
-  }
 
   // Cambiar nombre del ejercicio con soporte para auto-rellenado instantáneo en oninput y onchange
   document.querySelectorAll('.exercise-name-input').forEach(inp => {
