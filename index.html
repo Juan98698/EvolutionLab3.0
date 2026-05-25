@@ -2708,6 +2708,32 @@
     }
   }
 
+  function aplicarDatosPortada(p) {
+    if (!p) return;
+    const fields = {
+      'userName': p.userName || '',
+      'userGoal': p.userGoal || '',
+      'startDate': p.startDate || '',
+      'planVigenciaPlan': p.planVigenciaPlan || '28',
+      'trainerName': p.trainerName || '',
+      'whatsappLink': p.whatsappLink || '',
+      'instagramLink': p.instagramLink || '',
+      'globalNote': p.globalNote || ''
+    };
+    
+    for (let id in fields) {
+      const el = document.getElementById(id);
+      if (el) {
+        el.value = fields[id];
+        el.setAttribute('value', fields[id]);
+      }
+    }
+    
+    // Si hay elementos estáticos como spans en la portada, actualizarlos también
+    const trainerDisp = document.getElementById('trainerNameDisplay');
+    if (trainerDisp) trainerDisp.textContent = p.trainerName || '[Tu nombre]';
+  }
+
   async function cargarPlanDeCliente(clienteId) {
     if (!supabase) return;
     selectedClienteId = clienteId;
@@ -2737,6 +2763,20 @@
         if (plan.trackerConfig) {
           CONFIG = plan.trackerConfig;
           RULES = plan.trackerRules || RULES;
+        }
+        if (plan.portada) {
+          aplicarDatosPortada(plan.portada);
+        } else {
+          aplicarDatosPortada({
+            userName: '',
+            userGoal: '',
+            startDate: new Date().toISOString().split('T')[0],
+            planVigenciaPlan: '28',
+            trainerName: '',
+            whatsappLink: '',
+            instagramLink: '',
+            globalNote: 'Recuerda calentar 10 min antes. Respeta el RIR y tempo indicado. Hidrátate bien.'
+          });
         }
         toast("¡Plan cargado con éxito!", "success");
       } else {
@@ -2775,7 +2815,17 @@
         trainingDays: trainingDays,
         weekdayMapping: weekdayMapping,
         trackerConfig: typeof CONFIG !== 'undefined' ? CONFIG : null,
-        trackerRules: typeof RULES !== 'undefined' ? RULES : null
+        trackerRules: typeof RULES !== 'undefined' ? RULES : null,
+        portada: {
+          userName: document.getElementById('userName')?.value || '',
+          userGoal: document.getElementById('userGoal')?.value || '',
+          startDate: document.getElementById('startDate')?.value || '',
+          planVigenciaPlan: document.getElementById('planVigenciaPlan')?.value || '28',
+          trainerName: document.getElementById('trainerName')?.value || '',
+          whatsappLink: document.getElementById('whatsappLink')?.value || '',
+          instagramLink: document.getElementById('instagramLink')?.value || '',
+          globalNote: document.getElementById('globalNote')?.value || ''
+        }
     };
 
     try {
@@ -2864,6 +2914,9 @@
       CONFIG = plan.trackerConfig;
       RULES = plan.trackerRules || RULES;
     }
+    if (plan.portada) {
+      aplicarDatosPortada(plan.portada);
+    }
     
     // Volver a renderizar en la UI adaptada para el cliente
     renderFullApp();
@@ -2925,10 +2978,13 @@
           const selectorAtletas = document.getElementById('selectorAtletas');
           if (selectorAtletas) selectorAtletas.style.setProperty('display', 'none', 'important');
           
-          // Ocultar botones de edición de plan y la sección de diccionario e inputs
-          document.querySelectorAll('#addGlobalDayBtn, #addCustomVarBtn, #exportHtmlBtn, .add-day-btn, .btn-remove-day, .exercise-actions, .btn-add-ex, .btn-rem-ex, .img-upload-label, .gif-upload-label, .global-vars-panel button, #quickAddVarBtn, .remove-var-btn, .hidden-file-upload, .hidden-gif-upload, .video-url-input, #weekdayConfigSection').forEach(el => {
+          // Ocultar botones de edición de plan, vista previa PDF y la sección de diccionario e inputs
+          document.querySelectorAll('#printAsPdfBtn, #addGlobalDayBtn, #addCustomVarBtn, #exportHtmlBtn, .add-day-btn, .btn-remove-day, .exercise-actions, .btn-add-ex, .btn-rem-ex, .img-upload-label, .gif-upload-label, .global-vars-panel button, #quickAddVarBtn, .remove-var-btn, .hidden-file-upload, .hidden-gif-upload, .video-url-input, #weekdayConfigSection').forEach(el => {
             el.style.setProperty('display', 'none', 'important');
           });
+
+          const tabConfig = document.getElementById('tab-config');
+          if (tabConfig) tabConfig.style.setProperty('display', 'none', 'important');
 
           const defsSection = document.querySelector('.definitions-section');
           if (defsSection) defsSection.style.setProperty('display', 'none', 'important');
@@ -3009,9 +3065,12 @@
           }
           
           // Asegurarse de que los paneles de edición de entrenador estén visibles
-          document.querySelectorAll('#addGlobalDayBtn, #addCustomVarBtn, #exportHtmlBtn, .add-day-btn, .btn-remove-day, .exercise-actions, .btn-add-ex, .btn-rem-ex, .img-upload-label, .gif-upload-label, .global-vars-panel button, #quickAddVarBtn, .remove-var-btn, .hidden-file-upload, .hidden-gif-upload, .video-url-input, #weekdayConfigSection').forEach(el => {
+          document.querySelectorAll('#printAsPdfBtn, #addGlobalDayBtn, #addCustomVarBtn, #exportHtmlBtn, .add-day-btn, .btn-remove-day, .exercise-actions, .btn-add-ex, .btn-rem-ex, .img-upload-label, .gif-upload-label, .global-vars-panel button, #quickAddVarBtn, .remove-var-btn, .hidden-file-upload, .hidden-gif-upload, .video-url-input, #weekdayConfigSection').forEach(el => {
             el.style.removeProperty('display');
           });
+
+          const tabConfig = document.getElementById('tab-config');
+          if (tabConfig) tabConfig.style.removeProperty('display');
 
           const defsSection = document.querySelector('.definitions-section');
           if (defsSection) defsSection.style.removeProperty('display');
@@ -5951,7 +6010,7 @@ function addGlobalVariable() {
             const dayCards = document.querySelectorAll('#daysContainer .day-card');
             if (dayCards[idx]) {
                 const nameInput = dayCards[idx].querySelector('.day-name-input');
-                const nameStatic = dayCards[idx].querySelector('.day-title .static-value');
+                const nameStatic = dayCards[idx].querySelector('.day-title .static-value, .static-day-name');
                 const titleInput = dayCards[idx].querySelector('.day-title input');
                 return (nameInput ? nameInput.value : (nameStatic ? nameStatic.textContent : (titleInput ? titleInput.value : ''))) || '';
             }
