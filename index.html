@@ -5273,12 +5273,25 @@ let variableDefinitions = {
         let hasStatic = !!exercise.imageData;
         let hasAnimated = !!exercise.gifData;
         
+        let isOnline = typeof navigator !== 'undefined' ? navigator.onLine : true;
+        let initialSrc = '';
+        if (isOnline) {
+            initialSrc = hasStatic ? exercise.imageData : (hasAnimated ? exercise.gifData : '');
+            if (hasAnimated && hasStatic) {
+                // Pre-cargar la animación offline en segundo plano para que el Service Worker la guarde en caché
+                const imgPreload = new Image();
+                imgPreload.src = exercise.gifData;
+            }
+        } else {
+            initialSrc = hasAnimated ? exercise.gifData : (hasStatic ? exercise.imageData : '');
+        }
+        
         let imgHtml = `
             <div class="img-placeholder-wrapper" style="${(hasStatic || hasAnimated) ? 'display:none;' : 'display:flex;'}">
                 <div class="img-placeholder">📷 Sin imagen</div>
             </div>
             <img class="exercise-media img-preview" 
-                 src="${hasAnimated ? exercise.gifData : (hasStatic ? exercise.imageData : '')}" 
+                 src="${initialSrc}" 
                  data-static="${hasStatic ? exercise.imageData : ''}" 
                  data-animated="${hasAnimated ? exercise.gifData : ''}" 
                  style="${(hasStatic || hasAnimated) ? 'display:block;' : 'display:none;'}" 
@@ -6281,20 +6294,39 @@ function addGlobalVariable() {
                 const staticSrc = mediaEl.getAttribute('data-static');
                 const animatedSrc = mediaEl.getAttribute('data-animated');
                 
-                if (animatedSrc) {
-                    // Si hay animación, mostrar la animación (tanto online como offline)
-                    mediaEl.src = animatedSrc;
-                    mediaEl.style.display = 'block';
-                    if (placeholderEl) placeholderEl.style.display = 'none';
-                } else if (staticSrc) {
-                    // Si no hay animación pero sí foto estática, mostrar foto
-                    mediaEl.src = staticSrc;
-                    mediaEl.style.display = 'block';
-                    if (placeholderEl) placeholderEl.style.display = 'none';
+                if (isOnline) {
+                    if (staticSrc) {
+                        mediaEl.src = staticSrc;
+                        mediaEl.style.display = 'block';
+                        if (placeholderEl) placeholderEl.style.display = 'none';
+                        
+                        if (animatedSrc) {
+                            // Pre-cargar la animación en segundo plano para que el Service Worker la guarde en caché
+                            const imgPreload = new Image();
+                            imgPreload.src = animatedSrc;
+                        }
+                    } else if (animatedSrc) {
+                        mediaEl.src = animatedSrc;
+                        mediaEl.style.display = 'block';
+                        if (placeholderEl) placeholderEl.style.display = 'none';
+                    } else {
+                        mediaEl.style.display = 'none';
+                        if (placeholderEl) placeholderEl.style.display = 'flex';
+                    }
                 } else {
-                    // Si no hay ninguna imagen/animación para este estado
-                    mediaEl.style.display = 'none';
-                    if (placeholderEl) placeholderEl.style.display = 'flex';
+                    // Offline
+                    if (animatedSrc) {
+                        mediaEl.src = animatedSrc;
+                        mediaEl.style.display = 'block';
+                        if (placeholderEl) placeholderEl.style.display = 'none';
+                    } else if (staticSrc) {
+                        mediaEl.src = staticSrc;
+                        mediaEl.style.display = 'block';
+                        if (placeholderEl) placeholderEl.style.display = 'none';
+                    } else {
+                        mediaEl.style.display = 'none';
+                        if (placeholderEl) placeholderEl.style.display = 'flex';
+                    }
                 }
             }
         });
