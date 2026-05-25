@@ -2133,29 +2133,10 @@
   <div id="clienteNombreHeader" style="display:none; font-size:13px; color:rgba(255,255,255,0.5); background:rgba(255,255,255,0.08); padding:4px 12px; border-radius:99px; white-space:nowrap;"></div>
   <select id="selectorAtletas" style="display:none; font-family:'Orbitron',sans-serif; font-size:9px; padding:6px 12px; margin-left:8px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2); color:white; border-radius:4px; outline:none; cursor:pointer; max-width: 150px;"></select>
   <button id="guardarNubeBtn" class="btn" style="display:none; font-family:'Orbitron',sans-serif; font-size:9px; padding:6px 12px; background:linear-gradient(135deg, #4facfe, #00f2fe); border:none; margin-left:8px; color:white;">☁️ Guardar en la Nube</button>
-  <button id="generarLinkBtn" class="btn export-btn" style="display:none; font-family:'Orbitron',sans-serif; font-size:9px; padding:6px 12px;">⬇️ Exportar Cliente</button>
   <button id="registrarAtletaBtn" class="btn" style="display:none; font-family:'Orbitron',sans-serif; font-size:9px; padding:6px 12px; background:linear-gradient(135deg, #00d4ff, #7b2ff7); border:none; margin-left:8px; color:white;">👥 Registrar Atleta</button>
   <button id="cerrarSesionBtn" class="btn" style="font-family:'Orbitron',sans-serif; font-size:9px; padding:6px 12px; margin-left:8px; background:rgba(255,68,68,0.08); border:1px solid rgba(255,68,68,0.3); color:#ff6b6b; display:inline-block; transition: all 0.2s ease;">🚪 Cerrar Sesión</button>
 </header>
-<!-- Panel generador de HTML (solo entrenador) -->
-<div id="panelGenerarLink" style="display:none; background:var(--bg); border-bottom:1px solid var(--border); padding:1rem;">
-  <div style="max-width:520px; margin:0 auto;">
-    <div style="font-size:13px; font-weight:700; margin-bottom:10px; color:var(--text2); text-transform:uppercase; letter-spacing:0.05em;">Exportar Archivo para Cliente</div>
-    <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:flex-end;">
-      <div style="flex:1; min-width:180px;">
-        <label style="font-size:11px; color:var(--text2); font-weight:600; display:block; margin-bottom:4px;">NOMBRE DEL CLIENTE</label>
-        <input type="text" id="inputNombreCliente" placeholder="ej: juan, maria-lopez" style="width:100%;">
-      </div>
-      <div style="width:140px; min-width:120px;">
-        <label style="font-size:11px; color:var(--text2); font-weight:600; display:block; margin-bottom:4px;">VIGENCIA DEL PLAN (días)</label>
-        <input id="planVigencia" type="number" min="1" max="365" value="28" style="width:100%; height:38px; border-radius:var(--radius); border:1px solid var(--border2); padding:0 8px; background:var(--bg2); color:var(--text); font-weight:500; font-family:inherit; outline:none; cursor:text; font-size:13px;">
-      </div>
-      <button class="btn btn-primary" onclick="exportarHTMLCliente()" style="white-space:nowrap;">⬇️ Descargar HTML</button>
-      <button class="btn btn-ghost" onclick="cerrarPanelLink()" style="white-space:nowrap;">Cerrar</button>
-    </div>
-    <div style="margin-top:8px; font-size:12px; color:var(--text3);">💡 Esto descargará un archivo HTML con todas las reglas incrustadas. Súbelo a tu GitHub (ej. github pages) con este nombre.</div>
-  </div>
-</div>
+<!-- El antiguo panel de exportación a HTML local ha sido retirado. Ahora el guardado y distribución es 100% en la Nube con Supabase. -->
 
 <!-- Panel de Registro de Clientes en Supabase (solo entrenador) -->
 <div id="panelRegistrarCliente" style="display:none; background:var(--bg); border-bottom:1px solid var(--border); padding:1rem;">
@@ -2299,10 +2280,8 @@
 <div class="document-container" id="trainingPlanContainer">
     <!-- Toolbar -->
     <div class="toolbar">
-        <button id="printAsPdfBtn" class="btn-print">🖨️ Vista previa / Exportar PDF (Ctrl+P)</button>
         <button id="addGlobalDayBtn">➕ Añadir día</button>
         <button id="addCustomVarBtn">➕ Añadir variable global</button>
-        <button id="exportHtmlBtn" class="btn-print" style="background:#4b5563;">💾 Guardar Borrador Editable</button>
         <button id="calc1RMBtn" style="background:#7b2ff7;">🧮 Calculadora 1RM</button>
     </div>
 <div id="planFooterBrand" style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 2px solid #e2e8f0; font-size: 0.75rem; color: #64748b;">
@@ -2929,6 +2908,44 @@
   function comprobarRolYAdaptarUI(user) {
     console.log("Comprobando rol para el usuario ID:", user.id, "Email:", user.email);
     
+    const adaptarVistaClientePremium = () => {
+      // Configurar Filosofía Colapsable
+      const philoSection = document.querySelector('.philosophy-section');
+      if (philoSection && !document.querySelector('.philosophy-toggle')) {
+        const toggle = document.createElement('div');
+        toggle.className = 'philosophy-toggle';
+        toggle.onclick = function() {
+          toggle.classList.toggle('open');
+          wrapper.classList.toggle('expanded');
+        };
+        toggle.innerHTML = '<span class="philosophy-toggle-title">⚡ Nuestra Filosofía de Entrenamiento</span>' +
+                           '<span class="philosophy-toggle-icon">▼</span>';
+        const wrapper = document.createElement('div');
+        wrapper.className = 'philosophy-collapsible';
+        philoSection.parentNode.insertBefore(toggle, philoSection);
+        philoSection.parentNode.insertBefore(wrapper, philoSection);
+        wrapper.appendChild(philoSection);
+      }
+
+      // Agregar FAB para calculadora 1RM si no existe
+      if (!document.getElementById('fab1RMBtn')) {
+        const fab = document.createElement('button');
+        fab.className = 'fab-1rm';
+        fab.id = 'fab1RMBtn';
+        fab.innerHTML = '🧮';
+        fab.title = 'Calculadora 1RM';
+        fab.onclick = function() {
+          const modal = document.getElementById('modal-1rm');
+          if (modal) {
+            modal.classList.add('open');
+            const input = document.getElementById('input1RMPeso');
+            if (input) input.focus();
+          }
+        };
+        document.body.appendChild(fab);
+      }
+    };
+    
     const offlineFallback = () => {
       // Intentar recuperar rol guardado en caché local para soporte offline
       try {
@@ -2984,7 +3001,7 @@
             el.style.color = 'rgba(255, 255, 255, 0.6)';
           });
 
-          document.querySelectorAll('#printAsPdfBtn, #addGlobalDayBtn, #addCustomVarBtn, #exportHtmlBtn, .add-day-btn, .btn-remove-day, .exercise-actions, .btn-add-ex, .btn-rem-ex, .img-upload-label, .gif-upload-label, .global-vars-panel button, #quickAddVarBtn, .remove-var-btn, .hidden-file-upload, .hidden-gif-upload, .video-url-input, #weekdayConfigSection').forEach(el => {
+          document.querySelectorAll('#addGlobalDayBtn, #addCustomVarBtn, .add-day-btn, .btn-remove-day, .exercise-actions, .btn-add-ex, .btn-rem-ex, .img-upload-label, .gif-upload-label, .global-vars-panel button, #quickAddVarBtn, .remove-var-btn, .hidden-file-upload, .hidden-gif-upload, .video-url-input, #weekdayConfigSection').forEach(el => {
             el.style.setProperty('display', 'none', 'important');
           });
 
@@ -3004,10 +3021,13 @@
             console.log("Offline Fallback: No hay plan guardado en caché local.");
             renderFullApp();
           }
+          
+          // Cargar adaptaciones premium (Filosofía Colapsable y FAB Calculadora 1RM)
+          adaptarVistaClientePremium();
         } else {
           console.log("Offline Fallback: Detectado ENTRENADOR en caché.");
           // Si es entrenador offline, restauramos paneles editables normales
-          document.querySelectorAll('#printAsPdfBtn, #addGlobalDayBtn, #addCustomVarBtn, #exportHtmlBtn, .add-day-btn, .btn-remove-day, .exercise-actions, .btn-add-ex, .btn-rem-ex, .img-upload-label, .gif-upload-label, .global-vars-panel button, #quickAddVarBtn, .remove-var-btn, .hidden-file-upload, .hidden-gif-upload, .video-url-input, #weekdayConfigSection').forEach(el => {
+          document.querySelectorAll('#addGlobalDayBtn, #addCustomVarBtn, .add-day-btn, .btn-remove-day, .exercise-actions, .btn-add-ex, .btn-rem-ex, .img-upload-label, .gif-upload-label, .global-vars-panel button, #quickAddVarBtn, .remove-var-btn, .hidden-file-upload, .hidden-gif-upload, .video-url-input, #weekdayConfigSection').forEach(el => {
             el.style.removeProperty('display');
           });
           const tabConfig = document.getElementById('tab-config');
@@ -3115,8 +3135,8 @@
             el.style.color = 'rgba(255, 255, 255, 0.6)';
           });
 
-          // Ocultar botones de edición de plan, vista previa PDF y la sección de diccionario e inputs
-          document.querySelectorAll('#printAsPdfBtn, #addGlobalDayBtn, #addCustomVarBtn, #exportHtmlBtn, .add-day-btn, .btn-remove-day, .exercise-actions, .btn-add-ex, .btn-rem-ex, .img-upload-label, .gif-upload-label, .global-vars-panel button, #quickAddVarBtn, .remove-var-btn, .hidden-file-upload, .hidden-gif-upload, .video-url-input, #weekdayConfigSection').forEach(el => {
+          // Ocultar botones de edición de plan y la sección de diccionario e inputs
+          document.querySelectorAll('#addGlobalDayBtn, #addCustomVarBtn, .add-day-btn, .btn-remove-day, .exercise-actions, .btn-add-ex, .btn-rem-ex, .img-upload-label, .gif-upload-label, .global-vars-panel button, #quickAddVarBtn, .remove-var-btn, .hidden-file-upload, .hidden-gif-upload, .video-url-input, #weekdayConfigSection').forEach(el => {
             el.style.setProperty('display', 'none', 'important');
           });
 
@@ -3131,41 +3151,8 @@
           // Cargar el plan de entrenamiento propio del cliente desde Supabase o LocalStorage
           cargarPlanPropioCliente();
 
-          // Configurar Filosofía Colapsable
-          const philoSection = document.querySelector('.philosophy-section');
-          if (philoSection && !document.querySelector('.philosophy-toggle')) {
-            const toggle = document.createElement('div');
-            toggle.className = 'philosophy-toggle';
-            toggle.onclick = function() {
-              toggle.classList.toggle('open');
-              wrapper.classList.toggle('expanded');
-            };
-            toggle.innerHTML = '<span class="philosophy-toggle-title">⚡ Nuestra Filosofía de Entrenamiento</span>' +
-                               '<span class="philosophy-toggle-icon">▼</span>';
-            const wrapper = document.createElement('div');
-            wrapper.className = 'philosophy-collapsible';
-            philoSection.parentNode.insertBefore(toggle, philoSection);
-            philoSection.parentNode.insertBefore(wrapper, philoSection);
-            wrapper.appendChild(philoSection);
-          }
-
-          // Agregar FAB para calculadora 1RM si no existe
-          if (!document.getElementById('fab1RMBtn')) {
-            const fab = document.createElement('button');
-            fab.className = 'fab-1rm';
-            fab.id = 'fab1RMBtn';
-            fab.innerHTML = '🧮';
-            fab.title = 'Calculadora 1RM';
-            fab.onclick = function() {
-              const modal = document.getElementById('modal-1rm');
-              if (modal) {
-                modal.classList.add('open');
-                const input = document.getElementById('input1RMPeso');
-                if (input) input.focus();
-              }
-            };
-            document.body.appendChild(fab);
-          }
+          // Cargar adaptaciones premium (Filosofía Colapsable y FAB Calculadora 1RM)
+          adaptarVistaClientePremium();
           
         } else {
           // Si es entrenador, mostrar selector y botones
@@ -4960,122 +4947,6 @@ Un registro completo convierte cada sesi&oacute;n en informaci&oacute;n &uacute;
       }
     } catch(e) { console.error('Error cargando datos:', e); sesiones = []; updateNextIds(); }
   }
-  // ===== EXPORTADOR DE HTML PARA CLIENTES =====
-  function abrirPanelLink() {
-    const planInput = document.getElementById('planVigenciaPlan');
-    const exportInput = document.getElementById('planVigencia');
-    if (planInput && exportInput) exportInput.value = planInput.value || exportInput.value;
-    document.getElementById('panelGenerarLink').style.display = 'block';
-    document.getElementById('inputNombreCliente').focus();
-  }
-  function cerrarPanelLink() { document.getElementById('panelGenerarLink').style.display = 'none'; }
-  function sanitizarNombre(nombre) { return nombre.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,'-').replace(/[^a-z0-9_-]/g,'').substring(0,40); }
-  // Función auxiliar para obtener el fondo como Base64 y que funcione offline
-  async function getBgBase64() {
-      try {
-          const res = await fetch('/fondo.jpg');
-          if (!res.ok) return null;
-          const blob = await res.blob();
-          return new Promise((resolve) => {
-              const reader = new FileReader();
-              reader.onloadend = () => resolve(reader.result);
-              reader.readAsDataURL(blob);
-          });
-      } catch(e) {
-          return null; // Puede fallar si ya es un archivo local file://
-      }
-  }
-  
-  async function exportarHTMLCliente() {
-    const nombre = document.getElementById('inputNombreCliente').value || 'Cliente';
-    const id = sanitizarNombre(nombre);
-    if (!id) { toast('Ingresa el nombre del cliente primero', 'error'); return; }
-    
-    document.getElementById('saveConfigBtn').click();
-    toast('Generando archivo HTML...', 'info');
-    try {
-        const originalContainer = document.getElementById('trainingPlanContainer');
-        if (originalContainer) {
-            originalContainer.querySelectorAll('input, textarea').forEach(el => {
-                if (el.value !== undefined) el.setAttribute('value', el.value);
-                if (el.tagName === 'TEXTAREA') el.innerHTML = el.value;
-            });
-        }
-        // Ocultar el toast ANTES de clonar para que no se incluya en el export
-        const toastEl = document.getElementById('toast');
-        if (toastEl) { toastEl.classList.remove('show'); toastEl.className = ''; toastEl.textContent = ''; }
-        const parser = new DOMParser();
-        const cloneDoc = parser.parseFromString('<!DOCTYPE html><html lang="es">' + document.documentElement.innerHTML + '</html>', 'text/html');
-        // Asegurar que el toast del clon esté limpio
-        const cloneToast = cloneDoc.getElementById('toast');
-        if (cloneToast) { cloneToast.className = ''; cloneToast.textContent = ''; }
-        // Eliminar el estado guardado del borrador para que no pese ni interfiera
-        const savedStateScript = cloneDoc.getElementById('saved-state');
-        if (savedStateScript) savedStateScript.remove();
-        const cloneContainer = cloneDoc.getElementById('trainingPlanContainer');
-        if (cloneContainer) {
-            // Extraer el div del footer de marca antes de eliminar la barra de herramientas
-            const originalFooter = cloneContainer.querySelector('#planFooterBrand');
-            let footerClone = null;
-            if (originalFooter) {
-                footerClone = originalFooter.cloneNode(true);
-                originalFooter.remove();
-            }
-            const toolbar = cloneContainer.querySelector('.toolbar');
-            if (toolbar) toolbar.remove();
-            // Eliminar el panel de variables activas de la versión final del cliente
-            const globalVarsPanel = cloneContainer.querySelector('#globalVarsPanelContainer');
-            if (globalVarsPanel) globalVarsPanel.remove();
-            const editElements = cloneContainer.querySelectorAll('#addGlobalDayBtn, #addCustomVarBtn, #exportHtmlBtn, .add-day-btn, .btn-remove-day, .exercise-actions, .btn-add-ex, .btn-rem-ex, .img-upload-label, .gif-upload-label, .global-vars-panel button, #quickAddVarBtn, .remove-var-btn, .hidden-file-upload, .hidden-gif-upload, .video-url-input');
-            editElements.forEach(el => el.remove());
-            
-            // Limpiar temporizadores activos o botones de temporizador estáticos
-            cloneContainer.querySelectorAll('.rest-timer-active, .rest-timer-btn').forEach(el => el.remove());
-            // ===== MEJORA 2: Convertir variables-row a badges compactos =====
-            const _iconMap = {
-              'series de aproximacion': '🔄', 'series de trabajo': '📈',
-              'repeticiones': '🏃', 'tempo': '⏳', 'rir': '🔥',
-              'descanso': '⏱️'
-            };
-            cloneContainer.querySelectorAll('.variables-row').forEach(row => {
-              const items = row.querySelectorAll('.var-item');
-              const badgesDiv = cloneDoc.createElement('div');
-              badgesDiv.className = 'vars-badges';
-              items.forEach(item => {
-                const label = item.querySelector('label');
-                const valEl = item.querySelector('input'); // Leer del input original activo
-                if (!label || !valEl) return;
-                const labelText = label.textContent.trim();
-                const value = (valEl.value !== undefined && valEl.value !== '' ? valEl.value : valEl.getAttribute('value') || '').trim();
-                if (!value || value === '(sin definir)') return;
-                
-                // Obtener ID real de la variable desde data-var-id y normalizar
-                let varId = (valEl.getAttribute('data-var-id') || '').trim().toLowerCase();
-                const cleanLabel = labelText.toLowerCase().replace(/\(.*?\)/g, '').trim();
-                
-                if (!varId) {
-                  varId = cleanLabel;
-                }
-                
-                const icon = _iconMap[varId] || _iconMap[cleanLabel] || '📊';
-                
-                // Buscar la definición en variableDefinitions (intentando varias claves)
-                let definition = variableDefinitions[varId] || variableDefinitions[cleanLabel] || '';
-                
-                // Si no hay definición pero es una de las variables estándar, usar el fallback por defecto
-                if (!definition) {
-                  const defaultDefs = {
-                    "series de aproximacion": "Son series previas con poco peso para calentar los músculos y preparar las articulaciones sin cansarte. Ejemplo: Si vas a levantar 50kg, haces una serie previa con solo la barra o con 20kg.",
-                    "series de trabajo": "Son las series reales del plan donde el esfuerzo es alto y cuentan para el progreso. Ejemplo: Hacer 3 series de 10 repeticiones con el peso máximo que dominas.",
-                    "repeticiones": "Es el número de veces que realizas el movimiento completo del ejercicio dentro de una serie. Ejemplo: hacer 12 sentadillas seguidas sin parar.",
-                    "tempo": "Es la velocidad a la que realizas cada fase del movimiento (bajada, pausa y subida). Ejemplo: En sentadilla, bajar en 3 segundos, hacer 1 segundo de pausa abajo y subir rápido en 1 segundo.",
-                    "rir": "Indica cuántas repeticiones sientes que podrías haber hecho antes de llegar al fallo total. Ejemplo: Si haces 10 repeticiones con un RIR 2, significa que terminaste sintiendo que podrías haber hecho 2 más.",
-                    "descanso": "El tiempo que esperas entre una serie y otra para recuperar energía. Ejemplo: Cronometrar 2 minutos sentado antes de empezar la siguiente serie.",
-                    "peso": "Representa la resistencia externa que se opone a la contracción muscular para generar estímulo de adaptación en el organismo, para el contexto de este plan en especifico nos referimos a discos, mancuernas o las plaquetas de una maquina que se pueda agregar como resistencia externa."
-                  };
-                  definition = defaultDefs[varId] || defaultDefs[cleanLabel] || '';
-                  if (definition) {
-                    variableDefinitions[varId] = definition; // Guardarla en el objeto dinámico
                   }
                 }
                 
@@ -5308,28 +5179,25 @@ Un registro completo convierte cada sesi&oacute;n en informaci&oacute;n &uacute;
       toast('↺ Valores restaurados', 'info');
     });
   });
-  // Exportar / borrar (solo modo entrenador)
+  // Inicialización (solo modo entrenador)
   if (!MODO_CLIENTE) {
-    const linkBtn = document.getElementById('generarLinkBtn');
-    linkBtn.style.display = 'inline-flex';
-    linkBtn.addEventListener('click', function() {
-      const panel = document.getElementById('panelGenerarLink');
-      if (panel.style.display === 'none') abrirPanelLink(); else cerrarPanelLink();
-    });
     const borrarBtn = document.getElementById('borrarTodosBtn');
-    borrarBtn.style.display = 'inline-flex';
-    borrarBtn.addEventListener('click', clearAll);
+    if (borrarBtn) {
+      borrarBtn.style.display = 'inline-flex';
+      borrarBtn.addEventListener('click', clearAll);
+    }
   } else {
     var nombreVisible = _clienteId.replace(/-/g,' ').replace(/\b\w/g, c => c.toUpperCase());
     var headerNombre = document.getElementById('clienteNombreHeader');
-    headerNombre.textContent = '👤 ' + nombreVisible;
-    headerNombre.style.display = 'inline-block';
+    if (headerNombre) {
+      headerNombre.textContent = '👤 ' + nombreVisible;
+      headerNombre.style.display = 'inline-block';
+    }
     // Ocultar tab de config en modo cliente
-    document.getElementById('tab-config').style.display = 'none';
-    ['generarLinkBtn','borrarTodosBtn','panelGenerarLink'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) el.parentNode.removeChild(el);
-    });
+    const tabConfig = document.getElementById('tab-config');
+    if (tabConfig) tabConfig.style.display = 'none';
+    const borrarBtn = document.getElementById('borrarTodosBtn');
+    if (borrarBtn) borrarBtn.remove();
   }
 
   window.switchTab = switchTab;
@@ -5888,59 +5756,7 @@ function addGlobalVariable() {
     }
     renderFullApp();
 }
-    // Exportar a PDF (Ctrl+P)
-    function printToPdf() {
-        window.print();
-    }
-	
-    async function exportToHtml() {
-        // 1. Sincronizar valores actuales de inputs y textareas al atributo value
-        document.querySelectorAll('input, textarea').forEach(el => {
-            if (el.value !== undefined) el.setAttribute('value', el.value);
-            if (el.tagName === 'TEXTAREA') el.innerHTML = el.value;
-        });
-        // Asegurar que las reglas están actualizadas antes de guardar el borrador
-        const btnGuardar = document.getElementById('saveConfigBtn');
-        if(btnGuardar) btnGuardar.click();
-        // 2. Guardar el estado JSON en un script en el head
-        let stateScript = document.getElementById('saved-state');
-        if (!stateScript) {
-            stateScript = document.createElement('script');
-            stateScript.id = 'saved-state';
-            document.head.appendChild(stateScript);
-        }
-        const state = {
-            globalVariables: globalVariables,
-            variableDefinitions: variableDefinitions,
-            trainingDays: trainingDays,
-            weekdayMapping: weekdayMapping,
-            trackerConfig: typeof CONFIG !== 'undefined' ? CONFIG : null,
-            trackerRules: typeof RULES !== 'undefined' ? RULES : null
-        };
-        // Evitamos usar caracteres problemáticos dentro del string para no romper el HTML final
-        stateScript.textContent = "window.__SAVED_STATE__ = " + JSON.stringify(state).replace(/</g, '\\u003c') + ";";
-        // 3. Obtener el HTML de toda la página
-        // Limpiar toast antes de capturar para que no quede visible en el borrador
-        const toastEl = document.getElementById('toast');
-        if (toastEl) { toastEl.className = ''; toastEl.textContent = ''; }
-        let fullHtml = '<!DOCTYPE html>\n<html lang="es">\n' + document.documentElement.innerHTML + '\n</html>';
-        
-        // Incrustar fondo en Base64 para que el borrador funcione localmente
-        const base64Bg = await getBgBase64();
-        if (base64Bg) {
-            fullHtml = fullHtml.replace(/\/fondo\.jpg/g, base64Bg);
-        }
-        // 4. Descargar el archivo
-        const blob = new Blob([fullHtml], { type: 'text/html;charset=utf-8' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = 'borrador_entrenamiento.html';
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-    }
+    // Los antiguos generadores de PDF locales y borradores HTML han sido removidos de forma segura ya que el flujo es 100% en la Nube.
 
     // ==============================================================
     // ===== PARSEO DE DESCANSO =====
@@ -6341,12 +6157,8 @@ function addGlobalVariable() {
         }
         renderFullApp();
         renderWeekdayConfig();
-        const printBtn = document.getElementById('printAsPdfBtn');
-        if (printBtn) printBtn.onclick = printToPdf;
         const addVarToolbar = document.getElementById('addCustomVarBtn');
         if (addVarToolbar) addVarToolbar.onclick = addGlobalVariable;
-	const exportHtmlBtn = document.getElementById('exportHtmlBtn');
-        if (exportHtmlBtn) exportHtmlBtn.onclick = exportToHtml;
 
         // Delegación para eliminar variables
         document.addEventListener('click', function(e) {
@@ -6369,26 +6181,7 @@ function addGlobalVariable() {
         trainerNameInput.addEventListener('input', updateTrainerName);
         updateTrainerName();
         }
-        // Sincronizar saludo "Hola Atleta" en tiempo real con inputNombreCliente
-        const inputNombreCli = document.getElementById('inputNombreCliente');
-        if (inputNombreCli) {
-            inputNombreCli.addEventListener('input', () => {
-                const greetingEl = document.getElementById('dashboardGreeting');
-                if (greetingEl) {
-                    const nombreCli = inputNombreCli.value;
-                    const nombreMostrar = nombreCli ? nombreCli.split(' ')[0] : 'Atleta';
-                    let semana = 1;
-                    if (sesiones.length > 0) {
-                        const firstDate = new Date(sesiones[0].fecha + 'T00:00:00');
-                        const today = new Date();
-                        const diffTime = Math.abs(today - firstDate);
-                        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-                        semana = Math.floor(diffDays / 7) + 1;
-                    }
-                    greetingEl.innerHTML = `Hola, ${nombreMostrar} 👋 <div style="font-size: 11px; font-weight: 500; color: var(--text2); margin-top: 2px;">Semana ${semana > 0 ? semana : 1} de entrenamiento</div>`;
-                }
-            });
-        }
+        // Sincronización en tiempo real deshabilitada por desuso de panel de compilación local. El saludo se resuelve dinámicamente con la sesión de Supabase.
         // Inicializar Calculadora 1RM
         init1RMCalculator();
     }
