@@ -2630,7 +2630,7 @@
       
       // Sincronizar IDs y redibujar
       updateNextIds();
-      var ES_PAGINA_CLIENTE = window.INJECTED_CLIENT_ID !== '' || window.location.pathname.includes('/clientes/');
+      var ES_PAGINA_CLIENTE = !!window.INJECTED_CLIENT_ID || window.location.pathname.includes('/clientes/');
       if (ES_PAGINA_CLIENTE) {
         renderAll();
       } else {
@@ -2730,7 +2730,7 @@
         }
         
         // Volver a renderizar la aplicación para aplicar todos los cambios de rol en la UI
-        var ES_PAGINA_CLIENTE = window.INJECTED_CLIENT_ID !== '' || window.location.pathname.includes('/clientes/');
+        var ES_PAGINA_CLIENTE = !!window.INJECTED_CLIENT_ID || window.location.pathname.includes('/clientes/');
         if (!ES_PAGINA_CLIENTE && !MODO_CLIENTE) {
           renderFullApp();
         } else {
@@ -4908,7 +4908,7 @@ let variableDefinitions = {
     // RENDER PRINCIPAL
     // --------------------------------------------------------------
     function renderFullApp() {
-        var ES_PAGINA_CLIENTE = window.INJECTED_CLIENT_ID !== '' || window.location.pathname.includes('/clientes/');
+        var ES_PAGINA_CLIENTE = !!window.INJECTED_CLIENT_ID || window.location.pathname.includes('/clientes/');
         if (ES_PAGINA_CLIENTE) {
             console.log("renderFullApp() ignorado en página de cliente para preservar el HTML estático.");
             return;
