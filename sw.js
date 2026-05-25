@@ -84,7 +84,7 @@ self.addEventListener('fetch', event => {
             requestUrl.href.includes('gstatic') || 
             requestUrl.href.includes('cdnjs') || 
             requestUrl.href.includes('jsdelivr') ||
-            requestUrl.href.includes('supabase.co') || // Guardar recursos de Supabase (ej. base de datos / storage de fotos y GIFs)
+            requestUrl.href.includes('supabase.co/storage/v1/object/public') || // Solo cachear archivos públicos de almacenamiento (fotos/GIFs) de Supabase
             event.request.destination === 'image' ||   // Cualquier recurso de imagen
             /\.(png|jpe?g|gif|webp|svg)($|\?)/i.test(requestUrl.pathname) // Formatos comunes de imagen/GIF
           )

@@ -2786,6 +2786,41 @@
     const btnGuardar = document.getElementById('saveConfigBtn');
     if (btnGuardar) btnGuardar.click();
 
+    // Sincronizar nombres de ejercicios, variables y URLs de videos desde el DOM al estado trainingDays antes de guardar
+    document.querySelectorAll('.exercise-name-input').forEach(inp => {
+        const exId = inp.getAttribute('data-ex-id');
+        for (let day of trainingDays) {
+            const ex = day.exercises.find(e => e.id === exId);
+            if (ex) {
+                ex.name = inp.value;
+                break;
+            }
+        }
+    });
+
+    document.querySelectorAll('.var-input').forEach(inp => {
+        const exId = inp.getAttribute('data-ex-id');
+        const varId = inp.getAttribute('data-var-id');
+        for (let day of trainingDays) {
+            const ex = day.exercises.find(e => e.id === exId);
+            if (ex) {
+                ex.variables[varId] = inp.value;
+                break;
+            }
+        }
+    });
+
+    document.querySelectorAll('.video-url-input').forEach(inp => {
+        const exId = inp.getAttribute('data-ex-id');
+        for (let day of trainingDays) {
+            const ex = day.exercises.find(e => e.id === exId);
+            if (ex) {
+                ex.videoUrl = inp.value;
+                break;
+            }
+        }
+    });
+
     toast("Guardando plan en la nube...", "info");
 
     const state = {
