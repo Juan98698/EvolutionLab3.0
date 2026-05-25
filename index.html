@@ -5278,7 +5278,7 @@ let variableDefinitions = {
                 <div class="img-placeholder">📷 Sin imagen</div>
             </div>
             <img class="exercise-media img-preview" 
-                 src="${(navigator.onLine && hasStatic) ? exercise.imageData : (hasAnimated ? exercise.gifData : (hasStatic ? exercise.imageData : ''))}" 
+                 src="${hasAnimated ? exercise.gifData : (hasStatic ? exercise.imageData : '')}" 
                  data-static="${hasStatic ? exercise.imageData : ''}" 
                  data-animated="${hasAnimated ? exercise.gifData : ''}" 
                  style="${(hasStatic || hasAnimated) ? 'display:block;' : 'display:none;'}" 
@@ -6281,19 +6281,14 @@ function addGlobalVariable() {
                 const staticSrc = mediaEl.getAttribute('data-static');
                 const animatedSrc = mediaEl.getAttribute('data-animated');
                 
-                if (!isOnline && animatedSrc && animatedSrc.startsWith('data:')) {
-                    // Si está offline y hay animación offline, mostrar animación
+                if (animatedSrc) {
+                    // Si hay animación, mostrar la animación (tanto online como offline)
                     mediaEl.src = animatedSrc;
                     mediaEl.style.display = 'block';
                     if (placeholderEl) placeholderEl.style.display = 'none';
                 } else if (staticSrc) {
-                    // Si está online (o no hay animación offline), mostrar foto estática
+                    // Si no hay animación pero sí foto estática, mostrar foto
                     mediaEl.src = staticSrc;
-                    mediaEl.style.display = 'block';
-                    if (placeholderEl) placeholderEl.style.display = 'none';
-                } else if (animatedSrc) {
-                    // Si no hay foto estática pero sí animación
-                    mediaEl.src = animatedSrc;
                     mediaEl.style.display = 'block';
                     if (placeholderEl) placeholderEl.style.display = 'none';
                 } else {
