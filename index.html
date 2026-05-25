@@ -2519,8 +2519,23 @@
       logoutBtn.onclick = async () => {
         if (supabase) {
           toast("Cerrando sesión...", "info");
-          await supabase.auth.signOut();
-          localStorage.removeItem('pwa_client_url');
+          try {
+            await supabase.auth.signOut();
+          } catch(err) {
+            console.error("Error en signOut de Supabase:", err);
+          }
+          
+          // Limpieza selectiva garantizada de tokens y caché para Brave/iOS
+          try {
+            for (let i = localStorage.length - 1; i >= 0; i--) {
+              const key = localStorage.key(i);
+              if (key && (key.startsWith('sb-') || key.includes('auth') || key.includes('pwa_'))) {
+                localStorage.removeItem(key);
+              }
+            }
+            sessionStorage.clear();
+          } catch(e) {}
+          
           window.location.replace('/login.html');
         } else {
           window.location.replace('/login.html');
