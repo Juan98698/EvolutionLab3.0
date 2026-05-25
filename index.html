@@ -5134,6 +5134,9 @@ let variableDefinitions = {
         initChecklist();
         if (typeof actualizarBibliotecaEjercicios === 'function') {
             actualizarBibliotecaEjercicios();
+            if (typeof actualizarDatalistEjercicios === 'function') {
+                actualizarDatalistEjercicios();
+            }
         }
     }
     function renderGlobalVarsPanel() {
@@ -5328,7 +5331,7 @@ let variableDefinitions = {
                     <div class="exercise-name">
                         ${(typeof MODO_CLIENTE !== 'undefined' && MODO_CLIENTE) ? 
                             `<span class="static-exercise-name" style="font-size:1.1rem; font-weight:600; color:white;">${escapeHtml(exercise.name)}</span>` : 
-                            `<input type="text" class="exercise-name-input" data-ex-id="${exercise.id}" value="${escapeHtml(exercise.name)}">`
+                            `<input type="text" class="exercise-name-input" list="evolution-exercise-list" data-ex-id="${exercise.id}" value="${escapeHtml(exercise.name)}" placeholder="Escribe el nombre del ejercicio...">`
                         }
                     </div>
                     <div class="img-zone">
@@ -5436,11 +5439,30 @@ let variableDefinitions = {
     }
   }
 
-  // Cambiar nombre del ejercicio
+  function actualizarDatalistEjercicios() {
+    let datalist = document.getElementById('evolution-exercise-list');
+    if (!datalist) {
+        datalist = document.createElement('datalist');
+        datalist.id = 'evolution-exercise-list';
+        document.body.appendChild(datalist);
+    }
+    try {
+        const library = JSON.parse(localStorage.getItem('evolution_exercise_library') || '{}');
+        let html = '';
+        Object.keys(library).forEach(name => {
+            const prettyName = name.replace(/\b\w/g, c => c.toUpperCase());
+            html += `<option value="${escapeHtml(prettyName)}">`;
+        });
+        datalist.innerHTML = html;
+    } catch(e) {
+        console.error("Error al actualizar datalist de ejercicios:", e);
+    }
+  }
+
+  // Cambiar nombre del ejercicio con soporte para auto-rellenado instantáneo en oninput y onchange
   document.querySelectorAll('.exercise-name-input').forEach(inp => {
-      inp.onchange = (e) => {
+      const handleNameChange = (newName, isInputEvent) => {
           const exId = inp.getAttribute('data-ex-id');
-          const newName = inp.value.trim();
           let targetEx = null;
           for (let day of trainingDays) {
               const ex = day.exercises.find(e => e.id === exId);
@@ -5459,15 +5481,36 @@ let variableDefinitions = {
                       targetEx.imageData = found.imageData || "";
                       targetEx.gifData = found.gifData || "";
                       targetEx.videoUrl = found.videoUrl || targetEx.videoUrl || "";
+                      
                       renderFullApp();
                       toast(`¡Auto-rellenado multimedia para "${newName}"! 📂`, "info");
-                      return;
+                      
+                      // Mantener foco y posición del cursor si se re-renderizó en un evento de input activo
+                      const newInp = document.querySelector(`.exercise-name-input[data-ex-id="${exId}"]`);
+                      if (newInp) {
+                          newInp.focus();
+                          newInp.setSelectionRange(newInp.value.length, newInp.value.length);
+                      }
+                      return true;
                   }
               } catch(err) {
                   console.error("Error al auto-rellenar ejercicio:", err);
               }
           }
-          renderFullApp();
+          return false;
+      };
+
+      inp.oninput = (e) => {
+          const newName = inp.value.trim();
+          handleNameChange(newName, true);
+      };
+
+      inp.onchange = (e) => {
+          const newName = inp.value.trim();
+          const autoFilled = handleNameChange(newName, false);
+          if (!autoFilled) {
+              renderFullApp();
+          }
       };
   });
         // Cambiar valores de variables
