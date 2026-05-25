@@ -2131,6 +2131,8 @@
   </div>
   <span class="session-count" id="headerCount">0 sesiones</span>
   <div id="clienteNombreHeader" style="display:none; font-size:13px; color:rgba(255,255,255,0.5); background:rgba(255,255,255,0.08); padding:4px 12px; border-radius:99px; white-space:nowrap;"></div>
+  <select id="selectorAtletas" style="display:none; font-family:'Orbitron',sans-serif; font-size:9px; padding:6px 12px; margin-left:8px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2); color:white; border-radius:4px; outline:none; cursor:pointer; max-width: 150px;"></select>
+  <button id="guardarNubeBtn" class="btn" style="display:none; font-family:'Orbitron',sans-serif; font-size:9px; padding:6px 12px; background:linear-gradient(135deg, #4facfe, #00f2fe); border:none; margin-left:8px; color:white;">☁️ Guardar en la Nube</button>
   <button id="generarLinkBtn" class="btn export-btn" style="display:none; font-family:'Orbitron',sans-serif; font-size:9px; padding:6px 12px;">⬇️ Exportar Cliente</button>
   <button id="registrarAtletaBtn" class="btn" style="display:none; font-family:'Orbitron',sans-serif; font-size:9px; padding:6px 12px; background:linear-gradient(135deg, #00d4ff, #7b2ff7); border:none; margin-left:8px; color:white;">👥 Registrar Atleta</button>
   <button id="cerrarSesionBtn" class="btn" style="font-family:'Orbitron',sans-serif; font-size:9px; padding:6px 12px; margin-left:8px; background:rgba(255,68,68,0.08); border:1px solid rgba(255,68,68,0.3); color:#ff6b6b; display:inline-block; transition: all 0.2s ease;">🚪 Cerrar Sesión</button>
@@ -2643,6 +2645,234 @@
     }
   }
 
+  // ==============================================================
+  // ===== FUNCIONES SAAS: PLANES EN LA NUBE =====
+  // ==============================================================
+  let selectedClienteId = null;
+
+  function restablecerPlanDefecto() {
+    globalVariables = [
+      { id: "series de aproximacion", label: "SERIES DE APROXIMACION", type: "number", defaultValue: "2" },
+      { id: "series de trabajo", label: "SERIES DE TRABAJO", type: "text", defaultValue: "3" },
+      { id: "repeticiones", label: "REPETICIONES", type: "text", defaultValue: "10-12" },
+      { id: "tempo", label: "TEMPO", type: "text", defaultValue: "2:1:1" },
+      { id: "rir", label: "RIR", type: "number", defaultValue: "2" },
+      { id: "descanso", label: "DESCANSO(MIN)", type: "number", defaultValue: "2" },
+      { id: "peso", label: "PESO(KG)", type: "text", defaultValue: "10" }
+    ];
+    variableDefinitions = {
+      "series de aproximacion": "Son series previas con poco peso para calentar los músculos y preparar las articulaciones sin cansarte. Ejemplo: Si vas a levantar 50kg, haces una serie previa con solo la barra o con 20kg.",
+      "series de trabajo": "Son las series reales del plan donde el esfuerzo es alto y cuentan para el progreso. Ejemplo: Hacer 3 series de 10 repeticiones con el peso máximo que dominas.",
+      "repeticiones": "Es el número de veces que realizas el movimiento completo del ejercicio dentro de una serie. Ejemplo: hacer 12 sentadillas seguidas sin parar.",
+      "tempo": "Es la velocidad a la que realizas cada fase del movimiento (bajada, pausa y subida). Ejemplo: En sentadilla, bajar en 3 segundos, hacer 1 segundo de pausa abajo y subir rápido en 1 segundo.",
+      "rir": "Indica cuántas repeticiones sientes que podrías haber hecho antes de llegar al fallo total. Ejemplo: Si haces 10 repeticiones con un RIR 2, significa que terminaste sintiendo que podrías haber hecho 2 más.",
+      "descanso": "El tiempo que esperas entre una serie y otra para recuperar energía. Ejemplo: Cronometrar 2 minutos sentado antes de empezar la siguiente serie.",
+      "peso": "Representa la resistencia externa que se opone a la contracción muscular para generar estímulo de adaptación en el organismo, para el contexto de este plan en especifico nos referimos a discos, mancuernas o las plaquetas de una maquina que se pueda agregar como resistencia externa."
+    };
+    weekdayMapping = { 0: -1, 1: -1, 2: -1, 3: -1, 4: -1, 5: -1, 6: -1 };
+    trainingDays = [
+      { id: "day_1", name: "Día 1 - Pecho y Tríceps", exercises: generateEmptyExercises(3) },
+      { id: "day_2", name: "Día 2 - Espalda y Bíceps", exercises: generateEmptyExercises(3) },
+      { id: "day_3", name: "Día 3 - Piernas (Cuádriceps y Femoral)", exercises: generateEmptyExercises(3) },
+      { id: "day_4", name: "Día 4 - Hombros y Abdominales", exercises: generateEmptyExercises(3) },
+      { id: "day_5", name: "Día 5 - Full Body / Cardio", exercises: generateEmptyExercises(3) }
+    ];
+  }
+
+  async function cargarClientesSelector() {
+    if (!supabase) return;
+    try {
+      console.log("Cargando clientes de la base de datos...");
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id, nombre, email')
+        .eq('rol', 'cliente')
+        .order('nombre', { ascending: true });
+
+      if (error) throw error;
+
+      const selector = document.getElementById('selectorAtletas');
+      if (selector) {
+        selector.innerHTML = '<option value="">-- Seleccionar Atleta --</option>';
+        data.forEach(atleta => {
+          const option = document.createElement('option');
+          option.value = atleta.id;
+          option.textContent = atleta.nombre + ' (' + atleta.email + ')';
+          selector.appendChild(option);
+        });
+        selector.style.display = 'inline-block';
+      }
+    } catch (err) {
+      console.error("Error al cargar selector de clientes:", err);
+      toast("Error al cargar selector de clientes: " + err.message, "error");
+    }
+  }
+
+  async function cargarPlanDeCliente(clienteId) {
+    if (!supabase) return;
+    selectedClienteId = clienteId;
+    if (!clienteId) {
+      restablecerPlanDefecto();
+      renderFullApp();
+      renderWeekdayConfig();
+      return;
+    }
+    toast("Cargando plan desde la nube...", "info");
+    try {
+      const { data, error } = await supabase
+        .from('planes')
+        .select('*')
+        .eq('cliente_id', clienteId)
+        .eq('activo', true)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (data && data.datos_plan && Object.keys(data.datos_plan).length > 0) {
+        const plan = data.datos_plan;
+        if (plan.globalVariables) globalVariables = plan.globalVariables;
+        if (plan.variableDefinitions) variableDefinitions = plan.variableDefinitions;
+        if (plan.trainingDays) trainingDays = plan.trainingDays;
+        if (plan.weekdayMapping) weekdayMapping = plan.weekdayMapping;
+        if (plan.trackerConfig) {
+          CONFIG = plan.trackerConfig;
+          RULES = plan.trackerRules || RULES;
+        }
+        toast("¡Plan cargado con éxito!", "success");
+      } else {
+        restablecerPlanDefecto();
+        toast("Sin plan en la nube. Cargando plantilla limpia.", "info");
+      }
+      renderFullApp();
+      renderWeekdayConfig();
+    } catch (err) {
+      console.error("Error al cargar plan de cliente:", err);
+      toast("Error al cargar plan: " + err.message, "error");
+    }
+  }
+
+  async function guardarPlanEnNube() {
+    if (!supabase) return;
+    if (!selectedClienteId) {
+      toast("Por favor, selecciona un atleta primero.", "error");
+      return;
+    }
+    
+    // Sincronizar todos los inputs a su atributo value antes de guardar
+    document.querySelectorAll('input, textarea').forEach(el => {
+        if (el.value !== undefined) el.setAttribute('value', el.value);
+        if (el.tagName === 'TEXTAREA') el.innerHTML = el.value;
+    });
+
+    const btnGuardar = document.getElementById('saveConfigBtn');
+    if (btnGuardar) btnGuardar.click();
+
+    toast("Guardando plan en la nube...", "info");
+
+    const state = {
+        globalVariables: globalVariables,
+        variableDefinitions: variableDefinitions,
+        trainingDays: trainingDays,
+        weekdayMapping: weekdayMapping,
+        trackerConfig: typeof CONFIG !== 'undefined' ? CONFIG : null,
+        trackerRules: typeof RULES !== 'undefined' ? RULES : null
+    };
+
+    try {
+      const { data: existing, error: findError } = await supabase
+        .from('planes')
+        .select('id')
+        .eq('cliente_id', selectedClienteId)
+        .eq('activo', true)
+        .maybeSingle();
+
+      if (findError) throw findError;
+
+      let result;
+      if (existing) {
+        result = await supabase
+          .from('planes')
+          .update({ datos_plan: state })
+          .eq('id', existing.id);
+      } else {
+        result = await supabase
+          .from('planes')
+          .insert({
+            cliente_id: selectedClienteId,
+            creador_id: window.currentUser.id,
+            datos_plan: state,
+            activo: true
+          });
+      }
+
+      if (result.error) throw result.error;
+
+      toast("¡Plan guardado en la nube con éxito! ☁️", "success");
+    } catch (err) {
+      console.error("Error al guardar plan en la nube:", err);
+      toast("Error al guardar en la nube: " + err.message, "error");
+    }
+  }
+
+  async function cargarPlanPropioCliente() {
+    if (!supabase || !window.currentUser) return;
+
+    if (navigator.onLine) {
+      try {
+        console.log("Descargando plan del cliente desde la nube...");
+        const { data, error } = await supabase
+          .from('planes')
+          .select('*')
+          .eq('cliente_id', window.currentUser.id)
+          .eq('activo', true)
+          .maybeSingle();
+
+        if (error) throw error;
+
+        if (data && data.datos_plan && Object.keys(data.datos_plan).length > 0) {
+          localStorage.setItem('pwa_client_plan', JSON.stringify(data.datos_plan));
+          aplicarPlanCliente(data.datos_plan);
+          return;
+        }
+      } catch (err) {
+        console.error("Error al descargar plan propio:", err);
+      }
+    }
+
+    // Offline / Caché fallback
+    try {
+      const cached = localStorage.getItem('pwa_client_plan');
+      if (cached) {
+        console.log("Cargando plan propio desde LocalStorage...");
+        const plan = JSON.parse(cached);
+        aplicarPlanCliente(plan);
+        toast("Cargado en modo offline 🔌", "info");
+      } else {
+        toast("No tienes un plan asignado en la nube ni en caché local.", "warning");
+      }
+    } catch (e) {
+      console.error("Error al cargar plan propio desde caché:", e);
+    }
+  }
+
+  function aplicarPlanCliente(plan) {
+    if (plan.globalVariables) globalVariables = plan.globalVariables;
+    if (plan.variableDefinitions) variableDefinitions = plan.variableDefinitions;
+    if (plan.trainingDays) trainingDays = plan.trainingDays;
+    if (plan.weekdayMapping) weekdayMapping = plan.weekdayMapping;
+    if (plan.trackerConfig) {
+      CONFIG = plan.trackerConfig;
+      RULES = plan.trackerRules || RULES;
+    }
+    
+    // Volver a renderizar en la UI adaptada para el cliente
+    renderFullApp();
+    renderTodayBanner();
+    setTimeout(() => initRestTimers(), 300);
+    init1RMCalculator();
+    updateMediaForOfflineStatus();
+  }
+
   function comprobarRolYAdaptarUI(user) {
     console.log("Comprobando rol para el usuario ID:", user.id, "Email:", user.email);
     
@@ -2682,33 +2912,72 @@
           saludo.innerHTML = `Hola, ${data.nombre.split(' ')[0]} 👋`;
         }
 
-        // Si es cliente, ocultar paneles de entrenador
+        // Si es cliente, ocultar paneles de entrenador y cargar plan dinámico
         if (MODO_CLIENTE) {
-          console.log("El usuario es CLIENTE. Ocultando paneles de entrenador.");
-
-          // Redirección inteligente: si el cliente está en el editor principal (index.html),
-          // redirigirlo automáticamente a su plan de entrenamiento estático y personalizado
-          const currentPath = window.location.pathname;
-          if (currentPath === '/' || currentPath === '/index.html' || currentPath.endsWith('/index.html') || currentPath === '') {
-            const sanitizar = (str) => str.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9_-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
-            const clientFile = 'clientes/' + sanitizar(data.nombre) + '.html';
-            console.log("Redirigiendo cliente a su plan personalizado:", clientFile);
-            window.location.replace('/' + clientFile);
-            return;
-          }
+          console.log("El usuario es CLIENTE. Adaptando interfaz a modo visualización premium.");
 
           const panelGen = document.getElementById('panelGenerarLink');
           if (panelGen) panelGen.style.setProperty('display', 'none', 'important');
           const exportBtn = document.getElementById('generarLinkBtn');
           if (exportBtn) exportBtn.style.setProperty('display', 'none', 'important');
+          const saveNubeBtn = document.getElementById('guardarNubeBtn');
+          if (saveNubeBtn) saveNubeBtn.style.setProperty('display', 'none', 'important');
+          const selectorAtletas = document.getElementById('selectorAtletas');
+          if (selectorAtletas) selectorAtletas.style.setProperty('display', 'none', 'important');
           
-          // Ocultar botones de edición de plan
-          document.querySelectorAll('#addGlobalDayBtn, #addCustomVarBtn, #exportHtmlBtn, .add-day-btn, .btn-remove-day, .exercise-actions, .btn-add-ex, .btn-rem-ex, .img-upload-label, .gif-upload-label, .global-vars-panel button, #quickAddVarBtn, .remove-var-btn, .hidden-file-upload, .hidden-gif-upload, .video-url-input').forEach(el => {
+          // Ocultar botones de edición de plan y la sección de diccionario e inputs
+          document.querySelectorAll('#addGlobalDayBtn, #addCustomVarBtn, #exportHtmlBtn, .add-day-btn, .btn-remove-day, .exercise-actions, .btn-add-ex, .btn-rem-ex, .img-upload-label, .gif-upload-label, .global-vars-panel button, #quickAddVarBtn, .remove-var-btn, .hidden-file-upload, .hidden-gif-upload, .video-url-input, #weekdayConfigSection').forEach(el => {
             el.style.setProperty('display', 'none', 'important');
           });
+
+          const defsSection = document.querySelector('.definitions-section');
+          if (defsSection) defsSection.style.setProperty('display', 'none', 'important');
+          const globalVars = document.getElementById('globalVarsPanelContainer');
+          if (globalVars) globalVars.style.setProperty('display', 'none', 'important');
+
+          // Cargar el plan de entrenamiento propio del cliente desde Supabase o LocalStorage
+          cargarPlanPropioCliente();
+
+          // Configurar Filosofía Colapsable
+          const philoSection = document.querySelector('.philosophy-section');
+          if (philoSection && !document.querySelector('.philosophy-toggle')) {
+            const toggle = document.createElement('div');
+            toggle.className = 'philosophy-toggle';
+            toggle.onclick = function() {
+              toggle.classList.toggle('open');
+              wrapper.classList.toggle('expanded');
+            };
+            toggle.innerHTML = '<span class="philosophy-toggle-title">⚡ Nuestra Filosofía de Entrenamiento</span>' +
+                               '<span class="philosophy-toggle-icon">▼</span>';
+            const wrapper = document.createElement('div');
+            wrapper.className = 'philosophy-collapsible';
+            philoSection.parentNode.insertBefore(toggle, philoSection);
+            philoSection.parentNode.insertBefore(wrapper, philoSection);
+            wrapper.appendChild(philoSection);
+          }
+
+          // Agregar FAB para calculadora 1RM si no existe
+          if (!document.getElementById('fab1RMBtn')) {
+            const fab = document.createElement('button');
+            fab.className = 'fab-1rm';
+            fab.id = 'fab1RMBtn';
+            fab.innerHTML = '🧮';
+            fab.title = 'Calculadora 1RM';
+            fab.onclick = function() {
+              const modal = document.getElementById('modal-1rm');
+              if (modal) {
+                modal.classList.add('open');
+                const input = document.getElementById('input1RMPeso');
+                if (input) input.focus();
+              }
+            };
+            document.body.appendChild(fab);
+          }
+          
         } else {
-          // Si es entrenador, mostrar botones
-          console.log("El usuario es ENTRENADOR. Mostrando paneles y botones de edición.");
+          // Si es entrenador, mostrar selector y botones
+          console.log("El usuario es ENTRENADOR. Configurando panel de gestión en la nube.");
+          
           const genBtn = document.getElementById('generarLinkBtn');
           if (genBtn) genBtn.style.display = 'inline-block';
           
@@ -2722,11 +2991,36 @@
               }
             };
           }
+
+          const saveNubeBtn = document.getElementById('guardarNubeBtn');
+          if (saveNubeBtn) {
+            saveNubeBtn.style.display = 'inline-block';
+            saveNubeBtn.onclick = guardarPlanEnNube;
+          }
+
+          // Cargar atletas en el dropdown selector
+          cargarClientesSelector();
+
+          const selectorAtletas = document.getElementById('selectorAtletas');
+          if (selectorAtletas) {
+            selectorAtletas.onchange = (e) => {
+              cargarPlanDeCliente(e.target.value);
+            };
+          }
           
           // Asegurarse de que los paneles de edición de entrenador estén visibles
-          document.querySelectorAll('#addGlobalDayBtn, #addCustomVarBtn, #exportHtmlBtn, .add-day-btn, .btn-remove-day, .exercise-actions, .btn-add-ex, .btn-rem-ex, .img-upload-label, .gif-upload-label, .global-vars-panel button, #quickAddVarBtn, .remove-var-btn, .hidden-file-upload, .hidden-gif-upload, .video-url-input').forEach(el => {
+          document.querySelectorAll('#addGlobalDayBtn, #addCustomVarBtn, #exportHtmlBtn, .add-day-btn, .btn-remove-day, .exercise-actions, .btn-add-ex, .btn-rem-ex, .img-upload-label, .gif-upload-label, .global-vars-panel button, #quickAddVarBtn, .remove-var-btn, .hidden-file-upload, .hidden-gif-upload, .video-url-input, #weekdayConfigSection').forEach(el => {
             el.style.removeProperty('display');
           });
+
+          const defsSection = document.querySelector('.definitions-section');
+          if (defsSection) defsSection.style.removeProperty('display');
+          const globalVars = document.getElementById('globalVarsPanelContainer');
+          if (globalVars) globalVars.style.removeProperty('display');
+
+          // Remover FAB de 1RM si existe (el entrenador usa el botón normal)
+          const fab = document.getElementById('fab1RMBtn');
+          if (fab) fab.remove();
         }
         
         // Volver a renderizar la aplicación para aplicar todos los cambios de rol en la UI
@@ -4941,14 +5235,32 @@ let variableDefinitions = {
         const container = document.getElementById("daysContainer");
         if (!container) return;
         let html = '';
+        
+        // Si es cliente y hay más de un día, añadir barra de pestañas (day-tabs-bar)
+        if (typeof MODO_CLIENTE !== 'undefined' && MODO_CLIENTE && trainingDays.length > 1) {
+            html += `<div class="day-tabs-bar" id="dayTabsBar" style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:15px; padding:4px; background:rgba(255,255,255,0.04); border-radius:12px;">`;
+            trainingDays.forEach((day, idx) => {
+                const dayName = (day.name || 'Día ' + (idx + 1)).trim();
+                const shortName = dayName.length > 28 ? dayName.substring(0, 25) + '…' : dayName;
+                html += `<button class="day-tab-btn ${idx === 0 ? 'active' : ''}" onclick="switchDayTab(${idx})" style="font-family:'Orbitron',sans-serif; font-size:10px; font-weight:600; padding:6px 12px; border-radius:8px; border:none; transition:all 0.2s; cursor:pointer;">${escapeHtml(shortName)}</button>`;
+            });
+            html += `</div>`;
+        }
+
         trainingDays.forEach((day, idx) => {
+            // En modo cliente, sólo mostramos el primer día inicialmente. Los otros se ocultan
+            const displayStyle = (typeof MODO_CLIENTE !== 'undefined' && MODO_CLIENTE && idx > 0) ? 'display:none;' : '';
+            
             html += `
-                <div class="day-card" data-day-id="${day.id}">
+                <div class="day-card" data-day-id="${day.id}" data-day-tab-idx="${idx}" style="${displayStyle}">
                     <div class="day-header">
                         <div class="day-title">
-                            <input type="text" class="day-name-input" data-day-index="${idx}" value="${escapeHtml(day.name)}">
+                            ${(typeof MODO_CLIENTE !== 'undefined' && MODO_CLIENTE) ? 
+                                `<span class="static-day-name" style="font-size:1.2rem; font-weight:700; color:white; font-family:'Orbitron',sans-serif;">${escapeHtml(day.name)}</span>` : 
+                                `<input type="text" class="day-name-input" data-day-index="${idx}" value="${escapeHtml(day.name)}">`
+                            }
                         </div>
-                        <button class="btn-remove-day" data-day-id="${day.id}">🗑️ Eliminar día</button>
+                        ${(typeof MODO_CLIENTE !== 'undefined' && MODO_CLIENTE) ? '' : `<button class="btn-remove-day" data-day-id="${day.id}">🗑️ Eliminar día</button>`}
                     </div>
                     <div class="exercises-list" data-day-id="${day.id}">
             `;
@@ -4957,35 +5269,88 @@ let variableDefinitions = {
             });
             html += `
                     </div>
+                    ${(typeof MODO_CLIENTE !== 'undefined' && MODO_CLIENTE) ? '' : `
                     <div class="exercise-actions">
                         <button class="btn-sm btn-add-ex" data-day-id="${day.id}">➕ Añadir ejercicio</button>
                     </div>
+                    `}
                 </div>
             `;
         });
         container.innerHTML = html;
-        // Botón para agregar día al final
-        const addDayBtn = document.createElement('button');
-        addDayBtn.className = 'add-day-btn';
-        addDayBtn.id = 'dynamicAddDayBtn';
-        addDayBtn.textContent = '+ Agregar nuevo día de entrenamiento';
-        container.appendChild(addDayBtn);
+        
+        if (typeof MODO_CLIENTE === 'undefined' || !MODO_CLIENTE) {
+            // Botón para agregar día al final
+            const addDayBtn = document.createElement('button');
+            addDayBtn.className = 'add-day-btn';
+            addDayBtn.id = 'dynamicAddDayBtn';
+            addDayBtn.textContent = '+ Agregar nuevo día de entrenamiento';
+            container.appendChild(addDayBtn);
+        }
     }
     function renderExerciseCard(exercise, dayId) {
         let varsHtml = '';
-        globalVariables.forEach(v => {
-            let val = exercise.variables[v.id] !== undefined ? exercise.variables[v.id] : '';
-            varsHtml += `
-                <div class="var-item">
-                    <label>${escapeHtml(v.label)}</label>
-                    <input type="${v.type === 'number' ? 'number' : 'text'}" 
-                           class="var-input" 
-                           data-ex-id="${exercise.id}" 
-                           data-var-id="${v.id}" 
-                           value="${escapeHtml(val)}">
-                </div>
-            `;
-        });
+        
+        if (typeof MODO_CLIENTE !== 'undefined' && MODO_CLIENTE) {
+            const _iconMap = {
+              'series de aproximacion': '🔄', 'series de trabajo': '📈',
+              'repeticiones': '🏃', 'tempo': '⏳', 'rir': '🔥',
+              'descanso': '⏱️'
+            };
+            varsHtml += `<div class="vars-badges" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:10px;">`;
+            globalVariables.forEach(v => {
+                let val = exercise.variables[v.id] !== undefined ? exercise.variables[v.id] : '';
+                const value = String(val).trim();
+                if (!value || value === '(sin definir)') return;
+                
+                let varId = String(v.id).trim().toLowerCase();
+                const cleanLabel = String(v.label).toLowerCase().replace(/\(.*?\)/g, '').trim();
+                
+                const icon = _iconMap[varId] || _iconMap[cleanLabel] || '📊';
+                
+                let definition = variableDefinitions[varId] || variableDefinitions[cleanLabel] || '';
+                if (!definition) {
+                  const defaultDefs = {
+                    "series de aproximacion": "Son series previas con poco peso para calentar los músculos y preparar las articulaciones sin cansarte. Ejemplo: Si vas a levantar 50kg, haces una serie previa con solo la barra o con 20kg.",
+                    "series de trabajo": "Son las series reales del plan donde el esfuerzo es alto y cuentan para el progreso. Ejemplo: Hacer 3 series de 10 repeticiones con el peso máximo que dominas.",
+                    "repeticiones": "Es el número de veces que realizas el movimiento completo del ejercicio dentro de una serie. Ejemplo: hacer 12 sentadillas seguidas sin parar.",
+                    "tempo": "Es la velocidad a la que realizas cada fase del movimiento (bajada, pausa y subida). Ejemplo: En sentadilla, bajar en 3 segundos, hacer 1 segundo de pausa abajo y subir rápido en 1 segundo.",
+                    "rir": "Indica cuántas repeticiones sientes que podrías haber hecho antes de llegar al fallo total. Ejemplo: Si haces 10 repeticiones con un RIR 2, significa que terminaste sintiendo que podrías haber hecho 2 más.",
+                    "descanso": "El tiempo que esperas entre una serie y otra para recuperar energía. Ejemplo: Cronometrar 2 minutos sentado antes de empezar la siguiente serie.",
+                    "peso": "Representa la resistencia externa que se opone a la contracción muscular para generar estímulo de adaptación en el organismo, para el contexto de este plan en especifico nos referimos a discos, mancuernas o las plaquetas de una maquina que se pueda agregar como resistencia externa."
+                  };
+                  definition = defaultDefs[varId] || defaultDefs[cleanLabel] || '';
+                }
+                
+                const hasDef = !!definition;
+                const tipBtn = hasDef ? ` <span class="var-tooltip-trigger" onclick="showVarTooltip('${varId.replace(/'/g, '')}')" style="cursor:pointer; font-size:10px; color:#f97316; margin-left:2px; font-weight:bold;">ⓘ</span>` : '';
+                
+                const isDescanso = varId === 'descanso' || cleanLabel.includes('descanso') || String(v.label).toLowerCase().includes('descanso');
+                
+                varsHtml += `
+                    <div class="var-badge ${isDescanso ? 'badge-descanso' : ''}" ${isDescanso ? `data-descanso-val="${escapeHtml(value)}"` : ''} style="display:inline-flex; align-items:center; background:rgba(255,255,255,0.05); border:1px solid rgba(255,255,255,0.08); padding:4px 10px; border-radius:12px; font-size:12px; color:white;">
+                        <span class="var-badge-icon" style="margin-right:4px;">${icon}</span>
+                        <span class="var-badge-label" style="font-weight:600; color:rgba(255,255,255,0.6); margin-right:3px;">${escapeHtml(v.label)}:</span> ${escapeHtml(value)}${tipBtn}
+                    </div>
+                `;
+            });
+            varsHtml += `</div>`;
+        } else {
+            globalVariables.forEach(v => {
+                let val = exercise.variables[v.id] !== undefined ? exercise.variables[v.id] : '';
+                varsHtml += `
+                    <div class="var-item">
+                        <label>${escapeHtml(v.label)}</label>
+                        <input type="${v.type === 'number' ? 'number' : 'text'}" 
+                               class="var-input" 
+                               data-ex-id="${exercise.id}" 
+                               data-var-id="${v.id}" 
+                               value="${escapeHtml(val)}">
+                    </div>
+                `;
+            });
+        }
+        
         let hasStatic = !!exercise.imageData;
         let hasAnimated = !!exercise.gifData;
         
@@ -5000,39 +5365,57 @@ let variableDefinitions = {
                  style="${(hasStatic || hasAnimated) ? 'display:block;' : 'display:none;'}" 
                  alt="preview">
         `;
-        // Video HTML con botón oscuro
-        let videoHtml = `
-    <div class="video-link-item">
-        <label>🎥 Video explicativo (URL)</label>
-        <input type="text" class="video-url-input" data-ex-id="${exercise.id}" 
-               value="${escapeHtml(exercise.videoUrl || '')}" 
-               placeholder="Pega enlace de Drive o YouTube" style="width:100%; margin-bottom:8px;">
-        ${exercise.videoUrl ? `<a href="${exercise.videoUrl}" data-url="${exercise.videoUrl}" target="_blank" rel="noopener noreferrer" style="display:inline-block; margin-top:8px; padding:8px 12px; background:rgba(59, 130, 246, 0.2); border-radius:40px; color:#60a5fa; text-decoration:none; font-weight:600; text-align:center; border:1px solid #3b82f6; transition: all 0.3s ease;">📹 Ver video (YouTube/Drive)</a>` : ''}
-        <small style="display:block; margin-top:6px; color:var(--text3); font-size:0.7rem;">💡 Si el video no se abre, mantén presionado el enlace y selecciona "Abrir en navegador".</small>
-    </div>
-`;
+        
+        let videoHtml = '';
+        if (typeof MODO_CLIENTE !== 'undefined' && MODO_CLIENTE) {
+            if (exercise.videoUrl) {
+                videoHtml = `
+                    <div class="video-link-item" style="margin-top:10px;">
+                        <a href="${escapeHtml(exercise.videoUrl)}" data-url="${escapeHtml(exercise.videoUrl)}" target="_blank" rel="noopener noreferrer" style="display:inline-block; padding:8px 12px; background:rgba(59, 130, 246, 0.2); border-radius:40px; color:#60a5fa; text-decoration:none; font-weight:600; text-align:center; border:1px solid #3b82f6; transition: all 0.3s ease;">📹 Ver video (YouTube/Drive)</a>
+                        <small style="display:block; margin-top:6px; color:var(--text3); font-size:0.7rem;">💡 Si el video no se abre, mantén presionado el enlace y selecciona "Abrir en navegador".</small>
+                    </div>
+                `;
+            }
+        } else {
+            videoHtml = `
+                <div class="video-link-item">
+                    <label>🎥 Video explicativo (URL)</label>
+                    <input type="text" class="video-url-input" data-ex-id="${exercise.id}" 
+                           value="${escapeHtml(exercise.videoUrl || '')}" 
+                           placeholder="Pega enlace de Drive o YouTube" style="width:100%; margin-bottom:8px;">
+                    ${exercise.videoUrl ? `<a href="${exercise.videoUrl}" data-url="${exercise.videoUrl}" target="_blank" rel="noopener noreferrer" style="display:inline-block; margin-top:8px; padding:8px 12px; background:rgba(59, 130, 246, 0.2); border-radius:40px; color:#60a5fa; text-decoration:none; font-weight:600; text-align:center; border:1px solid #3b82f6; transition: all 0.3s ease;">📹 Ver video (YouTube/Drive)</a>` : ''}
+                    <small style="display:block; margin-top:6px; color:var(--text3); font-size:0.7rem;">💡 Si el video no se abre, mantén presionado el enlace y selecciona "Abrir en navegador".</small>
+                </div>
+            `;
+        }
+        
         return `
             <div class="exercise-card" data-exercise-id="${exercise.id}" data-day-id="${dayId}">
                 <div class="exercise-header">
                     <div class="exercise-checkbox client-only-checkbox" data-ex-id="${exercise.id}" data-day-id="${dayId}"></div>
                     <div class="exercise-name">
-                        <input type="text" class="exercise-name-input" data-ex-id="${exercise.id}" value="${escapeHtml(exercise.name)}">
+                        ${(typeof MODO_CLIENTE !== 'undefined' && MODO_CLIENTE) ? 
+                            `<span class="static-exercise-name" style="font-size:1.1rem; font-weight:600; color:white;">${escapeHtml(exercise.name)}</span>` : 
+                            `<input type="text" class="exercise-name-input" data-ex-id="${exercise.id}" value="${escapeHtml(exercise.name)}">`
+                        }
                     </div>
                     <div class="img-zone">
                         <div class="img-preview-container">${imgHtml}</div>
+                        ${(typeof MODO_CLIENTE !== 'undefined' && MODO_CLIENTE) ? '' : `
                         <button class="img-upload-label" data-ex-id="${exercise.id}">📸 Subir foto ${hasStatic ? '✔️' : ''}</button>
                         <button class="gif-upload-label" data-ex-id="${exercise.id}">🎬 Animación Offline ${hasAnimated ? '✔️' : ''}</button>
                         <input type="file" class="hidden-file-upload" data-ex-id="${exercise.id}" accept="image/*" style="display:none;">
                         <input type="file" class="hidden-gif-upload" data-ex-id="${exercise.id}" accept="image/*" style="display:none;">
+                        `}
                     </div>
                 </div>
-                <div class="variables-row">
-                    ${varsHtml}
-                </div>
+                ${(typeof MODO_CLIENTE !== 'undefined' && MODO_CLIENTE) ? varsHtml : `<div class="variables-row">${varsHtml}</div>`}
                 ${videoHtml}
+                ${(typeof MODO_CLIENTE !== 'undefined' && MODO_CLIENTE) ? '' : `
                 <div class="exercise-actions">
                     <button class="btn-sm btn-rem-ex" data-ex-id="${exercise.id}" data-day-id="${dayId}">❌ Eliminar ejercicio</button>
                 </div>
+                `}
             </div>
         `;
     }

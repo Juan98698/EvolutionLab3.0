@@ -24,6 +24,7 @@ create table public.planes (
     cliente_id uuid references public.profiles(id) on delete cascade not null,
     creador_id uuid references public.profiles(id) on delete set null,
     activo boolean default true not null,
+    datos_plan jsonb default '{}'::jsonb,
     created_at timestamp with time zone default timezone('utc'::text, now())
 );
 
@@ -97,6 +98,20 @@ create or replace trigger on_auth_user_created
   after insert on auth.users
   for each row execute procedure public.handle_new_user();
 
+-- Función auxiliar para comprobar si un usuario es entrenador sin causar recursión RLS
+create or replace function public.es_entrenador(user_id uuid)
+returns boolean as $$
+declare
+  is_trainer boolean;
+begin
+  select exists (
+    select 1 from public.profiles 
+    where id = user_id and rol = 'entrenador'
+  ) into is_trainer;
+  return is_trainer;
+end;
+$$ language plpgsql security definer;
+
 -- 3. HABILITACIÓN DE SEGURIDAD A NIVEL DE FILA (RLS)
 
 alter table public.profiles enable row level security;
@@ -114,17 +129,17 @@ create policy "Permitir lectura de propio perfil"
 
 create policy "Permitir entrenador leer todos los perfiles" 
   on public.profiles for select using (
-    exists (select 1 from public.profiles where id = auth.uid() and rol = 'entrenador')
+    public.es_entrenador(auth.uid())
   );
 
 create policy "Permitir entrenador crear perfiles" 
   on public.profiles for insert with check (
-    exists (select 1 from public.profiles where id = auth.uid() and rol = 'entrenador')
+    public.es_entrenador(auth.uid())
   );
 
 create policy "Permitir entrenador actualizar todos los perfiles" 
   on public.profiles for update using (
-    exists (select 1 from public.profiles where id = auth.uid() and rol = 'entrenador')
+    public.es_entrenador(auth.uid())
   );
 
 -- === Políticas de Planes ===
@@ -133,12 +148,12 @@ create policy "Atletas pueden ver sus propios planes"
 
 create policy "Entrenadores pueden leer todos los planes"
   on public.planes for select using (
-    exists (select 1 from public.profiles where id = auth.uid() and rol = 'entrenador')
+    public.es_entrenador(auth.uid())
   );
 
 create policy "Entrenadores pueden gestionar planes"
   on public.planes for all using (
-    exists (select 1 from public.profiles where id = auth.uid() and rol = 'entrenador')
+    public.es_entrenador(auth.uid())
   );
 
 -- === Políticas de Dias de Plan ===
@@ -152,7 +167,7 @@ create policy "Atletas pueden ver los dias de sus planes"
 
 create policy "Entrenadores pueden gestionar los dias de los planes"
   on public.dias_plan for all using (
-    exists (select 1 from public.profiles where id = auth.uid() and rol = 'entrenador')
+    public.es_entrenador(auth.uid())
   );
 
 -- === Políticas de Ejercicios de Plan ===
@@ -167,7 +182,7 @@ create policy "Atletas pueden ver los ejercicios de sus planes"
 
 create policy "Entrenadores pueden gestionar los ejercicios de los planes"
   on public.ejercicios_plan for all using (
-    exists (select 1 from public.profiles where id = auth.uid() and rol = 'entrenador')
+    public.es_entrenador(auth.uid())
   );
 
 -- === Políticas de Historial de Sesiones ===
@@ -185,7 +200,7 @@ create policy "Atletas pueden borrar su propio historial"
 
 create policy "Entrenadores pueden leer todo el historial de sesiones"
   on public.sesiones_historial for select using (
-    exists (select 1 from public.profiles where id = auth.uid() and rol = 'entrenador')
+    public.es_entrenador(auth.uid())
   );
 
 -- === Políticas de Detalles de Ejercicios en Sesiones ===
@@ -223,10 +238,21 @@ create policy "Atletas pueden borrar detalles de sus propias sesiones"
 
 create policy "Entrenadores pueden ver los detalles de todos los ejercicios de sesiones"
   on public.sesiones_ejercicios for select using (
-    exists (select 1 from public.profiles where id = auth.uid() and rol = 'entrenador')
+    public.es_entrenador(auth.uid())
   );
 
 -- 5. CREACIÓN DEL PRIMER USUARIO COMO ENTRENADOR (PASO OPCIONAL)
 -- Nota: La primera vez que te registres en Supabase Auth con tu correo personal,
 -- puedes forzar que tu rol sea 'entrenador' ejecutando esta consulta SQL (cambiando tu email):
 -- UPDATE public.profiles SET rol = 'entrenador' WHERE email = 'tu_correo@gmail.com';
+
+-- 6. CONCESIÓN DE PERMISOS (GRANTS) PARA ROLES DE SUPABASE
+-- Esto asegura que los usuarios autenticados y anónimos tengan permisos de lectura/escritura y de ejecución de funciones auxiliares
+grant execute on function public.es_entrenador(uuid) to anon, authenticated, public;
+grant select, insert, update, delete on public.profiles to anon, authenticated;
+grant select, insert, update, delete on public.planes to anon, authenticated;
+grant select, insert, update, delete on public.dias_plan to anon, authenticated;
+grant select, insert, update, delete on public.ejercicios_plan to anon, authenticated;
+grant select, insert, update, delete on public.sesiones_historial to anon, authenticated;
+grant select, insert, update, delete on public.sesiones_ejercicios to anon, authenticated;
+

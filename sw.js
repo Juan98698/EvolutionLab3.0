@@ -2,6 +2,7 @@ const CACHE_NAME = 'evolution-lab-v2';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
+  '/login.html',
   '/fondo.jpg',
   '/icon.png',
   '/manifest.json',
