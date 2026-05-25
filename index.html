@@ -4561,7 +4561,8 @@ Un registro completo convierte cada sesi&oacute;n en informaci&oacute;n &uacute;
                     "repeticiones": "Es el número de veces que realizas el movimiento completo del ejercicio dentro de una serie. Ejemplo: hacer 12 sentadillas seguidas sin parar.",
                     "tempo": "Es la velocidad a la que realizas cada fase del movimiento (bajada, pausa y subida). Ejemplo: En sentadilla, bajar en 3 segundos, hacer 1 segundo de pausa abajo y subir rápido en 1 segundo.",
                     "rir": "Indica cuántas repeticiones sientes que podrías haber hecho antes de llegar al fallo total. Ejemplo: Si haces 10 repeticiones con un RIR 2, significa que terminaste sintiendo que podrías haber hecho 2 más.",
-                    "descanso": "El tiempo que esperas entre una serie y otra para recuperar energía. Ejemplo: Cronometrar 2 minutos sentado antes de empezar la siguiente serie."
+                    "descanso": "El tiempo que esperas entre una serie y otra para recuperar energía. Ejemplo: Cronometrar 2 minutos sentado antes de empezar la siguiente serie.",
+                    "peso": "Representa la resistencia externa que se opone a la contracción muscular para generar estímulo de adaptación en el organismo, para el contexto de este plan en especifico nos referimos a discos, mancuernas o las plaquetas de una maquina que se pueda agregar como resistencia externa."
                   };
                   definition = defaultDefs[varId] || defaultDefs[cleanLabel] || '';
                   if (definition) {
@@ -4712,7 +4713,8 @@ Un registro completo convierte cada sesi&oacute;n en informaci&oacute;n &uacute;
               "repeticiones": "Es el número de veces que realizas el movimiento completo del ejercicio dentro de una serie. Ejemplo: hacer 12 sentadillas seguidas sin parar.",
               "tempo": "Es la velocidad a la que realizas cada fase del movimiento (bajada, pausa y subida). Ejemplo: En sentadilla, bajar en 3 segundos, hacer 1 segundo de pausa abajo y subir rápido en 1 segundo.",
               "rir": "Indica cuántas repeticiones sientes que podrías haber hecho antes de llegar al fallo total. Ejemplo: Si haces 10 repeticiones con un RIR 2, significa que terminaste sintiendo que podrías haber hecho 2 más.",
-              "descanso": "El tiempo que esperas entre una serie y otra para recuperar energía. Ejemplo: Cronometrar 2 minutos sentado antes de empezar la siguiente serie."
+              "descanso": "El tiempo que esperas entre una serie y otra para recuperar energía. Ejemplo: Cronometrar 2 minutos sentado antes de empezar la siguiente serie.",
+              "peso": "Representa la resistencia externa que se opone a la contracción muscular para generar estímulo de adaptación en el organismo, para el contexto de este plan en especifico nos referimos a discos, mancuernas o las plaquetas de una maquina que se pueda agregar como resistencia externa."
             };
             
             bo.textContent = window.__varDefs[varId] || window.__varDefs[cleanId] || defaultDefs[varId] || defaultDefs[cleanId] || 'Sin definición disponible.';
@@ -4833,7 +4835,7 @@ Un registro completo convierte cada sesi&oacute;n en informaci&oacute;n &uacute;
         { id: "tempo", label: "TEMPO", type: "text", defaultValue: "2:1:1" },
         { id: "rir", label: "RIR", type: "number", defaultValue: "2" },
 	{ id: "descanso", label: "DESCANSO(MIN)", type: "number", defaultValue: "2" },
-	
+	{ id: "peso", label: "PESO(KG)", type: "text", defaultValue: "10" }
     ];
   // Definiciones preestablecidas para las variables actuales
 let variableDefinitions = {
@@ -4842,7 +4844,8 @@ let variableDefinitions = {
     "repeticiones": "Es el número de veces que realizas el movimiento completo del ejercicio dentro de una serie. Ejemplo: hacer 12 sentadillas seguidas sin parar.",
     "tempo": "Es la velocidad a la que realizas cada fase del movimiento (bajada, pausa y subida). Ejemplo: En sentadilla, bajar en 3 segundos, hacer 1 segundo de pausa abajo y subir rápido en 1 segundo.",
     "rir": "Indica cuántas repeticiones sientes que podrías haber hecho antes de llegar al fallo total. Ejemplo: Si haces 10 repeticiones con un RIR 2, significa que terminaste sintiendo que podrías haber hecho 2 más.",
-    "descanso": "El tiempo que esperas entre una serie y otra para recuperar energía. Ejemplo: Cronometrar 2 minutos sentado antes de empezar la siguiente serie."
+    "descanso": "El tiempo que esperas entre una serie y otra para recuperar energía. Ejemplo: Cronometrar 2 minutos sentado antes de empezar la siguiente serie.",
+    "peso": "Representa la resistencia externa que se opone a la contracción muscular para generar estímulo de adaptación en el organismo, para el contexto de este plan en especifico nos referimos a discos, mancuernas o las plaquetas de una maquina que se pueda agregar como resistencia externa."
 };
     // Mapeo de días de la semana (0=Dom, 1=Lun, ..., 6=Sab) → índice de trainingDays (-1 = descanso)
     let weekdayMapping = { 0: -1, 1: -1, 2: -1, 3: -1, 4: -1, 5: -1, 6: -1 };
@@ -5687,7 +5690,8 @@ function addGlobalVariable() {
         "repeticiones": "Es el número de veces que realizas el movimiento completo del ejercicio dentro de una serie. Ejemplo: hacer 12 sentadillas seguidas sin parar.",
         "tempo": "Es la velocidad a la que realizas cada fase del movimiento (bajada, pausa y subida). Ejemplo: En sentadilla, bajar en 3 segundos, hacer 1 segundo de pausa abajo y subir rápido en 1 segundo.",
         "rir": "Indica cuántas repeticiones sientes que podrías haber hecho antes de llegar al fallo total. Ejemplo: Si haces 10 repeticiones con un RIR 2, significa que terminaste sintiendo que podrías haber hecho 2 más.",
-        "descanso": "El tiempo que esperas entre una serie y otra para recuperar energía. Ejemplo: Cronometrar 2 minutos sentado antes de empezar la siguiente serie."
+        "descanso": "El tiempo que esperas entre una serie y otra para recuperar energía. Ejemplo: Cronometrar 2 minutos sentado antes de empezar la siguiente serie.",
+        "peso": "Representa la resistencia externa que se opone a la contracción muscular para generar estímulo de adaptación en el organismo, para el contexto de este plan en especifico nos referimos a discos, mancuernas o las plaquetas de una maquina que se pueda agregar como resistencia externa."
       };
       
       var definition = defs[varId] || defs[cleanId] || '';
