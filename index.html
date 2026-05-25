@@ -5433,6 +5433,7 @@ let variableDefinitions = {
       }
       if (updated) {
         localStorage.setItem('evolution_exercise_library', JSON.stringify(library));
+        console.log("📂 [Biblioteca de Ejercicios] Biblioteca actualizada y sincronizada:", library);
       }
     } catch(e) {
       console.error("Error al actualizar biblioteca de ejercicios:", e);
