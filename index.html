@@ -2516,12 +2516,18 @@
 
   // Middleware de acceso: Si no hay credenciales, ir a login.html
   if (!SUPABASE_URL || !SUPABASE_KEY) {
+    try {
+      sessionStorage.setItem('auth_redirect_origin', window.location.href);
+    } catch(e){}
     window.location.replace('/login.html');
   } else {
     try {
       supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
     } catch(e) {
       console.error("Error al inicializar Supabase:", e);
+      try {
+        sessionStorage.setItem('auth_redirect_origin', window.location.href);
+      } catch(ex){}
       window.location.replace('/login.html');
     }
   }
@@ -2530,6 +2536,9 @@
   if (supabase) {
     supabase.auth.getSession().then(({ data, error }) => {
       if (error || !data.session) {
+        try {
+          sessionStorage.setItem('auth_redirect_origin', window.location.href);
+        } catch(e){}
         window.location.replace('/login.html');
       } else {
         // Guardar información del usuario logueado en una variable global
@@ -2662,6 +2671,18 @@
         // Si es cliente, ocultar paneles de entrenador
         if (MODO_CLIENTE) {
           console.log("El usuario es CLIENTE. Ocultando paneles de entrenador.");
+
+          // Redirección inteligente: si el cliente está en el editor principal (index.html),
+          // redirigirlo automáticamente a su plan de entrenamiento estático y personalizado
+          const currentPath = window.location.pathname;
+          if (currentPath === '/' || currentPath === '/index.html' || currentPath.endsWith('/index.html') || currentPath === '') {
+            const sanitizar = (str) => str.trim().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/[^a-z0-9_-]/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+            const clientFile = 'clientes/' + sanitizar(data.nombre) + '.html';
+            console.log("Redirigiendo cliente a su plan personalizado:", clientFile);
+            window.location.replace('/' + clientFile);
+            return;
+          }
+
           const panelGen = document.getElementById('panelGenerarLink');
           if (panelGen) panelGen.style.setProperty('display', 'none', 'important');
           const exportBtn = document.getElementById('generarLinkBtn');

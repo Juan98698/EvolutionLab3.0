@@ -425,7 +425,13 @@
                 console.log('Inicio de sesión exitoso:', data.user);
                 btnText.textContent = 'Acceso concedido';
                 setTimeout(() => {
-                    window.location.replace('/index.html');
+                    let origin = sessionStorage.getItem('auth_redirect_origin');
+                    if (origin && !origin.includes('login.html')) {
+                        sessionStorage.removeItem('auth_redirect_origin');
+                        window.location.replace(origin);
+                    } else {
+                        window.location.replace('/index.html');
+                    }
                 }, 500);
 
             } catch (err) {
