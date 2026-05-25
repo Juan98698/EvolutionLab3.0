@@ -19,6 +19,7 @@
           "short_name": "Evolution Lab",
           "description": "Plataforma integral de planificación de entrenamiento y seguimiento de sobrecarga progresiva.",
           "start_url": currentPath,
+          "scope": "/",
           "display": "standalone",
           "background_color": "#1a1a2e",
           "theme_color": "#0f172a",
@@ -2629,7 +2630,8 @@
       
       // Sincronizar IDs y redibujar
       updateNextIds();
-      if (typeof MODO_CLIENTE !== 'undefined' && MODO_CLIENTE) {
+      var ES_PAGINA_CLIENTE = window.INJECTED_CLIENT_ID !== '' || window.location.pathname.includes('/clientes/');
+      if (ES_PAGINA_CLIENTE) {
         renderAll();
       } else {
         renderFullApp();
@@ -2665,6 +2667,14 @@
         // Actualizar la variable global MODO_CLIENTE y window.MODO_CLIENTE
         MODO_CLIENTE = (data.rol === 'cliente');
         window.MODO_CLIENTE = MODO_CLIENTE;
+        
+        // Evitar trampa de redirección PWA: si es entrenador, limpiar pwa_client_url
+        if (!MODO_CLIENTE) {
+          try {
+            localStorage.removeItem('pwa_client_url');
+            console.log("Rol entrenador detectado: Eliminando pwa_client_url de localStorage.");
+          } catch(e) {}
+        }
         
         // Adaptar saludo y vista de entrenador/cliente
         const saludo = document.getElementById('dashboardGreeting');
@@ -2720,7 +2730,8 @@
         }
         
         // Volver a renderizar la aplicación para aplicar todos los cambios de rol en la UI
-        if (!MODO_CLIENTE) {
+        var ES_PAGINA_CLIENTE = window.INJECTED_CLIENT_ID !== '' || window.location.pathname.includes('/clientes/');
+        if (!ES_PAGINA_CLIENTE && !MODO_CLIENTE) {
           renderFullApp();
         } else {
           renderAll();
@@ -4897,8 +4908,9 @@ let variableDefinitions = {
     // RENDER PRINCIPAL
     // --------------------------------------------------------------
     function renderFullApp() {
-        if (typeof MODO_CLIENTE !== 'undefined' && MODO_CLIENTE) {
-            console.log("renderFullApp() ignorado en modo cliente para preservar el HTML estático.");
+        var ES_PAGINA_CLIENTE = window.INJECTED_CLIENT_ID !== '' || window.location.pathname.includes('/clientes/');
+        if (ES_PAGINA_CLIENTE) {
+            console.log("renderFullApp() ignorado en página de cliente para preservar el HTML estático.");
             return;
         }
         renderGlobalVarsPanel();
