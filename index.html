@@ -5435,78 +5435,119 @@ let variableDefinitions = {
                 }
             };
         });
-        // Subir imágenes
-        document.querySelectorAll('.img-upload-label').forEach(btn => {
-            btn.onclick = (e) => {
-                e.preventDefault();
-                const exId = btn.getAttribute('data-ex-id');
-                let fileInput = btn.parentElement.querySelector('.hidden-file-upload');
-                if (!fileInput) {
-                    fileInput = document.createElement('input');
-                    fileInput.type = 'file';
-                    fileInput.accept = 'image/*';
-                    fileInput.className = 'hidden-file-upload';
-                    fileInput.style.display = 'none';
-                    fileInput.setAttribute('data-ex-id', exId);
-                    btn.parentElement.appendChild(fileInput);
-                }
-                fileInput.onchange = (event) => {
-                    const file = event.target.files[0];
-                    if (file) {
-                        const reader = new FileReader();
-                        reader.onload = function(ev) {
-                            const imgData = ev.target.result;
-                            for (let day of trainingDays) {
-                                const ex = day.exercises.find(e => e.id === exId);
-                                if (ex) {
-                                    ex.imageData = imgData;
-                                    break;
-                                }
-                            }
-                            renderFullApp();
-                        };
-                        reader.readAsDataURL(file);
-                    }
-                };
-                fileInput.click();
-            };
+  async function subirArchivoAStorage(file, exId, tipo) {
+    if (!supabase) {
+      toast("Error: Supabase no está inicializado.", "error");
+      return null;
+    }
+    const ext = file.name.split('.').pop() || 'png';
+    const filePath = `${exId}_${tipo}.${ext}`;
+    try {
+      const { data, error } = await supabase.storage
+        .from('ejercicios')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: true
         });
-        // Subir animaciones offline (WebP/GIF)
-        document.querySelectorAll('.gif-upload-label').forEach(btn => {
-            btn.onclick = (e) => {
-                e.preventDefault();
-                const exId = btn.getAttribute('data-ex-id');
-                let fileInput = btn.parentElement.querySelector('.hidden-gif-upload');
-                if (!fileInput) {
-                    fileInput = document.createElement('input');
-                    fileInput.type = 'file';
-                    fileInput.accept = 'image/*';
-                    fileInput.className = 'hidden-gif-upload';
-                    fileInput.style.display = 'none';
-                    fileInput.setAttribute('data-ex-id', exId);
-                    btn.parentElement.appendChild(fileInput);
-                }
-                fileInput.onchange = (event) => {
-                    const file = event.target.files[0];
-                    if (file) {
-                        const reader = new FileReader();
-                        reader.onload = function(ev) {
-                            const gifData = ev.target.result;
-                            for (let day of trainingDays) {
-                                const ex = day.exercises.find(e => e.id === exId);
-                                if (ex) {
-                                    ex.gifData = gifData;
-                                    break;
-                                }
-                            }
-                            renderFullApp();
-                        };
-                        reader.readAsDataURL(file);
-                    }
-                };
-                fileInput.click();
-            };
-        });
+      if (error) throw error;
+      const { data: publicData } = supabase.storage
+        .from('ejercicios')
+        .getPublicUrl(filePath);
+      if (!publicData || !publicData.publicUrl) {
+        throw new Error("No se pudo obtener la URL pública.");
+      }
+      return publicData.publicUrl;
+    } catch (err) {
+      console.error("Error al subir archivo a Storage:", err);
+      toast("Error al subir archivo a Storage: " + err.message, "error");
+      return null;
+    }
+  }
+
+  // Subir imágenes
+  document.querySelectorAll('.img-upload-label').forEach(btn => {
+      btn.onclick = (e) => {
+          e.preventDefault();
+          const exId = btn.getAttribute('data-ex-id');
+          let fileInput = btn.parentElement.querySelector('.hidden-file-upload');
+          if (!fileInput) {
+              fileInput = document.createElement('input');
+              fileInput.type = 'file';
+              fileInput.accept = 'image/*';
+              fileInput.className = 'hidden-file-upload';
+              fileInput.style.display = 'none';
+              fileInput.setAttribute('data-ex-id', exId);
+              btn.parentElement.appendChild(fileInput);
+          }
+          fileInput.onchange = async (event) => {
+              const file = event.target.files[0];
+              if (file) {
+                  const originalText = btn.textContent;
+                  btn.textContent = "⏳ Subiendo...";
+                  btn.style.pointerEvents = "none";
+                  btn.style.opacity = "0.7";
+                  const publicUrl = await subirArchivoAStorage(file, exId, 'image');
+                  btn.textContent = originalText;
+                  btn.style.removeProperty('pointer-events');
+                  btn.style.removeProperty('opacity');
+                  if (publicUrl) {
+                      for (let day of trainingDays) {
+                          const ex = day.exercises.find(e => e.id === exId);
+                          if (ex) {
+                              ex.imageData = publicUrl;
+                              break;
+                          }
+                      }
+                      renderFullApp();
+                      toast("Imagen subida con éxito ☁️", "success");
+                  }
+              }
+          };
+          fileInput.click();
+      };
+  });
+  // Subir animaciones (WebP/GIF)
+  document.querySelectorAll('.gif-upload-label').forEach(btn => {
+      btn.onclick = (e) => {
+          e.preventDefault();
+          const exId = btn.getAttribute('data-ex-id');
+          let fileInput = btn.parentElement.querySelector('.hidden-gif-upload');
+          if (!fileInput) {
+              fileInput = document.createElement('input');
+              fileInput.type = 'file';
+              fileInput.accept = 'image/*';
+              fileInput.className = 'hidden-gif-upload';
+              fileInput.style.display = 'none';
+              fileInput.setAttribute('data-ex-id', exId);
+              btn.parentElement.appendChild(fileInput);
+          }
+          fileInput.onchange = async (event) => {
+              const file = event.target.files[0];
+              if (file) {
+                  const originalText = btn.textContent;
+                  btn.textContent = "⏳ Subiendo...";
+                  btn.style.pointerEvents = "none";
+                  btn.style.opacity = "0.7";
+                  const publicUrl = await subirArchivoAStorage(file, exId, 'gif');
+                  btn.textContent = originalText;
+                  btn.style.removeProperty('pointer-events');
+                  btn.style.removeProperty('opacity');
+                  if (publicUrl) {
+                      for (let day of trainingDays) {
+                          const ex = day.exercises.find(e => e.id === exId);
+                          if (ex) {
+                              ex.gifData = publicUrl;
+                              break;
+                          }
+                      }
+                      renderFullApp();
+                      toast("Animación subida con éxito ☁️", "success");
+                  }
+              }
+          };
+          fileInput.click();
+      };
+  });
         // Guardar URL del video
         document.querySelectorAll('.video-url-input').forEach(inp => {
             inp.oninput = (e) => {
