@@ -2629,8 +2629,12 @@
       
       // Sincronizar IDs y redibujar
       updateNextIds();
-      renderFullApp();
-      updateSelect();
+      if (typeof MODO_CLIENTE !== 'undefined' && MODO_CLIENTE) {
+        renderAll();
+      } else {
+        renderFullApp();
+        updateSelect();
+      }
 
     } catch (e) {
       console.error("Error al cargar historial desde Supabase:", e);
@@ -2716,7 +2720,11 @@
         }
         
         // Volver a renderizar la aplicación para aplicar todos los cambios de rol en la UI
-        renderFullApp();
+        if (!MODO_CLIENTE) {
+          renderFullApp();
+        } else {
+          renderAll();
+        }
         
       } else {
         console.warn("No se encontró fila de perfil para el usuario en Supabase.");
@@ -4668,8 +4676,6 @@ Un registro completo convierte cada sesi&oacute;n en informaci&oacute;n &uacute;
         if (regBtnClone) regBtnClone.remove();
         const panelRegClone = cloneDoc.getElementById('panelRegistrarCliente');
         if (panelRegClone) panelRegClone.remove();
-        const cerrarSesionClone = cloneDoc.getElementById('cerrarSesionBtn');
-        if (cerrarSesionClone) cerrarSesionClone.remove();
         
         // Ocultar configurador de días (solo para entrenador)
         const weekdayCfg = cloneDoc.getElementById('weekdayConfigSection');
@@ -4891,6 +4897,10 @@ let variableDefinitions = {
     // RENDER PRINCIPAL
     // --------------------------------------------------------------
     function renderFullApp() {
+        if (typeof MODO_CLIENTE !== 'undefined' && MODO_CLIENTE) {
+            console.log("renderFullApp() ignorado en modo cliente para preservar el HTML estático.");
+            return;
+        }
         renderGlobalVarsPanel();
 	renderDefinitions();
         renderDaysContainer();
