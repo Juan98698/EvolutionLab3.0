@@ -2978,6 +2978,22 @@
           const selectorAtletas = document.getElementById('selectorAtletas');
           if (selectorAtletas) selectorAtletas.style.setProperty('display', 'none', 'important');
           
+          // Mostrar nombre del cliente en la cabecera
+          const headerNombre = document.getElementById('clienteNombreHeader');
+          if (headerNombre) {
+            headerNombre.textContent = '👤 ' + data.nombre;
+            headerNombre.style.display = 'inline-block';
+          }
+
+          // Deshabilitar edición de los campos de portada
+          document.querySelectorAll('#userName, #userGoal, #startDate, #planVigenciaPlan, #trainerName, #whatsappLink, #instagramLink, #globalNote').forEach(el => {
+            el.readOnly = true;
+            el.style.pointerEvents = 'none';
+            el.style.background = 'rgba(255, 255, 255, 0.02)';
+            el.style.border = '1px solid rgba(255, 255, 255, 0.05)';
+            el.style.color = 'rgba(255, 255, 255, 0.6)';
+          });
+
           // Ocultar botones de edición de plan, vista previa PDF y la sección de diccionario e inputs
           document.querySelectorAll('#printAsPdfBtn, #addGlobalDayBtn, #addCustomVarBtn, #exportHtmlBtn, .add-day-btn, .btn-remove-day, .exercise-actions, .btn-add-ex, .btn-rem-ex, .img-upload-label, .gif-upload-label, .global-vars-panel button, #quickAddVarBtn, .remove-var-btn, .hidden-file-upload, .hidden-gif-upload, .video-url-input, #weekdayConfigSection').forEach(el => {
             el.style.setProperty('display', 'none', 'important');
@@ -3034,6 +3050,9 @@
           // Si es entrenador, mostrar selector y botones
           console.log("El usuario es ENTRENADOR. Configurando panel de gestión en la nube.");
           
+          const headerNombre = document.getElementById('clienteNombreHeader');
+          if (headerNombre) headerNombre.style.display = 'none';
+
           const genBtn = document.getElementById('generarLinkBtn');
           if (genBtn) genBtn.style.display = 'inline-block';
           
@@ -3064,6 +3083,15 @@
             };
           }
           
+          // Habilitar edición de los campos de portada para el entrenador
+          document.querySelectorAll('#userName, #userGoal, #startDate, #planVigenciaPlan, #trainerName, #whatsappLink, #instagramLink, #globalNote').forEach(el => {
+            el.readOnly = false;
+            el.style.removeProperty('pointer-events');
+            el.style.removeProperty('background');
+            el.style.removeProperty('border');
+            el.style.removeProperty('color');
+          });
+
           // Asegurarse de que los paneles de edición de entrenador estén visibles
           document.querySelectorAll('#printAsPdfBtn, #addGlobalDayBtn, #addCustomVarBtn, #exportHtmlBtn, .add-day-btn, .btn-remove-day, .exercise-actions, .btn-add-ex, .btn-rem-ex, .img-upload-label, .gif-upload-label, .global-vars-panel button, #quickAddVarBtn, .remove-var-btn, .hidden-file-upload, .hidden-gif-upload, .video-url-input, #weekdayConfigSection').forEach(el => {
             el.style.removeProperty('display');
@@ -4283,8 +4311,10 @@
     const greetingEl = document.getElementById('dashboardGreeting');
     if (greetingEl) {
       let nombreMostrar = 'Atleta';
-      if (typeof MODO_CLIENTE !== 'undefined' && MODO_CLIENTE) {
-        const nombreVisible = _clienteId.replace(/-/g,' ').replace(/\b\w/g, c => c.toUpperCase());
+      if (window.userProfile && window.userProfile.nombre) {
+        nombreMostrar = window.userProfile.nombre.split(' ')[0];
+      } else if (typeof MODO_CLIENTE !== 'undefined' && MODO_CLIENTE) {
+        const nombreVisible = typeof _clienteId !== 'undefined' && _clienteId ? _clienteId.replace(/-/g,' ').replace(/\b\w/g, c => c.toUpperCase()) : '';
         nombreMostrar = nombreVisible ? nombreVisible.split(' ')[0] : 'Atleta';
       } else {
         const nombreCli = document.getElementById('inputNombreCliente') ? document.getElementById('inputNombreCliente').value : '';
