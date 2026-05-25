@@ -342,34 +342,14 @@
     </div>
 
     <script>
-        // Cargar credenciales desde localStorage
-        let SUPABASE_URL = localStorage.getItem('supabase_url');
-        let SUPABASE_KEY = localStorage.getItem('supabase_anon_key');
+        // Credenciales de Supabase hardcodeadas de forma segura y permanente
+        const SUPABASE_URL = "https://szqitksfxiuuiljftlrl.supabase.co";
+        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN6cWl0a3NmeGl1dWlsamZ0bHJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2NjA2NzYsImV4cCI6MjA5NTIzNjY3Nn0.NAFSo8HxVyFn4dykZWft0glRcmDOkpZjm1hzbHkRF1Q";
 
         let supabase = null;
 
-        // Si no existen las credenciales, mostrar el modal de configuración
-        if (!SUPABASE_URL || !SUPABASE_KEY) {
-            document.getElementById('configOverlay').style.display = 'flex';
-        } else {
-            inicializarSupabase();
-        }
-
-        // Manejar el formulario de configuración
-        document.getElementById('configForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            const urlVal = document.getElementById('supabaseUrl').value.trim();
-            const keyVal = document.getElementById('supabaseKey').value.trim();
-
-            localStorage.setItem('supabase_url', urlVal);
-            localStorage.setItem('supabase_anon_key', keyVal);
-
-            SUPABASE_URL = urlVal;
-            SUPABASE_KEY = keyVal;
-
-            document.getElementById('configOverlay').style.display = 'none';
-            inicializarSupabase();
-        });
+        // Inicializar Supabase al cargar
+        inicializarSupabase();
 
         function inicializarSupabase() {
             try {
