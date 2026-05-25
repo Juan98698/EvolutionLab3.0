@@ -2929,10 +2929,122 @@
   function comprobarRolYAdaptarUI(user) {
     console.log("Comprobando rol para el usuario ID:", user.id, "Email:", user.email);
     
+    const offlineFallback = () => {
+      // Intentar recuperar rol guardado en caché local para soporte offline
+      try {
+        const cachedPlanStr = localStorage.getItem('pwa_client_plan');
+        const cachedUserProfile = localStorage.getItem('pwa_user_profile');
+        
+        let rolCache = 'cliente'; // Por seguridad, default a cliente offline
+        let nombreCache = 'Atleta';
+
+        if (cachedUserProfile) {
+          const profile = JSON.parse(cachedUserProfile);
+          // Verificar que el perfil guardado pertenezca al usuario actualmente autenticado
+          if (profile.userId === user.id) {
+            rolCache = profile.rol || 'cliente';
+            nombreCache = profile.nombre || 'Atleta';
+            window.userProfile = profile;
+          } else {
+            console.log("Offline Fallback: El perfil en caché no coincide con el usuario actual. Usando rol por defecto.");
+          }
+        }
+
+        MODO_CLIENTE = (rolCache === 'cliente');
+        window.MODO_CLIENTE = MODO_CLIENTE;
+
+        const saludo = document.getElementById('dashboardGreeting');
+        if (saludo) {
+          saludo.innerHTML = `Hola, ${nombreCache.split(' ')[0]} 👋`;
+        }
+
+        if (MODO_CLIENTE) {
+          console.log("Offline Fallback: Detectado CLIENTE en caché.");
+          
+          const panelGen = document.getElementById('panelGenerarLink');
+          if (panelGen) panelGen.style.setProperty('display', 'none', 'important');
+          const exportBtn = document.getElementById('generarLinkBtn');
+          if (exportBtn) exportBtn.style.setProperty('display', 'none', 'important');
+          const saveNubeBtn = document.getElementById('guardarNubeBtn');
+          if (saveNubeBtn) saveNubeBtn.style.setProperty('display', 'none', 'important');
+          const selectorAtletas = document.getElementById('selectorAtletas');
+          if (selectorAtletas) selectorAtletas.style.setProperty('display', 'none', 'important');
+
+          const headerNombre = document.getElementById('clienteNombreHeader');
+          if (headerNombre) {
+            headerNombre.textContent = '👤 ' + nombreCache;
+            headerNombre.style.display = 'inline-block';
+          }
+
+          document.querySelectorAll('#userName, #userGoal, #startDate, #planVigenciaPlan, #trainerName, #whatsappLink, #instagramLink, #globalNote').forEach(el => {
+            el.readOnly = true;
+            el.style.pointerEvents = 'none';
+            el.style.background = 'rgba(255, 255, 255, 0.02)';
+            el.style.border = '1px solid rgba(255, 255, 255, 0.05)';
+            el.style.color = 'rgba(255, 255, 255, 0.6)';
+          });
+
+          document.querySelectorAll('#printAsPdfBtn, #addGlobalDayBtn, #addCustomVarBtn, #exportHtmlBtn, .add-day-btn, .btn-remove-day, .exercise-actions, .btn-add-ex, .btn-rem-ex, .img-upload-label, .gif-upload-label, .global-vars-panel button, #quickAddVarBtn, .remove-var-btn, .hidden-file-upload, .hidden-gif-upload, .video-url-input, #weekdayConfigSection').forEach(el => {
+            el.style.setProperty('display', 'none', 'important');
+          });
+
+          const tabConfig = document.getElementById('tab-config');
+          if (tabConfig) tabConfig.style.setProperty('display', 'none', 'important');
+
+          const defsSection = document.querySelector('.definitions-section');
+          if (defsSection) defsSection.style.setProperty('display', 'none', 'important');
+          const globalVars = document.getElementById('globalVarsPanelContainer');
+          if (globalVars) globalVars.style.setProperty('display', 'none', 'important');
+
+          // Cargar plan propio desde caché
+          if (cachedPlanStr) {
+            const plan = JSON.parse(cachedPlanStr);
+            aplicarPlanCliente(plan);
+          } else {
+            console.log("Offline Fallback: No hay plan guardado en caché local.");
+            renderFullApp();
+          }
+        } else {
+          console.log("Offline Fallback: Detectado ENTRENADOR en caché.");
+          // Si es entrenador offline, restauramos paneles editables normales
+          document.querySelectorAll('#printAsPdfBtn, #addGlobalDayBtn, #addCustomVarBtn, #exportHtmlBtn, .add-day-btn, .btn-remove-day, .exercise-actions, .btn-add-ex, .btn-rem-ex, .img-upload-label, .gif-upload-label, .global-vars-panel button, #quickAddVarBtn, .remove-var-btn, .hidden-file-upload, .hidden-gif-upload, .video-url-input, #weekdayConfigSection').forEach(el => {
+            el.style.removeProperty('display');
+          });
+          const tabConfig = document.getElementById('tab-config');
+          if (tabConfig) tabConfig.style.removeProperty('display');
+          renderFullApp();
+        }
+      } catch (e) {
+        console.error("Error en el fallback offline de rol:", e);
+      }
+    };
+
+    if (!navigator.onLine) {
+      console.log("Offline detectado: Activando fallback de rol local.");
+      offlineFallback();
+      return;
+    }
+
     // Buscar perfil en Supabase para saber si es entrenador o cliente
     supabase.from('profiles').select('rol, nombre').eq('id', user.id).single().then(({ data, error }) => {
       if (error) {
         console.error("Error al obtener perfil desde Supabase:", error);
+        
+        // Si falló por falta de red real a pesar de navigator.onLine (o cualquier otro error de red/fetch)
+        const errorMsg = (error.message || "").toLowerCase();
+        if (
+          errorMsg.includes('failed to fetch') || 
+          errorMsg.includes('networkerror') || 
+          errorMsg.includes('load failed') ||
+          errorMsg.includes('network') ||
+          errorMsg.includes('cors') ||
+          error.status === 0
+        ) {
+          console.log("Error de red detectado en consulta de perfil. Activando fallback offline.");
+          offlineFallback();
+          return;
+        }
+
         toast("Error al cargar perfil: " + error.message, "error");
         
         // Mostrar aviso visual con detalles técnicos para ayudar al usuario
@@ -2947,6 +3059,15 @@
         console.log("Perfil obtenido de Supabase:", data);
         window.userProfile = data;
         
+        // Guardar el perfil en LocalStorage para soporte offline de roles
+        try {
+          localStorage.setItem('pwa_user_profile', JSON.stringify({ 
+            userId: user.id, 
+            rol: data.rol, 
+            nombre: data.nombre 
+          }));
+        } catch(e) {}
+
         // Actualizar la variable global MODO_CLIENTE y window.MODO_CLIENTE
         MODO_CLIENTE = (data.rol === 'cliente');
         window.MODO_CLIENTE = MODO_CLIENTE;
@@ -3129,7 +3250,12 @@
       }
     }).catch(err => {
       console.error("Excepción en comprobarRolYAdaptarUI:", err);
-      toast("Error de conexión: " + err.message, "error");
+      // Si el fetch falló por estar offline y navigator.onLine dio un falso positivo
+      if (err.message && err.message.includes('Failed to fetch')) {
+        offlineFallback();
+      } else {
+        toast("Error de conexión: " + err.message, "error");
+      }
     });
   }
 

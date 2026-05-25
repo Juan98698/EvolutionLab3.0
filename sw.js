@@ -75,11 +75,22 @@ self.addEventListener('fetch', event => {
       }
 
       return fetch(event.request).then(response => {
-        // Almacenar en caché dinámicamente recursos no precacheados del mismo dominio
-        if (
+        // Almacenar en caché dinámicamente recursos del mismo dominio, CDNs e imágenes/GIFs
+        const isDynamicAsset = (
           response.status === 200 && 
-          (requestUrl.origin === location.origin || requestUrl.href.includes('googleapis') || requestUrl.href.includes('gstatic') || requestUrl.href.includes('cdnjs') || requestUrl.href.includes('jsdelivr'))
-        ) {
+          (
+            requestUrl.origin === location.origin || 
+            requestUrl.href.includes('googleapis') || 
+            requestUrl.href.includes('gstatic') || 
+            requestUrl.href.includes('cdnjs') || 
+            requestUrl.href.includes('jsdelivr') ||
+            requestUrl.href.includes('supabase.co') || // Guardar recursos de Supabase (ej. base de datos / storage de fotos y GIFs)
+            event.request.destination === 'image' ||   // Cualquier recurso de imagen
+            /\.(png|jpe?g|gif|webp|svg)($|\?)/i.test(requestUrl.pathname) // Formatos comunes de imagen/GIF
+          )
+        );
+
+        if (isDynamicAsset) {
           const responseClone = response.clone();
           caches.open(CACHE_NAME).then(cache => {
             cache.put(event.request, responseClone);
