@@ -5117,6 +5117,9 @@ let variableDefinitions = {
         renderWeekdayConfig();
         attachAllEvents();
         initChecklist();
+        if (typeof actualizarBibliotecaEjercicios === 'function') {
+            actualizarBibliotecaEjercicios();
+        }
     }
     function renderGlobalVarsPanel() {
         const container = document.getElementById("globalVarsPanelContainer");
@@ -5374,19 +5377,71 @@ let variableDefinitions = {
                 }
             };
         });
-        // Cambiar nombre del ejercicio
-        document.querySelectorAll('.exercise-name-input').forEach(inp => {
-            inp.onchange = (e) => {
-                const exId = inp.getAttribute('data-ex-id');
-                for (let day of trainingDays) {
-                    const ex = day.exercises.find(e => e.id === exId);
-                    if (ex) {
-                        ex.name = inp.value;
-                        break;
-                    }
-                }
-            };
-        });
+  function actualizarBibliotecaEjercicios() {
+    try {
+      let library = JSON.parse(localStorage.getItem('evolution_exercise_library') || '{}');
+      let updated = false;
+      for (let day of trainingDays) {
+        for (let ex of day.exercises) {
+          const nameClean = ex.name.trim().toLowerCase();
+          if (nameClean && (ex.imageData || ex.gifData || ex.videoUrl)) {
+            if (!library[nameClean] || 
+                (ex.imageData && library[nameClean].imageData !== ex.imageData) ||
+                (ex.gifData && library[nameClean].gifData !== ex.gifData) ||
+                (ex.videoUrl && library[nameClean].videoUrl !== ex.videoUrl)) {
+              
+              library[nameClean] = {
+                imageData: ex.imageData || library[nameClean]?.imageData || "",
+                gifData: ex.gifData || library[nameClean]?.gifData || "",
+                videoUrl: ex.videoUrl || library[nameClean]?.videoUrl || ""
+              };
+              updated = true;
+            }
+          }
+        }
+      }
+      if (updated) {
+        localStorage.setItem('evolution_exercise_library', JSON.stringify(library));
+      }
+    } catch(e) {
+      console.error("Error al actualizar biblioteca de ejercicios:", e);
+    }
+  }
+
+  // Cambiar nombre del ejercicio
+  document.querySelectorAll('.exercise-name-input').forEach(inp => {
+      inp.onchange = (e) => {
+          const exId = inp.getAttribute('data-ex-id');
+          const newName = inp.value.trim();
+          let targetEx = null;
+          for (let day of trainingDays) {
+              const ex = day.exercises.find(e => e.id === exId);
+              if (ex) {
+                  ex.name = newName;
+                  targetEx = ex;
+                  break;
+              }
+          }
+          if (targetEx && newName && !targetEx.imageData && !targetEx.gifData) {
+              try {
+                  const library = JSON.parse(localStorage.getItem('evolution_exercise_library') || '{}');
+                  const key = newName.toLowerCase();
+                  const found = library[key];
+                  if (found) {
+                      targetEx.imageData = found.imageData || "";
+                      targetEx.gifData = found.gifData || "";
+                      targetEx.videoUrl = found.videoUrl || targetEx.videoUrl || "";
+                      renderFullApp();
+                      toast(`¡Auto-rellenado multimedia para "${newName}"! 📂`, "info");
+                      return;
+                  }
+              } catch(err) {
+                  console.error("Error al auto-rellenar ejercicio:", err);
+              }
+          }
+          renderFullApp();
+      };
+  });
         // Cambiar valores de variables
         document.querySelectorAll('.var-input').forEach(inp => {
             inp.oninput = (e) => {
@@ -5440,8 +5495,21 @@ let variableDefinitions = {
       toast("Error: Supabase no está inicializado.", "error");
       return null;
     }
+    let exName = "ejercicio";
+    for (let day of trainingDays) {
+      const ex = day.exercises.find(e => e.id === exId);
+      if (ex) {
+        exName = ex.name || "ejercicio";
+        break;
+      }
+    }
+    const nameClean = exName.trim().toLowerCase();
+    const isGeneric = nameClean.startsWith('ejercicio');
+    const slug = isGeneric 
+      ? exId 
+      : nameClean.replace(/[^a-z0-9_-]/g, "_").replace(/__+/g, "_");
     const ext = file.name.split('.').pop() || 'png';
-    const filePath = `${exId}_${tipo}.${ext}`;
+    const filePath = `${slug}_${tipo}.${ext}`;
     try {
       const { data, error } = await supabase.storage
         .from('ejercicios')
