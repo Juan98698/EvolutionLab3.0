@@ -45,37 +45,10 @@
     })();
   </script>
   <script>
-    // Redirección PWA para iOS y Android: cuando se instala la PWA, se usa el manifest.json estático (start_url:'/'),
-    // por lo que al abrir la PWA como standalone desde Home Screen se abre el editor en lugar del plan del cliente.
-    // Solución: guardar la URL del cliente en localStorage y redirigir al arrancar.
+    // Limpieza de redirecciones heredadas del modelo offline antiguo para evitar bucles
     (function() {
       try {
-        var path = window.location.pathname;
-        var search = window.location.search;
-        
-        // Si el cliente está en su página de plan o accede por parámetro c=, guardar la URL para la PWA
-        var isClientPath = path.indexOf('/clientes/') !== -1;
-        var hasClientParam = search.indexOf('c=') !== -1;
-        if (isClientPath || hasClientParam) {
-          localStorage.setItem('pwa_client_url', path + search);
-        }
-
-        var isStandalone = window.navigator.standalone === true ||
-          window.matchMedia('(display-mode: standalone)').matches;
-        if (isStandalone) {
-          if (path === '/' || path === '/index.html' || path === '') {
-            // Permitir al entrenador saltar la redirección agregando ?trainer=true o ?admin=true a la URL
-            if (search.indexOf('trainer') !== -1 || search.indexOf('admin') !== -1) {
-              localStorage.removeItem('pwa_client_url');
-            } else {
-              var savedUrl = localStorage.getItem('pwa_client_url');
-              if (savedUrl && savedUrl !== '/' && savedUrl !== '/index.html' && savedUrl !== '') {
-                window.location.replace(savedUrl);
-                return;
-              }
-            }
-          }
-        }
+        localStorage.removeItem('pwa_client_url');
       } catch(e) {}
     })();
   </script>
@@ -2504,7 +2477,14 @@
     window.location.replace('/login.html');
   } else {
     try {
-      supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
+        global: {
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache'
+          }
+        }
+      });
     } catch(e) {
       console.error("Error al inicializar Supabase:", e);
       try {
@@ -3421,11 +3401,6 @@
   var _urlParams = new URLSearchParams(window.location.search);
   var _clienteId = window.INJECTED_CLIENT_ID || (_urlParams.get('c') ? _urlParams.get('c').trim().toLowerCase().replace(/[^a-z0-9_-]/g, '') : '');
   let MODO_CLIENTE = _clienteId !== '';
-  if (MODO_CLIENTE) {
-    try {
-      localStorage.setItem('pwa_client_url', window.location.pathname + window.location.search);
-    } catch(e) {}
-  }
   let STORAGE_KEY = _clienteId ? ('sp_cliente_' + _clienteId) : 'sobrecarga_v5';
   let CICLO_KEY   = _clienteId ? ('sp_ciclo_'   + _clienteId) : 'fechaInicioCiclo';
   const CONFIG_KEY = 'sp_config_v1';
