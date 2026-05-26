@@ -46,14 +46,209 @@
             background-attachment: fixed;
             min-height: 100vh;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 20px;
+            padding: 40px 20px;
             color: var(--text);
             overflow-x: hidden;
         }
 
-        /* Contenedor principal con efecto cristal (Glassmorphism) */
+        /* Contenedor general del Landing */
+        .landing-container {
+            width: 100%;
+            max-width: 1100px;
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 40px;
+            align-items: center;
+            animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @media (min-width: 900px) {
+            .landing-container {
+                grid-template-columns: 1.1fr 0.9fr;
+                gap: 60px;
+            }
+        }
+
+        /* Columna Izquierda: Brand & Features */
+        .hero-section {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            text-align: left;
+        }
+
+        .brand-badge {
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            color: var(--cyan);
+            font-size: 11px;
+            font-weight: 700;
+            padding: 6px 14px;
+            border-radius: 40px;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            margin-bottom: 20px;
+            box-shadow: 0 0 15px rgba(0, 212, 255, 0.1);
+        }
+
+        .hero-title {
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(34px, 5vw, 54px);
+            font-weight: 900;
+            line-height: 1.1;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, #ffffff 40%, var(--cyan) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-title .cyan-text {
+            color: var(--cyan);
+            background: linear-gradient(135deg, var(--cyan) 30%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-tagline {
+            font-family: 'Orbitron', sans-serif;
+            font-size: clamp(16px, 2.5vw, 20px);
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 20px;
+            letter-spacing: 0.5px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+
+        .hero-description {
+            font-size: 14.5px;
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin-bottom: 30px;
+            max-width: 540px;
+        }
+
+        .features-list {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            width: 100%;
+            max-width: 500px;
+            margin-bottom: 30px;
+        }
+
+        .feature-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 16px;
+            background: rgba(15, 23, 42, 0.35);
+            border: 1px solid rgba(255,255,255,0.03);
+            border-radius: 12px;
+            padding: 15px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            transition: all 0.3s ease;
+        }
+
+        .feature-item:hover {
+            border-color: rgba(0, 212, 255, 0.15);
+            background: rgba(15, 23, 42, 0.45);
+            transform: translateX(5px);
+        }
+
+        .feature-icon {
+            font-size: 22px;
+            background: rgba(255,255,255,0.05);
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+
+        .feature-item h4 {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text);
+            margin-bottom: 4px;
+        }
+
+        .feature-item p {
+            font-size: 12px;
+            color: var(--text-muted);
+            line-height: 1.5;
+        }
+
+        .cta-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+            width: 100%;
+        }
+
+        .btn-whatsapp {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: #25d366;
+            color: white;
+            text-decoration: none;
+            padding: 14px 24px;
+            border-radius: 10px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            box-shadow: 0 4px 20px rgba(37, 211, 102, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .btn-whatsapp:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 24px rgba(37, 211, 102, 0.5);
+            background: #20ba5a;
+        }
+
+        .btn-instagram {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%);
+            color: white;
+            text-decoration: none;
+            padding: 14px 24px;
+            border-radius: 10px;
+            font-family: 'Orbitron', sans-serif;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            box-shadow: 0 4px 20px rgba(204, 35, 102, 0.3);
+            transition: all 0.3s ease;
+        }
+
+        .btn-instagram:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 24px rgba(204, 35, 102, 0.5);
+            opacity: 0.95;
+        }
+
+        /* Columna Derecha: Login Card */
+        .auth-section {
+            display: flex;
+            justify-content: center;
+            width: 100%;
+        }
+
         .login-card {
             background: var(--card-bg);
             backdrop-filter: blur(20px);
@@ -66,12 +261,17 @@
             box-shadow: 
                 0 20px 50px -10px rgba(0, 0, 0, 0.5),
                 0 0 40px rgba(123, 47, 247, 0.15);
-            animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+            animation: cardFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes cardFadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
         .header {
@@ -280,44 +480,92 @@
 </head>
 <body>
 
-    <div class="login-card">
-        <div class="header">
-            <div class="logo-symbol">📲</div>
-            <h1 class="title">Evolution Lab</h1>
-            <p class="subtitle">Ingresa a tu plan de entrenamiento</p>
-        </div>
-
-        <div id="errorAlert" class="alert-error">
-            <span>⚠️</span>
-            <span id="errorMessage">Correo o contraseña incorrectos.</span>
-        </div>
-
-        <form id="loginForm">
-            <div class="form-group">
-                <label for="email">Correo Electrónico</label>
-                <div class="input-wrapper">
-                    <span class="input-icon">✉️</span>
-                    <input type="email" id="email" class="form-control" placeholder="ejemplo@correo.com" required autocomplete="username">
+    <div class="landing-container">
+        <!-- Columna Izquierda: Brand Landing & Features -->
+        <div class="hero-section">
+            <div class="brand-badge">🔬 Ciencia & Evidencia</div>
+            <h1 class="hero-title">EVOLUTION <span class="cyan-text">LAB</span></h1>
+            <p class="hero-tagline">El Laboratorio de tu Evolución Física</p>
+            <p class="hero-description">
+                Tu plataforma premium de entrenamiento inteligente. Diseñada meticulosamente para optimizar tus ganancias de fuerza, estructurar tu sobrecarga progresiva en tiempo real y guiarte de forma interactiva en la sala de pesas.
+            </p>
+            
+            <div class="features-list">
+                <div class="feature-item">
+                    <div class="feature-icon">📊</div>
+                    <div>
+                        <h4>Sobrecarga Progresiva Científica</h4>
+                        <p>Planifica y registra variables clave: series, tempo de contracción muscular, RIR y cargas máximas estimadas en tiempo real.</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🔌</div>
+                    <div>
+                        <h4>Soporte Offline en el Gimnasio</h4>
+                        <p>¿Sin señal en el gimnasio? Tus rutinas y animaciones GIF de ejercicios se reproducen de forma instantánea en Modo Avión.</p>
+                    </div>
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🧮</div>
+                    <div>
+                        <h4>Calculadora 1RM Avanzada</h4>
+                        <p>Estima tus marcas máximas de fuerza directamente desde tu teléfono para ajustar tus cargas de manera científica y segura.</p>
+                    </div>
                 </div>
             </div>
+            
+            <div class="cta-buttons">
+                <a href="https://wa.me/573177726359?text=Hola!%20Vi%20tu%20perfil%20y%20quiero%20empezar%20mi%20entrenamiento%20personalizado%20en%20Evolution%20Lab" target="_blank" rel="noopener noreferrer" class="btn-whatsapp">
+                    <span>📲</span> ¡Quiero mi Plan!
+                </a>
+                <a href="https://www.instagram.com/manuel_betancur" target="_blank" rel="noopener noreferrer" class="btn-instagram">
+                    <span>📸</span> Sígueme en Instagram
+                </a>
+            </div>
+        </div>
 
-            <div class="form-group">
-                <label for="password">Contraseña</label>
-                <div class="input-wrapper">
-                    <span class="input-icon">🔒</span>
-                    <input type="password" id="password" class="form-control" placeholder="••••••••••••" required autocomplete="current-password">
+        <!-- Columna Derecha: Login Form Portal -->
+        <div class="auth-section">
+            <div class="login-card">
+                <div class="header">
+                    <div class="logo-symbol">📲</div>
+                    <h1 class="title">Evolution Lab</h1>
+                    <p class="subtitle">Ingresa a tu plan de entrenamiento</p>
+                </div>
+
+                <div id="errorAlert" class="alert-error">
+                    <span>⚠️</span>
+                    <span id="errorMessage">Correo o contraseña incorrectos.</span>
+                </div>
+
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label for="email">Correo Electrónico</label>
+                        <div class="input-wrapper">
+                            <span class="input-icon">✉️</span>
+                            <input type="email" id="email" class="form-control" placeholder="ejemplo@correo.com" required autocomplete="username">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="password">Contraseña</label>
+                        <div class="input-wrapper">
+                            <span class="input-icon">🔒</span>
+                            <input type="password" id="password" class="form-control" placeholder="••••••••••••" required autocomplete="current-password">
+                        </div>
+                    </div>
+
+                    <button type="submit" id="submitBtn" class="btn-submit">
+                        <div id="btnSpinner" class="spinner"></div>
+                        <span id="btnText">Entrar</span>
+                    </button>
+                </form>
+
+                <div class="footer-note">
+                    🔬 Diseñado bajo evidencia científica<br>
+                    👑 Exclusivo para ti por Evolution Lab
                 </div>
             </div>
-
-            <button type="submit" id="submitBtn" class="btn-submit">
-                <div id="btnSpinner" class="spinner"></div>
-                <span id="btnText">Entrar</span>
-            </button>
-        </form>
-
-        <div class="footer-note">
-            🔬 Diseñado bajo evidencia científica<br>
-            👑 Exclusivo para ti por Evolution Lab
         </div>
     </div>
 
