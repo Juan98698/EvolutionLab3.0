@@ -140,6 +140,51 @@
             margin-bottom: 30px;
         }
 
+        .origin-card {
+            background: linear-gradient(135deg, rgba(123, 47, 247, 0.08), rgba(0, 212, 255, 0.03));
+            border: 1px solid rgba(123, 47, 247, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 30px;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .origin-card h5 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--cyan);
+            margin-bottom: 10px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .origin-card p {
+            font-size: 12.5px;
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin-bottom: 10px;
+            user-select: text;
+        }
+
+        .origin-card p:last-child {
+            margin-bottom: 0;
+        }
+
+        .origin-card .origin-highlight {
+            color: var(--text);
+            border-left: 2px solid var(--cyan);
+            padding-left: 10px;
+            font-style: italic;
+        }
+
         .feature-item {
             display: flex;
             align-items: flex-start;
@@ -489,6 +534,13 @@
             <p class="hero-description">
                 Tu plataforma premium de entrenamiento inteligente. Aquí, cada rutina es diseñada meticulosamente por un profesional experto y apasionado del fitness, colocando tus objetivos individuales como nuestra única prioridad. Optimiza tu fuerza, domina tu sobrecarga en tiempo real y evoluciona con el respaldo de la ciencia.
             </p>
+            
+            <!-- 💡 EL ORIGEN DEL MÉTODO -->
+            <div class="origin-card">
+                <h5>💡 El Origen de Evolution Lab</h5>
+                <p>Evolution Lab nació al ver cómo los atletas lidiaban con planes planos, PDFs aburridos con demasiado texto, hojas de calculo en excel y rutinas por WhatsApp que al final dejaban más dudas que certezas en medio de la sala de pesas.</p>
+                <p class="origin-highlight">Cambiamos los documentos estáticos por un ecosistema interactivo y vivo en tu teléfono que te brinda claridad absoluta en cada entrenamiento.</p>
+            </div>
             
             <div class="features-list">
                 <div class="feature-item">
