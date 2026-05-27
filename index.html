@@ -2338,16 +2338,23 @@
   </div>
   <!-- PROGRESIÓN -->
   <div id="panel-chart" style="display:none">
-    <div class="top-bar" style="margin-top:-0.5rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:1rem;">
-      <div class="section-title" id="chartTitle" style="margin-bottom:0; flex:1;">Progresión</div>
-      <select id="ejercicioSelectChart" style="min-width:180px; max-width:280px;"></select>
+    <div class="top-bar" style="margin-top:0.5rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:1.5rem; padding-top: 4px;">
+      <div class="section-title" id="chartTitle" style="margin-bottom:0; flex:1; font-size:14px; color:var(--text); font-family:'Orbitron',sans-serif; letter-spacing:0.05em;">Progresión</div>
+      <select id="ejercicioSelectChart" style="min-width:180px; max-width:280px; height: 40px; line-height: 40px; padding: 0 32px 0 12px; background-position: right 12px center; display: inline-block; box-sizing: border-box;"></select>
     </div>
     <div class="chart-card">
-      <div class="chart-legend">
+      <div class="chart-legend" style="display: flex;">
         <span><span class="legend-sq" style="background:#378ADD"></span> Volumen total (kg)</span>
         <span><span class="legend-sq" style="background:#1D9E75; border-radius:50%"></span> 1RM estimado (kg)</span>
       </div>
-      <div style="position:relative; width:100%; height:260px;"><canvas id="mainChart"></canvas></div>
+      <div id="chartContainer" style="position:relative; width:100%; height:260px;"><canvas id="mainChart"></canvas></div>
+      <div id="chartEmptyState" style="display:none; flex-direction:column; align-items:center; justify-content:center; height:260px; text-align:center; color:var(--text3); gap:16px; padding: 20px;">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.8; filter: drop-shadow(0 0 8px rgba(0, 212, 255, 0.3));">
+          <polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline>
+          <polyline points="17 6 23 6 23 12"></polyline>
+        </svg>
+        <span style="font-size: 14px; max-width: 320px; font-weight: 500; line-height: 1.4; color: var(--text2);">Registra sesiones en tu historial para ver tu progresión de sobrecarga progresiva.</span>
+      </div>
     </div>
   </div>
   <!-- AGREGAR SESIÓN -->
@@ -4828,19 +4835,36 @@ Un registro completo convierte cada sesi&oacute;n en informaci&oacute;n &uacute;
       if (selChart) selChart.value = ejercicio;
     }
     
+    const emptyState = document.getElementById('chartEmptyState');
+    const container = document.getElementById('chartContainer');
+    const legend = document.querySelector('#panel-chart .chart-legend');
+
     if (!ejercicio) {
       document.getElementById('chartTitle').textContent = 'Progresión';
       if (chart) chart.destroy();
-      const canvas = document.getElementById('mainChart');
-      if (canvas) {
-        const ctx = canvas.getContext('2d');
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = '#a0a09c';
-        ctx.font = '14px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText('Registra sesiones en tu historial para ver tu progresión', canvas.width / 2, canvas.height / 2);
+      
+      if (emptyState && container) {
+        emptyState.style.display = 'flex';
+        container.style.display = 'none';
+        if (legend) legend.style.display = 'none';
+      } else {
+        const canvas = document.getElementById('mainChart');
+        if (canvas) {
+          const ctx = canvas.getContext('2d');
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          ctx.fillStyle = '#a0a09c';
+          ctx.font = '14px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('Registra sesiones en tu historial para ver tu progresión', canvas.width / 2, canvas.height / 2);
+        }
       }
       return;
+    }
+    
+    if (emptyState && container) {
+      emptyState.style.display = 'none';
+      container.style.display = 'block';
+      if (legend) legend.style.display = 'flex';
     }
     
     document.getElementById('chartTitle').textContent = 'Progresión — ' + ejercicio;
