@@ -1099,7 +1099,7 @@
             padding: 8px 12px;
             border: 1px solid var(--border2);
             background: rgba(255, 255, 255, 0.05);
-            color: #e0f2fe; /* Blanco hielo */
+            color: #b0bec5; /* Gris metalizado fallback para inputs */
             border-radius: 16px;
             font-family: 'Orbitron', sans-serif;
             letter-spacing: 0.03em;
@@ -1114,7 +1114,9 @@
             font-size: 0.9rem !important;
             font-weight: 700 !important;
             letter-spacing: 0.03em !important;
-            color: #e0f2fe !important; /* Blanco hielo */
+            background: linear-gradient(135deg, #b0bec5 0%, #00d4ff 100%) !important;
+            -webkit-background-clip: text !important;
+            -webkit-text-fill-color: transparent !important;
         }
         .img-zone {
             flex: 1;
