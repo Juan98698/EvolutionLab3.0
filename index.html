@@ -152,14 +152,91 @@
       opacity: 1;
     }
     header .session-count {
-      font-family: 'Inter', sans-serif;
-      font-size: 11px;
-      color: rgba(255,255,255,0.5);
-      background: rgba(255,255,255,0.08);
-      padding: 4px 12px;
-      border-radius: 99px;
+      font-family: 'Orbitron', sans-serif;
+      font-size: 10px;
+      font-weight: 700;
+      color: rgba(255, 255, 255, 0.6);
+      background: rgba(255, 255, 255, 0.05);
+      padding: 6px 14px;
+      border-radius: 40px;
       white-space: nowrap;
-      border: 1px solid rgba(255,255,255,0.06);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      letter-spacing: 0.5px;
+    }
+    #selectorAtletas {
+      font-family: 'Orbitron', sans-serif !important;
+      font-size: 10px !important;
+      font-weight: 700 !important;
+      padding: 6px 14px !important;
+      margin-left: 8px;
+      background: rgba(15, 23, 42, 0.5) !important;
+      border: 1px solid rgba(255, 255, 255, 0.1) !important;
+      color: white !important;
+      border-radius: 40px !important;
+      outline: none;
+      cursor: pointer;
+      max-width: 150px;
+      letter-spacing: 0.5px;
+      transition: all 0.2s ease;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23fff' d='M6 8L1 3h10z'/%3E%3C/svg%3E") !important;
+      background-repeat: no-repeat !important;
+      background-position: right 12px center !important;
+      padding-right: 28px !important;
+    }
+    #selectorAtletas:hover {
+      border-color: rgba(0, 212, 255, 0.4) !important;
+      box-shadow: 0 0 10px rgba(0, 212, 255, 0.1);
+    }
+    #guardarNubeBtn, #registrarAtletaBtn, #cerrarSesionBtn {
+      font-family: 'Orbitron', sans-serif !important;
+      font-size: 10px !important;
+      font-weight: 700 !important;
+      padding: 6px 14px !important;
+      margin-left: 8px;
+      border-radius: 40px !important;
+      cursor: pointer;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      transition: all 0.3s ease !important;
+      display: inline-block;
+    }
+    #guardarNubeBtn {
+      background: rgba(0, 212, 255, 0.15) !important;
+      border: 1px solid rgba(0, 212, 255, 0.4) !important;
+      color: #00d4ff !important;
+      box-shadow: 0 0 10px rgba(0, 212, 255, 0.1) !important;
+    }
+    #guardarNubeBtn:hover {
+      background: rgba(0, 212, 255, 0.35) !important;
+      border-color: rgba(0, 212, 255, 0.8) !important;
+      color: white !important;
+      box-shadow: 0 0 15px rgba(0, 212, 255, 0.3) !important;
+      transform: translateY(-1px) scale(1.02);
+    }
+    #registrarAtletaBtn {
+      background: rgba(123, 47, 247, 0.15) !important;
+      border: 1px solid rgba(123, 47, 247, 0.4) !important;
+      color: #a855f7 !important;
+      box-shadow: 0 0 10px rgba(123, 47, 247, 0.1) !important;
+    }
+    #registrarAtletaBtn:hover {
+      background: rgba(123, 47, 247, 0.35) !important;
+      border-color: rgba(123, 47, 247, 0.8) !important;
+      color: white !important;
+      box-shadow: 0 0 15px rgba(123, 47, 247, 0.3) !important;
+      transform: translateY(-1px) scale(1.02);
+    }
+    #cerrarSesionBtn {
+      background: rgba(239, 68, 68, 0.08) !important;
+      border: 1px solid rgba(239, 68, 68, 0.3) !important;
+      color: #ff6b6b !important;
+    }
+    #cerrarSesionBtn:hover {
+      background: rgba(239, 68, 68, 0.25) !important;
+      border-color: rgba(239, 68, 68, 0.7) !important;
+      color: white !important;
+      box-shadow: 0 0 15px rgba(239, 68, 68, 0.3) !important;
+      transform: translateY(-1px) scale(1.02);
     }
     .container { max-width: 1100px; margin: 0 auto; padding: 1rem; }
     .top-bar {
@@ -2256,10 +2333,10 @@
   </div>
   <span class="session-count" id="headerCount">0 sesiones</span>
   <div id="clienteNombreHeader" style="display:none; font-size:13px; color:rgba(255,255,255,0.5); background:rgba(255,255,255,0.08); padding:4px 12px; border-radius:99px; white-space:nowrap;"></div>
-  <select id="selectorAtletas" style="display:none; font-family:'Orbitron',sans-serif; font-size:9px; padding:6px 12px; margin-left:8px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2); color:white; border-radius:4px; outline:none; cursor:pointer; max-width: 150px;"></select>
-  <button id="guardarNubeBtn" class="btn" style="display:none; font-family:'Orbitron',sans-serif; font-size:9px; padding:6px 12px; background:linear-gradient(135deg, #4facfe, #00f2fe); border:none; margin-left:8px; color:white;">☁️ Guardar en la Nube</button>
-  <button id="registrarAtletaBtn" class="btn" style="display:none; font-family:'Orbitron',sans-serif; font-size:9px; padding:6px 12px; background:linear-gradient(135deg, #00d4ff, #7b2ff7); border:none; margin-left:8px; color:white;">👥 Registrar Atleta</button>
-  <button id="cerrarSesionBtn" class="btn" style="font-family:'Orbitron',sans-serif; font-size:9px; padding:6px 12px; margin-left:8px; background:rgba(255,68,68,0.08); border:1px solid rgba(255,68,68,0.3); color:#ff6b6b; display:inline-block; transition: all 0.2s ease;">🚪 Cerrar Sesión</button>
+  <select id="selectorAtletas" style="display:none;"></select>
+  <button id="guardarNubeBtn" class="btn" style="display:none;">☁️ Guardar en la Nube</button>
+  <button id="registrarAtletaBtn" class="btn" style="display:none;">👥 Registrar Atleta</button>
+  <button id="cerrarSesionBtn" class="btn">🚪 Cerrar Sesión</button>
 </header>
 <!-- El antiguo panel de exportación a HTML local ha sido retirado. Ahora el guardado y distribución es 100% en la Nube con Supabase. -->
 
