@@ -542,39 +542,17 @@
       letter-spacing: 0.04em;
     }
     .btn:active { transform: scale(0.97); }
-    .btn-primary {
-      background: linear-gradient(135deg, var(--accent) 0%, var(--cyan) 100%);
-      color: #ffffff;
-      box-shadow: 0 4px 15px rgba(123, 47, 247, 0.35);
-      border: 1px solid rgba(255, 255, 255, 0.1);
+    .btn-primary, .btn-ghost, .btn-danger {
+      background: rgba(255, 255, 255, 0.02) !important;
+      border: 1px solid var(--border2) !important;
+      color: var(--text2) !important;
+      box-shadow: none !important;
     }
-    .btn-primary:hover {
-      opacity: 0.95;
-      box-shadow: 0 6px 22px rgba(0, 212, 255, 0.55);
-      transform: translateY(-2px);
-    }
-    .btn-ghost {
-      background: rgba(255, 255, 255, 0.02);
-      border: 1px solid var(--border2);
-      color: var(--text2);
-    }
-    .btn-ghost:hover {
+    .btn-primary:hover, .btn-ghost:hover, .btn-danger:hover {
       background: rgba(0, 212, 255, 0.08) !important;
       border-color: rgba(0, 212, 255, 0.5) !important;
       color: #00d4ff !important;
-      box-shadow: 0 0 14px rgba(0, 212, 255, 0.3);
-      transform: translateY(-2px);
-    }
-    .btn-danger {
-      background: rgba(255, 255, 255, 0.02);
-      color: var(--red);
-      border: 1px solid var(--border);
-    }
-    .btn-danger:hover {
-      background: rgba(244, 63, 94, 0.08) !important;
-      border-color: rgba(244, 63, 94, 0.5) !important;
-      color: var(--red) !important;
-      box-shadow: 0 0 14px rgba(244, 63, 94, 0.3);
+      box-shadow: 0 0 14px rgba(0, 212, 255, 0.3) !important;
       transform: translateY(-2px);
     }
     .del-btn {
