@@ -2675,6 +2675,7 @@
         window.currentUser = data.session.user;
         console.log("Usuario autenticado:", window.currentUser.email);
         comprobarRolYAdaptarUI(window.currentUser);
+        actualizarClavesAlmacenamiento();
         cargarHistorialDesdeSupabase();
       }
     });
@@ -2715,17 +2716,27 @@
   async function cargarHistorialDesdeSupabase() {
     if (!supabase || !window.currentUser || !navigator.onLine) return;
 
+    const cid = window.currentUser.id;
+    actualizarClavesAlmacenamiento(cid);
+
     try {
-      console.log("Cargando historial desde Supabase...");
+      console.log("Cargando historial desde Supabase para:", cid);
       
       // 1. Obtener sesiones del cliente
       const { data: histData, error: histError } = await supabase
         .from('sesiones_historial')
         .select('*')
-        .eq('cliente_id', window.currentUser.id);
+        .eq('cliente_id', cid);
 
       if (histError) throw histError;
-      if (!histData || histData.length === 0) return;
+      
+      if (!histData || histData.length === 0) {
+        sesiones = [];
+        storageSet(STORAGE_KEY, JSON.stringify(sesiones));
+        updateNextIds();
+        renderAll();
+        return;
+      }
 
       const sessionIds = histData.map(s => s.id);
 
@@ -2784,13 +2795,7 @@
       
       // Sincronizar IDs y redibujar
       updateNextIds();
-      var ES_PAGINA_CLIENTE = !!window.INJECTED_CLIENT_ID || window.location.pathname.includes('/clientes/');
-      if (ES_PAGINA_CLIENTE) {
-        renderAll();
-      } else {
-        renderFullApp();
-        updateSelect();
-      }
+      renderAll();
 
     } catch (e) {
       console.error("Error al cargar historial desde Supabase:", e);
@@ -2935,6 +2940,8 @@
         restablecerPlanDefecto();
         toast("Sin plan en la nube. Cargando plantilla limpia.", "info");
       }
+
+
       renderFullApp();
       renderWeekdayConfig();
     } catch (err) {
@@ -3598,6 +3605,19 @@
   let MODO_CLIENTE = _clienteId !== '' || (window.userProfile && window.userProfile.rol === 'cliente');
   let STORAGE_KEY = _clienteId ? ('sp_cliente_' + _clienteId) : 'sobrecarga_v5';
   let CICLO_KEY   = _clienteId ? ('sp_ciclo_'   + _clienteId) : 'fechaInicioCiclo';
+
+  function actualizarClavesAlmacenamiento(clienteId = null) {
+    const id = clienteId || _clienteId || (window.currentUser ? window.currentUser.id : null);
+    if (id) {
+      STORAGE_KEY = 'sp_cliente_' + id;
+      CICLO_KEY = 'sp_ciclo_' + id;
+    } else {
+      STORAGE_KEY = 'sobrecarga_v5';
+      CICLO_KEY = 'fechaInicioCiclo';
+    }
+    console.log("Claves de almacenamiento actualizadas dinámicamente:", { STORAGE_KEY, CICLO_KEY });
+  }
+
   const CONFIG_KEY = 'sp_config_v1';
   let sesiones = [];
   let activeTab = 'plan';
