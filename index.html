@@ -21,6 +21,16 @@
     (function() {
       try {
         localStorage.removeItem('pwa_client_url');
+        
+        // Comprobación síncrona rápida de la existencia del token de sesión de Supabase
+        const sessionKey = 'sb-szqitksfxiuuiljftlrl-auth-token';
+        const sessionData = localStorage.getItem(sessionKey);
+        
+        if (!sessionData) {
+          // Si no hay datos de sesión localmente, redirigir instantáneamente al login
+          sessionStorage.setItem('auth_redirect_origin', window.location.href);
+          window.location.replace('login.html');
+        }
       } catch(e) {}
     })();
   </script>
@@ -88,6 +98,13 @@
       -webkit-text-size-adjust: 100%;
       text-size-adjust: 100%;
       min-height: 100vh;
+    }
+    body {
+      opacity: 0;
+      transition: opacity 0.25s ease-in-out;
+    }
+    body.auth-ready {
+      opacity: 1;
     }
     header {
       background: rgba(15, 15, 20, 0.92);
@@ -2770,7 +2787,19 @@
 
   // Verificar la sesión activa de Supabase
   if (supabase) {
+    // Temporizador de respaldo de seguridad: Si pasan 3 segundos y el body no se ha revelado,
+    // forzar la revelación para permitir que la app funcione offline o muestre su estado
+    const authFallbackTimeout = setTimeout(() => {
+      if (!document.body.classList.contains('auth-ready')) {
+        console.warn("Límite de tiempo de espera de autenticación alcanzado. Revelando interfaz en modo respaldo.");
+        document.body.classList.add('auth-ready');
+      }
+    }, 3000);
+
     supabase.auth.getSession().then(({ data, error }) => {
+      // Limpiar temporizador de respaldo ya que el callback de Supabase respondió
+      clearTimeout(authFallbackTimeout);
+
       if (error || !data.session) {
         try {
           sessionStorage.setItem('auth_redirect_origin', window.location.href);
@@ -2783,7 +2812,14 @@
         comprobarRolYAdaptarUI(window.currentUser);
         actualizarClavesAlmacenamiento();
         cargarHistorialDesdeSupabase();
+        
+        // Revelar suavemente la interfaz al confirmar autenticación exitosa
+        document.body.classList.add('auth-ready');
       }
+    }).catch(err => {
+      clearTimeout(authFallbackTimeout);
+      console.error("Error al obtener sesión:", err);
+      window.location.replace('login.html');
     });
   }
 
