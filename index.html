@@ -2173,14 +2173,14 @@
     <div class="nav-container">
       <!-- Grupo 1: Plan de Entrenamiento -->
       <div class="nav-group nav-group-plan">
-        <div class="nav-group-label">🏋️ Planificación</div>
+        <div class="nav-group-label" style="display:inline-flex; align-items:center;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px; vertical-align:-1px;"><path d="M6.5 6.5h11M6.5 4h-2a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h2M17.5 4h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-2"></path></svg>Planificación</div>
         <div class="nav-group-tabs">
           <button class="tab tab-plan-btn" id="tab-plan"><svg class="tab-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px; vertical-align:-3px;"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>Mi Plan</button>
         </div>
       </div>
       <!-- Grupo 2: Sobrecarga Progresiva -->
       <div class="nav-group nav-group-tracker">
-        <div class="nav-group-label">💪 Sobrecarga Progresiva</div>
+        <div class="nav-group-label" style="display:inline-flex; align-items:center;"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px; vertical-align:-1px;"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>Sobrecarga Progresiva</div>
         <div class="nav-group-tabs">
           <button class="tab active" id="tab-hist"><svg class="tab-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px; vertical-align:-3px;"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path></svg>Historial</button>
           <button class="tab" id="tab-chart"><svg class="tab-icon" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px; vertical-align:-3px;"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>Progresión</button>
@@ -2189,11 +2189,8 @@
         </div>
       </div>
     </div>
-  </div>
-  <!-- HISTORIAL -->
-  <div id="panel-hist">
-    <div class="top-bar" style="margin-top:-0.5rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
-      <div id="dashboardGreeting" style="font-size: 18px; font-weight: 700; color: var(--text); flex:1;">Hola 👋</div>
+     <div class="top-bar" style="margin-top:-0.5rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+      <div id="dashboardGreeting" style="font-size: 18px; font-weight: 700; color: var(--text); flex:1; display:inline-flex; align-items:center;">Hola <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:8px; display:inline-block; vertical-align:middle;"><path d="M18 11V6a2 2 0 0 0-2-2 2 2 0 0 0-2 2v5"></path><path d="M14 10V4a2 2 0 0 0-2-2 2 2 0 0 0-2 2v6"></path><path d="M10 10.5V6a2 2 0 0 0-2-2 2 2 0 0 0-2 2v4.5"></path><path d="M6 10v6a6 6 0 0 0 6 6h1a6 6 0 0 0 5-5.5v-6.5"></path></svg></div>
       <select id="ejercicioSelect" style="min-width:180px; max-width:280px;">
         <option value="">Todos los ejercicios</option>
       </select>
@@ -2213,7 +2210,7 @@
         Sin esa informaci&oacute;n, ese esfuerzo se pierde en el aire.
         Un registro completo convierte cada sesi&oacute;n en informaci&oacute;n &uacute;til en la toma de decisiones acertadas.
       </p>
-      <span class="hook-closing" id="dynamicHookSubtext">&#9888;&#65039; Sin historial no hay progresi&oacute;n inteligente, registra tu entrenamiento hoy y super&aacute;te ma&ntilde;ana.&#128293;</span>
+      <span class="hook-closing" id="dynamicHookSubtext" style="display:inline-flex; align-items:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px; display:inline-block; vertical-align:-2px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg> Sin historial no hay progresi&oacute;n inteligente, registra tu entrenamiento hoy y super&aacute;te ma&ntilde;ana. <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ef4444" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:6px; display:inline-block; vertical-align:-2px;"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 3z"></path></svg></span>
     </div>
     <div class="section-title">Historial de sesiones</div>
     <div class="table-wrap">
@@ -2270,14 +2267,13 @@
   </div>
   <div id="panel-plan" style="display:none">
 <div class="document-container" id="trainingPlanContainer">
-    <!-- Toolbar -->
     <div class="toolbar">
-        <button id="addGlobalDayBtn">➕ Añadir día</button>
-        <button id="addCustomVarBtn">➕ Añadir variable global</button>
-        <button id="calc1RMBtn" style="background:#7b2ff7;">🧮 Calculadora 1RM</button>
+        <button id="addGlobalDayBtn"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px; vertical-align:-1px;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>Añadir día</button>
+        <button id="addCustomVarBtn"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px; vertical-align:-1px;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>Añadir variable global</button>
+        <button id="calc1RMBtn" style="background:#7b2ff7;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px; vertical-align:-1px;"><rect x="4" y="2" width="16" height="20" rx="2" ry="2"></rect><line x1="9" y1="22" x2="9" y2="16"></line><line x1="15" y1="22" x2="15" y2="16"></line><line x1="9" y1="16" x2="15" y2="16"></line><line x1="9" y1="12" x2="15" y2="12"></line><line x1="9" y1="8" x2="15" y2="8"></line><line x1="12" y1="8" x2="12" y2="12"></line></svg>Calculadora 1RM</button>
     </div>
 <div id="planFooterBrand" style="text-align: center; margin-top: 40px; padding-top: 20px; border-top: 2px solid #e2e8f0; font-size: 0.75rem; color: #64748b;">
-    👑 Exclusivo para ti por Evolution Lab | 🔬 Diseñado bajo evidencia científica |  El cuerpo hace lo que la mente ordena.
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px; display:inline-block; vertical-align:-1px;"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg> Exclusivo para ti por Evolution Lab | <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px; display:inline-block; vertical-align:-1px;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg> Diseñado bajo evidencia científica | El cuerpo hace lo que la mente ordena.
 </div>
     <!-- PORTADA (con datos de la autora/entrenador y redes) -->
     <div class="cover-page">
@@ -2343,49 +2339,49 @@
     </div>
 </div>
         <div style="margin-bottom: 20px;">
-            <label style="font-weight:600;">🏷️ Dirigido a</label>
+            <label style="font-weight:600;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px; vertical-align:-2px;"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>Dirigido a</label>
             <input type="text" id="userName" style="width:100%; padding:12px; border-radius:20px; border: 1px solid #000;" value="Nombre Usuari@">
         </div>
         <div style="margin-bottom: 20px;">
-            <label style="font-weight:600;">🎯 Objetivo</label>
+            <label style="font-weight:600;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px; vertical-align:-2px;"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg>Objetivo</label>
             <input type="text" id="userGoal" style="width:100%; padding:12px; border-radius:20px; border: 1px solid #000;" value="Eejemplo: Hipertrofia">
         </div>
         <div style="margin-bottom: 20px;">
-            <label style="font-weight:600;">📅 Fecha inicio</label>
+            <label style="font-weight:600;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px; vertical-align:-2px;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>Fecha inicio</label>
             <input type="date" id="startDate" style="padding:10px; border-radius:20px; border: 1px solid #000;" value="2026-05-10">
         </div>
         <div style="margin-bottom: 20px;">
-            <label style="font-weight:600;">⏳ Vigencia del Plan (días)</label>
+            <label style="font-weight:600;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px; vertical-align:-2px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>Vigencia del Plan (días)</label>
             <input id="planVigenciaPlan" type="number" min="1" max="365" value="28" style="width:100%; padding:12px; border-radius:20px; border: 1px solid #000; background:rgba(255,255,255,0.05); color:white;">
         </div>
         <!-- Configuración de días de la semana -->
         <div class="weekday-config" id="weekdayConfigSection">
-            <div class="weekday-config-title">📅 Días de entrenamiento por semana</div>
+            <div class="weekday-config-title"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px; vertical-align:-2px;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>Días de entrenamiento por semana</div>
             <p style="font-size:0.78rem; color:#475569; margin-bottom:12px;">Asigna cada día del plan a un día de la semana. El cliente verá automáticamente qué le toca hoy.</p>
             <div class="weekday-grid" id="weekdayGrid"></div>
         </div>
         <!-- Nuevos campos para el elaborador / entrenador -->
         <div style="margin-bottom: 20px; border-top: 2px solid #eef2f6; padding-top: 15px;">
-            <label style="font-weight:600;">✍️ Elaborado por</label>
+            <label style="font-weight:600;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px; vertical-align:-2px;"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>Elaborado por</label>
             <input type="text" id="trainerName" style="width:100%; padding:12px; border-radius:20px; border: 1px solid #000;" value="Escribe tu nombre...">
         </div>
         <div class="social-row">
             <div class="social-item">
-                <label>📱 WhatsApp </label>
+                <label><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px; vertical-align:-2px;"><rect x="5" y="2" width="14" height="20" rx="2" ry="2"></rect><line x1="12" y1="18" x2="12.01" y2="18"></line></svg>WhatsApp </label>
                 <input type="text" id="whatsappLink" placeholder="https://wa.me/123456789" value="https://wa.me/123456789">
             </div>
             <div class="social-item">
-                <label>📸 Instagram </label>
+                <label><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px; vertical-align:-2px;"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>Instagram </label>
                 <input type="text" id="instagramLink" placeholder="https://instagram.com/tuusuario" value="https://instagram.com/tu_perfil">
             </div>
         </div>
         <div class="note-area">
-            <label style="font-weight:600;">📝 Nota / Descripción</label>
-            <textarea id="globalNote" rows="3">🏋️ Recuerda calentar 10 min antes. Respeta el RIR y tempo indicado. Hidrátate bien.</textarea>
+            <label style="font-weight:600;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px; vertical-align:-2px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>Nota / Descripción</label>
+            <textarea id="globalNote" rows="3">Recuerda calentar 10 min antes. Respeta el RIR y tempo indicado. Hidrátate bien.</textarea>
         </div>
     </div>
     <div class="definitions-section" style="margin-bottom: 30px;">
-    <h2 style="font-size: 1.4rem; font-weight: 700; color: #f97316; border-left: 5px solid #f97316; padding-left: 15px; margin-bottom: 15px;">📖 Diccionario de variables</h2>
+    <h2 style="font-size: 1.4rem; font-weight: 700; color: #f97316; border-left: 5px solid #f97316; padding-left: 15px; margin-bottom: 15px;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px; vertical-align:-3px;"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path></svg>Diccionario de variables</h2>
     <div id="definitionsContainer"></div>
 </div>
     <div id="globalVarsPanelContainer"></div>
@@ -3021,7 +3017,7 @@
 
         const saludo = document.getElementById('dashboardGreeting');
         if (saludo) {
-          saludo.innerHTML = `Hola, ${nombreCache.split(' ')[0]} 👋`;
+          saludo.innerHTML = `Hola, ${escapeHtml(nombreCache.split(' ')[0])} <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:8px; display:inline-block; vertical-align:middle;"><path d="M18 11V6a2 2 0 0 0-2-2 2 2 0 0 0-2 2v5"></path><path d="M14 10V4a2 2 0 0 0-2-2 2 2 0 0 0-2 2v6"></path><path d="M10 10.5V6a2 2 0 0 0-2-2 2 2 0 0 0-2 2v4.5"></path><path d="M6 10v6a6 6 0 0 0 6 6h1a6 6 0 0 0 5-5.5v-6.5"></path></svg>`;
         }
 
         if (MODO_CLIENTE) {
@@ -3038,7 +3034,7 @@
 
           const headerNombre = document.getElementById('clienteNombreHeader');
           if (headerNombre) {
-            headerNombre.textContent = '👤 ' + nombreCache;
+            headerNombre.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px; display:inline-block; vertical-align:-1px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>${escapeHtml(nombreCache)}`;
             headerNombre.style.display = 'inline-block';
           }
 
@@ -3119,7 +3115,7 @@
         // Mostrar aviso visual con detalles técnicos para ayudar al usuario
         const saludo = document.getElementById('dashboardGreeting');
         if (saludo) {
-          saludo.innerHTML = `Hola, Atleta 👋 <div style="font-size: 11px; font-weight: 500; color: #ff4d4d; margin-top: 4px;">⚠️ Error de Base de Datos: ${error.message}. Asegúrate de que el ID en 'profiles' coincida con tu Auth ID: ${user.id}</div>`;
+          saludo.innerHTML = `Hola, Atleta <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:8px; display:inline-block; vertical-align:middle;"><path d="M18 11V6a2 2 0 0 0-2-2 2 2 0 0 0-2 2v5"></path><path d="M14 10V4a2 2 0 0 0-2-2 2 2 0 0 0-2 2v6"></path><path d="M10 10.5V6a2 2 0 0 0-2-2 2 2 0 0 0-2 2v4.5"></path><path d="M6 10v6a6 6 0 0 0 6 6h1a6 6 0 0 0 5-5.5v-6.5"></path></svg> <div style="font-size: 11px; font-weight: 500; color: #ff4d4d; margin-top: 4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ff4d4d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px; display:inline-block; vertical-align:-1px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg> Error de Base de Datos: ${escapeHtml(error.message)}. Asegúrate de que el ID en 'profiles' coincida con tu Auth ID: ${escapeHtml(user.id)}</div>`;
         }
         return;
       }
@@ -3152,7 +3148,7 @@
         // Adaptar saludo y vista de entrenador/cliente
         const saludo = document.getElementById('dashboardGreeting');
         if (saludo) {
-          saludo.innerHTML = `Hola, ${data.nombre.split(' ')[0]} 👋`;
+          saludo.innerHTML = `Hola, ${escapeHtml(data.nombre.split(' ')[0])} <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:8px; display:inline-block; vertical-align:middle;"><path d="M18 11V6a2 2 0 0 0-2-2 2 2 0 0 0-2 2v5"></path><path d="M14 10V4a2 2 0 0 0-2-2 2 2 0 0 0-2 2v6"></path><path d="M10 10.5V6a2 2 0 0 0-2-2 2 2 0 0 0-2 2v4.5"></path><path d="M6 10v6a6 6 0 0 0 6 6h1a6 6 0 0 0 5-5.5v-6.5"></path></svg>`;
         }
 
         // Si es cliente, ocultar paneles de entrenador y cargar plan dinámico
@@ -3171,7 +3167,7 @@
           // Mostrar nombre del cliente en la cabecera
           const headerNombre = document.getElementById('clienteNombreHeader');
           if (headerNombre) {
-            headerNombre.textContent = '👤 ' + data.nombre;
+            headerNombre.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px; display:inline-block; vertical-align:-1px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>${escapeHtml(data.nombre)}`;
             headerNombre.style.display = 'inline-block';
           }
 
@@ -3281,7 +3277,7 @@
         
         const saludo = document.getElementById('dashboardGreeting');
         if (saludo) {
-          saludo.innerHTML = `Hola, Atleta 👋 <div style="font-size: 11px; font-weight: 500; color: #ff4d4d; margin-top: 4px;">⚠️ Perfil no encontrado. Asegúrate de crear una fila en la tabla 'profiles' con el ID: ${user.id}</div>`;
+          saludo.innerHTML = `Hola, Atleta <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:8px; display:inline-block; vertical-align:middle;"><path d="M18 11V6a2 2 0 0 0-2-2 2 2 0 0 0-2 2v5"></path><path d="M14 10V4a2 2 0 0 0-2-2 2 2 0 0 0-2 2v6"></path><path d="M10 10.5V6a2 2 0 0 0-2-2 2 2 0 0 0-2 2v4.5"></path><path d="M6 10v6a6 6 0 0 0 6 6h1a6 6 0 0 0 5-5.5v-6.5"></path></svg> <div style="font-size: 11px; font-weight: 500; color: #ff4d4d; margin-top: 4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ff4d4d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px; display:inline-block; vertical-align:-1px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg> Perfil no encontrado. Asegúrate de crear una fila en la tabla 'profiles' con el ID: ${escapeHtml(user.id)}</div>`;
         }
       }
     }).catch(err => {
@@ -3441,12 +3437,6 @@
   let sesiones = [];
   let nextSesionId = 1;
   let nextEjercicioId = 1;
-  let activeTab = 'hist';
-  let chart = null;
-  let tempEjercicios = [];
-  // ===============================================================
-  // ===== MOTOR DE SOBRECARGA PROGRESIVA — REGLAS POR DEFECTO =====
-  // ===============================================================
   const DEFAULT_CONFIG = {
     minSesiones: 3,          // mínimo de sesiones para evaluar un ejercicio
     ventana: 4,              // cuántas sesiones recientes mirar
@@ -3463,7 +3453,7 @@
       id: 'subir_peso_reps',
       tipo: 'subir',
       activa: true,
-      titulo: '⬆️ Subir peso',
+      titulo: 'Subir peso',
       mensaje: 'En {ejercicio} el RIR promedio fue {valor} (te quedan muchas reps en reserva — el peso es poco retador) durante las últimas sesiones. Intentá subir el peso un {porciento}% la próxima vez (~{peso} kg).',
       // RIR = Repeticiones en Reserva. 0 = fallo muscular, 1-2 = cerca del fallo, 3+ = demasiado margen.
       // Si el RIR promedio es ALTO (≥ umbral), el peso es demasiado fácil → sugerir subir peso.
@@ -3476,7 +3466,7 @@
       id: 'subir_peso_reps_objetivo',
       tipo: 'subir',
       activa: true,
-      titulo: '⬆️ Subir peso — Reps objetivo alcanzadas',
+      titulo: 'Subir peso — Reps objetivo alcanzadas',
       mensaje: 'En {ejercicio} ({grupo}) alcanzaste o superaste el objetivo de {reps_objetivo} reps en al menos {series_minimas} series, durante {sesiones_consecutivas} sesiones seguidas. Es momento de subir el peso un {porciento}% (~{peso} kg).',
       // Umbrales de reps por ejercicio (editables desde el panel)
       reps_por_ejercicio: {
@@ -3493,7 +3483,7 @@
       id: 'subir_reps_antes_peso',
       tipo: 'subir',
       activa: true,
-      titulo: '⬆️ Agregar repeticiones',
+      titulo: 'Agregar repeticiones',
       mensaje: 'En {ejercicio} tu volumen creció {porciento}% en las últimas sesiones. Considerá agregar 1-2 reps por serie antes de subir el peso.',
       umbral_crecimiento_vol: 8, // % de crecimiento de volumen que activa esta sugerencia
       sesiones_consecutivas: 2,
@@ -3502,7 +3492,7 @@
       id: 'mantener_peso',
       tipo: 'mantener',
       activa: true,
-      titulo: '= Mantener peso',
+      titulo: 'Mantener peso',
       mensaje: 'En {ejercicio} el volumen se mantuvo estable (±{valor}%). Seguí con {peso} kg y enfocate en mejorar la técnica o reducir el descanso.',
       umbral_estabilidad: 5, // ±% para considerar "estable"
       sesiones_consecutivas: 3,
@@ -3511,7 +3501,7 @@
       id: 'bajar_peso_rir_alto',
       tipo: 'bajar',
       activa: true,
-      titulo: '⬇️ Bajar peso — Cerca del fallo',
+      titulo: 'Bajar peso — Cerca del fallo',
       mensaje: 'En {ejercicio} el RIR promedio fue {valor} (muy cerca del fallo muscular) pero el volumen bajó. El peso puede ser demasiado alto para sostener la progresión. Considerá bajar un {porciento}% (~{peso} kg) para recuperar calidad de ejecución.',
       // RIR = Repeticiones en Reserva. 0=fallo muscular, 1=1 rep en reserva, 2=2 reps, etc.
       // RIR BAJO (≤ umbral) + volumen cayendo = el peso es demasiado alto → bajar peso
@@ -3523,7 +3513,7 @@
       id: 'bajar_peso_regresion',
       tipo: 'bajar',
       activa: true,
-      titulo: '⬇️ Bajar peso — Regresión de volumen',
+      titulo: 'Bajar peso — Regresión de volumen',
       mensaje: 'El volumen en {ejercicio} cayó {porciento}% en las últimas {valor} sesiones seguidas. Considerá bajar el peso un 5-10% y reconstruir progresión.',
       reduccion_porciento: 7,
     },
@@ -3531,7 +3521,7 @@
       id: 'descanso_excesivo',
       tipo: 'descanso',
       activa: true,
-      titulo: '😴 Retomar tras descanso largo',
+      titulo: 'Retomar tras descanso largo',
       mensaje: 'Han pasado {valor} días desde la última sesión de {ejercicio}. Retomá con {porciento}% menos de peso (~{peso} kg) para evitar el sobreentrenamiento.',
       reduccion_porciento: 10,
     },
@@ -3539,7 +3529,7 @@
       id: 'descanso_corto',
       tipo: 'info',
       activa: true,
-      titulo: '⏱ Descanso entre series — Alto',
+      titulo: 'Descanso entre series — Alto',
       mensaje: 'En {ejercicio} el descanso promedio fue {valor}s. Si querés mayor densidad de entrenamiento, reducí a 90-120s entre series.',
       umbral_descanso_alto: 180, // segundos
     },
@@ -3547,7 +3537,7 @@
       id: 'estancamiento',
       tipo: 'cambio',
       activa: true,
-      titulo: '🔄 Posible estancamiento',
+      titulo: 'Posible estancamiento',
       mensaje: 'En {ejercicio} no hubo mejora en {valor} sesiones seguidas (mismo peso y repeticiones, sin progresar el 1RM estimado). Considerá cambiar el ángulo, el agarre, o sustituir por un ejercicio similar durante 2-3 semanas.',
       sesiones_sin_mejora_peso_reps: 4, // sesiones consecutivas sin superar peso ni reps
     },
@@ -3555,7 +3545,7 @@
       id: 'racha_positiva',
       tipo: 'subir',
       activa: true,
-      titulo: '🔥 Racha de progreso',
+      titulo: 'Racha de progreso',
       mensaje: '¡Excelente! En {ejercicio} mejoraste el volumen {valor} sesiones seguidas. Seguí así y considerá subir el peso en la próxima sesión.',
       sesiones_racha: 3,
     },
@@ -3563,24 +3553,23 @@
       id: 'primer_sesion',
       tipo: 'info',
       activa: true,
-      titulo: '🏁 Primera sesión registrada',
+      titulo: 'Primera sesión registrada',
       mensaje: 'Registraste tu primera sesión de {ejercicio}. Necesitás al menos 3 sesiones para que el motor de progresión te dé sugerencias personalizadas.',
     },
     {
       id: 'record_personal',
       tipo: 'subir',
       activa: true,
-      titulo: '🏆 ¡Nuevo Récord Personal!',
+      titulo: '¡Nuevo Récord Personal!',
       mensaje: '¡Excelente! En {ejercicio} lograste tu mejor 1RM estimado histórico ({valor} kg). Tu récord anterior era de {peso} kg.',
     },
     {
       id: 'deload_sugerido',
       tipo: 'descanso',
       activa: true,
-      titulo: '📉 Deload Sugerido',
+      titulo: 'Deload Sugerido',
       mensaje: 'Llevas entrenando {ejercicio} durante {valor} semanas consecutivas sin descansos largos. Considerá hacer una semana de descarga (bajar volumen/peso 40-50%) para disipar la fatiga acumulada y prevenir lesiones.',
       semanas_consecutivas: 6,
-    },
   ];
   // ============================================================
   // ===== ESTADO DE CONFIGURACIÓN (carga desde localStorage) ===
@@ -3914,11 +3903,32 @@
     const notifs = analizarSobrecargaProgresiva();
     if (notifs.length === 0) return;
     notifs.forEach((n, i) => {
+      let iconSvg = '';
+      if (n.id === 'record_personal') {
+        iconSvg = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffd700" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px; display:inline-block; vertical-align:middle;"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.45 1-1 1H4v2h16v-2h-5c-.55 0-1-.45-1-1v-2.34"></path><path d="M12 2a6 6 0 0 1 6 6v3.5c0 1.66-1.34 3-3 3H9a3 3 0 0 1-3-3V8a6 6 0 0 1 6-6z"></path></svg>`;
+      } else if (n.id === 'racha_positiva') {
+        iconSvg = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ff7e2e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px; display:inline-block; vertical-align:middle;"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 3z"></path></svg>`;
+      } else if (n.id === 'primer_sesion') {
+        iconSvg = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#2ecc71" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px; display:inline-block; vertical-align:middle;"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z"></path><line x1="4" y1="22" x2="4" y2="15"></line></svg>`;
+      } else if (n.tipo === 'subir') {
+        iconSvg = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--green)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px; display:inline-block; vertical-align:middle;"><line x1="12" y1="19" x2="12" y2="5"></line><polyline points="5 12 12 5 19 12"></polyline></svg>`;
+      } else if (n.tipo === 'bajar') {
+        iconSvg = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--red)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px; display:inline-block; vertical-align:middle;"><line x1="12" y1="5" x2="12" y2="19"></line><polyline points="19 12 12 19 5 12"></polyline></svg>`;
+      } else if (n.tipo === 'mantener') {
+        iconSvg = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--amber)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px; display:inline-block; vertical-align:middle;"><line x1="5" y1="9" x2="19" y2="9"></line><line x1="5" y1="15" x2="19" y2="15"></line></svg>`;
+      } else if (n.tipo === 'descanso') {
+        iconSvg = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--blue)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px; display:inline-block; vertical-align:middle;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>`;
+      } else if (n.tipo === 'cambio') {
+        iconSvg = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#8E44AD" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px; display:inline-block; vertical-align:middle;"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>`;
+      } else {
+        iconSvg = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00d4ff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px; display:inline-block; vertical-align:middle;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`;
+      }
+
       const div = document.createElement('div');
       div.className = `sp-notif-banner sp-${n.tipo}`;
       div.innerHTML = `
         <div class="sp-notif-header">
-          <span>${n.titulo}</span>
+          <span style="display:inline-flex; align-items:center;">${iconSvg}${n.titulo}</span>
           <button class="sp-notif-close" onclick="this.closest('.sp-notif-banner').remove()">✕</button>
         </div>
         <div class="sp-notif-body">${escapeHtml(n.mensaje)}</div>
@@ -4099,7 +4109,7 @@
     `).join('');
   }
   function tipoLabel(tipo) {
-    const m = { subir: '⬆️ Subir', bajar: '⬇️ Bajar', mantener: '= Mantener', descanso: '😴 Descanso', cambio: '🔄 Cambio', info: 'ℹ️ Info' };
+    const m = { subir: 'Subir', bajar: 'Bajar', mantener: 'Mantener', descanso: 'Descanso', cambio: 'Cambio', info: 'Info' };
     return m[tipo] || tipo;
   }
   // ============================================================
@@ -4445,10 +4455,10 @@
       else if (percent < 0) trendHtml = `<span style="color:var(--red); font-size:12px; margin-left:6px; font-weight:700;">↓ ${percent.toFixed(1)}%</span>`;
     }
     document.getElementById('metrics').innerHTML = `
-      <div class="mcard" style="background: linear-gradient(135deg, rgba(255,255,255,0.03), transparent); border: 1px solid var(--border2); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);"><div class="mcard-label">Mejor 1RM estimado</div><div class="mcard-value" style="color: var(--accent);">${mejor1RMGlobal > 0 ? mejor1RMGlobal.toFixed(1) : '-'} <span style="font-size:14px; color:var(--text);">kg</span> 🏆</div></div>
+      <div class="mcard" style="background: linear-gradient(135deg, rgba(255,255,255,0.03), transparent); border: 1px solid var(--border2); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);"><div class="mcard-label">Mejor 1RM estimado</div><div class="mcard-value" style="color: var(--accent);">${mejor1RMGlobal > 0 ? mejor1RMGlobal.toFixed(1) : '-'} <span style="font-size:14px; color:var(--text);">kg</span> <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:8px; display:inline-block; vertical-align:middle;"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.45 1-1 1H4v2h16v-2h-5c-.55 0-1-.45-1-1v-2.34"></path><path d="M12 2a6 6 0 0 1 6 6v3.5c0 1.66-1.34 3-3 3H9a3 3 0 0 1-3-3V8a6 6 0 0 1 6-6z"></path></svg></div></div>
       <div class="mcard" style="background: linear-gradient(135deg, rgba(255,255,255,0.03), transparent); border: 1px solid var(--border2); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);"><div class="mcard-label">Volumen última sesión</div><div class="mcard-value">${ultimoVolumen > 0 ? ultimoVolumen.toLocaleString() : '-'} <span style="font-size:14px; color:var(--text);">kg</span>${trendHtml}</div></div>
-      <div class="mcard" style="background: linear-gradient(135deg, rgba(255,255,255,0.03), transparent); border: 1px solid var(--border2); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);"><div class="mcard-label">${ejercicioFiltro ? 'Sesiones' : 'Ejercicios'}</div><div class="mcard-value">${count} 📊</div></div>
-      <div class="mcard" style="background: linear-gradient(135deg, rgba(255,255,255,0.03), transparent); border: 1px solid var(--border2); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);"><div class="mcard-label">RIR promedio</div><div class="mcard-value">${avgRpe} 🎯</div></div>
+      <div class="mcard" style="background: linear-gradient(135deg, rgba(255,255,255,0.03), transparent); border: 1px solid var(--border2); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);"><div class="mcard-label">${ejercicioFiltro ? 'Sesiones' : 'Ejercicios'}</div><div class="mcard-value">${count} <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:8px; display:inline-block; vertical-align:middle;"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg></div></div>
+      <div class="mcard" style="background: linear-gradient(135deg, rgba(255,255,255,0.03), transparent); border: 1px solid var(--border2); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);"><div class="mcard-label">RIR promedio</div><div class="mcard-value">${avgRpe} <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:8px; display:inline-block; vertical-align:middle;"><circle cx="12" cy="12" r="10"></circle><circle cx="12" cy="12" r="6"></circle><circle cx="12" cy="12" r="2"></circle></svg></div></div>
     `;
     // Update header session count
     const headerCountEl = document.getElementById('headerCount');
@@ -4487,7 +4497,7 @@
           semana = Math.floor(diffDays / 7) + 1;
       }
       
-      greetingEl.innerHTML = `Hola, ${nombreMostrar} 👋 <div style="font-size: 11px; font-weight: 500; color: var(--text2); margin-top: 2px;">Semana ${semana > 0 ? semana : 1} de entrenamiento</div>`;
+      greetingEl.innerHTML = `Hola, ${nombreMostrar} <div style="font-size: 11px; font-weight: 500; color: var(--text2); margin-top: 2px;">Semana ${semana > 0 ? semana : 1} de entrenamiento</div>`;
     }
     // Update dynamic banner
     const dynamicHookBanner = document.getElementById('dynamicHookBanner');
@@ -4499,7 +4509,7 @@
             dynamicHookBanner.style.border = ''; // Remover para usar la clase CSS
             dynamicHookText.innerHTML = `<strong>Lo que no se mide, no se puede mejorar.</strong><br>
 La sobrecarga progresiva &mdash; el principio m&aacute;s importante del entrenamiento de fuerza &mdash;
-requiere que sepas exactamente qu&eacute; y cu&aacute;nto hiciste la &uacute;ltima vez para poder superarlo.
+requires que sepas exactamente qu&eacute; y cu&aacute;nto hiciste la &uacute;ltima vez para poder superarlo.
 Sin esa informaci&oacute;n, ese esfuerzo se pierde en el aire.
 Un registro completo convierte cada sesi&oacute;n en informaci&oacute;n &uacute;til en la toma de decisiones acertadas.`;
             dynamicHookSubtext.innerHTML = `&#9888;&#65039; Sin historial no hay progresi&oacute;n inteligente, registra tu entrenamiento hoy y super&aacute;te ma&ntilde;ana.&#128293;`;
@@ -4507,8 +4517,8 @@ Un registro completo convierte cada sesi&oacute;n en informaci&oacute;n &uacute;
             const countSesiones = sesiones.length;
             dynamicHookBanner.style.background = 'linear-gradient(135deg, rgba(0,212,255,0.08) 0%, rgba(123,47,247,0.08) 100%)';
             dynamicHookBanner.style.border = '1px solid rgba(123,47,247,0.2)';
-            dynamicHookText.innerHTML = `<strong style="font-size:18px;">🔥 ${countSesiones} sesiones completadas</strong>`;
-            dynamicHookSubtext.innerHTML = `¡Sigue así! El progreso se construye día a día. 🚀`;
+            dynamicHookText.innerHTML = `<strong style="font-size:18px; display:inline-flex; align-items:center;"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ff7e2e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px; display:inline-block; vertical-align:middle;"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 3z"/></svg> ${countSesiones} sesiones completadas</strong>`;
+            dynamicHookSubtext.innerHTML = `¡Sigue así! El progreso se construye día a día. <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#00d4ff" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:6px; display:inline-block; vertical-align:-2px;"><path d="M4.5 16.5c-1.5 1.25-2.5 3.5-2.5 3.5s2.25-1 3.5-2.5M12 2c0 0-4.5 1-6.5 5.5l9 9c4.5-2 5.5-6.5 5.5-6.5s-1.5-.5-3.5-1M12 2s.5 1.5 1 3.5M6 14s.5 1.5 1.5 3.5M9 9l-4 4M15 15l-4 4"/></svg>`;
         }
     }
   }
@@ -4548,7 +4558,7 @@ Un registro completo convierte cada sesi&oacute;n en informaci&oacute;n &uacute;
       if (!MODO_CLIENTE) {
         const sesion = sesiones.find(s => s.id === f.id_sesion);
         const esUnico = sesion && sesion.ejercicios.length <= 1;
-        btnEliminar = `<button class="del-btn" onclick="eliminarEjercicio(${f.id_sesion}, ${f.id_ej})" title="${esUnico ? 'Eliminar sesión completa' : 'Eliminar ejercicio'}" style="${esUnico ? 'background:#fee2e2;color:#b91c1c;' : ''}">🗑️</button>`;
+        btnEliminar = `<button class="del-btn" onclick="eliminarEjercicio(${f.id_sesion}, ${f.id_ej})" title="${esUnico ? 'Eliminar sesión completa' : 'Eliminar ejercicio'}" style="${esUnico ? 'background:#fee2e2;color:#b91c1c;' : ''}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>`;
       }
       html += `<tr>
         <td style="white-space:nowrap">${fechaForm}</td>
@@ -5042,7 +5052,7 @@ Un registro completo convierte cada sesi&oacute;n en informaci&oacute;n &uacute;
     var nombreVisible = _clienteId.replace(/-/g,' ').replace(/\b\w/g, c => c.toUpperCase());
     var headerNombre = document.getElementById('clienteNombreHeader');
     if (headerNombre) {
-      headerNombre.textContent = '👤 ' + nombreVisible;
+      headerNombre.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px; display:inline-block; vertical-align:-1px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>${escapeHtml(nombreVisible)}`;
       headerNombre.style.display = 'inline-block';
     }
     // Ocultar tab de config en modo cliente
@@ -5117,7 +5127,7 @@ let variableDefinitions = {
         const def = variableDefinitions[v.id] || '';
         html += `
     <div style="flex: 1; min-width: 250px; background: linear-gradient(135deg, rgba(255,255,255,0.03), transparent); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-radius: 16px; padding: 12px 15px; border: 1px solid var(--border2);">
-        <strong style="color: #f97316; font-size: 0.9rem;">🏷️ ${escapeHtml(v.label)}</strong>
+        <strong style="color: #f97316; font-size: 0.9rem; display:inline-flex; align-items:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px; vertical-align:-1px;"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>${escapeHtml(v.label)}</strong>
         <textarea class="definition-input" data-var-id="${v.id}" 
                   placeholder="Ej: Número de series por ejercicio" 
                   rows="5"
@@ -5162,7 +5172,7 @@ let variableDefinitions = {
         const container = document.getElementById("globalVarsPanelContainer");
         if (!container) return;
         let html = `<div class="global-vars-panel">
-                        <span style="font-weight:600;">📊 Variables activas:</span>`;
+                        <span style="font-weight:600; display:inline-flex; align-items:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px; vertical-align:-1px;"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>Variables activas:</span>`;
         globalVariables.forEach(v => {
             html += `<div class="badge-var">${escapeHtml(v.label)} 
                         <button class="remove-var-btn" data-var-id="${v.id}">✖</button>
@@ -5201,7 +5211,7 @@ let variableDefinitions = {
                                 `<input type="text" class="day-name-input" data-day-index="${idx}" value="${escapeHtml(day.name)}">`
                             }
                         </div>
-                        ${(typeof MODO_CLIENTE !== 'undefined' && MODO_CLIENTE) ? '' : `<button class="btn-remove-day" data-day-id="${day.id}">🗑️ Eliminar día</button>`}
+                        ${(typeof MODO_CLIENTE !== 'undefined' && MODO_CLIENTE) ? '' : `<button class="btn-remove-day" data-day-id="${day.id}" style="display:inline-flex; align-items:center;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px; vertical-align:-1px;"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>Eliminar día</button>`}
                     </div>
                     <div class="exercises-list" data-day-id="${day.id}">
             `;
@@ -6030,15 +6040,15 @@ function addGlobalVariable() {
             }
             container.className = 'today-banner rest-day';
             container.innerHTML = `
-                <div class="today-banner-title">📅 ${hoyStr}</div>
-                <div class="today-banner-day">🛌 Hoy es día de descanso</div>
+                <div class="today-banner-title" style="display:inline-flex; align-items:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px; vertical-align:-1px;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>${hoyStr}</div>
+                <div class="today-banner-day" style="display:inline-flex; align-items:center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px; vertical-align:-1px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 10"></polyline><line x1="12" y1="2" x2="12" y2="4"></line></svg>Hoy es día de descanso</div>
                 <div class="today-banner-meta">${cicloStr}${nextInfo ? ' · ' + nextInfo : ''}</div>
             `;
         } else {
             const dayName = getDayName(diaIndex);
             container.className = 'today-banner';
             container.innerHTML = `
-                <div class="today-banner-title">📅 Tu entrenamiento de hoy · ${hoyStr}</div>
+                <div class="today-banner-title" style="display:inline-flex; align-items:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px; vertical-align:-1px;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>Tu entrenamiento de hoy · ${hoyStr}</div>
                 <div class="today-banner-day">${dayName}</div>
                 <div class="today-banner-meta">${cicloStr}</div>
                 <button class="today-banner-btn" onclick="scrollToDayAndHighlight(${diaIndex})">Ver ejercicios →</button>
@@ -6079,7 +6089,7 @@ function addGlobalVariable() {
         orden.forEach(diaNum => {
             const nombre = diasNombres[diaNum];
             const isRest = weekdayMapping[diaNum] === -1;
-            let options = `<option value="-1"${isRest ? ' selected' : ''}>🛌 Descanso</option>`;
+            let options = `<option value="-1"${isRest ? ' selected' : ''}>Descanso</option>`;
             trainingDays.forEach((day, idx) => {
                 const sel = weekdayMapping[diaNum] === idx ? ' selected' : '';
                 options += `<option value="${idx}"${sel}>${escapeHtml(day.name)}</option>`;
@@ -6119,7 +6129,7 @@ function addGlobalVariable() {
         });
       }
       
-      ti.textContent = '🏷️ ' + (v ? v.label : varId.toUpperCase());
+      ti.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px; display:inline-block; vertical-align:-2px;"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>' + escapeHtml(v ? v.label : varId.toUpperCase());
       
       var defs = window.__varDefs || (typeof variableDefinitions !== 'undefined' ? variableDefinitions : {});
       
@@ -6494,7 +6504,7 @@ document.addEventListener('DOMContentLoaded', () => {
   <div class="tooltip-sheet">
     <div class="tooltip-sheet-handle"></div>
     <button class="tooltip-sheet-close" onclick="document.getElementById('varTooltipOverlay').classList.remove('open')">&times;</button>
-    <div class="tooltip-sheet-title" id="varTooltipTitle">🏷️ Variable</div>
+    <div class="tooltip-sheet-title" id="varTooltipTitle"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px; vertical-align:-2px;"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path><line x1="7" y1="7" x2="7.01" y2="7"></line></svg>Variable</div>
     <div class="tooltip-sheet-body" id="varTooltipBody"></div>
   </div>
 </div>
