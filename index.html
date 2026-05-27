@@ -15,48 +15,7 @@
   <link rel="icon" type="image/png" sizes="512x512" href="/icon.png">
   <title>Evolution Lab</title>
   <link id="pwa-manifest" rel="manifest" href="/manifest.json">
-  <script>
-    // Generar manifest dinámico según la URL actual para que si un cliente instala su HTML,
-    // la PWA se abra exactamente en su página de plan de entrenamiento y no en el editor del entrenador.
-    (function() {
-      try {
-        var currentPath = window.location.pathname || "/";
-        var manifestObj = {
-          "name": "Evolution Lab - Progressive Overload",
-          "short_name": "Evolution Lab",
-          "description": "Plataforma integral de planificación de entrenamiento y seguimiento de sobrecarga progresiva.",
-          "start_url": currentPath,
-          "scope": "/",
-          "display": "standalone",
-          "background_color": "#1a1a2e",
-          "theme_color": "#0f172a",
-          "orientation": "portrait-primary",
-          "icons": [
-            {
-              "src": "/icon-192.png",
-              "sizes": "192x192",
-              "type": "image/png",
-              "purpose": "any"
-            },
-            {
-              "src": "/icon.png",
-              "sizes": "512x512",
-              "type": "image/png",
-              "purpose": "any"
-            }
-          ]
-        };
-        var manifestStr = JSON.stringify(manifestObj);
-        var base64Manifest = btoa(unescape(encodeURIComponent(manifestStr)));
-        var manifestLink = document.getElementById('pwa-manifest');
-        if (manifestLink) {
-          manifestLink.href = 'data:application/json;base64,' + base64Manifest;
-        }
-      } catch (e) {
-        console.error('Error generando manifest dinámico:', e);
-      }
-    })();
-  </script>
+
   <script>
     // Limpieza de redirecciones heredadas del modelo offline antiguo para evitar bucles
     (function() {
