@@ -80,21 +80,49 @@
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
       --bg-image-url: url('/fondo.jpg');
-      --bg: #ffffff; --bg2: #f5f5f3; --bg3: #eeede8; --text: #1a1a18;
-      --text2: #6b6b67; --text3: #a0a09c; --border: rgba(0,0,0,0.1);
-      --border2: rgba(0,0,0,0.18); --radius: 8px; --radius-lg: 12px;
-      --green: #2a7a0c; --red: #A32D2D; --amber: #BA7517; --blue: #185FA5;
-      --green-light: #eaf5e1; --red-light: #fceaea; --accent: #185FA5;
-      --cyan: #00b4d8; --cyan-glow: rgba(0, 180, 216, 0.25);
+      --bg: rgba(15, 23, 42, 0.60);
+      --bg2: rgba(15, 23, 42, 0.45);
+      --bg3: #0b0f19;
+      --text: #f8fafc;
+      --text2: #94a3b8;
+      --text3: #64748b;
+      --border: rgba(255, 255, 255, 0.08);
+      --border2: rgba(255, 255, 255, 0.12);
+      --radius: 12px;
+      --radius-lg: 18px;
+      --green: #10b981;
+      --red: #f43f5e;
+      --amber: #f59e0b;
+      --blue: #00d4ff;
+      --green-light: rgba(16, 185, 129, 0.12);
+      --red-light: rgba(244, 63, 94, 0.12);
+      --accent: #7b2ff7;
+      --accent-glow: rgba(123, 47, 247, 0.35);
+      --cyan: #00d4ff;
+      --cyan-glow: rgba(0, 212, 255, 0.25);
     }
     @media (prefers-color-scheme: dark) {
       :root {
-        --bg: #1c1c1a; --bg2: #262624; --bg3: #2e2e2b; --text: #f0efe8;
-        --text2: #a0a09c; --text3: #6b6b67; --border: rgba(255,255,255,0.1);
-        --border2: rgba(255,255,255,0.18); --green: #7EC94A; --red: #F07070;
-        --amber: #F0A830; --blue: #76B4F0; --accent: #76B4F0;
-        --green-light: #1a2e0e; --red-light: #2e1010;
-        --cyan: #00d4ff; --cyan-glow: rgba(0, 212, 255, 0.25);
+        --bg: rgba(15, 23, 42, 0.60);
+        --bg2: rgba(15, 23, 42, 0.45);
+        --bg3: #0b0f19;
+        --text: #f8fafc;
+        --text2: #94a3b8;
+        --text3: #64748b;
+        --border: rgba(255, 255, 255, 0.08);
+        --border2: rgba(255, 255, 255, 0.12);
+        --radius: 12px;
+        --radius-lg: 18px;
+        --green: #10b981;
+        --red: #f43f5e;
+        --amber: #f59e0b;
+        --blue: #00d4ff;
+        --green-light: rgba(16, 185, 129, 0.12);
+        --red-light: rgba(244, 63, 94, 0.12);
+        --accent: #7b2ff7;
+        --accent-glow: rgba(123, 47, 247, 0.35);
+        --cyan: #00d4ff;
+        --cyan-glow: rgba(0, 212, 255, 0.25);
       }
     }
     html, body {
@@ -280,9 +308,10 @@
       background: rgba(255,255,255,0.05);
     }
     .tab.active {
-      background: rgba(255,255,255,0.1);
-      color: #fff;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+      background: linear-gradient(135deg, rgba(0, 212, 255, 0.15), rgba(123, 47, 247, 0.15));
+      color: #00d4ff;
+      border: 1px solid rgba(0, 212, 255, 0.2);
+      box-shadow: 0 0 12px rgba(0, 212, 255, 0.15);
     }
     .tab-plan-btn {
       font-size: 13px;
@@ -391,32 +420,35 @@
     .num { text-align: right; }
     .center { text-align: center; }
     .chart-card {
-      background: linear-gradient(135deg, rgba(255,255,255,0.03), transparent);
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.55), rgba(15, 23, 42, 0.25));
       border-radius: var(--radius-lg);
       border: 1px solid var(--border2);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
+      backdrop-filter: blur(16px) saturate(180%);
+      -webkit-backdrop-filter: blur(16px) saturate(180%);
       padding: 1.25rem;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.35);
     }
     .chart-legend { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 12px; font-size: 12px; }
     .legend-sq { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
     .form-section {
-      background: linear-gradient(135deg, rgba(255,255,255,0.03), transparent);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
+      background: linear-gradient(135deg, rgba(15, 23, 42, 0.55), rgba(15, 23, 42, 0.25));
+      backdrop-filter: blur(16px) saturate(180%);
+      -webkit-backdrop-filter: blur(16px) saturate(180%);
       border-radius: var(--radius-lg);
       border: 1px solid var(--border2);
       padding: 1.25rem;
+      box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.35);
     }
     .ejercicio-group {
-      background: rgba(255, 255, 255, 0.03);
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
+      background: rgba(15, 23, 42, 0.4);
+      backdrop-filter: blur(12px) saturate(140%);
+      -webkit-backdrop-filter: blur(12px) saturate(140%);
       border-radius: var(--radius);
       padding: 1rem;
       margin-bottom: 1.25rem;
       border: 1px solid rgba(255, 255, 255, 0.08);
       position: relative;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
     }
     .ejercicio-group input, .ejercicio-group select, .ejercicio-group textarea {
       background: rgba(255, 255, 255, 0.02) !important;
@@ -505,8 +537,18 @@
       gap: 6px;
     }
     .btn:active { transform: scale(0.97); }
-    .btn-primary { background: var(--text); color: var(--bg); }
-    .btn-primary:hover { opacity: 0.85; }
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent) 0%, var(--cyan) 100%);
+      color: #ffffff;
+      box-shadow: 0 4px 15px rgba(123, 47, 247, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .btn-primary:hover {
+      opacity: 0.95;
+      box-shadow: 0 6px 20px rgba(0, 212, 255, 0.45);
+      transform: translateY(-1px);
+    }
     .btn-ghost { background: transparent; border: 1px solid var(--border2); color: var(--text); }
     .btn-ghost:hover { background: var(--bg2); }
     .btn-danger { background: transparent; color: var(--red); border: 1px solid var(--border); }
@@ -816,24 +858,47 @@
            size: A4;
           }
         html {
-    background-color: #1a1a2e !important;
+            background-color: #0b0f19 !important;
         }
         body {
-    background: transparent !important;
+            background: transparent !important;
+            overflow-x: hidden;
+            position: relative;
         }
         body::before {
             content: '';
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            z-index: -1;
-            background-image: var(--bg-image-url);
+            inset: 0;
+            z-index: -2;
+            background-color: #0b0f19;
+            background-image: 
+                radial-gradient(at 10% 10%, rgba(123, 47, 247, 0.15) 0px, transparent 50%),
+                radial-gradient(at 90% 90%, rgba(0, 212, 255, 0.12) 0px, transparent 50%),
+                var(--bg-image-url);
             background-size: cover;
             background-position: center;
             background-repeat: no-repeat;
             pointer-events: none;
+        }
+        /* Capa de partículas espaciales flotantes */
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            z-index: -1;
+            background-image:
+                radial-gradient(1.5px 1.5px at 20% 30%, rgba(0, 212, 255, 0.15), transparent),
+                radial-gradient(1px 1px at 40% 70%, rgba(123, 47, 247, 0.12), transparent),
+                radial-gradient(1.5px 1.5px at 60% 15%, rgba(0, 212, 255, 0.1), transparent),
+                radial-gradient(1px 1px at 80% 55%, rgba(123, 47, 247, 0.1), transparent),
+                radial-gradient(1.5px 1.5px at 15% 85%, rgba(0, 212, 255, 0.08), transparent),
+                radial-gradient(1px 1px at 90% 25%, rgba(123, 47, 247, 0.08), transparent);
+            pointer-events: none;
+            animation: particleDrift 20s ease-in-out infinite alternate;
+        }
+        @keyframes particleDrift {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(-15px, -10px); }
         }
         #panel-plan {
     font-family: 'inter', sans-serif;
@@ -888,14 +953,14 @@
             background: #059669;
         }
         .cover-page, .day-card {
-            background: linear-gradient(135deg, rgba(255,255,255,0.03), transparent);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.55), rgba(15, 23, 42, 0.25));
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
             border: 1px solid var(--border2);
             border-radius: 24px;
             margin-bottom: 40px;
             padding: 25px 30px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
         }
         .cover-page {
             /* Mantenemos el estilo de cover-page general de glassmorphism */
@@ -961,15 +1026,15 @@
             font-size: 0.75rem;
         }
         .exercise-card {
-            background: linear-gradient(135deg, rgba(255,255,255,0.03), transparent);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
+            background: linear-gradient(135deg, rgba(15, 23, 42, 0.45), rgba(15, 23, 42, 0.15));
+            backdrop-filter: blur(12px) saturate(160%);
+            -webkit-backdrop-filter: blur(12px) saturate(160%);
             border-radius: 20px;
             padding: 20px;
             margin-bottom: 20px;
             border: 1px solid var(--border2);
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-            transition: opacity 0.3s ease;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+            transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         }
         .exercise-card.completed {
             opacity: 0.5;
@@ -2517,6 +2582,17 @@
     }
   }
 
+  // Intentar cargar perfil de LocalStorage de inmediato para evitar flashes o banners de expiración erróneos
+  try {
+    const cachedUserProfile = localStorage.getItem('pwa_user_profile');
+    if (cachedUserProfile) {
+      window.userProfile = JSON.parse(cachedUserProfile);
+      console.log("Perfil restaurado desde caché local al inicio:", window.userProfile);
+    }
+  } catch(e) {
+    console.error("Error al restaurar perfil inicial:", e);
+  }
+
   // Verificar la sesión activa de Supabase
   if (supabase) {
     supabase.auth.getSession().then(({ data, error }) => {
@@ -3440,7 +3516,7 @@
   // ================= CONFIGURACIÓN =================
   var _urlParams = new URLSearchParams(window.location.search);
   var _clienteId = window.INJECTED_CLIENT_ID || (_urlParams.get('c') ? _urlParams.get('c').trim().toLowerCase().replace(/[^a-z0-9_-]/g, '') : '');
-  let MODO_CLIENTE = _clienteId !== '';
+  let MODO_CLIENTE = _clienteId !== '' || (window.userProfile && window.userProfile.rol === 'cliente');
   let STORAGE_KEY = _clienteId ? ('sp_cliente_' + _clienteId) : 'sobrecarga_v5';
   let CICLO_KEY   = _clienteId ? ('sp_ciclo_'   + _clienteId) : 'fechaInicioCiclo';
   const CONFIG_KEY = 'sp_config_v1';
@@ -4252,17 +4328,6 @@
     
     const diasTranscurridos = (hoyLocal - fechaInicio) / (1000 * 60 * 60 * 24);
     
-    // Anti-trampas: bloquear si el cliente tiene sesiones registradas con fechas futuras a hoy
-    if (sesiones && sesiones.length > 0) {
-      const fechasValidas = sesiones.map(s => parsearFechaISO(s.fecha)).filter(Boolean);
-      if (fechasValidas.length > 0) {
-        const maxFecha = new Date(Math.max(...fechasValidas));
-        if (maxFecha > hoyLocal) {
-          return true;
-        }
-      }
-    }
-    
     return diasTranscurridos >= vigencia;
   }
   function mensajePlazoExpirado() {
@@ -4290,18 +4355,22 @@
     // 2. Si hay conexión y usuario logueado en Supabase, sincronizar de fondo
     const ultimaSesion = sesiones[sesiones.length - 1];
     if (ultimaSesion) {
-      if (navigator.onLine && supabase && window.currentUser) {
-        toast('Guardando en la nube...', 'info');
-        const exito = await sincronizarSesionRemota(ultimaSesion);
-        if (exito) {
-          toast('¡Sincronizado con Supabase!', 'success');
+      // SOLO sincronizar si no tiene un UUID de Supabase (es decir, no ha sido sincronizada aún)
+      const yaSincronizada = typeof ultimaSesion.id === 'string' && ultimaSesion.id.includes('-');
+      if (!yaSincronizada) {
+        if (navigator.onLine && supabase && window.currentUser) {
+          toast('Guardando en la nube...', 'info');
+          const exito = await sincronizarSesionRemota(ultimaSesion);
+          if (exito) {
+            toast('¡Sincronizado con Supabase!', 'success');
+          } else {
+            toast('Guardado localmente. Pendiente de sincronizar.', 'info');
+            encolarSesionOffline(ultimaSesion);
+          }
         } else {
-          toast('Guardado localmente. Pendiente de sincronizar.', 'info');
+          toast('Guardado localmente (Offline).', 'info');
           encolarSesionOffline(ultimaSesion);
         }
-      } else {
-        toast('Guardado localmente (Offline).', 'info');
-        encolarSesionOffline(ultimaSesion);
       }
     }
   }
@@ -4337,6 +4406,9 @@
 
       if (histError) throw histError;
       const sesionId = histData.id;
+      
+      // Actualizar ID local de la sesión con el UUID de Supabase
+      sesion.id = sesionId;
 
       // 2. Preparar e insertar los ejercicios detallados
       const ejerciciosInsert = sesion.ejercicios.map(ej => {
@@ -4364,11 +4436,40 @@
         };
       });
 
-      const { error: ejError } = await supabase
+      const { data: ejData, error: ejError } = await supabase
         .from('sesiones_ejercicios')
-        .insert(ejerciciosInsert);
+        .insert(ejerciciosInsert)
+        .select('id, nombre_ejercicio');
 
       if (ejError) throw ejError;
+
+      // Actualizar IDs locales de los ejercicios con los UUIDs de Supabase
+      if (ejData) {
+        ejData.forEach(inserted => {
+          const localEj = sesion.ejercicios.find(e => e.nombre === inserted.nombre_ejercicio);
+          if (localEj) {
+            localEj.id_ej = inserted.id;
+          }
+        });
+      }
+
+      // Buscar la sesión correspondiente en el array global 'sesiones' para asegurar consistencia
+      const localSes = sesiones.find(s => s.fecha === sesion.fecha && s.notas_sesion === sesion.notas_sesion);
+      if (localSes) {
+        localSes.id = sesionId;
+        if (ejData) {
+          ejData.forEach(inserted => {
+            const localEj = localSes.ejercicios.find(e => e.nombre === inserted.nombre_ejercicio);
+            if (localEj) {
+              localEj.id_ej = inserted.id;
+            }
+          });
+        }
+      }
+
+      // Guardar de inmediato en LocalStorage para conservar los IDs actualizados
+      storageSet(STORAGE_KEY, JSON.stringify(sesiones));
+
       return true;
 
     } catch(e) {
@@ -4640,15 +4741,14 @@ Un registro completo convierte cada sesi&oacute;n en informaci&oacute;n &uacute;
     const volData = filas.map(f => f.volumen);
     const rmData = filas.map(f => f.rm);
     if (chart) chart.destroy();
-    const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    const gridColor = isDark ? 'rgba(255,255,255,0.07)' : 'rgba(0,0,0,0.07)';
-    const labelColor = isDark ? '#a0a09c' : '#6b6b67';
+    const gridColor = 'rgba(255, 255, 255, 0.08)';
+    const labelColor = '#94a3b8';
     chart = new Chart(document.getElementById('mainChart'), {
       data: {
         labels,
         datasets: [
-          { type: 'bar', label: 'Volumen (kg)', data: volData, backgroundColor: isDark ? '#185FA5' : '#B5D4F4', borderColor: '#378ADD', borderWidth: 1, yAxisID: 'y' },
-          { type: 'line', label: '1RM estimado', data: rmData, borderColor: '#1D9E75', backgroundColor: 'transparent', borderWidth: 2.5, pointBackgroundColor: '#1D9E75', pointRadius: 5, tension: 0.3, yAxisID: 'y2' }
+          { type: 'bar', label: 'Volumen (kg)', data: volData, backgroundColor: 'rgba(0, 212, 255, 0.2)', borderColor: '#00d4ff', borderWidth: 1.5, yAxisID: 'y' },
+          { type: 'line', label: '1RM estimado', data: rmData, borderColor: '#7b2ff7', backgroundColor: 'transparent', borderWidth: 3, pointBackgroundColor: '#7b2ff7', pointBorderColor: '#00d4ff', pointRadius: 5, tension: 0.3, yAxisID: 'y2' }
         ]
       },
       options: {
@@ -4660,8 +4760,8 @@ Un registro completo convierte cada sesi&oacute;n en informaci&oacute;n &uacute;
         },
         scales: {
           x: { ticks: { color: labelColor, maxRotation: 45 }, grid: { color: gridColor } },
-          y: { title: { display: true, text: 'Volumen (kg)', color: '#378ADD' }, ticks: { color: '#378ADD' }, grid: { color: gridColor } },
-          y2: { position: 'right', title: { display: true, text: '1RM est. (kg)', color: '#1D9E75' }, ticks: { color: '#1D9E75' }, grid: { display: false } }
+          y: { title: { display: true, text: 'Volumen (kg)', color: '#00d4ff' }, ticks: { color: '#00d4ff' }, grid: { color: gridColor } },
+          y2: { position: 'right', title: { display: true, text: '1RM est. (kg)', color: '#7b2ff7' }, ticks: { color: '#7b2ff7' }, grid: { display: false } }
         }
       }
     });
