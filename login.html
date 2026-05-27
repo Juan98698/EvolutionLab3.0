@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Evolution Lab - Iniciar Sesión</title>
+    <meta name="description" content="Evolution Lab — Planificación inteligente, ejecución impecable. Tu portal de entrenamiento personalizado basado en ciencia.">
     <link rel="icon" type="image/png" href="/icon.png">
     
     <!-- Google Fonts -->
@@ -22,9 +23,11 @@
             --accent: #7b2ff7;
             --accent-glow: rgba(123, 47, 247, 0.4);
             --cyan: #00d4ff;
+            --cyan-glow: rgba(0, 212, 255, 0.25);
             --text: #f8fafc;
             --text-muted: #94a3b8;
             --radius: 16px;
+            --green-wa: #25d366;
         }
 
         * {
@@ -34,6 +37,9 @@
             user-select: none;
         }
 
+        /* ═══════════════════════════════════════════
+           BODY & TECH GRID BACKGROUND
+        ═══════════════════════════════════════════ */
         body {
             font-family: 'Inter', sans-serif;
             background-color: var(--bg);
@@ -52,9 +58,49 @@
             padding: 40px 20px;
             color: var(--text);
             overflow-x: hidden;
+            position: relative;
         }
 
-        /* Contenedor general del Landing */
+        /* Tech Grid Overlay */
+        body::before {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(0, 212, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 212, 255, 0.03) 1px, transparent 1px);
+            background-size: 60px 60px;
+            mask-image: radial-gradient(ellipse 70% 60% at 50% 50%, black 20%, transparent 80%);
+            -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 50%, black 20%, transparent 80%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Floating Particles Layer */
+        body::after {
+            content: '';
+            position: fixed;
+            inset: 0;
+            background-image:
+                radial-gradient(1.5px 1.5px at 20% 30%, rgba(0, 212, 255, 0.15), transparent),
+                radial-gradient(1px 1px at 40% 70%, rgba(123, 47, 247, 0.12), transparent),
+                radial-gradient(1.5px 1.5px at 60% 15%, rgba(0, 212, 255, 0.1), transparent),
+                radial-gradient(1px 1px at 80% 55%, rgba(123, 47, 247, 0.1), transparent),
+                radial-gradient(1.5px 1.5px at 15% 85%, rgba(0, 212, 255, 0.08), transparent),
+                radial-gradient(1px 1px at 90% 25%, rgba(123, 47, 247, 0.08), transparent);
+            pointer-events: none;
+            z-index: 0;
+            animation: particleDrift 20s ease-in-out infinite alternate;
+        }
+
+        @keyframes particleDrift {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(-15px, -10px); }
+        }
+
+        /* ═══════════════════════════════════════════
+           LANDING CONTAINER & GRID
+        ═══════════════════════════════════════════ */
         .landing-container {
             width: 100%;
             max-width: 1100px;
@@ -62,7 +108,8 @@
             grid-template-columns: 1fr;
             gap: 40px;
             align-items: center;
-            animation: fadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            z-index: 1;
         }
 
         @media (min-width: 900px) {
@@ -72,7 +119,55 @@
             }
         }
 
-        /* Columna Izquierda: Brand & Features */
+        /* ═══════════════════════════════════════════
+           STAGGERED FADE-IN ANIMATIONS
+        ═══════════════════════════════════════════ */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(28px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes fadeInRight {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        @keyframes cardReveal {
+            from {
+                opacity: 0;
+                transform: translateY(30px) scale(0.97);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .stagger-1 { animation: fadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both; }
+        .stagger-2 { animation: fadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both; }
+        .stagger-3 { animation: fadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.35s both; }
+        .stagger-4 { animation: fadeInRight 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.45s both; }
+        .stagger-5 { animation: fadeInRight 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.55s both; }
+        .stagger-6 { animation: fadeInRight 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.65s both; }
+        .stagger-7 { animation: fadeInRight 0.6s cubic-bezier(0.16, 1, 0.3, 1) 0.75s both; }
+        .stagger-8 { animation: fadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.85s both; }
+        .stagger-card { animation: cardReveal 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.4s both; }
+
+        /* ═══════════════════════════════════════════
+           HERO SECTION (Left Column)
+        ═══════════════════════════════════════════ */
         .hero-section {
             display: flex;
             flex-direction: column;
@@ -81,7 +176,7 @@
         }
 
         .brand-badge {
-            background: rgba(0, 212, 255, 0.1);
+            background: rgba(0, 212, 255, 0.08);
             border: 1px solid rgba(0, 212, 255, 0.2);
             color: var(--cyan);
             font-size: 11px;
@@ -92,6 +187,13 @@
             letter-spacing: 0.1em;
             margin-bottom: 20px;
             box-shadow: 0 0 15px rgba(0, 212, 255, 0.1);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .brand-badge svg {
+            flex-shrink: 0;
         }
 
         .hero-title {
@@ -107,7 +209,6 @@
         }
 
         .hero-title .cyan-text {
-            color: var(--cyan);
             background: linear-gradient(135deg, var(--cyan) 30%, var(--accent) 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
@@ -123,34 +224,67 @@
             text-shadow: 0 2px 10px rgba(0,0,0,0.5);
         }
 
-        .hero-description {
-            font-size: 14.5px;
-            color: var(--text-muted);
-            line-height: 1.6;
-            margin-bottom: 30px;
-            max-width: 540px;
-        }
-
-        .features-list {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-            width: 100%;
-            max-width: 500px;
-            margin-bottom: 30px;
-        }
-
+        /* ═══════════════════════════════════════════
+           ORIGIN CARD (with animated glow border)
+        ═══════════════════════════════════════════ */
         .origin-card {
+            position: relative;
             background: linear-gradient(135deg, rgba(123, 47, 247, 0.08), rgba(0, 212, 255, 0.03));
             border: 1px solid rgba(123, 47, 247, 0.2);
-            border-radius: 12px;
-            padding: 20px;
+            border-radius: 14px;
+            padding: 22px;
             margin-bottom: 30px;
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
+            margin-top: 10px;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
             width: 100%;
             max-width: 540px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            box-shadow: 
+                0 10px 30px rgba(0, 0, 0, 0.25),
+                inset 0 1px 0 rgba(255, 255, 255, 0.04);
+            overflow: hidden;
+            transition: border-color 0.4s ease, box-shadow 0.4s ease;
+        }
+
+        .origin-card::before {
+            content: '';
+            position: absolute;
+            top: -1px;
+            left: -1px;
+            right: -1px;
+            bottom: -1px;
+            border-radius: 15px;
+            background: conic-gradient(
+                from 0deg,
+                transparent 0deg,
+                rgba(0, 212, 255, 0.3) 60deg,
+                transparent 120deg,
+                rgba(123, 47, 247, 0.3) 200deg,
+                transparent 280deg,
+                rgba(0, 212, 255, 0.2) 350deg,
+                transparent 360deg
+            );
+            z-index: -1;
+            animation: glowSpin 8s linear infinite;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .origin-card:hover::before {
+            opacity: 1;
+        }
+
+        .origin-card:hover {
+            border-color: rgba(0, 212, 255, 0.25);
+            box-shadow: 
+                0 10px 40px rgba(0, 0, 0, 0.3),
+                0 0 20px rgba(0, 212, 255, 0.08),
+                inset 0 1px 0 rgba(255, 255, 255, 0.06);
+        }
+
+        @keyframes glowSpin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
 
         .origin-card h5 {
@@ -185,36 +319,63 @@
             font-style: italic;
         }
 
+        /* ═══════════════════════════════════════════
+           FEATURES LIST
+        ═══════════════════════════════════════════ */
+        .features-list {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            width: 100%;
+            max-width: 500px;
+            margin-bottom: 30px;
+        }
+
         .feature-item {
             display: flex;
             align-items: flex-start;
             gap: 16px;
             background: rgba(15, 23, 42, 0.35);
-            border: 1px solid rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.04);
             border-radius: 12px;
             padding: 15px;
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
-            transition: all 0.3s ease;
+            transition: all 0.35s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .feature-item:hover {
-            border-color: rgba(0, 212, 255, 0.15);
-            background: rgba(15, 23, 42, 0.45);
-            transform: translateX(5px);
+            border-color: rgba(0, 212, 255, 0.18);
+            background: rgba(15, 23, 42, 0.5);
+            transform: translateX(6px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .feature-item:hover .feature-icon {
+            box-shadow: 0 4px 16px rgba(0, 212, 255, 0.2);
+            border-color: rgba(0, 212, 255, 0.2);
+        }
+
+        .feature-item:hover .feature-icon svg {
+            transform: scale(1.1);
         }
 
         .feature-icon {
-            font-size: 22px;
-            background: rgba(255,255,255,0.05);
-            width: 44px;
-            height: 44px;
-            border-radius: 10px;
+            background: rgba(255,255,255,0.04);
+            border: 1px solid rgba(255,255,255,0.06);
+            width: 46px;
+            height: 46px;
+            border-radius: 11px;
             display: flex;
             align-items: center;
             justify-content: center;
             flex-shrink: 0;
             box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            transition: all 0.35s ease;
+        }
+
+        .feature-icon svg {
+            transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
         .feature-item h4 {
@@ -232,6 +393,9 @@
             line-height: 1.5;
         }
 
+        /* ═══════════════════════════════════════════
+           CTA BUTTONS (WhatsApp & Instagram)
+        ═══════════════════════════════════════════ */
         .cta-buttons {
             display: flex;
             flex-wrap: wrap;
@@ -239,12 +403,42 @@
             width: 100%;
         }
 
+        /* Shine sweep effect */
+        .btn-shine {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-shine::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -60%;
+            width: 40%;
+            height: 200%;
+            background: linear-gradient(
+                105deg,
+                transparent 40%,
+                rgba(255, 255, 255, 0.18) 45%,
+                rgba(255, 255, 255, 0.25) 50%,
+                rgba(255, 255, 255, 0.18) 55%,
+                transparent 60%
+            );
+            transform: skewX(-15deg);
+            transition: left 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+            pointer-events: none;
+        }
+
+        .btn-shine:hover::after {
+            left: 130%;
+        }
+
         .btn-whatsapp {
             display: inline-flex;
             align-items: center;
             justify-content: center;
             gap: 10px;
-            background: #25d366;
+            background: linear-gradient(135deg, #25d366 0%, #128c47 100%);
             color: white;
             text-decoration: none;
             padding: 14px 24px;
@@ -259,9 +453,8 @@
         }
 
         .btn-whatsapp:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 24px rgba(37, 211, 102, 0.5);
-            background: #20ba5a;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 28px rgba(37, 211, 102, 0.45);
         }
 
         .btn-instagram {
@@ -284,12 +477,13 @@
         }
 
         .btn-instagram:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 24px rgba(204, 35, 102, 0.5);
-            opacity: 0.95;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 28px rgba(204, 35, 102, 0.45);
         }
 
-        /* Columna Derecha: Login Card */
+        /* ═══════════════════════════════════════════
+           LOGIN CARD (Right Column)
+        ═══════════════════════════════════════════ */
         .auth-section {
             display: flex;
             justify-content: center;
@@ -297,9 +491,10 @@
         }
 
         .login-card {
+            position: relative;
             background: var(--card-bg);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
             border: 1px solid var(--border);
             border-radius: var(--radius);
             width: 100%;
@@ -307,18 +502,42 @@
             padding: 40px 32px;
             box-shadow: 
                 0 20px 50px -10px rgba(0, 0, 0, 0.5),
-                0 0 40px rgba(123, 47, 247, 0.15);
-            animation: cardFadeIn 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+                0 0 40px rgba(123, 47, 247, 0.12);
+            overflow: hidden;
         }
 
-        @keyframes cardFadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+        /* Animated border glow on login card */
+        .login-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(
+                from 180deg at 50% 50%,
+                transparent 0deg,
+                rgba(0, 212, 255, 0.12) 60deg,
+                transparent 120deg,
+                rgba(123, 47, 247, 0.12) 240deg,
+                transparent 360deg
+            );
+            animation: glowSpin 10s linear infinite;
+            z-index: -1;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+        /* Inner background to mask the conic gradient center */
+        .login-card::after {
+            content: '';
+            position: absolute;
+            inset: 1px;
+            border-radius: calc(var(--radius) - 1px);
+            background: linear-gradient(
+                170deg,
+                rgba(15, 23, 42, 0.92) 0%,
+                rgba(11, 15, 25, 0.96) 100%
+            );
+            z-index: -1;
         }
 
         .header {
@@ -328,15 +547,20 @@
 
         .logo-symbol {
             background: linear-gradient(135deg, var(--cyan), var(--accent));
-            width: 52px;
-            height: 52px;
-            border-radius: 12px;
+            width: 54px;
+            height: 54px;
+            border-radius: 14px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            font-size: 26px;
-            margin-bottom: 15px;
-            box-shadow: 0 0 20px var(--accent-glow);
+            margin-bottom: 16px;
+            box-shadow: 0 0 24px var(--accent-glow);
+            animation: logoPulse 3s ease-in-out infinite;
+        }
+
+        @keyframes logoPulse {
+            0%, 100% { box-shadow: 0 0 20px var(--accent-glow); }
+            50% { box-shadow: 0 0 35px var(--accent-glow), 0 0 60px rgba(0, 212, 255, 0.1); }
         }
 
         .title {
@@ -357,19 +581,12 @@
             font-weight: 500;
         }
 
+        /* ═══════════════════════════════════════════
+           FLOATING LABEL INPUTS
+        ═══════════════════════════════════════════ */
         .form-group {
-            margin-bottom: 20px;
+            margin-bottom: 22px;
             position: relative;
-        }
-
-        .form-group label {
-            display: block;
-            font-size: 11px;
-            font-weight: 700;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            margin-bottom: 8px;
         }
 
         .input-wrapper {
@@ -382,7 +599,12 @@
             top: 50%;
             transform: translateY(-50%);
             color: var(--text-muted);
-            font-size: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            pointer-events: none;
+            transition: color 0.3s ease;
+            z-index: 2;
         }
 
         .form-control {
@@ -390,26 +612,92 @@
             background: rgba(15, 23, 42, 0.6);
             border: 1px solid var(--border);
             border-radius: 10px;
-            padding: 12px 16px 12px 42px;
+            padding: 18px 16px 8px 44px;
             color: var(--text);
             font-size: 14px;
             font-family: inherit;
             outline: none;
             transition: all 0.3s ease;
+            position: relative;
+            z-index: 1;
+        }
+
+        .form-control::placeholder {
+            color: transparent;
+        }
+
+        .floating-label {
+            position: absolute;
+            left: 44px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-muted);
+            pointer-events: none;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 3;
+            letter-spacing: 0.02em;
+        }
+
+        .form-control:focus + .floating-label,
+        .form-control:not(:placeholder-shown) + .floating-label {
+            top: 8px;
+            transform: translateY(0);
+            font-size: 9.5px;
+            font-weight: 700;
+            color: var(--cyan);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
         }
 
         .form-control:focus {
             border-color: var(--cyan);
-            box-shadow: 0 0 12px rgba(0, 212, 255, 0.2);
+            box-shadow: 0 0 14px rgba(0, 212, 255, 0.18);
             background: rgba(15, 23, 42, 0.85);
         }
 
+        .form-control:focus ~ .input-icon {
+            color: var(--cyan);
+        }
+
+        /* Password toggle button */
+        .password-toggle {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4px;
+            border-radius: 6px;
+            transition: color 0.2s ease, background 0.2s ease;
+            z-index: 3;
+        }
+
+        .password-toggle:hover {
+            color: var(--cyan);
+            background: rgba(0, 212, 255, 0.08);
+        }
+
+        .password-toggle .eye-off { display: none; }
+        .password-toggle.visible .eye-on { display: none; }
+        .password-toggle.visible .eye-off { display: block; }
+
+        /* ═══════════════════════════════════════════
+           SUBMIT BUTTON
+        ═══════════════════════════════════════════ */
         .btn-submit {
             width: 100%;
             background: linear-gradient(135deg, var(--cyan) 0%, var(--accent) 100%);
             color: white;
             border: none;
-            padding: 14px;
+            padding: 15px;
             border-radius: 10px;
             font-size: 13px;
             font-weight: 700;
@@ -418,17 +706,43 @@
             text-transform: uppercase;
             cursor: pointer;
             box-shadow: 0 4px 20px var(--accent-glow);
-            transition: all 0.2s ease;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
             margin-top: 10px;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-submit::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -60%;
+            width: 40%;
+            height: 200%;
+            background: linear-gradient(
+                105deg,
+                transparent 40%,
+                rgba(255, 255, 255, 0.15) 45%,
+                rgba(255, 255, 255, 0.22) 50%,
+                rgba(255, 255, 255, 0.15) 55%,
+                transparent 60%
+            );
+            transform: skewX(-15deg);
+            transition: left 0.65s cubic-bezier(0.16, 1, 0.3, 1);
+            pointer-events: none;
+        }
+
+        .btn-submit:hover::after {
+            left: 130%;
         }
 
         .btn-submit:hover {
             transform: translateY(-2px);
-            box-shadow: 0 6px 24px rgba(123, 47, 247, 0.5);
+            box-shadow: 0 8px 30px rgba(123, 47, 247, 0.5);
         }
 
         .btn-submit:active {
@@ -442,35 +756,80 @@
             box-shadow: none;
         }
 
+        .btn-submit:disabled::after {
+            display: none;
+        }
+
+        /* ═══════════════════════════════════════════
+           ERROR ALERT
+        ═══════════════════════════════════════════ */
         .alert-error {
-            background: rgba(239, 68, 68, 0.15);
-            border: 1px solid rgba(239, 68, 68, 0.3);
-            border-radius: 8px;
-            padding: 10px 14px;
+            background: rgba(239, 68, 68, 0.12);
+            border: 1px solid rgba(239, 68, 68, 0.25);
+            border-radius: 10px;
+            padding: 11px 14px;
             color: #fca5a5;
             font-size: 12px;
             margin-bottom: 20px;
             display: none;
             align-items: center;
-            gap: 8px;
-            animation: shake 0.3s ease;
+            gap: 10px;
+            animation: shake 0.35s ease;
         }
 
         @keyframes shake {
             0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-4px); }
-            75% { transform: translateX(4px); }
+            20% { transform: translateX(-5px); }
+            40% { transform: translateX(5px); }
+            60% { transform: translateX(-3px); }
+            80% { transform: translateX(3px); }
         }
 
         .footer-note {
             text-align: center;
-            margin-top: 25px;
+            margin-top: 28px;
             font-size: 11px;
             color: var(--text-muted);
-            line-height: 1.5;
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
         }
 
-        /* Configuración de credenciales de Supabase */
+        .footer-note .footer-line {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .footer-credit {
+            font-size: 9px;
+            opacity: 0.5;
+            margin-top: 6px;
+            font-family: 'Orbitron', sans-serif;
+            letter-spacing: 0.5px;
+        }
+
+        /* Spinner */
+        .spinner {
+            width: 16px;
+            height: 16px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            display: none;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* ═══════════════════════════════════════════
+           CONFIG OVERLAY (Supabase)
+        ═══════════════════════════════════════════ */
         .config-overlay {
             position: fixed;
             top: 0;
@@ -508,109 +867,260 @@
             line-height: 1.5;
         }
 
-        /* Loader */
-        .spinner {
-            width: 16px;
-            height: 16px;
-            border: 2px solid rgba(255,255,255,0.3);
-            border-top: 2px solid white;
-            border-radius: 50%;
-            animation: spin 0.8s linear infinite;
-            display: none;
+        .config-box .form-control {
+            padding: 12px 14px;
         }
 
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+        .config-box .form-group label {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 8px;
         }
+
+        /* ═══════════════════════════════════════════
+           RESPONSIVE MOBILE
+        ═══════════════════════════════════════════ */
+        @media (max-width: 899px) {
+            body {
+                padding: 30px 16px;
+            }
+
+            .landing-container {
+                gap: 30px;
+            }
+
+            .hero-section {
+                align-items: center;
+                text-align: center;
+            }
+
+            .origin-card {
+                max-width: 100%;
+            }
+
+            .features-list {
+                max-width: 100%;
+            }
+
+            .cta-buttons {
+                justify-content: center;
+            }
+
+            .login-card {
+                padding: 32px 24px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                padding: 20px 12px;
+            }
+
+            .hero-title {
+                font-size: clamp(28px, 7vw, 38px);
+            }
+
+            .login-card {
+                padding: 28px 20px;
+            }
+
+            .btn-whatsapp,
+            .btn-instagram {
+                width: 100%;
+                justify-content: center;
+            }
+        }
+
+        /* ═══════════════════════════════════════════
+           SVG ICON HELPERS
+        ═══════════════════════════════════════════ */
+        .icon-gradient stop:first-child { stop-color: var(--cyan); }
+        .icon-gradient stop:last-child { stop-color: var(--accent); }
     </style>
 </head>
 <body>
 
     <div class="landing-container">
-        <!-- Columna Izquierda: Brand Landing & Features -->
+        <!-- ═══ Left Column: Brand Landing & Features ═══ -->
         <div class="hero-section">
-            <div class="brand-badge">🔬 Ciencia & Evidencia</div>
-            <h1 class="hero-title">EVOLUTION <span class="cyan-text">LAB</span></h1>
-            <p class="hero-tagline">Planificación inteligente, ejecución impecable</p>
-            <!-- 💡 EL MÉTODO EVOLUTION LAB -->
-            <div class="origin-card" style="margin-top: 10px;">
-                <h5>💡 El Método Evolution Lab</h5>
+
+            <!-- Badge -->
+            <div class="brand-badge stagger-1">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 3h6l1 7h-8l1-7z"/>
+                    <path d="M10 10v4a2 2 0 002 2h0a2 2 0 002-2v-4"/>
+                    <line x1="12" y1="16" x2="12" y2="21"/>
+                    <line x1="8" y1="21" x2="16" y2="21"/>
+                </svg>
+                Ciencia & Evidencia
+            </div>
+
+            <!-- Title -->
+            <h1 class="hero-title stagger-2">EVOLUTION <span class="cyan-text">LAB</span></h1>
+            <p class="hero-tagline stagger-2">Planificación inteligente, ejecución impecable</p>
+
+            <!-- Origin Card -->
+            <div class="origin-card stagger-3">
+                <h5>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 2v4"/>
+                        <path d="M12 18v4"/>
+                        <circle cx="12" cy="12" r="4" stroke="var(--cyan)"/>
+                        <path d="M4.93 4.93l2.83 2.83"/>
+                        <path d="M16.24 16.24l2.83 2.83"/>
+                        <path d="M2 12h4"/>
+                        <path d="M18 12h4"/>
+                        <path d="M4.93 19.07l2.83-2.83"/>
+                        <path d="M16.24 7.76l2.83-2.83"/>
+                    </svg>
+                    El Método Evolution Lab
+                </h5>
                 <p>Meticulosamente diseñado por un profesional experto y apasionado para colocar tus metas individuales como prioridad absoluta, <strong>Evolution Lab</strong> nace como respuesta a las rutinas planas en PDF, Excels aburridos y mensajes de WhatsApp que no te orientan adecuadamente y te generan mas duda que certeza en plena sala de pesas.</p>
                 <p class="origin-highlight">Transformamos el entrenamiento estático en un ecosistema interactivo y vivo en tu teléfono para que optimices tu fuerza y domines tu sobrecarga con claridad absoluta.</p>
             </div>
-            
+
+            <!-- Features -->
             <div class="features-list">
-                <div class="feature-item">
-                    <div class="feature-icon">📊</div>
+                <div class="feature-item stagger-4">
+                    <div class="feature-icon">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="url(#grad1)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <defs><linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#00d4ff"/><stop offset="100%" stop-color="#7b2ff7"/></linearGradient></defs>
+                            <path d="M3 3v18h18"/>
+                            <path d="M7 16l4-4 3 3 5-7"/>
+                        </svg>
+                    </div>
                     <div>
                         <h4>Registro & Progreso Inteligente</h4>
                         <p>Registra cada serie y visualiza tu progreso sesión tras sesión. Recibe recomendaciones científicas automáticas para ajustar tus cargas y garantizar un avance continuo sin estancamientos.</p>
                     </div>
                 </div>
-                <div class="feature-item">
-                    <div class="feature-icon">🔍</div>
+                <div class="feature-item stagger-5">
+                    <div class="feature-icon">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="url(#grad2)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <defs><linearGradient id="grad2" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#00d4ff"/><stop offset="100%" stop-color="#7b2ff7"/></linearGradient></defs>
+                            <circle cx="12" cy="12" r="10"/>
+                            <circle cx="12" cy="12" r="6"/>
+                            <circle cx="12" cy="12" r="2"/>
+                        </svg>
+                    </div>
                     <div>
                         <h4>Valoración & Seguimiento Continuo</h4>
                         <p>Cada plan incluye una valoración antropométrica detallada y un seguimiento constante para asegurar que tu evolución física avance en la dirección correcta.</p>
                     </div>
                 </div>
-                <div class="feature-item">
-                    <div class="feature-icon">🔌</div>
+                <div class="feature-item stagger-6">
+                    <div class="feature-icon">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="url(#grad3)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <defs><linearGradient id="grad3" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#00d4ff"/><stop offset="100%" stop-color="#7b2ff7"/></linearGradient></defs>
+                            <polygon points="5 3 19 12 5 21 5 3"/>
+                            <line x1="19" y1="3" x2="19" y2="21" stroke-dasharray="2 2"/>
+                        </svg>
+                    </div>
                     <div>
                         <h4>Videos Guía & GIFs Offline</h4>
                         <p>Accede a videos explicativos detallados (YouTube/Drive) con conexión. ¿Sin internet en el gimnasio? Las animaciones GIF se activan de forma automática para guiar tu técnica offline sin gastar tus datos.</p>
                     </div>
                 </div>
-                <div class="feature-item">
-                    <div class="feature-icon">🧮</div>
+                <div class="feature-item stagger-7">
+                    <div class="feature-icon">
+                        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="url(#grad4)" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                            <defs><linearGradient id="grad4" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#00d4ff"/><stop offset="100%" stop-color="#7b2ff7"/></linearGradient></defs>
+                            <rect x="4" y="2" width="16" height="20" rx="2"/>
+                            <line x1="8" y1="6" x2="16" y2="6"/>
+                            <line x1="8" y1="10" x2="16" y2="10"/>
+                            <line x1="8" y1="14" x2="12" y2="14"/>
+                            <circle cx="15" cy="17" r="2.5"/>
+                            <path d="M16.8 18.8L18 20"/>
+                        </svg>
+                    </div>
                     <div>
                         <h4>Calculadora 1RM Avanzada</h4>
                         <p>Estima tus marcas máximas de fuerza directamente desde tu teléfono para ajustar tus cargas de manera científica y segura.</p>
                     </div>
                 </div>
             </div>
-            
-            <div class="cta-buttons">
+
+            <!-- CTA Buttons -->
+            <div class="cta-buttons stagger-8">
                 <!-- 💬 ENLACE DE WHATSAPP: Reemplaza "573113666959" por tu número real con código de país (sin el signo "+") -->
-                <a href="https://wa.me/573113666959?text=Hola!%20Vi%20tu%20perfil%20y%20quiero%20empezar%20mi%20entrenamiento%20personalizado%20en%20Evolution%20Lab" target="_blank" rel="noopener noreferrer" class="btn-whatsapp">
-                    <span>📲</span> ¡Quiero mi Plan!
+                <a href="https://wa.me/573113666959?text=Hola!%20Vi%20tu%20perfil%20y%20quiero%20empezar%20mi%20entrenamiento%20personalizado%20en%20Evolution%20Lab" target="_blank" rel="noopener noreferrer" class="btn-whatsapp btn-shine">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
+                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                    </svg>
+                    ¡Quiero mi Plan!
                 </a>
                 <!-- 📸 ENLACE DE INSTAGRAM: Reemplaza "manuel_betancur" por tu usuario de Instagram real (sin el "@") -->
-                <a href="https://www.instagram.com/manuel_betancur" target="_blank" rel="noopener noreferrer" class="btn-instagram">
-                    <span>📸</span> Sígueme en Instagram
+                <a href="https://www.instagram.com/manuel_betancur" target="_blank" rel="noopener noreferrer" class="btn-instagram btn-shine">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="white">
+                        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/>
+                    </svg>
+                    Sígueme en Instagram
                 </a>
             </div>
         </div>
 
-        <!-- Columna Derecha: Login Form Portal -->
+        <!-- ═══ Right Column: Login Form Portal ═══ -->
         <div class="auth-section">
-            <div class="login-card">
+            <div class="login-card stagger-card">
                 <div class="header">
-                    <div class="logo-symbol">📲</div>
+                    <div class="logo-symbol">
+                        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/>
+                            <polyline points="10 17 15 12 10 7"/>
+                            <line x1="15" y1="12" x2="3" y2="12"/>
+                        </svg>
+                    </div>
                     <h1 class="title">PORTAL ATLETA</h1>
                     <p class="subtitle">Ingresa a tu plan de entrenamiento</p>
                 </div>
 
                 <div id="errorAlert" class="alert-error">
-                    <span>⚠️</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fca5a5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                        <line x1="12" y1="9" x2="12" y2="13"/>
+                        <line x1="12" y1="17" x2="12.01" y2="17"/>
+                    </svg>
                     <span id="errorMessage">Correo o contraseña incorrectos.</span>
                 </div>
 
                 <form id="loginForm">
                     <div class="form-group">
-                        <label for="email">Correo Electrónico</label>
                         <div class="input-wrapper">
-                            <span class="input-icon">✉️</span>
+                            <span class="input-icon">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="2" y="4" width="20" height="16" rx="2"/>
+                                    <path d="M22 4l-10 8L2 4"/>
+                                </svg>
+                            </span>
                             <input type="email" id="email" class="form-control" placeholder="ejemplo@correo.com" required autocomplete="username">
+                            <label for="email" class="floating-label">Correo Electrónico</label>
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label for="password">Contraseña</label>
                         <div class="input-wrapper">
-                            <span class="input-icon">🔒</span>
+                            <span class="input-icon">
+                                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                    <rect x="3" y="11" width="18" height="11" rx="2"/>
+                                    <path d="M7 11V7a5 5 0 0110 0v4"/>
+                                </svg>
+                            </span>
                             <input type="password" id="password" class="form-control" placeholder="••••••••••••" required autocomplete="current-password">
+                            <label for="password" class="floating-label">Contraseña</label>
+                            <button type="button" id="passwordToggle" class="password-toggle" aria-label="Mostrar u ocultar contraseña">
+                                <svg class="eye-on" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                                    <circle cx="12" cy="12" r="3"/>
+                                </svg>
+                                <svg class="eye-off" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                                    <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/>
+                                    <line x1="1" y1="1" x2="23" y2="23"/>
+                                </svg>
+                            </button>
                         </div>
                     </div>
 
@@ -621,9 +1131,21 @@
                 </form>
 
                 <div class="footer-note">
-                    🔬 Diseñado bajo evidencia científica<br>
-                    👑 Exclusivo para ti por Evolution Lab<br>
-                    <span style="font-size: 9px; opacity: 0.6; margin-top: 6px; display: block; font-family: 'Orbitron', sans-serif; letter-spacing: 0.5px;">Developed by Juan Manuel Cardona</span>
+                    <span class="footer-line">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M9 3h6l1 7h-8l1-7z"/>
+                            <path d="M10 10v4a2 2 0 002 2h0a2 2 0 002-2v-4"/>
+                            <line x1="12" y1="16" x2="12" y2="21"/>
+                        </svg>
+                        Diseñado bajo evidencia científica
+                    </span>
+                    <span class="footer-line">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+                        </svg>
+                        Exclusivo para ti por Evolution Lab
+                    </span>
+                    <span class="footer-credit">Developed by Juan Manuel Cardona</span>
                 </div>
             </div>
         </div>
@@ -644,12 +1166,30 @@
                     <label for="supabaseKey">SUPABASE ANON KEY</label>
                     <input type="text" id="supabaseKey" class="form-control" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6..." required style="padding-left: 14px;">
                 </div>
-                <button type="submit" class="btn-submit">💾 Guardar y Conectar</button>
+                <button type="submit" class="btn-submit">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                    Guardar y Conectar
+                </button>
             </form>
         </div>
     </div>
 
     <script>
+        // ═══════════════════════════════════════════
+        // PASSWORD TOGGLE
+        // ═══════════════════════════════════════════
+        const passwordInput = document.getElementById('password');
+        const passwordToggle = document.getElementById('passwordToggle');
+
+        passwordToggle.addEventListener('click', () => {
+            const isPassword = passwordInput.type === 'password';
+            passwordInput.type = isPassword ? 'text' : 'password';
+            passwordToggle.classList.toggle('visible', isPassword);
+        });
+
+        // ═══════════════════════════════════════════
+        // SUPABASE AUTH (preserved exactly)
+        // ═══════════════════════════════════════════
         // Credenciales de Supabase hardcodeadas de forma segura y permanente
         const SUPABASE_URL = "https://szqitksfxiuuiljftlrl.supabase.co";
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN6cWl0a3NmeGl1dWlsamZ0bHJsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk2NjA2NzYsImV4cCI6MjA5NTIzNjY3Nn0.NAFSo8HxVyFn4dykZWft0glRcmDOkpZjm1hzbHkRF1Q";
