@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -1213,6 +1213,8 @@
             } catch (err) {
                 console.error("Error al inicializar Supabase:", err);
                 alert("Error al inicializar Supabase. Verifica tus credenciales.");
+                localStorage.removeItem('supabase_url');
+                localStorage.removeItem('supabase_anon_key');
                 window.location.reload();
             }
         }
