@@ -2235,7 +2235,10 @@
   </div>
   <!-- PROGRESIÓN -->
   <div id="panel-chart" style="display:none">
-    <div class="section-title" id="chartTitle">Progresión</div>
+    <div class="top-bar" style="margin-top:-0.5rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:1rem;">
+      <div class="section-title" id="chartTitle" style="margin-bottom:0; flex:1;">Progresión</div>
+      <select id="ejercicioSelectChart" style="min-width:180px; max-width:280px;"></select>
+    </div>
     <div class="chart-card">
       <div class="chart-legend">
         <span><span class="legend-sq" style="background:#378ADD"></span> Volumen total (kg)</span>
@@ -3096,7 +3099,7 @@
     }
 
     // Buscar perfil en Supabase para saber si es entrenador o cliente
-    supabase.from('profiles').select('rol, nombre').eq('id', user.id).single().then(({ data, error }) => {
+    supabase.from('profiles').select('rol, nombre, vigencia_dias, fecha_inicio').eq('id', user.id).single().then(({ data, error }) => {
       if (error) {
         console.error("Error al obtener perfil desde Supabase:", error);
         
@@ -3134,7 +3137,9 @@
           localStorage.setItem('pwa_user_profile', JSON.stringify({ 
             userId: user.id, 
             rol: data.rol, 
-            nombre: data.nombre 
+            nombre: data.nombre,
+            vigencia_dias: data.vigencia_dias,
+            fecha_inicio: data.fecha_inicio
           }));
         } catch(e) {}
 
@@ -4193,6 +4198,10 @@
         if (parsed.vigenciaDias !== undefined) return parseInt(parsed.vigenciaDias);
       }
     } catch(e) {}
+    // Prioridad 1: Perfil de usuario (Supabase / Caché local)
+    if (window.userProfile && window.userProfile.vigencia_dias !== undefined) {
+      return parseInt(window.userProfile.vigencia_dias) || 28;
+    }
     const planInput = document.getElementById('planVigenciaPlan');
     if (planInput && planInput.value) return parseInt(planInput.value) || 28;
     const exportVig = document.getElementById('planVigencia');
@@ -4200,6 +4209,10 @@
     return 28;
   }
   function obtenerFechaInicioPlan() {
+    // Prioridad 1: Perfil de usuario (Supabase / Caché local)
+    if (window.userProfile && window.userProfile.fecha_inicio) {
+      return window.userProfile.fecha_inicio;
+    }
     // 1. Intentar leer del input de fecha de la portada o div de cliente
     const startEl = document.getElementById('startDate');
     let startVal = '';
@@ -4561,13 +4574,10 @@ Un registro completo convierte cada sesi&oacute;n en informaci&oacute;n &uacute;
       }
       const fechaForm = f.fecha.split('-').reverse().join('/');
       const repsStr = f.repsArray.join(', ');
-      // El botón de eliminar solo se muestra al entrenador (no en MODO_CLIENTE)
-      let btnEliminar = '';
-      if (!MODO_CLIENTE) {
-        const sesion = sesiones.find(s => s.id === f.id_sesion);
-        const esUnico = sesion && sesion.ejercicios.length <= 1;
-        btnEliminar = `<button class="del-btn" onclick="eliminarEjercicio(${f.id_sesion}, ${f.id_ej})" title="${esUnico ? 'Eliminar sesión completa' : 'Eliminar ejercicio'}" style="${esUnico ? 'background:#fee2e2;color:#b91c1c;' : ''}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>`;
-      }
+      // El botón de eliminar se muestra para permitir corregir el historial
+      const sesion = sesiones.find(s => String(s.id) === String(f.id_sesion));
+      const esUnico = sesion && sesion.ejercicios.length <= 1;
+      let btnEliminar = `<button class="del-btn" onclick="eliminarEjercicio('${f.id_sesion}', '${f.id_ej}')" title="${esUnico ? 'Eliminar sesión completa' : 'Eliminar ejercicio'}" style="${esUnico ? 'background:#fee2e2;color:#b91c1c;' : ''}"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>`;
       html += `<tr>
         <td style="white-space:nowrap">${fechaForm}</td>
         <td style="font-weight:600; white-space:nowrap">${escapeHtml(f.ejercicio)}</td>
@@ -4588,11 +4598,45 @@ Un registro completo convierte cada sesi&oacute;n en informaci&oacute;n &uacute;
   }
   // ===== GRÁFICA =====
   function renderChart() {
-    const ejercicio = document.getElementById('ejercicioSelect').value;
-    if (!ejercicio) { toast('Selecciona un ejercicio para ver la progresión', 'info'); return; }
+    const selChart = document.getElementById('ejercicioSelectChart');
+    let ejercicio = selChart ? selChart.value : '';
+    if (!ejercicio) {
+      ejercicio = document.getElementById('ejercicioSelect').value;
+    }
+    const nombres = obtenerTodosEjercicios();
+    if (!ejercicio && nombres.length > 0) {
+      ejercicio = nombres[0];
+      if (selChart) selChart.value = ejercicio;
+    }
+    
+    if (!ejercicio) {
+      document.getElementById('chartTitle').textContent = 'Progresión';
+      if (chart) chart.destroy();
+      const canvas = document.getElementById('mainChart');
+      if (canvas) {
+        const ctx = canvas.getContext('2d');
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.fillStyle = '#a0a09c';
+        ctx.font = '14px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Registra sesiones en tu historial para ver tu progresión', canvas.width / 2, canvas.height / 2);
+      }
+      return;
+    }
+    
     document.getElementById('chartTitle').textContent = 'Progresión — ' + ejercicio;
     const filas = obtenerFilas(ejercicio);
-    const labels = filas.map(f => f.fecha.split('-').reverse().slice(0,2).join('/'));
+    
+    const labels = filas.map(f => {
+      if (!f.fecha) return '';
+      const cleanDate = f.fecha.includes('-') ? f.fecha.split('-').reverse().join('/') : f.fecha;
+      const parts = cleanDate.split('/');
+      if (parts.length >= 2) {
+        return parts.slice(0, 2).join('/');
+      }
+      return cleanDate;
+    });
+    
     const volData = filas.map(f => f.volumen);
     const rmData = filas.map(f => f.rm);
     if (chart) chart.destroy();
@@ -4841,24 +4885,39 @@ Un registro completo convierte cada sesi&oacute;n en informaci&oacute;n &uacute;
   }
   // ===== ELIMINAR =====
   function eliminarEjercicio(idSesion, idEj) {
-    if (MODO_CLIENTE) { toast('Solo el entrenador puede eliminar registros', 'error'); return; }
-    const sesion = sesiones.find(s => s.id === idSesion);
+    const sesion = sesiones.find(s => String(s.id) === String(idSesion));
     if (!sesion) { toast('No se encontró la sesión', 'error'); return; }
-    const ej = sesion.ejercicios.find(e => e.id_ej === idEj);
+    const ej = sesion.ejercicios.find(e => String(e.id_ej) === String(idEj));
     const nombre = ej ? ej.nombre : 'este ejercicio';
     const fechaStr = sesion.fecha.split('-').reverse().join('/');
     // Si es el único ejercicio de la sesión, preguntar si eliminar la sesión completa
     if (sesion.ejercicios.length <= 1) {
       mostrarModal('¿Eliminar sesión completa?', `"${nombre}" es el único ejercicio de la sesión del ${fechaStr}. Se eliminará la sesión completa. Esta acción no se puede deshacer.`, function() {
-        sesiones = sesiones.filter(s => s.id !== idSesion);
+        // Sincronizar borrado en Supabase
+        if (navigator.onLine && supabase && window.currentUser) {
+          if (typeof idSesion === 'string' && idSesion.includes('-')) {
+            supabase.from('sesiones_historial').delete().eq('id', idSesion).then(({ error }) => {
+              if (error) console.error("Error al borrar sesión de Supabase:", error);
+            });
+          }
+        }
+        sesiones = sesiones.filter(s => String(s.id) !== String(idSesion));
         toast('✅ Sesión eliminada', 'success');
         saveData(); updateSelect(); renderAll();
       });
     } else {
       mostrarModal('¿Eliminar ejercicio?', `Se eliminará "${nombre}" de la sesión del ${fechaStr}. Esta acción no se puede deshacer.`, function() {
-        const sesRef = sesiones.find(s => s.id === idSesion);
+        const sesRef = sesiones.find(s => String(s.id) === String(idSesion));
         if (sesRef) {
-          sesRef.ejercicios = sesRef.ejercicios.filter(e => e.id_ej !== idEj);
+          // Sincronizar borrado en Supabase
+          if (navigator.onLine && supabase && window.currentUser) {
+            if (typeof idEj === 'string' && idEj.includes('-')) {
+              supabase.from('sesiones_ejercicios').delete().eq('id', idEj).then(({ error }) => {
+                if (error) console.error("Error al borrar ejercicio de Supabase:", error);
+              });
+            }
+          }
+          sesRef.ejercicios = sesRef.ejercicios.filter(e => String(e.id_ej) !== String(idEj));
           toast(`✅ Ejercicio "${nombre}" eliminado`, 'success');
           saveData(); updateSelect(); renderAll();
         }
@@ -4902,7 +4961,9 @@ Un registro completo convierte cada sesi&oacute;n en informaci&oacute;n &uacute;
             todayBannerEl.style.display = 'none';
         }
     }
-    if (tab === 'chart') renderChart();
+    if (tab === 'chart') {
+      setTimeout(() => renderChart(), 50);
+    }
     else if (tab === 'add') {
       if (tempEjercicios.length === 0) agregarEjercicioAlForm();
       const fi = document.getElementById('fecha_sesion');
@@ -4915,8 +4976,23 @@ Un registro completo convierte cada sesi&oacute;n en informaci&oacute;n &uacute;
     const sel = document.getElementById('ejercicioSelect');
     const prev = sel.value;
     const nombres = obtenerTodosEjercicios();
+    
+    // Rellenar selector del historial
     sel.innerHTML = '<option value="">Todos los ejercicios</option>' +
       nombres.map(n => `<option value="${n}" ${n===prev?'selected':''}>${escapeHtml(n)}</option>`).join('');
+      
+    // Rellenar selector de la gráfica
+    const selChart = document.getElementById('ejercicioSelectChart');
+    if (selChart) {
+      const prevChart = selChart.value;
+      selChart.innerHTML = '<option value="">-- Seleccionar Ejercicio --</option>' +
+        nombres.map(n => `<option value="${n}" ${n===prevChart?'selected':''}>${escapeHtml(n)}</option>`).join('');
+      
+      // Auto-seleccionar el primero si no hay ninguno seleccionado y hay disponibles
+      if (!selChart.value && nombres.length > 0) {
+        selChart.value = nombres[0];
+      }
+    }
   }
   function mostrarAvisoBloqueo() {
     const aviso = document.getElementById('avisoBloqueo');
@@ -5021,6 +5097,7 @@ Un registro completo convierte cada sesi&oacute;n en informaci&oacute;n &uacute;
   const tabPlanBtn = document.getElementById('tab-plan'); if (tabPlanBtn) tabPlanBtn.addEventListener('click', () => switchTab('plan'));
   // Selector de ejercicio
   document.getElementById('ejercicioSelect').addEventListener('change', () => renderAll());
+  document.getElementById('ejercicioSelectChart').addEventListener('change', () => renderChart());
   // Botones formulario
   document.getElementById('agregarEjercicioBtn').addEventListener('click', agregarEjercicioAlForm);
   document.getElementById('guardarSesionBtn').addEventListener('click', guardarSesion);
