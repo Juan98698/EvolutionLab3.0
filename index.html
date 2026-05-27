@@ -5279,13 +5279,80 @@ Un registro completo convierte cada sesi&oacute;n en informaci&oacute;n &uacute;
     if (typeof actualizarDatalistEjercicios === 'function') actualizarDatalistEjercicios();
   }
   function actualizarDatalistEjercicios() {
-    const dl = document.getElementById('ejercicios_sugeridos');
-    if (!dl) return;
-    const rule = RULES.find(r => r.id === 'subir_peso_reps_objetivo');
-    const ejerciciosRegla = rule && rule.reps_por_ejercicio ? Object.keys(rule.reps_por_ejercicio) : [];
-    const ejerciciosHistorial = obtenerTodosEjercicios();
-    const setEj = new Set([...ejerciciosRegla, ...ejerciciosHistorial]);
-    dl.innerHTML = Array.from(setEj).sort().map(ej => `<option value="${escapeHtml(ej)}"></option>`).join('');
+    let dlSugeridos = document.getElementById('ejercicios_sugeridos');
+    let dlEvolution = document.getElementById('evolution-exercise-list');
+    
+    if (!dlEvolution) {
+      dlEvolution = document.createElement('datalist');
+      dlEvolution.id = 'evolution-exercise-list';
+      document.body.appendChild(dlEvolution);
+    }
+    
+    try {
+      const setEj = new Set();
+      
+      // 1. Ejercicios del plan activo del cliente (si existen)
+      if (typeof trainingDays !== 'undefined' && Array.isArray(trainingDays)) {
+        trainingDays.forEach(day => {
+          if (day && Array.isArray(day.exercises)) {
+            day.exercises.forEach(ex => {
+              if (ex && ex.name) {
+                const prettyName = ex.name.trim();
+                if (prettyName) setEj.add(prettyName);
+              }
+            });
+          }
+        });
+      }
+      
+      // 2. Ejercicios del historial de sesiones guardadas
+      const ejerciciosHistorial = obtenerTodosEjercicios();
+      if (Array.isArray(ejerciciosHistorial)) {
+        ejerciciosHistorial.forEach(ej => {
+          if (ej) {
+            const prettyName = ej.trim();
+            if (prettyName) setEj.add(prettyName);
+          }
+        });
+      }
+      
+      // 3. Ejercicios de las reglas de sobrecarga
+      if (typeof RULES !== 'undefined' && Array.isArray(RULES)) {
+        const rule = RULES.find(r => r.id === 'subir_peso_reps_objetivo');
+        const ejerciciosRegla = rule && rule.reps_por_ejercicio ? Object.keys(rule.reps_por_ejercicio) : [];
+        ejerciciosRegla.forEach(ej => {
+          if (ej) {
+            const prettyName = ej.trim();
+            if (prettyName) setEj.add(prettyName);
+          }
+        });
+      }
+      
+      // 4. Biblioteca de ejercicios local en localStorage
+      try {
+        const library = JSON.parse(localStorage.getItem('evolution_exercise_library') || '{}');
+        Object.keys(library).forEach(name => {
+          if (name) {
+            const prettyName = name.replace(/\b\w/g, c => c.toUpperCase()).trim();
+            if (prettyName) setEj.add(prettyName);
+          }
+        });
+      } catch (e) {
+        console.error("Error al leer biblioteca de ejercicios local:", e);
+      }
+      
+      const arrayEj = Array.from(setEj).sort();
+      const optionsHtml = arrayEj.map(ej => `<option value="${escapeHtml(ej)}"></option>`).join('');
+      
+      if (dlSugeridos) {
+        dlSugeridos.innerHTML = optionsHtml;
+      }
+      if (dlEvolution) {
+        dlEvolution.innerHTML = optionsHtml;
+      }
+    } catch (e) {
+      console.error("Error general en actualizarDatalistEjercicios:", e);
+    }
   }
   window.eliminarEjercicioRegla = function(nombre) {
     const rule = RULES.find(r => r.id === 'subir_peso_reps_objetivo');
@@ -5759,25 +5826,6 @@ Un registro completo convierte cada sesi&oacute;n en informaci&oacute;n &uacute;
   }
   window.actualizarBibliotecaEjercicios = actualizarBibliotecaEjercicios;
 
-  function actualizarDatalistEjercicios() {
-    let datalist = document.getElementById('evolution-exercise-list');
-    if (!datalist) {
-        datalist = document.createElement('datalist');
-        datalist.id = 'evolution-exercise-list';
-        document.body.appendChild(datalist);
-    }
-    try {
-        const library = JSON.parse(localStorage.getItem('evolution_exercise_library') || '{}');
-        let html = '';
-        Object.keys(library).forEach(name => {
-            const prettyName = name.replace(/\b\w/g, c => c.toUpperCase());
-            html += `<option value="${escapeHtml(prettyName)}">`;
-        });
-        datalist.innerHTML = html;
-    } catch(e) {
-        console.error("Error al actualizar datalist de ejercicios:", e);
-    }
-  }
   window.actualizarDatalistEjercicios = actualizarDatalistEjercicios;
 
     function attachAllEvents() {
