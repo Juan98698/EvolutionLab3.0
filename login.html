@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="es">
 <head>
     <meta charset="UTF-8">
@@ -828,6 +828,60 @@
         }
 
         /* ═══════════════════════════════════════════
+           CONFIG OVERLAY (Supabase)
+        ═══════════════════════════════════════════ */
+        .config-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(11, 15, 25, 0.95);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            padding: 20px;
+        }
+
+        .config-box {
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            width: 100%;
+            max-width: 480px;
+            padding: 30px;
+            box-shadow: 0 0 30px var(--accent-glow);
+        }
+
+        .config-box h3 {
+            font-family: 'Orbitron', sans-serif;
+            margin-bottom: 12px;
+            color: var(--cyan);
+        }
+
+        .config-box p {
+            font-size: 12px;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+
+        .config-box .form-control {
+            padding: 12px 14px;
+        }
+
+        .config-box .form-group label {
+            display: block;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 8px;
+        }
+
+        /* ═══════════════════════════════════════════
            RESPONSIVE MOBILE
         ═══════════════════════════════════════════ */
         @media (max-width: 899px) {
@@ -881,6 +935,11 @@
             }
         }
 
+        /* ═══════════════════════════════════════════
+           SVG ICON HELPERS
+        ═══════════════════════════════════════════ */
+        .icon-gradient stop:first-child { stop-color: var(--cyan); }
+        .icon-gradient stop:last-child { stop-color: var(--accent); }
     </style>
 </head>
 <body>
@@ -1092,6 +1151,29 @@
         </div>
     </div>
 
+    <!-- Modal de Configuración Inicial de Supabase -->
+    <div id="configOverlay" class="config-overlay">
+        <div class="config-box">
+            <h3>⚙️ CONFIGURACIÓN DE SUPABASE</h3>
+            <p>Introduce las credenciales de tu proyecto de Supabase para conectar la base de datos y la autenticación. Puedes obtenerlas en tu panel de Supabase en <strong>Project Settings > API</strong>.</p>
+            
+            <form id="configForm">
+                <div class="form-group">
+                    <label for="supabaseUrl">SUPABASE URL</label>
+                    <input type="url" id="supabaseUrl" class="form-control" placeholder="https://xxxxxx.supabase.co" required style="padding-left: 14px;">
+                </div>
+                <div class="form-group">
+                    <label for="supabaseKey">SUPABASE ANON KEY</label>
+                    <input type="text" id="supabaseKey" class="form-control" placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6..." required style="padding-left: 14px;">
+                </div>
+                <button type="submit" class="btn-submit">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+                    Guardar y Conectar
+                </button>
+            </form>
+        </div>
+    </div>
+
     <script>
         // ═══════════════════════════════════════════
         // PASSWORD TOGGLE
@@ -1166,6 +1248,7 @@
                 }
 
                 // Login exitoso, guardar credenciales en caché y redirigir
+                console.log('Inicio de sesión exitoso:', data.user);
                 btnText.textContent = 'Acceso concedido';
                 setTimeout(() => {
                     let origin = sessionStorage.getItem('auth_redirect_origin');
