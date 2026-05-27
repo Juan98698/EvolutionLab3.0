@@ -406,6 +406,7 @@
     .badge-Hombros { background: #EEEDFE; color: #3C3489; }
     .badge-Brazos { background: #FBEAF0; color: #72243E; }
     .badge-Core { background: #F1EFE8; color: #444441; }
+    .badge-General { background: #E6F1FB; color: #0C447C; }
     @media (prefers-color-scheme: dark) {
       .badge-Pecho { background: #042C53; color: #B5D4F4; }
       .badge-Espalda { background: #412402; color: #FAC775; }
@@ -413,6 +414,7 @@
       .badge-Hombros { background: #26215C; color: #CECBF6; }
       .badge-Brazos { background: #4B1528; color: #F4C0D1; }
       .badge-Core { background: #2C2C2A; color: #D3D1C7; }
+      .badge-General { background: #042C53; color: #B5D4F4; }
     }
     .delta-up { color: var(--green); font-weight: 600; }
     .delta-dn { color: var(--red); font-weight: 600; }
@@ -1006,15 +1008,26 @@
             margin-bottom: 25px;
         }
         .day-title input {
-        font-size: 1.6rem;
+        font-size: 1.3rem;
         font-weight: 700;
         border: none;	
         background: transparent;
-        width: auto;          /* Para que se ajuste al contenido */
-        min-width: auto;      /* Elimina el ancho mínimo fijo */
+        width: auto;
+        min-width: auto;
         padding: 5px 0;
-    font-family: 'Inter', sans-serif;
+    font-family: 'Orbitron', sans-serif;
+    letter-spacing: 0.04em;
 }
+        /* Títulos de day-card y exercise-name con Orbitron */
+        .static-day-name {
+            font-family: 'Orbitron', sans-serif !important;
+        }
+        .day-name-input {
+            font-family: 'Orbitron', sans-serif !important;
+            font-size: 1.2rem !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.04em !important;
+        }
         .btn-remove-day {
             background: #fee2e2;
             color: #b91c1c;
@@ -1078,20 +1091,27 @@
         }
         .exercise-name input {
             width: 100%;
-            font-size: 1rem;
+            font-size: 0.92rem;
             font-weight: 700;
             padding: 8px 12px;
             border: 1px solid var(--border2);
             background: rgba(255, 255, 255, 0.05);
             color: white;
             border-radius: 16px;
-            font-family: 'Inter', sans-serif;
+            font-family: 'Orbitron', sans-serif;
+            letter-spacing: 0.03em;
         white-space: normal;
         word-break: break-word;
-        line-height: 1.2;
+        line-height: 1.3;
         height: auto;
         min-height: 44px;
 }
+        .static-exercise-name {
+            font-family: 'Orbitron', sans-serif !important;
+            font-size: 0.9rem !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.03em !important;
+        }
         .img-zone {
             flex: 1;
             min-width: 240px;
@@ -1167,12 +1187,28 @@
             min-width: 85px;
         }
         .var-item label {
-            font-size: 0.7rem;
-            font-weight: 600;
+            font-size: 0.58rem;
+            font-weight: 700;
             text-transform: uppercase;
             color: var(--text2);
             display: block;
             margin-bottom: 4px;
+            font-family: 'Orbitron', sans-serif;
+            letter-spacing: 0.06em;
+        }
+        /* Cover page labels with Orbitron */
+        .cover-page label, .cover-page .note-area label,
+        .cover-page .social-item label {
+            font-family: 'Orbitron', sans-serif !important;
+            font-size: 0.68rem !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.06em !important;
+            text-transform: uppercase !important;
+            color: var(--text2) !important;
+        }
+        /* Dictionary title */
+        .definitions-section h2 {
+            font-family: 'Orbitron', sans-serif !important;
         }
         .var-item input {
             width: 100%;
@@ -1781,8 +1817,10 @@
       border: 1px solid #e2e8f0;
     }
     .weekday-config-title {
+      font-family: 'Orbitron', sans-serif;
       font-weight: 700;
       font-size: 0.95rem;
+      letter-spacing: 0.04em;
       margin-bottom: 12px;
       display: flex;
       align-items: center;
@@ -2686,6 +2724,7 @@
             sessionsMap[e.sesion_id].ejercicios.push({
               id_ej: e.id,
               nombre: e.nombre_ejercicio,
+              grupo: e.grupo_muscular || '',
               peso: Number(e.peso),
               repsArray: e.series_reps,
               rpe: Number(e.rpe_rir),
@@ -3523,6 +3562,7 @@
   let sesiones = [];
   let activeTab = 'plan';
   let tempEjercicios = [];
+  let chart = null; // Referencia global al gráfico de Chart.js
   let nextSesionId = 1;
   let nextEjercicioId = 1;
   const DEFAULT_CONFIG = {
@@ -4427,6 +4467,7 @@
         return {
           sesion_id: sesionId,
           nombre_ejercicio: ej.nombre,
+          grupo_muscular: ej.grupo || '',
           series_reps: ej.repsArray,
           peso: ej.peso,
           rpe_rir: ej.rpe,
@@ -4439,7 +4480,7 @@
       const { data: ejData, error: ejError } = await supabase
         .from('sesiones_ejercicios')
         .insert(ejerciciosInsert)
-        .select('id, nombre_ejercicio');
+        .select('id, nombre_ejercicio, grupo_muscular');
 
       if (ejError) throw ejError;
 
@@ -4534,7 +4575,7 @@
       for (let e of s.ejercicios) {
         if (!ejercicioFiltro || e.nombre === ejercicioFiltro) {
           filas.push({
-            fecha: s.fecha, ejercicio: e.nombre, grupo: e.grupo,
+            fecha: s.fecha, ejercicio: e.nombre, grupo: e.grupo || 'General',
             repsArray: e.repsArray, peso: e.peso, series: e.repsArray.length,
             rpe: e.rpe, descanso: e.descanso, notas_ej: e.notas_ej,
             id_sesion: s.id, id_ej: e.id_ej,
@@ -4682,7 +4723,7 @@ Un registro completo convierte cada sesi&oacute;n en informaci&oacute;n &uacute;
       html += `<tr>
         <td style="white-space:nowrap">${fechaForm}</td>
         <td style="font-weight:600; white-space:nowrap">${escapeHtml(f.ejercicio)}</td>
-        <td><span class="badge badge-${f.grupo}">${f.grupo}</span></td>
+        <td><span class="badge badge-${f.grupo || 'General'}">${f.grupo || 'General'}</span></td>
         <td class="center">${f.series}</td>
         <td class="center">${repsStr}</td>
         <td class="center">${f.peso}</td>
@@ -4744,6 +4785,7 @@ Un registro completo convierte cada sesi&oacute;n en informaci&oacute;n &uacute;
     const gridColor = 'rgba(255, 255, 255, 0.08)';
     const labelColor = '#94a3b8';
     chart = new Chart(document.getElementById('mainChart'), {
+      type: 'bar',
       data: {
         labels,
         datasets: [
