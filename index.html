@@ -2491,7 +2491,7 @@
     try {
       sessionStorage.setItem('auth_redirect_origin', window.location.href);
     } catch(e){}
-    window.location.replace('/login.html');
+    window.location.replace('login.html');
   } else {
     try {
       supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY, {
@@ -2507,7 +2507,7 @@
       try {
         sessionStorage.setItem('auth_redirect_origin', window.location.href);
       } catch(ex){}
-      window.location.replace('/login.html');
+      window.location.replace('login.html');
     }
   }
 
@@ -2518,7 +2518,7 @@
         try {
           sessionStorage.setItem('auth_redirect_origin', window.location.href);
         } catch(e){}
-        window.location.replace('/login.html');
+        window.location.replace('login.html');
       } else {
         // Guardar información del usuario logueado en una variable global
         window.currentUser = data.session.user;
@@ -2553,9 +2553,9 @@
             sessionStorage.clear();
           } catch(e) {}
           
-          window.location.replace('/login.html');
+          window.location.replace('login.html');
         } else {
-          window.location.replace('/login.html');
+          window.location.replace('login.html');
         }
       };
     }
@@ -3437,6 +3437,7 @@
   let CICLO_KEY   = _clienteId ? ('sp_ciclo_'   + _clienteId) : 'fechaInicioCiclo';
   const CONFIG_KEY = 'sp_config_v1';
   let sesiones = [];
+  let activeTab = 'plan';
   let nextSesionId = 1;
   let nextEjercicioId = 1;
   const DEFAULT_CONFIG = {
@@ -3572,6 +3573,7 @@
       titulo: 'Deload Sugerido',
       mensaje: 'Llevas entrenando {ejercicio} durante {valor} semanas consecutivas sin descansos largos. Considerá hacer una semana de descarga (bajar volumen/peso 40-50%) para disipar la fatiga acumulada y prevenir lesiones.',
       semanas_consecutivas: 6,
+    },
   ];
   // ============================================================
   // ===== ESTADO DE CONFIGURACIÓN (carga desde localStorage) ===
