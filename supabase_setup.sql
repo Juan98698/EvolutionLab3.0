@@ -65,6 +65,7 @@ create table public.sesiones_ejercicios (
     id uuid primary key default gen_random_uuid(),
     sesion_id uuid references public.sesiones_historial(id) on delete cascade not null,
     nombre_ejercicio text not null,
+    grupo_muscular text,
     series_reps jsonb not null default '[]'::jsonb, -- Array de repeticiones de las series completadas
     peso numeric not null,
     rpe_rir numeric not null,

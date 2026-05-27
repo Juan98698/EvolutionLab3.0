@@ -2735,11 +2735,20 @@
         });
       }
 
-      // 4. Actualizar la variable global e historial local
+      // 4. Actualizar la variable global e historial local preservando sesiones no sincronizadas
       const sesionesSupabase = Object.values(sessionsMap);
-      sesionesSupabase.sort((a, b) => a.fecha.localeCompare(b.fecha));
+      
+      // Conservar las sesiones locales que aún no se han subido a Supabase (IDs numéricos)
+      const localesPendientes = sesiones.filter(s => typeof s.id === 'number');
+      
+      // Unir ambas listas de sesiones sin duplicados de fecha
+      const mapeoExistentes = new Set(sesionesSupabase.map(s => s.fecha));
+      const localesFiltradas = localesPendientes.filter(s => !mapeoExistentes.has(s.fecha));
+      
+      const todasLasSesiones = [...sesionesSupabase, ...localesFiltradas];
+      todasLasSesiones.sort((a, b) => a.fecha.localeCompare(b.fecha));
 
-      sesiones = sesionesSupabase;
+      sesiones = todasLasSesiones;
       storageSet(STORAGE_KEY, JSON.stringify(sesiones));
       
       // Sincronizar IDs y redibujar
@@ -3565,6 +3574,28 @@
   let chart = null; // Referencia global al gráfico de Chart.js
   let nextSesionId = 1;
   let nextEjercicioId = 1;
+
+  // ===== NOTIFICACIONES DESCARTADAS (persistencia) =====
+  const DISMISSED_NOTIFS_KEY = 'evolution_dismissed_notifs';
+  let dismissedNotifs = new Set();
+  function loadDismissedNotifs() {
+    try {
+      const raw = storageGet(DISMISSED_NOTIFS_KEY);
+      if (raw) dismissedNotifs = new Set(JSON.parse(raw));
+    } catch(e) { dismissedNotifs = new Set(); }
+  }
+  function saveDismissedNotifs() {
+    storageSet(DISMISSED_NOTIFS_KEY, JSON.stringify([...dismissedNotifs]));
+  }
+  function dismissNotif(key) {
+    dismissedNotifs.add(key);
+    saveDismissedNotifs();
+  }
+  function getNotifKey(n) {
+    // Clave única: ruleId + nombre del ejercicio
+    return n.id + '::' + (n.ejercicio || '');
+  }
+
   const DEFAULT_CONFIG = {
     minSesiones: 3,          // mínimo de sesiones para evaluar un ejercicio
     ventana: 4,              // cuántas sesiones recientes mirar
@@ -3753,7 +3784,7 @@
       if (n === 1) {
         const r = RULES.find(r => r.id === 'primer_sesion');
         if (r && r.activa) {
-          notifs.push({ tipo: r.tipo, titulo: r.titulo, mensaje: interpolar(r.mensaje, { ejercicio: nombre }) });
+          notifs.push({ id: 'primer_sesion', ejercicio: nombre, tipo: r.tipo, titulo: r.titulo, mensaje: interpolar(r.mensaje, { ejercicio: nombre }) });
         }
         continue;
       }
@@ -3818,6 +3849,7 @@
         const redPct = rDescansoEx.reduccion_porciento;
         const pesoNuevo = redondearPeso(ultima.peso * (1 - redPct / 100));
         notifs.push({
+          id: 'descanso_excesivo', ejercicio: nombre,
           tipo: rDescansoEx.tipo, titulo: rDescansoEx.titulo,
           mensaje: interpolar(rDescansoEx.mensaje, {
             ejercicio: nombre, valor: diasDesdeUltima,
@@ -3832,6 +3864,7 @@
         const redPct = rReg.reduccion_porciento;
         const pesoNuevo = redondearPeso(ultima.peso * (1 - redPct / 100));
         notifs.push({
+          id: 'bajar_peso_regresion', ejercicio: nombre,
           tipo: rReg.tipo, titulo: rReg.titulo,
           mensaje: interpolar(rReg.mensaje, {
             ejercicio: nombre, valor: regresionCount,
@@ -3845,6 +3878,7 @@
         const redPct = rRirAlto.reduccion_porciento;
         const pesoNuevo = redondearPeso(ultima.peso * (1 - redPct / 100));
         notifs.push({
+          id: 'bajar_peso_rir_alto', ejercicio: nombre,
           tipo: rRirAlto.tipo, titulo: rRirAlto.titulo,
           mensaje: interpolar(rRirAlto.mensaje, {
             ejercicio: nombre, valor: avgRIR.toFixed(1),
@@ -3863,6 +3897,7 @@
           const incKg = Math.max(rSubir.incremento_minimo_kg, ultima.peso * incPct / 100);
           const pesoNuevo = redondearPeso(ultima.peso + incKg);
           notifs.push({
+            id: 'subir_peso_reps', ejercicio: nombre,
             tipo: rSubir.tipo, titulo: rSubir.titulo,
             mensaje: interpolar(rSubir.mensaje, {
               ejercicio: nombre, valor: avgRIR.toFixed(1),
@@ -3895,6 +3930,7 @@
             const pesoNuevo = redondearPeso(ultima.peso + incKg);
             const seriesMinimas = Math.ceil((ultima.repsArray.length || 1) * seriesMinPct / 100);
             notifs.push({
+              id: 'subir_peso_reps_objetivo', ejercicio: nombre,
               tipo: rRepsObj.tipo, titulo: rRepsObj.titulo,
               mensaje: interpolar(rRepsObj.mensaje, {
                 ejercicio: nombre, valor: repsObjetivo,
@@ -3911,6 +3947,7 @@
       const rReps = RULES.find(r => r.id === 'subir_reps_antes_peso');
       if (rReps && rReps.activa && deltaPct !== null && deltaPct >= rReps.umbral_crecimiento_vol && rachaPositiva >= rReps.sesiones_consecutivas) {
         notifs.push({
+          id: 'subir_reps_antes_peso', ejercicio: nombre,
           tipo: rReps.tipo, titulo: rReps.titulo,
           mensaje: interpolar(rReps.mensaje, {
             ejercicio: nombre, valor: ultima.peso,
@@ -3924,6 +3961,7 @@
         && Math.abs(deltaPct) <= rMantener.umbral_estabilidad
         && rachaPositiva === 0 && regresionCount === 0) {
         notifs.push({
+          id: 'mantener_peso', ejercicio: nombre,
           tipo: rMantener.tipo, titulo: rMantener.titulo,
           mensaje: interpolar(rMantener.mensaje, {
             ejercicio: nombre, valor: Math.abs(deltaPct).toFixed(1),
@@ -3935,6 +3973,7 @@
       const rDescansoCorto = RULES.find(r => r.id === 'descanso_corto');
       if (rDescansoCorto && rDescansoCorto.activa && avgDescanso >= rDescansoCorto.umbral_descanso_alto) {
         notifs.push({
+          id: 'descanso_corto', ejercicio: nombre,
           tipo: rDescansoCorto.tipo, titulo: rDescansoCorto.titulo,
           mensaje: interpolar(rDescansoCorto.mensaje, {
             ejercicio: nombre, valor: Math.round(avgDescanso),
@@ -3954,6 +3993,7 @@
             ? sesionsSinMejoraPesoReps
             : totalSinMejora;
           notifs.push({
+            id: 'estancamiento', ejercicio: nombre,
             tipo: rEstanc.tipo, titulo: rEstanc.titulo,
             mensaje: interpolar(rEstanc.mensaje, {
               ejercicio: nombre, valor: sesionesAfectadas,
@@ -3966,6 +4006,7 @@
       const rRacha = RULES.find(r => r.id === 'racha_positiva');
       if (rRacha && rRacha.activa && rachaPositiva >= rRacha.sesiones_racha) {
         notifs.push({
+          id: 'racha_positiva', ejercicio: nombre,
           tipo: rRacha.tipo, titulo: rRacha.titulo,
           mensaje: interpolar(rRacha.mensaje, {
             ejercicio: nombre, valor: rachaPositiva,
@@ -3980,6 +4021,7 @@
         const rm1Ultima = ultima.rm;
         if (rm1Ultima > rm1MaxPrev && (rm1Ultima - rm1MaxPrev) >= 0.5) {
           notifs.push({
+            id: 'record_personal', ejercicio: nombre,
             tipo: rRecord.tipo, titulo: rRecord.titulo,
             mensaje: interpolar(rRecord.mensaje, {
               ejercicio: nombre, valor: rm1Ultima.toFixed(1),
@@ -4004,6 +4046,7 @@
         const semanasConsecutivas = Math.round((parsearFechaISO(ultima.fecha) - fechaStreakStart) / (1000*60*60*24*7));
         if (semanasConsecutivas >= semanasDeload) {
           notifs.push({
+            id: 'deload_sugerido', ejercicio: nombre,
             tipo: rDeload.tipo, titulo: rDeload.titulo,
             mensaje: interpolar(rDeload.mensaje, {
               ejercicio: nombre, valor: semanasConsecutivas,
@@ -4029,9 +4072,13 @@
     if (!container) return;
     container.innerHTML = '';
     if (sesiones.length === 0) return;
+    loadDismissedNotifs();
     const notifs = analizarSobrecargaProgresiva();
     if (notifs.length === 0) return;
-    notifs.forEach((n, i) => {
+    // Filter out dismissed notifications
+    const notifsVisibles = notifs.filter(n => !dismissedNotifs.has(getNotifKey(n)));
+    if (notifsVisibles.length === 0) return;
+    notifsVisibles.forEach((n, i) => {
       let iconSvg = '';
       if (n.id === 'record_personal') {
         iconSvg = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ffd700" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px; display:inline-block; vertical-align:middle;"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"></path><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"></path><path d="M4 22h16"></path><path d="M10 14.66V17c0 .55-.45 1-1 1H4v2h16v-2h-5c-.55 0-1-.45-1-1v-2.34"></path><path d="M12 2a6 6 0 0 1 6 6v3.5c0 1.66-1.34 3-3 3H9a3 3 0 0 1-3-3V8a6 6 0 0 1 6-6z"></path></svg>`;
@@ -4053,15 +4100,21 @@
         iconSvg = `<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#00d4ff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px; display:inline-block; vertical-align:middle;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>`;
       }
 
+      const notifKey = getNotifKey(n);
       const div = document.createElement('div');
       div.className = `sp-notif-banner sp-${n.tipo}`;
       div.innerHTML = `
         <div class="sp-notif-header">
           <span style="display:inline-flex; align-items:center;">${iconSvg}${n.titulo}</span>
-          <button class="sp-notif-close" onclick="this.closest('.sp-notif-banner').remove()">✕</button>
+          <button class="sp-notif-close" data-notif-key="${escapeHtml(notifKey)}">✕</button>
         </div>
         <div class="sp-notif-body">${escapeHtml(n.mensaje)}</div>
       `;
+      // Attach dismiss handler that persists to localStorage
+      div.querySelector('.sp-notif-close').addEventListener('click', function() {
+        dismissNotif(notifKey);
+        this.closest('.sp-notif-banner').remove();
+      });
       container.appendChild(div);
     });
   }
@@ -4446,9 +4499,6 @@
 
       if (histError) throw histError;
       const sesionId = histData.id;
-      
-      // Actualizar ID local de la sesión con el UUID de Supabase
-      sesion.id = sesionId;
 
       // 2. Preparar e insertar los ejercicios detallados
       const ejerciciosInsert = sesion.ejercicios.map(ej => {
@@ -4483,6 +4533,9 @@
         .select('id, nombre_ejercicio, grupo_muscular');
 
       if (ejError) throw ejError;
+
+      // Actualizar ID local de la sesión con el UUID de Supabase tras el éxito total
+      sesion.id = sesionId;
 
       // Actualizar IDs locales de los ejercicios con los UUIDs de Supabase
       if (ejData) {
@@ -4975,7 +5028,7 @@ Un registro completo convierte cada sesi&oacute;n en informaci&oacute;n &uacute;
     }, 100);
   }
   // ===== GUARDAR SESIÓN =====
-  function guardarSesion() {
+  async function guardarSesion() {
     ocultarError();
     if (haPasadoElPlazo()) { mostrarError(mensajePlazoExpirado()); return; }
     const fecha = document.getElementById('fecha_sesion').value;
@@ -5010,7 +5063,10 @@ Un registro completo convierte cada sesi&oacute;n en informaci&oacute;n &uacute;
       };
     });
     sesiones.push({ id: nextSesionId++, fecha, notas_sesion: document.getElementById('notas_sesion').value, ejercicios: ejerciciosGuardar });
-    saveData();
+    // Limpiar notificaciones descartadas para mostrar nuevos análisis
+    dismissedNotifs.clear();
+    saveDismissedNotifs();
+    await saveData();
     tempEjercicios = [];
     document.getElementById('fecha_sesion').value = getTodayISO();
     document.getElementById('notas_sesion').value = '';
@@ -5214,6 +5270,11 @@ Un registro completo convierte cada sesi&oacute;n en informaci&oacute;n &uacute;
             const orig = e.nombre;
             const norm = orig.trim().charAt(0).toUpperCase() + orig.trim().slice(1).toLowerCase();
             if (orig !== norm) { e.nombre = norm; changed = true; }
+            // Normalizar grupo muscular: si es undefined, null o vacío, usar 'General'
+            if (!e.grupo || e.grupo === 'undefined') {
+              e.grupo = 'General';
+              changed = true;
+            }
           }
         }
         if (changed) saveData();
@@ -5225,6 +5286,8 @@ Un registro completo convierte cada sesi&oacute;n en informaci&oacute;n &uacute;
         const fechas = sesiones.map(s => s.fecha).sort();
         establecerFechaInicioCiclo(fechas[0]);
       }
+      // Cargar notificaciones descartadas
+      loadDismissedNotifs();
     } catch(e) { console.error('Error cargando datos:', e); sesiones = []; updateNextIds(); }
   }
 
