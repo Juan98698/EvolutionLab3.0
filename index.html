@@ -1017,16 +1017,19 @@
         padding: 5px 0;
     font-family: 'Orbitron', sans-serif;
     letter-spacing: 0.04em;
+    color: #fbbf24 !important; /* Oro premium */
 }
         /* Títulos de day-card y exercise-name con Orbitron */
         .static-day-name {
             font-family: 'Orbitron', sans-serif !important;
+            color: #fbbf24 !important; /* Oro premium */
         }
         .day-name-input {
             font-family: 'Orbitron', sans-serif !important;
             font-size: 1.2rem !important;
             font-weight: 700 !important;
             letter-spacing: 0.04em !important;
+            color: #fbbf24 !important; /* Oro premium */
         }
         .btn-remove-day {
             background: #fee2e2;
@@ -1096,7 +1099,7 @@
             padding: 8px 12px;
             border: 1px solid var(--border2);
             background: rgba(255, 255, 255, 0.05);
-            color: white;
+            color: #fafaf9; /* Blanco crema */
             border-radius: 16px;
             font-family: 'Orbitron', sans-serif;
             letter-spacing: 0.03em;
@@ -1111,6 +1114,7 @@
             font-size: 0.9rem !important;
             font-weight: 700 !important;
             letter-spacing: 0.03em !important;
+            color: #fafaf9 !important; /* Blanco crema */
         }
         .img-zone {
             flex: 1;
@@ -1353,7 +1357,9 @@
     font-size: 1.8rem;
     font-weight: 900;
     text-align: center;
-    color: var(--text);
+    background: linear-gradient(135deg, #ffe082 0%, #fbbf24 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
     letter-spacing: 3px;
     margin-bottom: 8px;
     text-transform: uppercase;
@@ -1481,7 +1487,7 @@
 }
 .philosophy-card strong {
     font-family: 'Orbitron', sans-serif;
-    color: var(--text);
+    color: #fb923c; /* Cobre/Naranja premium */
     display: block;
     font-size: 1.05rem;
     font-weight: 700;
@@ -1594,9 +1600,17 @@
     }
   .cover-page h1 {
         color: black !important;
+        -webkit-text-fill-color: black !important;
         border-bottom: 3px solid black !important;
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
+    }
+    .day-title input, .day-name-input, .static-day-name,
+    .exercise-name input, .static-exercise-name,
+    .philosophy-title, .philosophy-card strong {
+        color: black !important;
+        -webkit-text-fill-color: black !important;
+        background: transparent !important;
     }
 	.video-link-item a {
         display: inline-block !important;
@@ -2397,7 +2411,7 @@
     <div class="cover-page">
     <!-- NUEVO TÍTULO CENTRAL -->
     <div style="text-align: center; margin-bottom: 30px;">
-    <h1 style="font-family: 'Orbitron', sans-serif; font-size: 1.9rem; font-weight: 800; color: #ffffff; border-bottom: 4px solid #ffffff; display: inline-block; padding-bottom: 8px; letter-spacing: 1px;">PLAN DE ENTRENAMIENTO PERSONALIZADO</h1>
+    <h1 style="font-family: 'Orbitron', sans-serif; font-size: 1.9rem; font-weight: 800; background: linear-gradient(135deg, #ffe082 0%, #fbbf24 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; border-bottom: 4px solid #fbbf24; display: inline-block; padding-bottom: 8px; letter-spacing: 1px;">PLAN DE ENTRENAMIENTO PERSONALIZADO</h1>
     <p style="font-family: 'Orbitron', sans-serif; font-size: 0.95rem; color: var(--text2); margin-top: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px;">Estrategia inteligente, ejecución impecable</p>
 </div>
 <!-- Texto de enganche / Filosofía del método -->
@@ -5546,7 +5560,7 @@ Un registro completo convierte cada sesi&oacute;n en informaci&oacute;n &uacute;
                     <div class="day-header">
                         <div class="day-title">
                             ${(typeof MODO_CLIENTE !== 'undefined' && MODO_CLIENTE) ? 
-                                `<span class="static-day-name" style="font-size:1.2rem; font-weight:700; color:white; font-family:'Orbitron',sans-serif;">${escapeHtml(day.name)}</span>` : 
+                                `<span class="static-day-name" style="font-size:1.2rem; font-weight:700; font-family:'Orbitron',sans-serif;">${escapeHtml(day.name)}</span>` : 
                                 `<input type="text" class="day-name-input" data-day-index="${idx}" value="${escapeHtml(day.name)}">`
                             }
                         </div>
@@ -5702,7 +5716,7 @@ Un registro completo convierte cada sesi&oacute;n en informaci&oacute;n &uacute;
                     <div class="exercise-checkbox client-only-checkbox" data-ex-id="${exercise.id}" data-day-id="${dayId}"></div>
                     <div class="exercise-name">
                         ${(typeof MODO_CLIENTE !== 'undefined' && MODO_CLIENTE) ? 
-                            `<span class="static-exercise-name" style="font-size:1.1rem; font-weight:600; color:white;">${escapeHtml(exercise.name)}</span>` : 
+                            `<span class="static-exercise-name" style="font-size:1.1rem; font-weight:600;">${escapeHtml(exercise.name)}</span>` : 
                             `<input type="text" class="exercise-name-input" list="evolution-exercise-list" data-ex-id="${exercise.id}" value="${escapeHtml(exercise.name)}" placeholder="Escribe el nombre del ejercicio...">`
                         }
                     </div>
