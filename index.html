@@ -1017,19 +1017,21 @@
         padding: 5px 0;
     font-family: 'Orbitron', sans-serif;
     letter-spacing: 0.04em;
-    color: #7b2ff7 !important; /* Morado eléctrico */
+    color: #b0bec5 !important; /* Gris metalizado fallback para inputs */
 }
         /* Títulos de day-card y exercise-name con Orbitron */
         .static-day-name {
             font-family: 'Orbitron', sans-serif !important;
-            color: #7b2ff7 !important; /* Morado eléctrico */
+            background: linear-gradient(135deg, #b0bec5 0%, #00d4ff 100%) !important;
+            -webkit-background-clip: text !important;
+            -webkit-text-fill-color: transparent !important;
         }
         .day-name-input {
             font-family: 'Orbitron', sans-serif !important;
             font-size: 1.2rem !important;
             font-weight: 700 !important;
             letter-spacing: 0.04em !important;
-            color: #7b2ff7 !important; /* Morado eléctrico */
+            color: #b0bec5 !important; /* Gris metalizado fallback para inputs */
         }
         .btn-remove-day {
             background: #fee2e2;
