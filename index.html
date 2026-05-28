@@ -1797,13 +1797,29 @@
         backdrop-filter: blur(16px) saturate(180%);
         -webkit-backdrop-filter: blur(16px) saturate(180%);
         border-radius: var(--radius-lg);
-        padding: 1.25rem 1.5rem;
-        margin-bottom: 1.25rem;
-        border: 1px solid var(--border2);
         color: #fff;
-        animation: slideIn 0.3s ease;
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
         font-family: 'Orbitron', sans-serif !important;
+        
+        /* Transición Premium Colapsable (Evita Layout Shifts bruscos) */
+        max-height: 0;
+        opacity: 0;
+        margin-bottom: 0;
+        padding: 0 1.5rem;
+        border: 0px solid transparent;
+        overflow: hidden;
+        transition: max-height 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+                    opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+                    margin-bottom 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+                    padding 0.8s cubic-bezier(0.16, 1, 0.3, 1),
+                    border 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      .today-banner.show-banner {
+        max-height: 250px;
+        opacity: 1;
+        margin-bottom: 1.25rem;
+        padding: 1.25rem 1.5rem;
+        border: 1px solid var(--border2);
       }
       .today-banner.rest-day {
         background: linear-gradient(135deg, rgba(30, 41, 59, 0.30), rgba(51, 65, 85, 0.12));
@@ -2423,13 +2439,13 @@
 </div>
 <div class="container">
   <!-- Banner Tu Entrenamiento de Hoy -->
-  <div id="todayBanner" style="display:none;"></div>
+  <div id="todayBanner" class="today-banner stagger-2"></div>
   <div class="aviso-bloqueo" id="avisoBloqueo">
     🔒 Tu plan ha finalizado. <a href="#" id="renovarLink">Contacta a tu entrenador para renovar</a>.
   </div>
   <!-- Notificaciones de sobrecarga progresiva -->
   <div id="sp-notif-container"></div>
-  <div class="top-bar stagger-2">
+  <div class="top-bar stagger-3">
     <div class="nav-container">
       <!-- Grupo 1: Plan de Entrenamiento -->
       <div class="nav-group nav-group-plan">
@@ -2451,7 +2467,7 @@
     </div>
   </div>
     <!-- HISTORIAL -->
-    <div id="panel-hist" class="stagger-3" style="display:none">
+    <div id="panel-hist" class="stagger-4" style="display:none">
      <div class="top-bar" style="margin-top:-0.5rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
       <div id="dashboardGreeting" style="font-size: 18px; font-weight: 700; color: var(--text); flex:1; display:inline-flex; align-items:center;">Hola <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:8px; display:inline-block; vertical-align:middle;"><path d="M18 11V6a2 2 0 0 0-2-2 2 2 0 0 0-2 2v5"></path><path d="M14 10V4a2 2 0 0 0-2-2 2 2 0 0 0-2 2v6"></path><path d="M10 10.5V6a2 2 0 0 0-2-2 2 2 0 0 0-2 2v4.5"></path><path d="M6 10v6a6 6 0 0 0 6 6h1a6 6 0 0 0 5-5.5v-6.5"></path></svg></div>
       <select id="ejercicioSelect" style="min-width:180px; max-width:280px;">
@@ -2492,7 +2508,7 @@
     </div>
   </div>
   <!-- PROGRESIÓN -->
-  <div id="panel-chart" class="stagger-3" style="display:none">
+  <div id="panel-chart" class="stagger-4" style="display:none">
     <div class="top-bar" style="margin-top:0.5rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:1.5rem; padding-top: 4px;">
       <div class="section-title" id="chartTitle" style="margin-bottom:0; flex:1; font-size:14px; color:var(--text); font-family:'Orbitron',sans-serif; letter-spacing:0.05em;">Progresión</div>
       <select id="ejercicioSelectChart" style="min-width:180px; max-width:280px; height: 40px; line-height: 40px; padding: 0 32px 0 12px; background-position: right 12px center; display: inline-block; box-sizing: border-box;"></select>
@@ -2513,7 +2529,7 @@
     </div>
   </div>
   <!-- AGREGAR SESIÓN -->
-  <div id="panel-add" class="stagger-3" style="display:none">
+  <div id="panel-add" class="stagger-4" style="display:none">
     <div class="section-title">Nueva sesión</div>
     <div class="form-section">
       <div id="validationBanner" class="validation-banner">
@@ -2538,7 +2554,7 @@
       </div>
     </div>
   </div>
-  <div id="panel-plan" class="stagger-3">
+  <div id="panel-plan" class="stagger-4">
 <div class="document-container" id="trainingPlanContainer">
     <div class="toolbar">
         <button id="addGlobalDayBtn"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px; vertical-align:-1px;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>Añadir día</button>
@@ -2662,7 +2678,7 @@
 </div>
 </div>
   <!-- ===== PANEL CONFIGURACIÓN DE REGLAS ===== -->
-  <div id="panel-config" class="stagger-3">
+  <div id="panel-config" class="stagger-4">
     <div class="section-title">⚙️ Motor de sobrecarga progresiva — Configuración de reglas</div>
     <div class="config-section">
       <div class="config-section-title">📊 Parámetros generales de análisis</div>
@@ -2844,16 +2860,23 @@
         // Guardar información del usuario logueado en una variable global
         window.currentUser = data.session.user;
         console.log("Usuario autenticado:", window.currentUser.email);
-        comprobarRolYAdaptarUI(window.currentUser);
+        
         actualizarClavesAlmacenamiento();
         cargarHistorialDesdeSupabase();
         
-        // Indicar que la autenticación está lista
-        window.authIsReady = true;
-        // Solo revelar si el DOM y la UI ya fueron completamente inicializados por initPlan()
-        if (window.domIsReady) {
-          document.body.classList.add('auth-ready');
-        }
+        comprobarRolYAdaptarUI(window.currentUser).then(() => {
+          console.log("Rol y UI adaptados con éxito. Revelando interfaz.");
+          window.authIsReady = true;
+          if (window.domIsReady) {
+            document.body.classList.add('auth-ready');
+          }
+        }).catch(err => {
+          console.error("Error al adaptar UI:", err);
+          window.authIsReady = true;
+          if (window.domIsReady) {
+            document.body.classList.add('auth-ready');
+          }
+        });
       }
     }).catch(err => {
       clearTimeout(authFallbackTimeout);
@@ -3302,7 +3325,8 @@
   }
 
   function comprobarRolYAdaptarUI(user) {
-    console.log("Comprobando rol para el usuario ID:", user.id, "Email:", user.email);
+    return new Promise((resolve) => {
+      console.log("Comprobando rol para el usuario ID:", user.id, "Email:", user.email);
     
     const adaptarVistaClientePremium = () => {
       // Configurar Filosofía Colapsable
@@ -3430,8 +3454,10 @@
           if (tabConfig) tabConfig.style.removeProperty('display');
           renderFullApp();
         }
+        resolve();
       } catch (e) {
         console.error("Error en el fallback offline de rol:", e);
+        resolve();
       }
     };
 
@@ -3468,6 +3494,7 @@
         if (saludo) {
           saludo.innerHTML = `Hola, Atleta <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:8px; display:inline-block; vertical-align:middle;"><path d="M18 11V6a2 2 0 0 0-2-2 2 2 0 0 0-2 2v5"></path><path d="M14 10V4a2 2 0 0 0-2-2 2 2 0 0 0-2 2v6"></path><path d="M10 10.5V6a2 2 0 0 0-2-2 2 2 0 0 0-2 2v4.5"></path><path d="M6 10v6a6 6 0 0 0 6 6h1a6 6 0 0 0 5-5.5v-6.5"></path></svg> <div style="font-size: 11px; font-weight: 500; color: #ff4d4d; margin-top: 4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ff4d4d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px; display:inline-block; vertical-align:-1px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg> Error de Base de Datos: ${escapeHtml(error.message)}. Asegúrate de que el ID en 'profiles' coincida con tu Auth ID: ${escapeHtml(user.id)}</div>`;
         }
+        resolve();
         return;
       }
       
@@ -3546,11 +3573,23 @@
           const globalVars = document.getElementById('globalVarsPanelContainer');
           if (globalVars) globalVars.style.setProperty('display', 'none', 'important');
 
-          // Cargar el plan de entrenamiento propio del cliente desde Supabase o LocalStorage
-          cargarPlanPropioCliente();
-
-          // Cargar adaptaciones premium (Filosofía Colapsable y FAB Calculadora 1RM)
-          adaptarVistaClientePremium();
+          // Cargar el plan de entrenamiento propio del cliente desde Supabase o LocalStorage (y esperar!)
+          cargarPlanPropioCliente().then(() => {
+            // Cargar adaptaciones premium (Filosofía Colapsable y FAB Calculadora 1RM)
+            adaptarVistaClientePremium();
+            
+            // Volver a renderizar la aplicación para aplicar todos los cambios de rol en la UI
+            var ES_PAGINA_CLIENTE = !!window.INJECTED_CLIENT_ID || window.location.pathname.includes('/clientes/');
+            if (!ES_PAGINA_CLIENTE && !MODO_CLIENTE) {
+              renderFullApp();
+            } else {
+              renderAll();
+            }
+            resolve();
+          }).catch(err => {
+            console.error("Error al cargar plan de cliente:", err);
+            resolve();
+          });
           
         } else {
           // Si es entrenador, mostrar selector y botones
@@ -3579,49 +3618,53 @@
             saveNubeBtn.onclick = guardarPlanEnNube;
           }
 
-          // Cargar atletas en el dropdown selector
-          cargarClientesSelector();
+          // Cargar atletas en el dropdown selector (y esperar!)
+          cargarClientesSelector().then(() => {
+            const selectorAtletas = document.getElementById('selectorAtletas');
+            if (selectorAtletas) {
+              selectorAtletas.onchange = (e) => {
+                cargarPlanDeCliente(e.target.value);
+              };
+            }
+            
+            // Habilitar edición de los campos de portada para el entrenador
+            document.querySelectorAll('#userName, #userGoal, #startDate, #planVigenciaPlan, #trainerName, #whatsappLink, #instagramLink, #globalNote').forEach(el => {
+              el.readOnly = false;
+              el.style.removeProperty('pointer-events');
+              el.style.removeProperty('background');
+              el.style.removeProperty('border');
+              el.style.removeProperty('color');
+            });
 
-          const selectorAtletas = document.getElementById('selectorAtletas');
-          if (selectorAtletas) {
-            selectorAtletas.onchange = (e) => {
-              cargarPlanDeCliente(e.target.value);
-            };
-          }
-          
-          // Habilitar edición de los campos de portada para el entrenador
-          document.querySelectorAll('#userName, #userGoal, #startDate, #planVigenciaPlan, #trainerName, #whatsappLink, #instagramLink, #globalNote').forEach(el => {
-            el.readOnly = false;
-            el.style.removeProperty('pointer-events');
-            el.style.removeProperty('background');
-            el.style.removeProperty('border');
-            el.style.removeProperty('color');
+            // Asegurarse de que los paneles de edición de entrenador estén visibles
+            document.querySelectorAll('#printAsPdfBtn, #addGlobalDayBtn, #addCustomVarBtn, #exportHtmlBtn, .add-day-btn, .btn-remove-day, .exercise-actions, .btn-add-ex, .btn-rem-ex, .img-upload-label, .gif-upload-label, .global-vars-panel button, #quickAddVarBtn, .remove-var-btn, .hidden-file-upload, .hidden-gif-upload, .video-url-input, #weekdayConfigSection').forEach(el => {
+              el.style.removeProperty('display');
+            });
+
+            const tabConfig = document.getElementById('tab-config');
+            if (tabConfig) tabConfig.style.removeProperty('display');
+
+            const defsSection = document.querySelector('.definitions-section');
+            if (defsSection) defsSection.style.removeProperty('display');
+            const globalVars = document.getElementById('globalVarsPanelContainer');
+            if (globalVars) globalVars.style.removeProperty('display');
+
+            // Remover FAB de 1RM si existe (el entrenador usa el botón normal)
+            const fab = document.getElementById('fab1RMBtn');
+            if (fab) fab.remove();
+            
+            // Volver a renderizar la aplicación para aplicar todos los cambios de rol en la UI
+            var ES_PAGINA_CLIENTE = !!window.INJECTED_CLIENT_ID || window.location.pathname.includes('/clientes/');
+            if (!ES_PAGINA_CLIENTE && !MODO_CLIENTE) {
+              renderFullApp();
+            } else {
+              renderAll();
+            }
+            resolve();
+          }).catch(err => {
+            console.error("Error al cargar clientes selector:", err);
+            resolve();
           });
-
-          // Asegurarse de que los paneles de edición de entrenador estén visibles
-          document.querySelectorAll('#printAsPdfBtn, #addGlobalDayBtn, #addCustomVarBtn, #exportHtmlBtn, .add-day-btn, .btn-remove-day, .exercise-actions, .btn-add-ex, .btn-rem-ex, .img-upload-label, .gif-upload-label, .global-vars-panel button, #quickAddVarBtn, .remove-var-btn, .hidden-file-upload, .hidden-gif-upload, .video-url-input, #weekdayConfigSection').forEach(el => {
-            el.style.removeProperty('display');
-          });
-
-          const tabConfig = document.getElementById('tab-config');
-          if (tabConfig) tabConfig.style.removeProperty('display');
-
-          const defsSection = document.querySelector('.definitions-section');
-          if (defsSection) defsSection.style.removeProperty('display');
-          const globalVars = document.getElementById('globalVarsPanelContainer');
-          if (globalVars) globalVars.style.removeProperty('display');
-
-          // Remover FAB de 1RM si existe (el entrenador usa el botón normal)
-          const fab = document.getElementById('fab1RMBtn');
-          if (fab) fab.remove();
-        }
-        
-        // Volver a renderizar la aplicación para aplicar todos los cambios de rol en la UI
-        var ES_PAGINA_CLIENTE = !!window.INJECTED_CLIENT_ID || window.location.pathname.includes('/clientes/');
-        if (!ES_PAGINA_CLIENTE && !MODO_CLIENTE) {
-          renderFullApp();
-        } else {
-          renderAll();
         }
         
       } else {
@@ -3632,6 +3675,7 @@
         if (saludo) {
           saludo.innerHTML = `Hola, Atleta <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:8px; display:inline-block; vertical-align:middle;"><path d="M18 11V6a2 2 0 0 0-2-2 2 2 0 0 0-2 2v5"></path><path d="M14 10V4a2 2 0 0 0-2-2 2 2 0 0 0-2 2v6"></path><path d="M10 10.5V6a2 2 0 0 0-2-2 2 2 0 0 0-2 2v4.5"></path><path d="M6 10v6a6 6 0 0 0 6 6h1a6 6 0 0 0 5-5.5v-6.5"></path></svg> <div style="font-size: 11px; font-weight: 500; color: #ff4d4d; margin-top: 4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ff4d4d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px; display:inline-block; vertical-align:-1px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg> Perfil no encontrado. Asegúrate de crear una fila en la tabla 'profiles' con el ID: ${escapeHtml(user.id)}</div>`;
         }
+        resolve();
       }
     }).catch(err => {
       console.error("Excepción en comprobarRolYAdaptarUI:", err);
@@ -3640,8 +3684,10 @@
         offlineFallback();
       } else {
         toast("Error de conexión: " + err.message, "error");
+        resolve();
       }
     });
+  });
   }
 
   window.cerrarPanelRegistro = function() {
@@ -5405,7 +5451,7 @@ Un registro completo convierte cada sesi&oacute;n en informaci&oacute;n &uacute;
         if (tab === 'plan') {
             renderTodayBanner();
         } else {
-            todayBannerEl.style.display = 'none';
+            todayBannerEl.classList.remove('show-banner');
         }
     }
     if (tab === 'chart') {
@@ -6538,12 +6584,12 @@ function addGlobalVariable() {
         if (!container) return;
         // Solo mostrar en la pestaña "Mi Plan"
         if (typeof activeTab !== 'undefined' && activeTab !== 'plan') {
-            container.style.display = 'none';
+            container.classList.remove('show-banner');
             return;
         }
         // Solo mostrar si hay mapeo configurado
         const hasConfig = Object.values(weekdayMapping).some(v => v !== -1);
-        if (!hasConfig) { container.style.display = 'none'; return; }
+        if (!hasConfig) { container.classList.remove('show-banner'); return; }
         const hoy = new Date();
         const diaSemana = hoy.getDay();
         const diaIndex = weekdayMapping[diaSemana];
@@ -6592,7 +6638,7 @@ function addGlobalVariable() {
             if (typeof trainingDays !== 'undefined' && trainingDays[idx]) return trainingDays[idx].name;
             return 'Día ' + (idx + 1);
         }
-        container.style.display = 'block';
+        container.classList.remove('rest-day');
         if (diaIndex === -1 || diaIndex === undefined || diaIndex === null) {
             // Día de descanso — buscar próximo entrenamiento
             let nextInfo = '';
@@ -6606,7 +6652,7 @@ function addGlobalVariable() {
                     break;
                 }
             }
-            container.className = 'today-banner rest-day';
+            container.classList.add('rest-day');
             container.innerHTML = `
                 <div class="today-banner-title" style="display:inline-flex; align-items:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px; vertical-align:-1px;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>${hoyStr}</div>
                 <div class="today-banner-day" style="display:inline-flex; align-items:center;"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:8px; vertical-align:-1px;"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 10"></polyline><line x1="12" y1="2" x2="12" y2="4"></line></svg>Hoy es día de descanso</div>
@@ -6614,7 +6660,6 @@ function addGlobalVariable() {
             `;
         } else {
             const dayName = getDayName(diaIndex);
-            container.className = 'today-banner';
             container.innerHTML = `
                 <div class="today-banner-title" style="display:inline-flex; align-items:center;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px; vertical-align:-1px;"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>Tu entrenamiento de hoy · ${hoyStr}</div>
                 <div class="today-banner-day">${dayName}</div>
@@ -6622,6 +6667,7 @@ function addGlobalVariable() {
                 <button class="today-banner-btn" onclick="scrollToDayAndHighlight(${diaIndex})">Ver ejercicios →</button>
             `;
         }
+        container.classList.add('show-banner');
     }
     function scrollToDayAndHighlight(dayIndex) {
         // Cambiar a tab plan
