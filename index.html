@@ -1766,7 +1766,7 @@
       background: transparent !important;
       }
       /* Fix para iOS y Mobile: Se usa un seudoelemento fijo para el fondo, ya que background-attachment: fixed falla en iPhone */
-      body::before {
+      html::before {
           content: "";
           position: fixed;
           top: 0;
