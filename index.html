@@ -101,10 +101,42 @@
     }
     body {
       opacity: 0;
-      transition: opacity 0.5s ease-out;
+      transition: opacity 0.45s ease-out;
     }
     body.auth-ready {
       opacity: 1;
+    }
+
+    /* ═══════════════════════════════════════════
+       STAGGERED SLIDE-UP ANIMATIONS (INDEX)
+       ═══════════════════════════════════════════ */
+    @keyframes indexFadeInUp {
+      from {
+        opacity: 0;
+        transform: translateY(18px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    .stagger-1, .stagger-2, .stagger-3, .stagger-4, .stagger-5 {
+      opacity: 0;
+    }
+    body.auth-ready .stagger-1 {
+      animation: indexFadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.05s both;
+    }
+    body.auth-ready .stagger-2 {
+      animation: indexFadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
+    }
+    body.auth-ready .stagger-3 {
+      animation: indexFadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.25s both;
+    }
+    body.auth-ready .stagger-4 {
+      animation: indexFadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.35s both;
+    }
+    body.auth-ready .stagger-5 {
+      animation: indexFadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.45s both;
     }
     header {
       background: rgba(15, 15, 20, 0.92);
@@ -2338,7 +2370,7 @@
 </style>
 </head>
 <body>
-<header>
+<header class="stagger-1">
   <div class="brand">
     <div class="brand-name">Evolution Lab</div>
     <div class="brand-credit">
@@ -2397,7 +2429,7 @@
   </div>
   <!-- Notificaciones de sobrecarga progresiva -->
   <div id="sp-notif-container"></div>
-  <div class="top-bar">
+  <div class="top-bar stagger-2">
     <div class="nav-container">
       <!-- Grupo 1: Plan de Entrenamiento -->
       <div class="nav-group nav-group-plan">
@@ -2419,7 +2451,7 @@
     </div>
   </div>
     <!-- HISTORIAL -->
-    <div id="panel-hist" style="display:none">
+    <div id="panel-hist" class="stagger-3" style="display:none">
      <div class="top-bar" style="margin-top:-0.5rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
       <div id="dashboardGreeting" style="font-size: 18px; font-weight: 700; color: var(--text); flex:1; display:inline-flex; align-items:center;">Hola <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:8px; display:inline-block; vertical-align:middle;"><path d="M18 11V6a2 2 0 0 0-2-2 2 2 0 0 0-2 2v5"></path><path d="M14 10V4a2 2 0 0 0-2-2 2 2 0 0 0-2 2v6"></path><path d="M10 10.5V6a2 2 0 0 0-2-2 2 2 0 0 0-2 2v4.5"></path><path d="M6 10v6a6 6 0 0 0 6 6h1a6 6 0 0 0 5-5.5v-6.5"></path></svg></div>
       <select id="ejercicioSelect" style="min-width:180px; max-width:280px;">
@@ -2460,7 +2492,7 @@
     </div>
   </div>
   <!-- PROGRESIÓN -->
-  <div id="panel-chart" style="display:none">
+  <div id="panel-chart" class="stagger-3" style="display:none">
     <div class="top-bar" style="margin-top:0.5rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; margin-bottom:1.5rem; padding-top: 4px;">
       <div class="section-title" id="chartTitle" style="margin-bottom:0; flex:1; font-size:14px; color:var(--text); font-family:'Orbitron',sans-serif; letter-spacing:0.05em;">Progresión</div>
       <select id="ejercicioSelectChart" style="min-width:180px; max-width:280px; height: 40px; line-height: 40px; padding: 0 32px 0 12px; background-position: right 12px center; display: inline-block; box-sizing: border-box;"></select>
@@ -2481,7 +2513,7 @@
     </div>
   </div>
   <!-- AGREGAR SESIÓN -->
-  <div id="panel-add" style="display:none">
+  <div id="panel-add" class="stagger-3" style="display:none">
     <div class="section-title">Nueva sesión</div>
     <div class="form-section">
       <div id="validationBanner" class="validation-banner">
@@ -2506,7 +2538,7 @@
       </div>
     </div>
   </div>
-  <div id="panel-plan">
+  <div id="panel-plan" class="stagger-3">
 <div class="document-container" id="trainingPlanContainer">
     <div class="toolbar">
         <button id="addGlobalDayBtn"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px; vertical-align:-1px;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>Añadir día</button>
@@ -2630,7 +2662,7 @@
 </div>
 </div>
   <!-- ===== PANEL CONFIGURACIÓN DE REGLAS ===== -->
-  <div id="panel-config">
+  <div id="panel-config" class="stagger-3">
     <div class="section-title">⚙️ Motor de sobrecarga progresiva — Configuración de reglas</div>
     <div class="config-section">
       <div class="config-section-title">📊 Parámetros generales de análisis</div>
