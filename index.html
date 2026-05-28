@@ -101,7 +101,7 @@
     }
     body {
       opacity: 0;
-      transition: opacity 0.25s ease-in-out;
+      transition: opacity 0.5s ease-out;
     }
     body.auth-ready {
       opacity: 1;
@@ -2792,7 +2792,10 @@
     const authFallbackTimeout = setTimeout(() => {
       if (!document.body.classList.contains('auth-ready')) {
         console.warn("Límite de tiempo de espera de autenticación alcanzado. Revelando interfaz en modo respaldo.");
-        document.body.classList.add('auth-ready');
+        window.authIsReady = true;
+        if (window.domIsReady) {
+          document.body.classList.add('auth-ready');
+        }
       }
     }, 3000);
 
@@ -2813,8 +2816,12 @@
         actualizarClavesAlmacenamiento();
         cargarHistorialDesdeSupabase();
         
-        // Revelar suavemente la interfaz al confirmar autenticación exitosa
-        document.body.classList.add('auth-ready');
+        // Indicar que la autenticación está lista
+        window.authIsReady = true;
+        // Solo revelar si el DOM y la UI ya fueron completamente inicializados por initPlan()
+        if (window.domIsReady) {
+          document.body.classList.add('auth-ready');
+        }
       }
     }).catch(err => {
       clearTimeout(authFallbackTimeout);
@@ -6978,6 +6985,13 @@ document.addEventListener('DOMContentLoaded', () => {
     initPlan();
     // Ejecutar una vez al inicio por si carga directamente offline
     setTimeout(updateMediaForOfflineStatus, 150);
+
+    // Indicar que el DOM y el initPlan ya finalizaron
+    window.domIsReady = true;
+    // Revelar el body si la sesión ya fue verificada con éxito
+    if (window.authIsReady) {
+        document.body.classList.add('auth-ready');
+    }
 });
 </script>
 <!-- Modal de Calculadora 1RM (Dark Glassmorphism) -->
