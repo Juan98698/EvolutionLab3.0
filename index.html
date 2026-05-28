@@ -3393,6 +3393,67 @@
           document.body.appendChild(fab);
         }
       };
+
+      const configurarVistaEntrenador = () => {
+        console.log("Configurando vista de Entrenador en UI...");
+        const headerNombre = document.getElementById('clienteNombreHeader');
+        if (headerNombre) headerNombre.style.display = 'none';
+
+        const genBtn = document.getElementById('generarLinkBtn');
+        if (genBtn) genBtn.style.display = 'inline-block';
+        
+        const regBtn = document.getElementById('registrarAtletaBtn');
+        if (regBtn) {
+          regBtn.style.display = 'inline-block';
+          regBtn.onclick = () => {
+            const panel = document.getElementById('panelRegistrarCliente');
+            if (panel) {
+              panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+            }
+          };
+        }
+
+        const saveNubeBtn = document.getElementById('guardarNubeBtn');
+        if (saveNubeBtn) {
+          saveNubeBtn.style.display = 'inline-block';
+          saveNubeBtn.onclick = guardarPlanEnNube;
+        }
+
+        // Habilitar campos
+        document.querySelectorAll('#userName, #userGoal, #startDate, #planVigenciaPlan, #trainerName, #whatsappLink, #instagramLink, #globalNote').forEach(el => {
+          el.readOnly = false;
+          el.style.removeProperty('pointer-events');
+          el.style.removeProperty('background');
+          el.style.removeProperty('border');
+          el.style.removeProperty('color');
+        });
+
+        // Mostrar paneles y botones
+        document.querySelectorAll('#printAsPdfBtn, #addGlobalDayBtn, #addCustomVarBtn, #exportHtmlBtn, .add-day-btn, .btn-remove-day, .exercise-actions, .btn-add-ex, .btn-rem-ex, .img-upload-label, .gif-upload-label, .global-vars-panel button, #quickAddVarBtn, .remove-var-btn, .hidden-file-upload, .hidden-gif-upload, .video-url-input, #weekdayConfigSection').forEach(el => {
+          el.style.removeProperty('display');
+        });
+
+        const tabConfig = document.getElementById('tab-config');
+        if (tabConfig) tabConfig.style.removeProperty('display');
+
+        const defsSection = document.querySelector('.definitions-section');
+        if (defsSection) defsSection.style.removeProperty('display');
+        const globalVars = document.getElementById('globalVarsPanelContainer');
+        if (globalVars) globalVars.style.removeProperty('display');
+
+        const fab = document.getElementById('fab1RMBtn');
+        if (fab) fab.remove();
+
+        // Cargar atletas selector
+        cargarClientesSelector().then(() => {
+          const selectorAtletas = document.getElementById('selectorAtletas');
+          if (selectorAtletas) {
+            selectorAtletas.onchange = (e) => {
+              cargarPlanDeCliente(e.target.value);
+            };
+          }
+        });
+      };
       
       const offlineFallback = () => {
         // Intentar recuperar rol guardado en caché local para soporte offline
@@ -3400,18 +3461,15 @@
           const cachedPlanStr = localStorage.getItem('pwa_client_plan');
           const cachedUserProfile = localStorage.getItem('pwa_user_profile');
           
-          let rolCache = 'cliente'; // Por seguridad, default a cliente offline
+          let rolCache = 'cliente'; // Default a cliente offline por seguridad
           let nombreCache = 'Atleta';
 
           if (cachedUserProfile) {
             const profile = JSON.parse(cachedUserProfile);
-            // Verificar que el perfil guardado pertenezca al usuario actualmente autenticado
             if (profile.userId === user.id) {
               rolCache = profile.rol || 'cliente';
               nombreCache = profile.nombre || 'Atleta';
               window.userProfile = profile;
-            } else {
-              console.log("Offline Fallback: El perfil en caché no coincide con el usuario actual. Usando rol por defecto.");
             }
           }
 
@@ -3461,7 +3519,6 @@
             const globalVars = document.getElementById('globalVarsPanelContainer');
             if (globalVars) globalVars.style.setProperty('display', 'none', 'important');
 
-            // Cargar plan propio desde caché
             if (cachedPlanStr) {
               const plan = JSON.parse(cachedPlanStr);
               aplicarPlanCliente(plan);
@@ -3469,17 +3526,10 @@
               console.log("Offline Fallback: No hay plan guardado en caché local.");
               renderFullApp();
             }
-            
-            // Cargar adaptaciones premium (Filosofía Colapsable y FAB Calculadora 1RM)
             adaptarVistaClientePremium();
           } else {
             console.log("Offline Fallback: Detectado ENTRENADOR en caché.");
-            // Si es entrenador offline, restauramos paneles editables normales
-            document.querySelectorAll('#addGlobalDayBtn, #addCustomVarBtn, .add-day-btn, .btn-remove-day, .exercise-actions, .btn-add-ex, .btn-rem-ex, .img-upload-label, .gif-upload-label, .global-vars-panel button, #quickAddVarBtn, .remove-var-btn, .hidden-file-upload, .hidden-gif-upload, .video-url-input, #weekdayConfigSection').forEach(el => {
-              el.style.removeProperty('display');
-            });
-            const tabConfig = document.getElementById('tab-config');
-            if (tabConfig) tabConfig.style.removeProperty('display');
+            configurarVistaEntrenador();
             renderFullApp();
           }
           resolve();
@@ -3546,15 +3596,10 @@
               const globalVars = document.getElementById('globalVarsPanelContainer');
               if (globalVars) globalVars.style.setProperty('display', 'none', 'important');
 
-              // Cargar plan de cliente (que se cargará de caché e iniciará stagger cascade de inmediato)
               cargarPlanPropioCliente();
               adaptarVistaClientePremium();
             } else {
-              document.querySelectorAll('#addGlobalDayBtn, #addCustomVarBtn, .add-day-btn, .btn-remove-day, .exercise-actions, .btn-add-ex, .btn-rem-ex, .img-upload-label, .gif-upload-label, .global-vars-panel button, #quickAddVarBtn, .remove-var-btn, .hidden-file-upload, .hidden-gif-upload, .video-url-input, #weekdayConfigSection').forEach(el => {
-                el.style.removeProperty('display');
-              });
-              const tabConfig = document.getElementById('tab-config');
-              if (tabConfig) tabConfig.style.removeProperty('display');
+              configurarVistaEntrenador();
               renderFullApp();
             }
             
@@ -3563,7 +3608,7 @@
           }
         }
       } catch (e) {
-        print("Error al aplicar carga rápida de perfil:", e)
+        console.error("Error al aplicar carga rápida de perfil:", e);
       }
 
       const sincronizarPerfilYPlan = async () => {
@@ -3604,11 +3649,7 @@
               if (MODO_CLIENTE) {
                 cargarPlanPropioCliente();
               } else {
-                document.querySelectorAll('#addGlobalDayBtn, #addCustomVarBtn, .add-day-btn, .btn-remove-day, .exercise-actions, .btn-add-ex, .btn-rem-ex, .img-upload-label, .gif-upload-label, .global-vars-panel button, #quickAddVarBtn, .remove-var-btn, .hidden-file-upload, .hidden-gif-upload, .video-url-input, #weekdayConfigSection').forEach(el => {
-                  el.style.removeProperty('display');
-                });
-                const tabConfig = document.getElementById('tab-config');
-                if (tabConfig) tabConfig.style.removeProperty('display');
+                configurarVistaEntrenador();
                 renderFullApp();
               }
             }
@@ -3696,33 +3737,9 @@
                 resolve();
               });
             } else {
-              document.querySelectorAll('#addGlobalDayBtn, #addCustomVarBtn, .add-day-btn, .btn-remove-day, .exercise-actions, .btn-add-ex, .btn-rem-ex, .img-upload-label, .gif-upload-label, .global-vars-panel button, #quickAddVarBtn, .remove-var-btn, .hidden-file-upload, .hidden-gif-upload, .video-url-input, #weekdayConfigSection').forEach(el => {
-                el.style.removeProperty('display');
-              });
-              const tabConfig = document.getElementById('tab-config');
-              if (tabConfig) tabConfig.style.removeProperty('display');
+              configurarVistaEntrenador();
               renderFullApp();
-              
-              cargarClientesSelector().then(() => {
-                const selectorAtletas = document.getElementById('selectorAtletas');
-                if (selectorAtletas) {
-                  selectorAtletas.onchange = (e) => {
-                    cargarPlanDeCliente(e.target.value);
-                  };
-                }
-                
-                document.querySelectorAll('#userName, #userGoal, #startDate, #planVigenciaPlan, #trainerName, #whatsappLink, #instagramLink, #globalNote').forEach(el => {
-                  el.readOnly = false;
-                  el.style.pointerEvents = 'auto';
-                  el.style.background = '';
-                  el.style.border = '';
-                  el.style.color = '';
-                });
-                resolve();
-              }).catch(err => {
-                console.error("Error al cargar selector en carga inicial:", err);
-                resolve();
-              });
+              resolve();
             }
           }
         }).catch(err => {
