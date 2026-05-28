@@ -101,7 +101,7 @@
     }
     body {
       opacity: 0;
-      transition: opacity 0.45s ease-out;
+      transition: opacity 0.22s ease-out;
     }
     body.auth-ready {
       opacity: 1;
@@ -113,7 +113,7 @@
     @keyframes indexFadeInUp {
       from {
         opacity: 0;
-        transform: translateY(28px);
+        transform: translateY(20px);
       }
       to {
         opacity: 1;
@@ -124,28 +124,28 @@
       opacity: 0;
     }
     body.auth-ready .stagger-1 {
-      animation: indexFadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
+      animation: indexFadeInUp 0.85s cubic-bezier(0.16, 1, 0.3, 1) 0.12s both;
     }
     body.auth-ready .stagger-2 {
-      animation: indexFadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both;
+      animation: indexFadeInUp 0.85s cubic-bezier(0.16, 1, 0.3, 1) 0.24s both;
     }
     body.auth-ready .stagger-3 {
-      animation: indexFadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.35s both;
+      animation: indexFadeInUp 0.85s cubic-bezier(0.16, 1, 0.3, 1) 0.38s both;
     }
     body.auth-ready .stagger-4 {
-      animation: indexFadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.45s both;
+      animation: indexFadeInUp 0.85s cubic-bezier(0.16, 1, 0.3, 1) 0.52s both;
     }
     body.auth-ready .stagger-5 {
-      animation: indexFadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.55s both;
+      animation: indexFadeInUp 0.85s cubic-bezier(0.16, 1, 0.3, 1) 0.66s both;
     }
     body.auth-ready .stagger-6 {
-      animation: indexFadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.65s both;
+      animation: indexFadeInUp 0.85s cubic-bezier(0.16, 1, 0.3, 1) 0.80s both;
     }
     body.auth-ready .stagger-7 {
-      animation: indexFadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.75s both;
+      animation: indexFadeInUp 0.85s cubic-bezier(0.16, 1, 0.3, 1) 0.94s both;
     }
     body.auth-ready .stagger-8 {
-      animation: indexFadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.85s both;
+      animation: indexFadeInUp 0.85s cubic-bezier(0.16, 1, 0.3, 1) 1.08s both;
     }
     header {
       background: rgba(15, 15, 20, 0.92);
@@ -6988,7 +6988,7 @@ function addGlobalVariable() {
         if (document.body.classList.contains('auth-ready')) {
             container.style.animation = 'none';
             container.offsetHeight; /* forzar reflow */
-            container.style.animation = 'indexFadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both';
+            container.style.animation = 'indexFadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both';
         } else {
             container.style.animation = '';
         }
