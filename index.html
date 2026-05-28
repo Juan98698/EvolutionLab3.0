@@ -16,6 +16,12 @@
   <title>Evolution Lab</title>
   <link id="pwa-manifest" rel="manifest" href="/manifest.json">
 
+  <!-- Vercel Web Analytics -->
+  <script>
+    window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+  </script>
+  <script defer src="/_vercel/insights/script.js"></script>
+
   <script>
     // Limpieza de redirecciones heredadas del modelo offline antiguo para evitar bucles
     (function() {

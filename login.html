@@ -14,6 +14,12 @@
     
     <!-- Supabase JS CDN -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.8/dist/umd/supabase.js"></script>
+    
+    <!-- Vercel Web Analytics -->
+    <script>
+      window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
+    </script>
+    <script defer src="/_vercel/insights/script.js"></script>
 
     <style>
         :root {
@@ -935,7 +941,7 @@
             }
         }
 
-        /* ═══════════════════════════════════════════
+        /* ═══��═══════════════════════════════════════
            SVG ICON HELPERS
         ═══════════════════════════════════════════ */
         .icon-gradient stop:first-child { stop-color: var(--cyan); }

@@ -7,5 +7,8 @@
   "devDependencies": {
     "html-minifier-terser": "^7.2.0",
     "shx": "^0.4.0"
+  },
+  "dependencies": {
+    "@vercel/analytics": "^2.0.1"
   }
 }
