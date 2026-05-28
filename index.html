@@ -969,19 +969,22 @@
             overflow-x: hidden;
             position: relative;
         }
-        body::before {
+        html::before {
             content: '';
             position: fixed;
-            inset: 0;
-            z-index: -2;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -999;
             background-color: #0b0f19;
             background-image: 
-                radial-gradient(at 10% 10%, rgba(123, 47, 247, 0.15) 0px, transparent 50%),
-                radial-gradient(at 90% 90%, rgba(0, 212, 255, 0.12) 0px, transparent 50%),
-                var(--bg-image-url);
-            background-size: cover;
-            background-position: center;
-            background-repeat: no-repeat;
+                radial-gradient(at 10% 10%, rgba(123, 47, 247, 0.15) 0px, transparent 55%),
+                radial-gradient(at 90% 90%, rgba(230, 0, 35, 0.12) 0px, transparent 55%),
+                var(--bg-image-url) !important;
+            background-size: cover !important;
+            background-position: center !important;
+            background-repeat: no-repeat !important;
             pointer-events: none;
         }
         /* Capa de partículas espaciales flotantes */
@@ -1785,19 +1788,7 @@
       background: transparent !important;
       }
       /* Fix para iOS y Mobile: Se usa un seudoelemento fijo para el fondo, ya que background-attachment: fixed falla en iPhone */
-      body::before {
-          content: "";
-          position: fixed;
-          top: 0;
-          left: 0;
-          width: 100vw;
-          height: 100vh;
-          background-image: var(--bg-image-url) !important;
-          background-size: cover !important;
-          background-position: center !important;
-          z-index: -999;
-          pointer-events: none;
-      }
+      /* body::before override cleaned */
       #panel-plan {
   	background-repeat: repeat !important;
           background-size: auto !important;
