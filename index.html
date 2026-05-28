@@ -3138,6 +3138,24 @@
     console.error("Error al restaurar perfil inicial:", e);
   }
 
+  window.authIsReady = false;
+  window.appIsLoadedAndReady = false;
+
+  function revelarInterfaz() {
+    if (!window.domIsReady) {
+      console.log("revelarInterfaz: Esperando a que el DOM esté listo...");
+      return;
+    }
+    if (window.authIsReady && window.appIsLoadedAndReady) {
+      if (!document.body.classList.contains('auth-ready')) {
+        document.body.classList.add('auth-ready');
+        console.log("revelarInterfaz: Interfaz revelada con éxito de forma escalonada.");
+      }
+    } else {
+      console.log(`revelarInterfaz: Aún no revelando. authIsReady=${window.authIsReady}, appIsLoadedAndReady=${window.appIsLoadedAndReady}`);
+    }
+  }
+
   // Verificar la sesión activa de Supabase
   if (supabase) {
     // Temporizador de respaldo de seguridad: Si pasan 3 segundos y el body no se ha revelado,
@@ -3146,9 +3164,8 @@
       if (!document.body.classList.contains('auth-ready')) {
         console.warn("Límite de tiempo de espera de autenticación alcanzado. Revelando interfaz en modo respaldo.");
         window.authIsReady = true;
-        if (window.domIsReady) {
-          document.body.classList.add('auth-ready');
-        }
+        window.appIsLoadedAndReady = true;
+        revelarInterfaz();
       }
     }, 3000);
 
@@ -3171,10 +3188,7 @@
         
         // Indicar que la autenticación está lista
         window.authIsReady = true;
-        // Solo revelar si el DOM y la UI ya fueron completamente inicializados por initPlan()
-        if (window.domIsReady) {
-          document.body.classList.add('auth-ready');
-        }
+        revelarInterfaz();
       }
     }).catch(err => {
       clearTimeout(authFallbackTimeout);
@@ -3595,9 +3609,13 @@
         toast("Cargado en modo offline 🔌", "info");
       } else {
         toast("No tienes un plan asignado en la nube ni en caché local.", "warning");
+        window.appIsLoadedAndReady = true;
+        revelarInterfaz();
       }
     } catch (e) {
       console.error("Error al cargar plan propio desde caché:", e);
+      window.appIsLoadedAndReady = true;
+      revelarInterfaz();
     }
   }
 
@@ -3620,6 +3638,10 @@
     setTimeout(() => initRestTimers(), 300);
     init1RMCalculator();
     updateMediaForOfflineStatus();
+
+    // Indicar que la carga de datos del plan finalizó
+    window.appIsLoadedAndReady = true;
+    revelarInterfaz();
   }
 
   function comprobarRolYAdaptarUI(user) {
@@ -3737,6 +3759,8 @@
           } else {
             console.log("Offline Fallback: No hay plan guardado en caché local.");
             renderFullApp();
+            window.appIsLoadedAndReady = true;
+            revelarInterfaz();
           }
           
           // Cargar adaptaciones premium (Filosofía Colapsable y FAB Calculadora 1RM)
@@ -3750,9 +3774,13 @@
           const tabConfig = document.getElementById('tab-config');
           if (tabConfig) tabConfig.style.removeProperty('display');
           renderFullApp();
+          window.appIsLoadedAndReady = true;
+          revelarInterfaz();
         }
       } catch (e) {
         console.error("Error en el fallback offline de rol:", e);
+        window.appIsLoadedAndReady = true;
+        revelarInterfaz();
       }
     };
 
@@ -3945,6 +3973,10 @@
           renderAll();
         }
         
+        // Revelar interfaz del entrenador inmediatamente
+        window.appIsLoadedAndReady = true;
+        revelarInterfaz();
+        
       } else {
         console.warn("No se encontró fila de perfil para el usuario en Supabase.");
         toast("No se encontró tu perfil en la base de datos.", "error");
@@ -3953,6 +3985,8 @@
         if (saludo) {
           saludo.innerHTML = `Hola, Atleta <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:8px; display:inline-block; vertical-align:middle;"><path d="M18 11V6a2 2 0 0 0-2-2 2 2 0 0 0-2 2v5"></path><path d="M14 10V4a2 2 0 0 0-2-2 2 2 0 0 0-2 2v6"></path><path d="M10 10.5V6a2 2 0 0 0-2-2 2 2 0 0 0-2 2v4.5"></path><path d="M6 10v6a6 6 0 0 0 6 6h1a6 6 0 0 0 5-5.5v-6.5"></path></svg> <div style="font-size: 11px; font-weight: 500; color: #ff4d4d; margin-top: 4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ff4d4d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px; display:inline-block; vertical-align:-1px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg> Perfil no encontrado. Asegúrate de crear una fila en la tabla 'profiles' con el ID: ${escapeHtml(user.id)}</div>`;
         }
+        window.appIsLoadedAndReady = true;
+        revelarInterfaz();
       }
     }).catch(err => {
       console.error("Excepción en comprobarRolYAdaptarUI:", err);
@@ -3961,6 +3995,8 @@
         offlineFallback();
       } else {
         toast("Error de conexión: " + err.message, "error");
+        window.appIsLoadedAndReady = true;
+        revelarInterfaz();
       }
     });
   }
@@ -6914,6 +6950,13 @@ function addGlobalVariable() {
             return 'Día ' + (idx + 1);
         }
         container.style.display = 'block';
+        if (document.body.classList.contains('auth-ready')) {
+            container.style.animation = 'none';
+            container.offsetHeight; /* forzar reflow */
+            container.style.animation = 'indexFadeInUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both';
+        } else {
+            container.style.animation = '';
+        }
         if (diaIndex === -1 || diaIndex === undefined || diaIndex === null) {
             // Día de descanso — buscar próximo entrenamiento
             let nextInfo = '';
@@ -6942,6 +6985,35 @@ function addGlobalVariable() {
                 <div class="today-banner-meta">${cicloStr}</div>
                 <button class="today-banner-btn" onclick="scrollToDayAndHighlight(${diaIndex})">Ver ejercicios →</button>
             `;
+        }
+
+        // Re-distribución dinámica de clases stagger
+        const topBar = document.querySelector('.top-bar');
+        const panelPlan = document.getElementById('panel-plan');
+
+        if (container.style.display !== 'none') {
+            container.classList.remove('stagger-1', 'stagger-2', 'stagger-3', 'stagger-4', 'stagger-5');
+            container.classList.add('stagger-2');
+            
+            if (topBar) {
+                topBar.classList.remove('stagger-2', 'stagger-3');
+                topBar.classList.add('stagger-3');
+            }
+            if (panelPlan) {
+                panelPlan.classList.remove('stagger-3', 'stagger-4');
+                panelPlan.classList.add('stagger-4');
+            }
+        } else {
+            container.classList.remove('stagger-1', 'stagger-2', 'stagger-3', 'stagger-4', 'stagger-5');
+            
+            if (topBar) {
+                topBar.classList.remove('stagger-2', 'stagger-3');
+                topBar.classList.add('stagger-2');
+            }
+            if (panelPlan) {
+                panelPlan.classList.remove('stagger-3', 'stagger-4');
+                panelPlan.classList.add('stagger-3');
+            }
         }
     }
     function scrollToDayAndHighlight(dayIndex) {
@@ -7341,10 +7413,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Indicar que el DOM y el initPlan ya finalizaron
     window.domIsReady = true;
-    // Revelar el body si la sesión ya fue verificada con éxito
-    if (window.authIsReady) {
-        document.body.classList.add('auth-ready');
-    }
+    // Revelar la interfaz de forma controlada y escalonada si todo está listo
+    revelarInterfaz();
 });
 </script>
 <!-- Modal de Calculadora 1RM (Dark Glassmorphism) -->
