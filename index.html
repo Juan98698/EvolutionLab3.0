@@ -113,30 +113,66 @@
     @keyframes indexFadeInUp {
       from {
         opacity: 0;
-        transform: translateY(18px);
+        transform: translateY(28px);
       }
       to {
         opacity: 1;
         transform: translateY(0);
       }
     }
-    .stagger-1, .stagger-2, .stagger-3, .stagger-4, .stagger-5 {
+    .stagger-1, .stagger-2, .stagger-3, .stagger-4, .stagger-5, .stagger-6, .stagger-7, .stagger-8 {
       opacity: 0;
     }
     body.auth-ready .stagger-1 {
-      animation: indexFadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.05s both;
+      animation: indexFadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
     }
     body.auth-ready .stagger-2 {
-      animation: indexFadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.15s both;
+      animation: indexFadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both;
     }
     body.auth-ready .stagger-3 {
-      animation: indexFadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.25s both;
-    }
-    body.auth-ready .stagger-4 {
       animation: indexFadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.35s both;
     }
-    body.auth-ready .stagger-5 {
+    body.auth-ready .stagger-4 {
       animation: indexFadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.45s both;
+    }
+    body.auth-ready .stagger-5 {
+      animation: indexFadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.55s both;
+    }
+    body.auth-ready .stagger-6 {
+      animation: indexFadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.65s both;
+    }
+    body.auth-ready .stagger-7 {
+      animation: indexFadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.75s both;
+    }
+    body.auth-ready .stagger-8 {
+      animation: indexFadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.85s both;
+    }
+
+    /* ═══════════════════════════════════════════
+       ORQUESTACIÓN PREMIUM DEL PORTAL DEL CLIENTE
+       ═══════════════════════════════════════════ */
+    /* Caso A: El cliente TIENE banner de entrenamiento hoy */
+    body.auth-ready.has-today-banner #todayBanner {
+      animation: indexFadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both !important;
+      opacity: 0;
+    }
+    body.auth-ready.has-today-banner .top-bar {
+      animation: indexFadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.35s both !important;
+      opacity: 0;
+    }
+    body.auth-ready.has-today-banner #panel-plan {
+      animation: indexFadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.45s both !important;
+      opacity: 0;
+    }
+
+    /* Caso B: El cliente NO TIENE banner de entrenamiento hoy (día de descanso, pestaña distinta o entrenador) */
+    body.auth-ready:not(.has-today-banner) .top-bar {
+      animation: indexFadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both !important;
+      opacity: 0;
+    }
+    body.auth-ready:not(.has-today-banner) #panel-plan {
+      animation: indexFadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.35s both !important;
+      opacity: 0;
     }
     header {
       background: rgba(15, 15, 20, 0.92);
@@ -6896,11 +6932,16 @@ function addGlobalVariable() {
         // Solo mostrar en la pestaña "Mi Plan"
         if (typeof activeTab !== 'undefined' && activeTab !== 'plan') {
             container.style.display = 'none';
+            document.body.classList.remove('has-today-banner');
             return;
         }
         // Solo mostrar si hay mapeo configurado
         const hasConfig = Object.values(weekdayMapping).some(v => v !== -1);
-        if (!hasConfig) { container.style.display = 'none'; return; }
+        if (!hasConfig) { 
+            container.style.display = 'none'; 
+            document.body.classList.remove('has-today-banner');
+            return; 
+        }
         const hoy = new Date();
         const diaSemana = hoy.getDay();
         const diaIndex = weekdayMapping[diaSemana];
@@ -6987,33 +7028,11 @@ function addGlobalVariable() {
             `;
         }
 
-        // Re-distribución dinámica de clases stagger
-        const topBar = document.querySelector('.top-bar');
-        const panelPlan = document.getElementById('panel-plan');
-
+        // Orquestación de clases para animaciones CSS premium basadas en body
         if (container.style.display !== 'none') {
-            container.classList.remove('stagger-1', 'stagger-2', 'stagger-3', 'stagger-4', 'stagger-5');
-            container.classList.add('stagger-2');
-            
-            if (topBar) {
-                topBar.classList.remove('stagger-2', 'stagger-3');
-                topBar.classList.add('stagger-3');
-            }
-            if (panelPlan) {
-                panelPlan.classList.remove('stagger-3', 'stagger-4');
-                panelPlan.classList.add('stagger-4');
-            }
+            document.body.classList.add('has-today-banner');
         } else {
-            container.classList.remove('stagger-1', 'stagger-2', 'stagger-3', 'stagger-4', 'stagger-5');
-            
-            if (topBar) {
-                topBar.classList.remove('stagger-2', 'stagger-3');
-                topBar.classList.add('stagger-2');
-            }
-            if (panelPlan) {
-                panelPlan.classList.remove('stagger-3', 'stagger-4');
-                panelPlan.classList.add('stagger-3');
-            }
+            document.body.classList.remove('has-today-banner');
         }
     }
     function scrollToDayAndHighlight(dayIndex) {
