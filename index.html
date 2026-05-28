@@ -949,6 +949,11 @@
           }
         html {
             background-color: #0b0f19 !important;
+            background-image: var(--bg-image-url) !important;
+            background-size: cover !important;
+            background-position: center !important;
+            background-repeat: no-repeat !important;
+            background-attachment: fixed !important;
         }
         body {
             background: transparent !important;
@@ -1760,7 +1765,12 @@
     }
 }
       html {
-      background-color: #1a1a2e !important;
+      background-color: #0b0f19 !important;
+      background-image: var(--bg-image-url) !important;
+      background-size: cover !important;
+      background-position: center !important;
+      background-repeat: no-repeat !important;
+      background-attachment: fixed !important;
       }
       body {
       background: transparent !important;
@@ -2365,6 +2375,317 @@
     }
     .philosophy-description {
       color: #ffffff !important;
+    }
+  }
+
+  /* ═══════════════════════════════════════════
+     RESPONSIVE: PANTALLAS PEQUEÑAS (≤768px)
+     ═══════════════════════════════════════════ */
+  @media (max-width: 768px) {
+    /* --- HEADER --- */
+    header {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 8px;
+      padding: 0.6rem 0.75rem;
+    }
+    header .brand {
+      text-align: center;
+      align-items: center;
+    }
+    header .session-count {
+      text-align: center;
+      align-self: center;
+    }
+    #selectorAtletas {
+      margin-left: 0 !important;
+      max-width: 100% !important;
+      width: 100% !important;
+    }
+    #guardarNubeBtn,
+    #registrarAtletaBtn,
+    #cerrarSesionBtn {
+      margin-left: 0 !important;
+      width: 100% !important;
+      text-align: center !important;
+      justify-content: center !important;
+    }
+
+    /* --- CONTAINER --- */
+    .container {
+      padding: 0.5rem;
+    }
+
+    /* --- PANEL PLAN --- */
+    #panel-plan {
+      padding: 16px 6px !important;
+    }
+    .document-container {
+      padding: 10px 8px 24px 8px !important;
+      border-radius: 16px !important;
+    }
+
+    /* --- COVER PAGE (PORTADA) --- */
+    .cover-page,
+    .day-card {
+      padding: 16px 12px !important;
+      border-radius: 16px !important;
+      margin-bottom: 20px !important;
+    }
+    .cover-page h1 {
+      font-size: 1.3rem !important;
+      letter-spacing: 0.5px !important;
+    }
+    .cover-page p {
+      font-size: 0.82rem !important;
+    }
+    .social-row {
+      flex-direction: column;
+      gap: 10px;
+    }
+    .social-item {
+      min-width: 100% !important;
+    }
+
+    /* --- FILOSOFÍA / PHILOSOPHY --- */
+    .philosophy-title {
+      font-size: 1.2rem !important;
+    }
+    .philosophy-quote p {
+      font-size: 1rem !important;
+    }
+    .philosophy-subtitle {
+      font-size: 0.95rem !important;
+    }
+    .philosophy-card {
+      padding: 14px 14px !important;
+    }
+    .philosophy-card strong {
+      font-size: 0.88rem !important;
+    }
+    .philosophy-card p {
+      font-size: 0.82rem !important;
+    }
+    .philosophy-footer {
+      padding: 14px 12px !important;
+      font-size: 0.82rem !important;
+      letter-spacing: 0.5px !important;
+    }
+
+    /* --- TOOLBAR --- */
+    .toolbar {
+      border-radius: 16px !important;
+      padding: 8px 10px !important;
+      gap: 6px !important;
+      flex-direction: column;
+    }
+    .toolbar button {
+      width: 100% !important;
+      justify-content: center !important;
+      text-align: center !important;
+    }
+
+    /* --- DAY HEADER --- */
+    .day-header {
+      flex-direction: column;
+      align-items: flex-start !important;
+      gap: 8px;
+    }
+    .day-title input {
+      font-size: 1rem !important;
+      width: 100% !important;
+    }
+    .day-name-input {
+      font-size: 1rem !important;
+    }
+
+    /* --- EXERCISE CARD --- */
+    .exercise-card {
+      padding: 12px 10px !important;
+      border-radius: 14px !important;
+      margin-bottom: 12px !important;
+    }
+    .exercise-header {
+      flex-direction: column;
+      gap: 8px;
+    }
+    .exercise-name {
+      min-width: 100% !important;
+    }
+    .exercise-name input {
+      font-size: 0.82rem !important;
+    }
+    .img-zone {
+      min-width: 100% !important;
+    }
+
+    /* --- VARIABLES ROW --- */
+    .variables-row {
+      gap: 8px !important;
+      padding: 8px 10px !important;
+    }
+    .var-item {
+      min-width: 70px !important;
+    }
+
+    /* --- GLOBAL VARS PANEL --- */
+    .global-vars-panel {
+      padding: 8px 10px !important;
+      border-radius: 14px !important;
+      gap: 6px !important;
+    }
+
+    /* --- FORM SECTION (TRACKER) --- */
+    .form-section {
+      padding: 0.8rem !important;
+    }
+    .form-grid {
+      grid-template-columns: 1fr 1fr !important;
+      gap: 8px !important;
+    }
+    .ejercicio-group {
+      padding: 0.65rem !important;
+    }
+
+    /* --- CHART CARD --- */
+    .chart-card {
+      padding: 0.8rem !important;
+    }
+
+    /* --- TABLE --- */
+    table {
+      font-size: 12px !important;
+    }
+    th, td {
+      padding: 6px 8px !important;
+    }
+
+    /* --- METRICS --- */
+    .mcard {
+      padding: 0.6rem 0.7rem !important;
+    }
+    .mcard-value {
+      font-size: 18px !important;
+    }
+
+    /* --- SERIES BUILDER --- */
+    .serie-row {
+      gap: 6px !important;
+    }
+    .reps-val {
+      font-size: 18px !important;
+      min-width: 28px !important;
+    }
+    .reps-btn {
+      width: 38px !important;
+      height: 38px !important;
+      font-size: 18px !important;
+    }
+
+    /* --- TODAY BANNER --- */
+    .today-banner {
+      padding: 0.8rem 1rem !important;
+    }
+
+    /* --- HOOK BANNER --- */
+    .hook-banner {
+      padding: 0.8rem 0.8rem 0.7rem !important;
+    }
+
+    /* --- MODAL 1RM --- */
+    .modal-1rm-box {
+      border-radius: 16px !important;
+      padding: 1rem !important;
+    }
+
+    /* --- CONFIGURACIÓN MODAL --- */
+    .config-grid {
+      grid-template-columns: 1fr !important;
+    }
+
+    /* --- NAV CONTAINER --- */
+    .nav-group-tabs {
+      flex-wrap: wrap;
+    }
+    .tab {
+      font-size: 11px !important;
+      padding: 6px 8px !important;
+    }
+
+    /* --- PANEL REGISTRAR CLIENTE --- */
+    #panelRegistrarCliente > div {
+      padding: 0 !important;
+    }
+    #panelRegistrarCliente input {
+      font-size: 12px !important;
+    }
+  }
+
+  /* ═══════════════════════════════════════════
+     RESPONSIVE: PANTALLAS MUY PEQUEÑAS (≤480px)
+     ═══════════════════════════════════════════ */
+  @media (max-width: 480px) {
+    .brand-name {
+      font-size: 15px !important;
+    }
+    .cover-page h1 {
+      font-size: 1.1rem !important;
+    }
+    .philosophy-title {
+      font-size: 1rem !important;
+    }
+    .philosophy-quote p {
+      font-size: 0.88rem !important;
+    }
+    .philosophy-card strong {
+      font-size: 0.78rem !important;
+    }
+    .form-grid {
+      grid-template-columns: 1fr !important;
+    }
+    .serie-row {
+      gap: 4px !important;
+    }
+    .serie-label {
+      font-size: 10px !important;
+      min-width: 44px !important;
+    }
+    .reps-val {
+      font-size: 16px !important;
+      min-width: 24px !important;
+    }
+    .reps-btn {
+      width: 34px !important;
+      height: 34px !important;
+      font-size: 16px !important;
+      border-radius: 8px !important;
+    }
+    .tab {
+      font-size: 10px !important;
+      padding: 5px 6px !important;
+    }
+    .document-container {
+      padding: 6px 4px 16px 4px !important;
+    }
+    .exercise-card {
+      padding: 10px 8px !important;
+    }
+    .variables-row {
+      gap: 6px !important;
+      padding: 6px 8px !important;
+    }
+    .var-item {
+      min-width: 60px !important;
+    }
+    .var-item label {
+      font-size: 0.5rem !important;
+    }
+    .exercise-name input {
+      font-size: 0.78rem !important;
+      padding: 6px 8px !important;
+    }
+    .day-title input {
+      font-size: 0.9rem !important;
     }
   }
 </style>
