@@ -147,33 +147,6 @@
     body.auth-ready .stagger-8 {
       animation: indexFadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.85s both;
     }
-
-    /* ═══════════════════════════════════════════
-       ORQUESTACIÓN PREMIUM DEL PORTAL DEL CLIENTE
-       ═══════════════════════════════════════════ */
-    /* Caso A: El cliente TIENE banner de entrenamiento hoy */
-    body.auth-ready.has-today-banner #todayBanner {
-      animation: indexFadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both !important;
-      opacity: 0;
-    }
-    body.auth-ready.has-today-banner .top-bar {
-      animation: indexFadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.35s both !important;
-      opacity: 0;
-    }
-    body.auth-ready.has-today-banner #panel-plan {
-      animation: indexFadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.45s both !important;
-      opacity: 0;
-    }
-
-    /* Caso B: El cliente NO TIENE banner de entrenamiento hoy (día de descanso, pestaña distinta o entrenador) */
-    body.auth-ready:not(.has-today-banner) .top-bar {
-      animation: indexFadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both !important;
-      opacity: 0;
-    }
-    body.auth-ready:not(.has-today-banner) #panel-plan {
-      animation: indexFadeInUp 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.35s both !important;
-      opacity: 0;
-    }
     header {
       background: rgba(15, 15, 20, 0.92);
       backdrop-filter: blur(16px);
@@ -1847,7 +1820,6 @@
         margin-bottom: 1.25rem;
         border: 1px solid var(--border2);
         color: #fff;
-        animation: slideIn 0.3s ease;
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
         font-family: 'Orbitron', sans-serif !important;
       }
@@ -6933,6 +6905,17 @@ function addGlobalVariable() {
         if (typeof activeTab !== 'undefined' && activeTab !== 'plan') {
             container.style.display = 'none';
             document.body.classList.remove('has-today-banner');
+            
+            const topBar = document.querySelector('.top-bar');
+            const panelPlan = document.getElementById('panel-plan');
+            if (topBar) {
+                topBar.classList.remove('stagger-1', 'stagger-2', 'stagger-3', 'stagger-4', 'stagger-5', 'stagger-6', 'stagger-7', 'stagger-8');
+                topBar.classList.add('stagger-2');
+            }
+            if (panelPlan) {
+                panelPlan.classList.remove('stagger-1', 'stagger-2', 'stagger-3', 'stagger-4', 'stagger-5', 'stagger-6', 'stagger-7', 'stagger-8');
+                panelPlan.classList.add('stagger-3');
+            }
             return;
         }
         // Solo mostrar si hay mapeo configurado
@@ -6940,6 +6923,17 @@ function addGlobalVariable() {
         if (!hasConfig) { 
             container.style.display = 'none'; 
             document.body.classList.remove('has-today-banner');
+            
+            const topBar = document.querySelector('.top-bar');
+            const panelPlan = document.getElementById('panel-plan');
+            if (topBar) {
+                topBar.classList.remove('stagger-1', 'stagger-2', 'stagger-3', 'stagger-4', 'stagger-5', 'stagger-6', 'stagger-7', 'stagger-8');
+                topBar.classList.add('stagger-2');
+            }
+            if (panelPlan) {
+                panelPlan.classList.remove('stagger-1', 'stagger-2', 'stagger-3', 'stagger-4', 'stagger-5', 'stagger-6', 'stagger-7', 'stagger-8');
+                panelPlan.classList.add('stagger-3');
+            }
             return; 
         }
         const hoy = new Date();
@@ -7029,10 +7023,37 @@ function addGlobalVariable() {
         }
 
         // Orquestación de clases para animaciones CSS premium basadas en body
+        const topBar = document.querySelector('.top-bar');
+        const panelPlan = document.getElementById('panel-plan');
+
         if (container.style.display !== 'none') {
             document.body.classList.add('has-today-banner');
+            
+            // Asignar staggers dinámicos si el banner de hoy está visible
+            container.classList.remove('stagger-1', 'stagger-2', 'stagger-3', 'stagger-4', 'stagger-5', 'stagger-6', 'stagger-7', 'stagger-8');
+            container.classList.add('stagger-2');
+            
+            if (topBar) {
+                topBar.classList.remove('stagger-1', 'stagger-2', 'stagger-3', 'stagger-4', 'stagger-5', 'stagger-6', 'stagger-7', 'stagger-8');
+                topBar.classList.add('stagger-3');
+            }
+            if (panelPlan) {
+                panelPlan.classList.remove('stagger-1', 'stagger-2', 'stagger-3', 'stagger-4', 'stagger-5', 'stagger-6', 'stagger-7', 'stagger-8');
+                panelPlan.classList.add('stagger-4');
+            }
         } else {
             document.body.classList.remove('has-today-banner');
+            
+            container.classList.remove('stagger-1', 'stagger-2', 'stagger-3', 'stagger-4', 'stagger-5', 'stagger-6', 'stagger-7', 'stagger-8');
+            
+            if (topBar) {
+                topBar.classList.remove('stagger-1', 'stagger-2', 'stagger-3', 'stagger-4', 'stagger-5', 'stagger-6', 'stagger-7', 'stagger-8');
+                topBar.classList.add('stagger-2');
+            }
+            if (panelPlan) {
+                panelPlan.classList.remove('stagger-1', 'stagger-2', 'stagger-3', 'stagger-4', 'stagger-5', 'stagger-6', 'stagger-7', 'stagger-8');
+                panelPlan.classList.add('stagger-3');
+            }
         }
     }
     function scrollToDayAndHighlight(dayIndex) {
