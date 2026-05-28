@@ -3265,41 +3265,69 @@
   async function cargarPlanPropioCliente() {
     if (!supabase || !window.currentUser) return;
 
-    if (navigator.onLine) {
-      try {
-        console.log("Descargando plan del cliente desde la nube...");
-        const { data, error } = await supabase
-          .from('planes')
-          .select('*')
-          .eq('cliente_id', window.currentUser.id)
-          .eq('activo', true)
-          .maybeSingle();
-
-        if (error) throw error;
-
-        if (data && data.datos_plan && Object.keys(data.datos_plan).length > 0) {
-          localStorage.setItem('pwa_client_plan', JSON.stringify(data.datos_plan));
-          aplicarPlanCliente(data.datos_plan);
-          return;
-        }
-      } catch (err) {
-        console.error("Error al descargar plan propio:", err);
-      }
-    }
-
-    // Offline / Caché fallback
+    // 1. Cargar INSTANTÁNEAMENTE desde caché si existe (Fast Render para animar de inmediato)
+    let tieneCache = false;
     try {
       const cached = localStorage.getItem('pwa_client_plan');
       if (cached) {
-        console.log("Cargando plan propio desde LocalStorage...");
+        console.log("Renderizado rápido: Aplicando plan propio desde LocalStorage...");
         const plan = JSON.parse(cached);
         aplicarPlanCliente(plan);
-        toast("Cargado en modo offline 🔌", "info");
-      } else {
-        toast("No tienes un plan asignado en la nube ni en caché local.", "warning");
+        tieneCache = true;
       }
     } catch (e) {
-      console.error("Error al cargar plan propio desde caché:", e);
+      console.error("Error al leer caché inicial del plan:", e);
+    }
+
+    // 2. Definir función para descargar el plan actualizado en segundo plano
+    const descargarDesdeRed = async () => {
+      if (navigator.onLine) {
+        try {
+          console.log("Sincronizando plan en segundo plano con la nube...");
+          const { data, error } = await supabase
+            .from('planes')
+            .select('*')
+            .eq('cliente_id', window.currentUser.id)
+            .eq('activo', true)
+            .maybeSingle();
+
+          if (error) throw error;
+
+          if (data && data.datos_plan && Object.keys(data.datos_plan).length > 0) {
+            const planNuevoStr = JSON.stringify(data.datos_plan);
+            const cachedStr = localStorage.getItem('pwa_client_plan');
+            
+            // Solo actualizar e inyectar en caliente si el plan cambió
+            if (planNuevoStr !== cachedStr) {
+              console.log("¡Se detectaron actualizaciones en la nube! Actualizando interfaz en caliente...");
+              localStorage.setItem('pwa_client_plan', planNuevoStr);
+              aplicarPlanCliente(data.datos_plan);
+              
+              // Volver a renderizar en caliente
+              var ES_PAGINA_CLIENTE = !!window.INJECTED_CLIENT_ID || window.location.pathname.includes('/clientes/');
+              if (!ES_PAGINA_CLIENTE && !MODO_CLIENTE) {
+                renderFullApp();
+              } else {
+                renderAll();
+              }
+            } else {
+              console.log("El plan local ya está al día con la nube.");
+            }
+          }
+        } catch (err) {
+          console.error("Error al descargar plan propio en segundo plano:", err);
+        }
+      }
+    };
+
+    // 3. Estrategia híbrida PWA:
+    if (tieneCache) {
+      // Si ya hay caché, disparamos la descarga en segundo plano y permitimos que la página cargue en 0ms
+      descargarDesdeRed();
+      return;
+    } else {
+      // Si es la primera vez (sin caché), esperamos obligatoriamente la red
+      await descargarDesdeRed();
     }
   }
 
@@ -3327,367 +3355,385 @@
   function comprobarRolYAdaptarUI(user) {
     return new Promise((resolve) => {
       console.log("Comprobando rol para el usuario ID:", user.id, "Email:", user.email);
-    
-    const adaptarVistaClientePremium = () => {
-      // Configurar Filosofía Colapsable
-      const philoSection = document.querySelector('.philosophy-section');
-      if (philoSection && !document.querySelector('.philosophy-toggle')) {
-        const toggle = document.createElement('div');
-        toggle.className = 'philosophy-toggle';
-        toggle.onclick = function() {
-          toggle.classList.toggle('open');
-          wrapper.classList.toggle('expanded');
-        };
-        toggle.innerHTML = '<span class="philosophy-toggle-title">⚡ Nuestra Filosofía de Entrenamiento</span>' +
-                           '<span class="philosophy-toggle-icon">▼</span>';
-        const wrapper = document.createElement('div');
-        wrapper.className = 'philosophy-collapsible';
-        philoSection.parentNode.insertBefore(toggle, philoSection);
-        philoSection.parentNode.insertBefore(wrapper, philoSection);
-        wrapper.appendChild(philoSection);
-      }
-
-      // Agregar FAB para calculadora 1RM si no existe
-      if (!document.getElementById('fab1RMBtn')) {
-        const fab = document.createElement('button');
-        fab.className = 'fab-1rm';
-        fab.id = 'fab1RMBtn';
-        fab.innerHTML = '🧮';
-        fab.title = 'Calculadora 1RM';
-        fab.onclick = function() {
-          const modal = document.getElementById('modal-1rm');
-          if (modal) {
-            modal.classList.add('open');
-            const input = document.getElementById('input1RMPeso');
-            if (input) input.focus();
-          }
-        };
-        document.body.appendChild(fab);
-      }
-    };
-    
-    const offlineFallback = () => {
-      // Intentar recuperar rol guardado en caché local para soporte offline
-      try {
-        const cachedPlanStr = localStorage.getItem('pwa_client_plan');
-        const cachedUserProfile = localStorage.getItem('pwa_user_profile');
-        
-        let rolCache = 'cliente'; // Por seguridad, default a cliente offline
-        let nombreCache = 'Atleta';
-
-        if (cachedUserProfile) {
-          const profile = JSON.parse(cachedUserProfile);
-          // Verificar que el perfil guardado pertenezca al usuario actualmente autenticado
-          if (profile.userId === user.id) {
-            rolCache = profile.rol || 'cliente';
-            nombreCache = profile.nombre || 'Atleta';
-            window.userProfile = profile;
-          } else {
-            console.log("Offline Fallback: El perfil en caché no coincide con el usuario actual. Usando rol por defecto.");
-          }
-        }
-
-        MODO_CLIENTE = (rolCache === 'cliente');
-        window.MODO_CLIENTE = MODO_CLIENTE;
-
-        const saludo = document.getElementById('dashboardGreeting');
-        if (saludo) {
-          saludo.innerHTML = `Hola, ${escapeHtml(nombreCache.split(' ')[0])} <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:8px; display:inline-block; vertical-align:middle;"><path d="M18 11V6a2 2 0 0 0-2-2 2 2 0 0 0-2 2v5"></path><path d="M14 10V4a2 2 0 0 0-2-2 2 2 0 0 0-2 2v6"></path><path d="M10 10.5V6a2 2 0 0 0-2-2 2 2 0 0 0-2 2v4.5"></path><path d="M6 10v6a6 6 0 0 0 6 6h1a6 6 0 0 0 5-5.5v-6.5"></path></svg>`;
-        }
-
-        if (MODO_CLIENTE) {
-          console.log("Offline Fallback: Detectado CLIENTE en caché.");
-          
-          const panelGen = document.getElementById('panelGenerarLink');
-          if (panelGen) panelGen.style.setProperty('display', 'none', 'important');
-          const exportBtn = document.getElementById('generarLinkBtn');
-          if (exportBtn) exportBtn.style.setProperty('display', 'none', 'important');
-          const saveNubeBtn = document.getElementById('guardarNubeBtn');
-          if (saveNubeBtn) saveNubeBtn.style.setProperty('display', 'none', 'important');
-          const selectorAtletas = document.getElementById('selectorAtletas');
-          if (selectorAtletas) selectorAtletas.style.setProperty('display', 'none', 'important');
-
-          const headerNombre = document.getElementById('clienteNombreHeader');
-          if (headerNombre) {
-            headerNombre.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px; display:inline-block; vertical-align:-1px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>${escapeHtml(nombreCache)}`;
-            headerNombre.style.display = 'inline-block';
-          }
-
-          document.querySelectorAll('#userName, #userGoal, #startDate, #planVigenciaPlan, #trainerName, #whatsappLink, #instagramLink, #globalNote').forEach(el => {
-            el.readOnly = true;
-            el.style.pointerEvents = 'none';
-            el.style.background = 'rgba(255, 255, 255, 0.02)';
-            el.style.border = '1px solid rgba(255, 255, 255, 0.05)';
-            el.style.color = 'rgba(255, 255, 255, 0.6)';
-          });
-
-          document.querySelectorAll('#addGlobalDayBtn, #addCustomVarBtn, .add-day-btn, .btn-remove-day, .exercise-actions, .btn-add-ex, .btn-rem-ex, .img-upload-label, .gif-upload-label, .global-vars-panel button, #quickAddVarBtn, .remove-var-btn, .hidden-file-upload, .hidden-gif-upload, .video-url-input, #weekdayConfigSection').forEach(el => {
-            el.style.setProperty('display', 'none', 'important');
-          });
-
-          const tabConfig = document.getElementById('tab-config');
-          if (tabConfig) tabConfig.style.setProperty('display', 'none', 'important');
-
-          const defsSection = document.querySelector('.definitions-section');
-          if (defsSection) defsSection.style.setProperty('display', 'none', 'important');
-          const globalVars = document.getElementById('globalVarsPanelContainer');
-          if (globalVars) globalVars.style.setProperty('display', 'none', 'important');
-
-          // Cargar plan propio desde caché
-          if (cachedPlanStr) {
-            const plan = JSON.parse(cachedPlanStr);
-            aplicarPlanCliente(plan);
-          } else {
-            console.log("Offline Fallback: No hay plan guardado en caché local.");
-            renderFullApp();
-          }
-          
-          // Cargar adaptaciones premium (Filosofía Colapsable y FAB Calculadora 1RM)
-          adaptarVistaClientePremium();
-        } else {
-          console.log("Offline Fallback: Detectado ENTRENADOR en caché.");
-          // Si es entrenador offline, restauramos paneles editables normales
-          document.querySelectorAll('#addGlobalDayBtn, #addCustomVarBtn, .add-day-btn, .btn-remove-day, .exercise-actions, .btn-add-ex, .btn-rem-ex, .img-upload-label, .gif-upload-label, .global-vars-panel button, #quickAddVarBtn, .remove-var-btn, .hidden-file-upload, .hidden-gif-upload, .video-url-input, #weekdayConfigSection').forEach(el => {
-            el.style.removeProperty('display');
-          });
-          const tabConfig = document.getElementById('tab-config');
-          if (tabConfig) tabConfig.style.removeProperty('display');
-          renderFullApp();
-        }
-        resolve();
-      } catch (e) {
-        console.error("Error en el fallback offline de rol:", e);
-        resolve();
-      }
-    };
-
-    if (!navigator.onLine) {
-      console.log("Offline detectado: Activando fallback de rol local.");
-      offlineFallback();
-      return;
-    }
-
-    // Buscar perfil en Supabase para saber si es entrenador o cliente
-    supabase.from('profiles').select('rol, nombre, vigencia_dias, fecha_inicio').eq('id', user.id).single().then(({ data, error }) => {
-      if (error) {
-        console.error("Error al obtener perfil desde Supabase:", error);
-        
-        // Si falló por falta de red real a pesar de navigator.onLine (o cualquier otro error de red/fetch)
-        const errorMsg = (error.message || "").toLowerCase();
-        if (
-          errorMsg.includes('failed to fetch') || 
-          errorMsg.includes('networkerror') || 
-          errorMsg.includes('load failed') ||
-          errorMsg.includes('network') ||
-          errorMsg.includes('cors') ||
-          error.status === 0
-        ) {
-          console.log("Error de red detectado en consulta de perfil. Activando fallback offline.");
-          offlineFallback();
-          return;
-        }
-
-        toast("Error al cargar perfil: " + error.message, "error");
-        
-        // Mostrar aviso visual con detalles técnicos para ayudar al usuario
-        const saludo = document.getElementById('dashboardGreeting');
-        if (saludo) {
-          saludo.innerHTML = `Hola, Atleta <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:8px; display:inline-block; vertical-align:middle;"><path d="M18 11V6a2 2 0 0 0-2-2 2 2 0 0 0-2 2v5"></path><path d="M14 10V4a2 2 0 0 0-2-2 2 2 0 0 0-2 2v6"></path><path d="M10 10.5V6a2 2 0 0 0-2-2 2 2 0 0 0-2 2v4.5"></path><path d="M6 10v6a6 6 0 0 0 6 6h1a6 6 0 0 0 5-5.5v-6.5"></path></svg> <div style="font-size: 11px; font-weight: 500; color: #ff4d4d; margin-top: 4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ff4d4d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px; display:inline-block; vertical-align:-1px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg> Error de Base de Datos: ${escapeHtml(error.message)}. Asegúrate de que el ID en 'profiles' coincida con tu Auth ID: ${escapeHtml(user.id)}</div>`;
-        }
-        resolve();
-        return;
-      }
       
-      if (data) {
-        console.log("Perfil obtenido de Supabase:", data);
-        window.userProfile = data;
-        
-        // Guardar el perfil en LocalStorage para soporte offline de roles
+      const adaptarVistaClientePremium = () => {
+        // Configurar Filosofía Colapsable
+        const philoSection = document.querySelector('.philosophy-section');
+        if (philoSection && !document.querySelector('.philosophy-toggle')) {
+          const toggle = document.createElement('div');
+          toggle.className = 'philosophy-toggle';
+          toggle.onclick = function() {
+            toggle.classList.toggle('open');
+            wrapper.classList.toggle('expanded');
+          };
+          toggle.innerHTML = '<span class="philosophy-toggle-title">⚡ Nuestra Filosofía de Entrenamiento</span>' +
+                             '<span class="philosophy-toggle-icon">▼</span>';
+          const wrapper = document.createElement('div');
+          wrapper.className = 'philosophy-collapsible';
+          philoSection.parentNode.insertBefore(toggle, philoSection);
+          philoSection.parentNode.insertBefore(wrapper, philoSection);
+          wrapper.appendChild(philoSection);
+        }
+
+        // Agregar FAB para calculadora 1RM si no existe
+        if (!document.getElementById('fab1RMBtn')) {
+          const fab = document.createElement('button');
+          fab.className = 'fab-1rm';
+          fab.id = 'fab1RMBtn';
+          fab.innerHTML = '🧮';
+          fab.title = 'Calculadora 1RM';
+          fab.onclick = function() {
+            const modal = document.getElementById('modal-1rm');
+            if (modal) {
+              modal.classList.add('open');
+              const input = document.getElementById('input1RMPeso');
+              if (input) input.focus();
+            }
+          };
+          document.body.appendChild(fab);
+        }
+      };
+      
+      const offlineFallback = () => {
+        // Intentar recuperar rol guardado en caché local para soporte offline
         try {
-          localStorage.setItem('pwa_user_profile', JSON.stringify({ 
-            userId: user.id, 
-            rol: data.rol, 
-            nombre: data.nombre,
-            vigencia_dias: data.vigencia_dias,
-            fecha_inicio: data.fecha_inicio
-          }));
-        } catch(e) {}
-
-        // Actualizar la variable global MODO_CLIENTE y window.MODO_CLIENTE
-        MODO_CLIENTE = (data.rol === 'cliente');
-        window.MODO_CLIENTE = MODO_CLIENTE;
-        
-        // Evitar trampa de redirección PWA: si es entrenador, limpiar pwa_client_url
-        if (!MODO_CLIENTE) {
-          try {
-            localStorage.removeItem('pwa_client_url');
-            console.log("Rol entrenador detectado: Eliminando pwa_client_url de localStorage.");
-          } catch(e) {}
-        }
-        
-        // Adaptar saludo y vista de entrenador/cliente
-        const saludo = document.getElementById('dashboardGreeting');
-        if (saludo) {
-          saludo.innerHTML = `Hola, ${escapeHtml(data.nombre.split(' ')[0])} <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:8px; display:inline-block; vertical-align:middle;"><path d="M18 11V6a2 2 0 0 0-2-2 2 2 0 0 0-2 2v5"></path><path d="M14 10V4a2 2 0 0 0-2-2 2 2 0 0 0-2 2v6"></path><path d="M10 10.5V6a2 2 0 0 0-2-2 2 2 0 0 0-2 2v4.5"></path><path d="M6 10v6a6 6 0 0 0 6 6h1a6 6 0 0 0 5-5.5v-6.5"></path></svg>`;
-        }
-
-        // Si es cliente, ocultar paneles de entrenador y cargar plan dinámico
-        if (MODO_CLIENTE) {
-          console.log("El usuario es CLIENTE. Adaptando interfaz a modo visualización premium.");
-
-          const panelGen = document.getElementById('panelGenerarLink');
-          if (panelGen) panelGen.style.setProperty('display', 'none', 'important');
-          const exportBtn = document.getElementById('generarLinkBtn');
-          if (exportBtn) exportBtn.style.setProperty('display', 'none', 'important');
-          const saveNubeBtn = document.getElementById('guardarNubeBtn');
-          if (saveNubeBtn) saveNubeBtn.style.setProperty('display', 'none', 'important');
-          const selectorAtletas = document.getElementById('selectorAtletas');
-          if (selectorAtletas) selectorAtletas.style.setProperty('display', 'none', 'important');
+          const cachedPlanStr = localStorage.getItem('pwa_client_plan');
+          const cachedUserProfile = localStorage.getItem('pwa_user_profile');
           
-          // Mostrar nombre del cliente en la cabecera
-          const headerNombre = document.getElementById('clienteNombreHeader');
-          if (headerNombre) {
-            headerNombre.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px; display:inline-block; vertical-align:-1px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>${escapeHtml(data.nombre)}`;
-            headerNombre.style.display = 'inline-block';
-          }
+          let rolCache = 'cliente'; // Por seguridad, default a cliente offline
+          let nombreCache = 'Atleta';
 
-          // Deshabilitar edición de los campos de portada
-          document.querySelectorAll('#userName, #userGoal, #startDate, #planVigenciaPlan, #trainerName, #whatsappLink, #instagramLink, #globalNote').forEach(el => {
-            el.readOnly = true;
-            el.style.pointerEvents = 'none';
-            el.style.background = 'rgba(255, 255, 255, 0.02)';
-            el.style.border = '1px solid rgba(255, 255, 255, 0.05)';
-            el.style.color = 'rgba(255, 255, 255, 0.6)';
-          });
-
-          // Ocultar botones de edición de plan y la sección de diccionario e inputs
-          document.querySelectorAll('#addGlobalDayBtn, #addCustomVarBtn, .add-day-btn, .btn-remove-day, .exercise-actions, .btn-add-ex, .btn-rem-ex, .img-upload-label, .gif-upload-label, .global-vars-panel button, #quickAddVarBtn, .remove-var-btn, .hidden-file-upload, .hidden-gif-upload, .video-url-input, #weekdayConfigSection').forEach(el => {
-            el.style.setProperty('display', 'none', 'important');
-          });
-
-          const tabConfig = document.getElementById('tab-config');
-          if (tabConfig) tabConfig.style.setProperty('display', 'none', 'important');
-
-          const defsSection = document.querySelector('.definitions-section');
-          if (defsSection) defsSection.style.setProperty('display', 'none', 'important');
-          const globalVars = document.getElementById('globalVarsPanelContainer');
-          if (globalVars) globalVars.style.setProperty('display', 'none', 'important');
-
-          // Cargar el plan de entrenamiento propio del cliente desde Supabase o LocalStorage (y esperar!)
-          cargarPlanPropioCliente().then(() => {
-            // Cargar adaptaciones premium (Filosofía Colapsable y FAB Calculadora 1RM)
-            adaptarVistaClientePremium();
-            
-            // Volver a renderizar la aplicación para aplicar todos los cambios de rol en la UI
-            var ES_PAGINA_CLIENTE = !!window.INJECTED_CLIENT_ID || window.location.pathname.includes('/clientes/');
-            if (!ES_PAGINA_CLIENTE && !MODO_CLIENTE) {
-              renderFullApp();
+          if (cachedUserProfile) {
+            const profile = JSON.parse(cachedUserProfile);
+            // Verificar que el perfil guardado pertenezca al usuario actualmente autenticado
+            if (profile.userId === user.id) {
+              rolCache = profile.rol || 'cliente';
+              nombreCache = profile.nombre || 'Atleta';
+              window.userProfile = profile;
             } else {
-              renderAll();
+              console.log("Offline Fallback: El perfil en caché no coincide con el usuario actual. Usando rol por defecto.");
             }
-            resolve();
-          }).catch(err => {
-            console.error("Error al cargar plan de cliente:", err);
-            resolve();
-          });
-          
-        } else {
-          // Si es entrenador, mostrar selector y botones
-          console.log("El usuario es ENTRENADOR. Configurando panel de gestión en la nube.");
-          
-          const headerNombre = document.getElementById('clienteNombreHeader');
-          if (headerNombre) headerNombre.style.display = 'none';
-
-          const genBtn = document.getElementById('generarLinkBtn');
-          if (genBtn) genBtn.style.display = 'inline-block';
-          
-          const regBtn = document.getElementById('registrarAtletaBtn');
-          if (regBtn) {
-            regBtn.style.display = 'inline-block';
-            regBtn.onclick = () => {
-              const panel = document.getElementById('panelRegistrarCliente');
-              if (panel) {
-                panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-              }
-            };
           }
 
-          const saveNubeBtn = document.getElementById('guardarNubeBtn');
-          if (saveNubeBtn) {
-            saveNubeBtn.style.display = 'inline-block';
-            saveNubeBtn.onclick = guardarPlanEnNube;
+          MODO_CLIENTE = (rolCache === 'cliente');
+          window.MODO_CLIENTE = MODO_CLIENTE;
+
+          const saludo = document.getElementById('dashboardGreeting');
+          if (saludo) {
+            saludo.innerHTML = `Hola, ${escapeHtml(nombreCache.split(' ')[0])} <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:8px; display:inline-block; vertical-align:middle;"><path d="M18 11V6a2 2 0 0 0-2-2 2 2 0 0 0-2 2v5"></path><path d="M14 10V4a2 2 0 0 0-2-2 2 2 0 0 0-2 2v6"></path><path d="M10 10.5V6a2 2 0 0 0-2-2 2 2 0 0 0-2 2v4.5"></path><path d="M6 10v6a6 6 0 0 0 6 6h1a6 6 0 0 0 5-5.5v-6.5"></path></svg>`;
           }
 
-          // Cargar atletas en el dropdown selector (y esperar!)
-          cargarClientesSelector().then(() => {
-            const selectorAtletas = document.getElementById('selectorAtletas');
-            if (selectorAtletas) {
-              selectorAtletas.onchange = (e) => {
-                cargarPlanDeCliente(e.target.value);
-              };
-            }
+          if (MODO_CLIENTE) {
+            console.log("Offline Fallback: Detectado CLIENTE en caché.");
             
-            // Habilitar edición de los campos de portada para el entrenador
+            const panelGen = document.getElementById('panelGenerarLink');
+            if (panelGen) panelGen.style.setProperty('display', 'none', 'important');
+            const exportBtn = document.getElementById('generarLinkBtn');
+            if (exportBtn) exportBtn.style.setProperty('display', 'none', 'important');
+            const saveNubeBtn = document.getElementById('guardarNubeBtn');
+            if (saveNubeBtn) saveNubeBtn.style.setProperty('display', 'none', 'important');
+            const selectorAtletas = document.getElementById('selectorAtletas');
+            if (selectorAtletas) selectorAtletas.style.setProperty('display', 'none', 'important');
+
+            const headerNombre = document.getElementById('clienteNombreHeader');
+            if (headerNombre) {
+              headerNombre.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px; display:inline-block; vertical-align:-1px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>${escapeHtml(nombreCache)}`;
+              headerNombre.style.display = 'inline-block';
+            }
+
             document.querySelectorAll('#userName, #userGoal, #startDate, #planVigenciaPlan, #trainerName, #whatsappLink, #instagramLink, #globalNote').forEach(el => {
-              el.readOnly = false;
-              el.style.removeProperty('pointer-events');
-              el.style.removeProperty('background');
-              el.style.removeProperty('border');
-              el.style.removeProperty('color');
+              el.readOnly = true;
+              el.style.pointerEvents = 'none';
+              el.style.background = 'rgba(255, 255, 255, 0.02)';
+              el.style.border = '1px solid rgba(255, 255, 255, 0.05)';
+              el.style.color = 'rgba(255, 255, 255, 0.6)';
             });
 
-            // Asegurarse de que los paneles de edición de entrenador estén visibles
-            document.querySelectorAll('#printAsPdfBtn, #addGlobalDayBtn, #addCustomVarBtn, #exportHtmlBtn, .add-day-btn, .btn-remove-day, .exercise-actions, .btn-add-ex, .btn-rem-ex, .img-upload-label, .gif-upload-label, .global-vars-panel button, #quickAddVarBtn, .remove-var-btn, .hidden-file-upload, .hidden-gif-upload, .video-url-input, #weekdayConfigSection').forEach(el => {
-              el.style.removeProperty('display');
+            document.querySelectorAll('#addGlobalDayBtn, #addCustomVarBtn, .add-day-btn, .btn-remove-day, .exercise-actions, .btn-add-ex, .btn-rem-ex, .img-upload-label, .gif-upload-label, .global-vars-panel button, #quickAddVarBtn, .remove-var-btn, .hidden-file-upload, .hidden-gif-upload, .video-url-input, #weekdayConfigSection').forEach(el => {
+              el.style.setProperty('display', 'none', 'important');
             });
 
             const tabConfig = document.getElementById('tab-config');
-            if (tabConfig) tabConfig.style.removeProperty('display');
+            if (tabConfig) tabConfig.style.setProperty('display', 'none', 'important');
 
             const defsSection = document.querySelector('.definitions-section');
-            if (defsSection) defsSection.style.removeProperty('display');
+            if (defsSection) defsSection.style.setProperty('display', 'none', 'important');
             const globalVars = document.getElementById('globalVarsPanelContainer');
-            if (globalVars) globalVars.style.removeProperty('display');
+            if (globalVars) globalVars.style.setProperty('display', 'none', 'important');
 
-            // Remover FAB de 1RM si existe (el entrenador usa el botón normal)
-            const fab = document.getElementById('fab1RMBtn');
-            if (fab) fab.remove();
-            
-            // Volver a renderizar la aplicación para aplicar todos los cambios de rol en la UI
-            var ES_PAGINA_CLIENTE = !!window.INJECTED_CLIENT_ID || window.location.pathname.includes('/clientes/');
-            if (!ES_PAGINA_CLIENTE && !MODO_CLIENTE) {
-              renderFullApp();
+            // Cargar plan propio desde caché
+            if (cachedPlanStr) {
+              const plan = JSON.parse(cachedPlanStr);
+              aplicarPlanCliente(plan);
             } else {
-              renderAll();
+              console.log("Offline Fallback: No hay plan guardado en caché local.");
+              renderFullApp();
             }
-            resolve();
-          }).catch(err => {
-            console.error("Error al cargar clientes selector:", err);
-            resolve();
-          });
+            
+            // Cargar adaptaciones premium (Filosofía Colapsable y FAB Calculadora 1RM)
+            adaptarVistaClientePremium();
+          } else {
+            console.log("Offline Fallback: Detectado ENTRENADOR en caché.");
+            // Si es entrenador offline, restauramos paneles editables normales
+            document.querySelectorAll('#addGlobalDayBtn, #addCustomVarBtn, .add-day-btn, .btn-remove-day, .exercise-actions, .btn-add-ex, .btn-rem-ex, .img-upload-label, .gif-upload-label, .global-vars-panel button, #quickAddVarBtn, .remove-var-btn, .hidden-file-upload, .hidden-gif-upload, .video-url-input, #weekdayConfigSection').forEach(el => {
+              el.style.removeProperty('display');
+            });
+            const tabConfig = document.getElementById('tab-config');
+            if (tabConfig) tabConfig.style.removeProperty('display');
+            renderFullApp();
+          }
+          resolve();
+        } catch (e) {
+          console.error("Error en el fallback offline de rol:", e);
+          resolve();
         }
-        
-      } else {
-        console.warn("No se encontró fila de perfil para el usuario en Supabase.");
-        toast("No se encontró tu perfil en la base de datos.", "error");
-        
-        const saludo = document.getElementById('dashboardGreeting');
-        if (saludo) {
-          saludo.innerHTML = `Hola, Atleta <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:8px; display:inline-block; vertical-align:middle;"><path d="M18 11V6a2 2 0 0 0-2-2 2 2 0 0 0-2 2v5"></path><path d="M14 10V4a2 2 0 0 0-2-2 2 2 0 0 0-2 2v6"></path><path d="M10 10.5V6a2 2 0 0 0-2-2 2 2 0 0 0-2 2v4.5"></path><path d="M6 10v6a6 6 0 0 0 6 6h1a6 6 0 0 0 5-5.5v-6.5"></path></svg> <div style="font-size: 11px; font-weight: 500; color: #ff4d4d; margin-top: 4px;"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#ff4d4d" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:4px; display:inline-block; vertical-align:-1px;"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg> Perfil no encontrado. Asegúrate de crear una fila en la tabla 'profiles' con el ID: ${escapeHtml(user.id)}</div>`;
+      };
+
+      // ==========================================
+      // RENDIMIENTO PREMIUM PWA: CARGA INSTANTÁNEA DESDE CACHÉ (FAST-BOOT)
+      // ==========================================
+      let tienePerfilCache = false;
+      try {
+        const cachedUserProfile = localStorage.getItem('pwa_user_profile');
+        if (cachedUserProfile) {
+          const profile = JSON.parse(cachedUserProfile);
+          if (profile.userId === user.id) {
+            console.log("Renderizado rápido: Aplicando perfil e interfaz desde caché en 0ms...");
+            tienePerfilCache = true;
+            
+            MODO_CLIENTE = (profile.rol === 'cliente');
+            window.MODO_CLIENTE = MODO_CLIENTE;
+            window.userProfile = profile;
+
+            const saludo = document.getElementById('dashboardGreeting');
+            if (saludo) {
+              saludo.innerHTML = `Hola, ${escapeHtml(profile.nombre.split(' ')[0])} <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:8px; display:inline-block; vertical-align:middle;"><path d="M18 11V6a2 2 0 0 0-2-2 2 2 0 0 0-2 2v5"></path><path d="M14 10V4a2 2 0 0 0-2-2 2 2 0 0 0-2 2v6"></path><path d="M10 10.5V6a2 2 0 0 0-2-2 2 2 0 0 0-2 2v4.5"></path><path d="M6 10v6a6 6 0 0 0 6 6h1a6 6 0 0 0 5-5.5v-6.5"></path></svg>`;
+            }
+
+            if (MODO_CLIENTE) {
+              const panelGen = document.getElementById('panelGenerarLink');
+              if (panelGen) panelGen.style.setProperty('display', 'none', 'important');
+              const exportBtn = document.getElementById('generarLinkBtn');
+              if (exportBtn) exportBtn.style.setProperty('display', 'none', 'important');
+              const saveNubeBtn = document.getElementById('guardarNubeBtn');
+              if (saveNubeBtn) saveNubeBtn.style.setProperty('display', 'none', 'important');
+              const selectorAtletas = document.getElementById('selectorAtletas');
+              if (selectorAtletas) selectorAtletas.style.setProperty('display', 'none', 'important');
+
+              const headerNombre = document.getElementById('clienteNombreHeader');
+              if (headerNombre) {
+                headerNombre.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px; display:inline-block; vertical-align:-1px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>${escapeHtml(profile.nombre)}`;
+                headerNombre.style.display = 'inline-block';
+              }
+
+              document.querySelectorAll('#userName, #userGoal, #startDate, #planVigenciaPlan, #trainerName, #whatsappLink, #instagramLink, #globalNote').forEach(el => {
+                el.readOnly = true;
+                el.style.pointerEvents = 'none';
+                el.style.background = 'rgba(255, 255, 255, 0.02)';
+                el.style.border = '1px solid rgba(255, 255, 255, 0.05)';
+                el.style.color = 'rgba(255, 255, 255, 0.6)';
+              });
+
+              document.querySelectorAll('#addGlobalDayBtn, #addCustomVarBtn, .add-day-btn, .btn-remove-day, .exercise-actions, .btn-add-ex, .btn-rem-ex, .img-upload-label, .gif-upload-label, .global-vars-panel button, #quickAddVarBtn, .remove-var-btn, .hidden-file-upload, .hidden-gif-upload, .video-url-input, #weekdayConfigSection').forEach(el => {
+                el.style.setProperty('display', 'none', 'important');
+              });
+
+              const tabConfig = document.getElementById('tab-config');
+              if (tabConfig) tabConfig.style.setProperty('display', 'none', 'important');
+
+              const defsSection = document.querySelector('.definitions-section');
+              if (defsSection) defsSection.style.setProperty('display', 'none', 'important');
+              const globalVars = document.getElementById('globalVarsPanelContainer');
+              if (globalVars) globalVars.style.setProperty('display', 'none', 'important');
+
+              // Cargar plan de cliente (que se cargará de caché e iniciará stagger cascade de inmediato)
+              cargarPlanPropioCliente();
+              adaptarVistaClientePremium();
+            } else {
+              document.querySelectorAll('#addGlobalDayBtn, #addCustomVarBtn, .add-day-btn, .btn-remove-day, .exercise-actions, .btn-add-ex, .btn-rem-ex, .img-upload-label, .gif-upload-label, .global-vars-panel button, #quickAddVarBtn, .remove-var-btn, .hidden-file-upload, .hidden-gif-upload, .video-url-input, #weekdayConfigSection').forEach(el => {
+                el.style.removeProperty('display');
+              });
+              const tabConfig = document.getElementById('tab-config');
+              if (tabConfig) tabConfig.style.removeProperty('display');
+              renderFullApp();
+            }
+            
+            // RESOLVER PROMEDIO INMEDIATAMENTE para que la cascada stagger inicie en 0ms
+            resolve();
+          }
         }
-        resolve();
+      } catch (e) {
+        print("Error al aplicar carga rápida de perfil:", e)
       }
-    }).catch(err => {
-      console.error("Excepción en comprobarRolYAdaptarUI:", err);
-      // Si el fetch falló por estar offline y navigator.onLine dio un falso positivo
-      if (err.message && err.message.includes('Failed to fetch')) {
-        offlineFallback();
+
+      const sincronizarPerfilYPlan = async () => {
+        if (!navigator.onLine) return;
+        try {
+          console.log("Sincronizando perfil con Supabase en segundo plano...");
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('rol, nombre, vigencia_dias, fecha_inicio')
+            .eq('id', user.id)
+            .single();
+
+          if (error) throw error;
+
+          if (data) {
+            window.userProfile = data;
+            const perfilNuevoStr = JSON.stringify({ 
+              userId: user.id, 
+              rol: data.rol, 
+              nombre: data.nombre,
+              vigencia_dias: data.vigencia_dias,
+              fecha_inicio: data.fecha_inicio
+            });
+            const cachedUserProfile = localStorage.getItem('pwa_user_profile');
+
+            // Si el perfil cambió en la nube, actualizar la UI en caliente
+            if (perfilNuevoStr !== cachedUserProfile) {
+              localStorage.setItem('pwa_user_profile', perfilNuevoStr);
+              
+              MODO_CLIENTE = (data.rol === 'cliente');
+              window.MODO_CLIENTE = MODO_CLIENTE;
+              
+              const saludo = document.getElementById('dashboardGreeting');
+              if (saludo) {
+                saludo.innerHTML = `Hola, ${escapeHtml(data.nombre.split(' ')[0])} <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:8px; display:inline-block; vertical-align:middle;"><path d="M18 11V6a2 2 0 0 0-2-2 2 2 0 0 0-2 2v5"></path><path d="M14 10V4a2 2 0 0 0-2-2 2 2 0 0 0-2 2v6"></path><path d="M10 10.5V6a2 2 0 0 0-2-2 2 2 0 0 0-2 2v4.5"></path><path d="M6 10v6a6 6 0 0 0 6 6h1a6 6 0 0 0 5-5.5v-6.5"></path></svg>`;
+              }
+
+              if (MODO_CLIENTE) {
+                cargarPlanPropioCliente();
+              } else {
+                document.querySelectorAll('#addGlobalDayBtn, #addCustomVarBtn, .add-day-btn, .btn-remove-day, .exercise-actions, .btn-add-ex, .btn-rem-ex, .img-upload-label, .gif-upload-label, .global-vars-panel button, #quickAddVarBtn, .remove-var-btn, .hidden-file-upload, .hidden-gif-upload, .video-url-input, #weekdayConfigSection').forEach(el => {
+                  el.style.removeProperty('display');
+                });
+                const tabConfig = document.getElementById('tab-config');
+                if (tabConfig) tabConfig.style.removeProperty('display');
+                renderFullApp();
+              }
+            }
+          }
+        } catch (err) {
+          console.error("Error al sincronizar perfil en segundo plano:", err);
+        }
+      };
+
+      // Si no tenemos perfil en caché, hay que buscarlo obligatoriamente y esperar
+      if (!tienePerfilCache) {
+        if (!navigator.onLine) {
+          offlineFallback();
+          return;
+        }
+        
+        supabase.from('profiles').select('rol, nombre, vigencia_dias, fecha_inicio').eq('id', user.id).single().then(({ data, error }) => {
+          if (error) {
+            console.error("Error al obtener perfil en carga inicial:", error);
+            offlineFallback();
+            return;
+          }
+          
+          if (data) {
+            window.userProfile = data;
+            try {
+              localStorage.setItem('pwa_user_profile', JSON.stringify({ 
+                userId: user.id, 
+                rol: data.rol, 
+                nombre: data.nombre,
+                vigencia_dias: data.vigencia_dias,
+                fecha_inicio: data.fecha_inicio
+              }));
+            } catch(e) {}
+
+            MODO_CLIENTE = (data.rol === 'cliente');
+            window.MODO_CLIENTE = MODO_CLIENTE;
+
+            const saludo = document.getElementById('dashboardGreeting');
+            if (saludo) {
+              saludo.innerHTML = `Hola, ${escapeHtml(data.nombre.split(' ')[0])} <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-left:8px; display:inline-block; vertical-align:middle;"><path d="M18 11V6a2 2 0 0 0-2-2 2 2 0 0 0-2 2v5"></path><path d="M14 10V4a2 2 0 0 0-2-2 2 2 0 0 0-2 2v6"></path><path d="M10 10.5V6a2 2 0 0 0-2-2 2 2 0 0 0-2 2v4.5"></path><path d="M6 10v6a6 6 0 0 0 6 6h1a6 6 0 0 0 5-5.5v-6.5"></path></svg>`;
+            }
+
+            if (MODO_CLIENTE) {
+              const panelGen = document.getElementById('panelGenerarLink');
+              if (panelGen) panelGen.style.setProperty('display', 'none', 'important');
+              const exportBtn = document.getElementById('generarLinkBtn');
+              if (exportBtn) exportBtn.style.setProperty('display', 'none', 'important');
+              const saveNubeBtn = document.getElementById('guardarNubeBtn');
+              if (saveNubeBtn) saveNubeBtn.style.setProperty('display', 'none', 'important');
+              const selectorAtletas = document.getElementById('selectorAtletas');
+              if (selectorAtletas) selectorAtletas.style.setProperty('display', 'none', 'important');
+
+              const headerNombre = document.getElementById('clienteNombreHeader');
+              if (headerNombre) {
+                headerNombre.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="margin-right:6px; display:inline-block; vertical-align:-1px;"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>${escapeHtml(data.nombre)}`;
+                headerNombre.style.display = 'inline-block';
+              }
+
+              document.querySelectorAll('#userName, #userGoal, #startDate, #planVigenciaPlan, #trainerName, #whatsappLink, #instagramLink, #globalNote').forEach(el => {
+                el.readOnly = true;
+                el.style.pointerEvents = 'none';
+                el.style.background = 'rgba(255, 255, 255, 0.02)';
+                el.style.border = '1px solid rgba(255, 255, 255, 0.05)';
+                el.style.color = 'rgba(255, 255, 255, 0.6)';
+              });
+
+              document.querySelectorAll('#addGlobalDayBtn, #addCustomVarBtn, .add-day-btn, .btn-remove-day, .exercise-actions, .btn-add-ex, .btn-rem-ex, .img-upload-label, .gif-upload-label, .global-vars-panel button, #quickAddVarBtn, .remove-var-btn, .hidden-file-upload, .hidden-gif-upload, .video-url-input, #weekdayConfigSection').forEach(el => {
+                el.style.setProperty('display', 'none', 'important');
+              });
+
+              const tabConfig = document.getElementById('tab-config');
+              if (tabConfig) tabConfig.style.setProperty('display', 'none', 'important');
+
+              const defsSection = document.querySelector('.definitions-section');
+              if (defsSection) defsSection.style.setProperty('display', 'none', 'important');
+              const globalVars = document.getElementById('globalVarsPanelContainer');
+              if (globalVars) globalVars.style.setProperty('display', 'none', 'important');
+
+              cargarPlanPropioCliente().then(() => {
+                adaptarVistaClientePremium();
+                resolve();
+              }).catch(err => {
+                console.error("Error al cargar plan inicial de cliente:", err);
+                resolve();
+              });
+            } else {
+              document.querySelectorAll('#addGlobalDayBtn, #addCustomVarBtn, .add-day-btn, .btn-remove-day, .exercise-actions, .btn-add-ex, .btn-rem-ex, .img-upload-label, .gif-upload-label, .global-vars-panel button, #quickAddVarBtn, .remove-var-btn, .hidden-file-upload, .hidden-gif-upload, .video-url-input, #weekdayConfigSection').forEach(el => {
+                el.style.removeProperty('display');
+              });
+              const tabConfig = document.getElementById('tab-config');
+              if (tabConfig) tabConfig.style.removeProperty('display');
+              renderFullApp();
+              
+              cargarClientesSelector().then(() => {
+                const selectorAtletas = document.getElementById('selectorAtletas');
+                if (selectorAtletas) {
+                  selectorAtletas.onchange = (e) => {
+                    cargarPlanDeCliente(e.target.value);
+                  };
+                }
+                
+                document.querySelectorAll('#userName, #userGoal, #startDate, #planVigenciaPlan, #trainerName, #whatsappLink, #instagramLink, #globalNote').forEach(el => {
+                  el.readOnly = false;
+                  el.style.pointerEvents = 'auto';
+                  el.style.background = '';
+                  el.style.border = '';
+                  el.style.color = '';
+                });
+                resolve();
+              }).catch(err => {
+                console.error("Error al cargar selector en carga inicial:", err);
+                resolve();
+              });
+            }
+          }
+        }).catch(err => {
+          console.error("Error al obtener perfil desde Supabase:", err);
+          offlineFallback();
+        });
       } else {
-        toast("Error de conexión: " + err.message, "error");
-        resolve();
+        // Si ya cargó por caché, de todas formas sincronizamos el perfil en segundo plano
+        sincronizarPerfilYPlan();
       }
     });
-  });
   }
 
   window.cerrarPanelRegistro = function() {
