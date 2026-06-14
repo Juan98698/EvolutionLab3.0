@@ -51,7 +51,7 @@ export const AthleteDashboard: React.FC = () => {
   const [showOnboarding, setShowOnboarding] = useState<boolean>(false);
   const [showShareCard, setShowShareCard] = useState<boolean>(false);
 
-  // Manejar redirección exitosa o cancelada de Stripe
+  // Manejar redirección exitosa o cancelada de MercadoPago
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const paymentSuccess = params.get('payment_success');
@@ -94,10 +94,10 @@ export const AthleteDashboard: React.FC = () => {
     }
   }, [user]);
 
-  const handleStripeCheckout = async (plan: string, redirectPath: string) => {
+  const handleMercadoPagoCheckout = async (plan: string, redirectPath: string) => {
     setPaymentLoading(true);
     try {
-      const response = await fetch('/api/create-checkout-session', {
+      const response = await fetch('/api/create-mercadopago-preference', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -112,13 +112,13 @@ export const AthleteDashboard: React.FC = () => {
 
       const data = await response.json();
       if (data.url) {
-        window.location.href = data.url; // Redirigir a Stripe Checkout
+        window.location.href = data.url; // Redirigir a MercadoPago Checkout
       } else {
         throw new Error(data.error || 'No se obtuvo la URL de pago');
       }
     } catch (err: any) {
-      console.error('Stripe redirect error:', err);
-      showToast('Error al conectar con Stripe: ' + err.message, 'error');
+      console.error('MercadoPago redirect error:', err);
+      showToast('Error al conectar con MercadoPago: ' + err.message, 'error');
     } finally {
       setPaymentLoading(false);
     }
@@ -1926,7 +1926,7 @@ export const AthleteDashboard: React.FC = () => {
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               <button
-                onClick={() => handleStripeCheckout('premium', '/dashboard')}
+                onClick={() => handleMercadoPagoCheckout('premium', '/dashboard')}
                 disabled={paymentLoading}
                 style={{
                   background: 'linear-gradient(135deg, #7b2ff7, #00d4ff)',
@@ -1938,7 +1938,7 @@ export const AthleteDashboard: React.FC = () => {
                   opacity: paymentLoading ? 0.7 : 1
                 }}
               >
-                {paymentLoading ? 'PROCESANDO PAGO...' : 'PAGAR CON STRIPE 💳'}
+                {paymentLoading ? 'PROCESANDO PAGO...' : 'PAGAR CON MERCADOPAGO 💳'}
               </button>
               
               <a

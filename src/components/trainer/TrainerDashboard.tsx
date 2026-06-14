@@ -64,7 +64,7 @@ export const TrainerDashboard: React.FC = () => {
 
   const [paymentLoading, setPaymentLoading] = useState<boolean>(false);
 
-  // Manejar redirección exitosa o cancelada de Stripe
+  // Manejar redirección exitosa o cancelada de MercadoPago
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const paymentSuccess = params.get('payment_success');
@@ -80,10 +80,10 @@ export const TrainerDashboard: React.FC = () => {
     }
   }, [location.search, navigate, location.pathname, refreshProfile]);
 
-  const handleStripeCheckout = async (plan: string, redirectPath: string) => {
+  const handleMercadoPagoCheckout = async (plan: string, redirectPath: string) => {
     setPaymentLoading(true);
     try {
-      const response = await fetch('/api/create-checkout-session', {
+      const response = await fetch('/api/create-mercadopago-preference', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -98,13 +98,13 @@ export const TrainerDashboard: React.FC = () => {
 
       const data = await response.json();
       if (data.url) {
-        window.location.href = data.url; // Redirigir a Stripe Checkout
+        window.location.href = data.url; // Redirigir a MercadoPago Checkout
       } else {
         throw new Error(data.error || 'No se obtuvo la URL de pago');
       }
     } catch (err: any) {
-      console.error('Stripe redirect error:', err);
-      showToast('Error al conectar con Stripe: ' + err.message, 'error');
+      console.error('MercadoPago redirect error:', err);
+      showToast('Error al conectar con MercadoPago: ' + err.message, 'error');
     } finally {
       setPaymentLoading(false);
     }
@@ -1238,7 +1238,7 @@ export const TrainerDashboard: React.FC = () => {
                   
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <button
-                      onClick={() => handleStripeCheckout('iniciacion', '/trainer')}
+                      onClick={() => handleMercadoPagoCheckout('iniciacion', '/trainer')}
                       disabled={paymentLoading}
                       style={{
                         background: 'linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.01))',
@@ -1254,7 +1254,7 @@ export const TrainerDashboard: React.FC = () => {
                     </button>
 
                     <button
-                      onClick={() => handleStripeCheckout('intermedio', '/trainer')}
+                      onClick={() => handleMercadoPagoCheckout('intermedio', '/trainer')}
                       disabled={paymentLoading}
                       style={{
                         background: 'linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(0, 212, 255, 0.02))',
@@ -1271,7 +1271,7 @@ export const TrainerDashboard: React.FC = () => {
                     </button>
 
                     <button
-                      onClick={() => handleStripeCheckout('profesional', '/trainer')}
+                      onClick={() => handleMercadoPagoCheckout('profesional', '/trainer')}
                       disabled={paymentLoading}
                       style={{
                         background: 'linear-gradient(135deg, rgba(123, 47, 247, 0.1), rgba(123, 47, 247, 0.02))',
@@ -1344,7 +1344,7 @@ export const TrainerDashboard: React.FC = () => {
                   <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', display: 'block' }}>Hasta 2 Atletas</span>
                 </div>
                 <button
-                  onClick={() => handleStripeCheckout('iniciacion', '/trainer')}
+                  onClick={() => handleMercadoPagoCheckout('iniciacion', '/trainer')}
                   disabled={paymentLoading}
                   style={{
                     width: '100%',
@@ -1361,7 +1361,7 @@ export const TrainerDashboard: React.FC = () => {
                     marginTop: '8px'
                   }}
                 >
-                  {paymentLoading ? 'PROCESANDO...' : 'PAGAR CON STRIPE 💳'}
+                  {paymentLoading ? 'PROCESANDO...' : 'PAGAR CON MERCADOPAGO 💳'}
                 </button>
               </div>
               <div style={{ background: 'rgba(0, 212, 255, 0.04)', border: '1px solid rgba(0, 212, 255, 0.25)', borderRadius: '16px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px', justifyContent: 'space-between', boxShadow: '0 0 15px rgba(0, 212, 255, 0.1)' }}>
@@ -1371,7 +1371,7 @@ export const TrainerDashboard: React.FC = () => {
                   <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', display: 'block' }}>Hasta 10 Atletas</span>
                 </div>
                 <button
-                  onClick={() => handleStripeCheckout('intermedio', '/trainer')}
+                  onClick={() => handleMercadoPagoCheckout('intermedio', '/trainer')}
                   disabled={paymentLoading}
                   style={{
                     width: '100%',
@@ -1389,7 +1389,7 @@ export const TrainerDashboard: React.FC = () => {
                     boxShadow: '0 0 8px rgba(0, 212, 255, 0.15)'
                   }}
                 >
-                  {paymentLoading ? 'PROCESANDO...' : 'PAGAR CON STRIPE 💳'}
+                  {paymentLoading ? 'PROCESANDO...' : 'PAGAR CON MERCADOPAGO 💳'}
                 </button>
               </div>
               <div style={{ background: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.06)', borderRadius: '16px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px', justifyContent: 'space-between' }}>
@@ -1399,7 +1399,7 @@ export const TrainerDashboard: React.FC = () => {
                   <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', display: 'block' }}>Atletas Ilimitados</span>
                 </div>
                 <button
-                  onClick={() => handleStripeCheckout('profesional', '/trainer')}
+                  onClick={() => handleMercadoPagoCheckout('profesional', '/trainer')}
                   disabled={paymentLoading}
                   style={{
                     width: '100%',
@@ -1417,7 +1417,7 @@ export const TrainerDashboard: React.FC = () => {
                     boxShadow: '0 0 8px rgba(123, 47, 247, 0.15)'
                   }}
                 >
-                  {paymentLoading ? 'PROCESANDO...' : 'PAGAR CON STRIPE 💳'}
+                  {paymentLoading ? 'PROCESANDO...' : 'PAGAR CON MERCADOPAGO 💳'}
                 </button>
               </div>
             </div>
