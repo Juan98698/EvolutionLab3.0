@@ -1,0 +1,2650 @@
+import React, { useState, useEffect, useMemo } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { supabase } from '../../lib/supabaseClient';
+import { useSupabase } from '../../context/SupabaseContext';
+import { Profile, PlanData, TrainingDay, Exercise, GlobalVariable, EjercicioGlobal } from '../../types/database.types';
+import Toast from '../common/Toast';
+import { InfoTooltip } from '../common/InfoTooltip';
+import {
+  Chart as ChartJS,
+  RadialLinearScale,
+  ArcElement,
+  Tooltip as ChartTooltipPlugin,
+  Legend as ChartLegendPlugin,
+  PointElement as ChartPointElement,
+  LineElement as ChartLineElement,
+  Filler as ChartFiller,
+} from 'chart.js';
+import { Radar } from 'react-chartjs-2';
+
+ChartJS.register(RadialLinearScale, ArcElement, ChartTooltipPlugin, ChartLegendPlugin, ChartPointElement, ChartLineElement, ChartFiller);
+
+const DEFAULT_VARIABLE_DEFINITIONS: Record<string, string> = {
+  "series de aproximacion": "Son series previas con poco peso para calentar los músculos y preparar las articulaciones sin cansarte. Ejemplo: Si vas a levantar 50kg, haces una serie previa con solo la barra o con 20kg.",
+  "series de trabajo": "Son las series reales del plan donde el esfuerzo es alto y cuentan para el progreso. Ejemplo: Hacer 3 series de 10 repeticiones con el peso máximo que dominas.",
+  "repeticiones": "Es el número de veces que realizas el movimiento completo del ejercicio dentro de una serie. Ejemplo: hacer 12 sentadillas seguidas sin parar.",
+  "tempo": "Es la velocidad a la que realizas cada fase del movimiento (bajada, pausa y subida). Ejemplo: En sentadilla, bajar en 3 segundos, hacer 1 segundo de pausa abajo y subir rápido en 1 segundo.",
+  "rir": "Indica cuántas repeticiones sientes que podrías haber hecho antes de llegar al fallo total. Ejemplo: Si haces 10 repeticiones con un RIR 2, significa que terminaste sintiendo que podrías haber hecho 2 más.",
+  "descanso": "El tiempo que esperas entre una serie y otra para recuperar energía. Ejemplo: Cronometrar 2 minutos sentado antes de empezar la siguiente serie.",
+  "peso": "Representa la resistencia externa que se opone a la contracción muscular para generar estímulo de adaptación en el organismo."
+};
+
+export const PlanPlanner: React.FC = () => {
+  const { clienteId } = useParams<{ clienteId: string }>();
+  const navigate = useNavigate();
+  const { profile } = useSupabase();
+
+  // Estados de datos
+  const [clientProfile, setClientProfile] = useState<Profile | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [saving, setSaving] = useState<boolean>(false);
+  const [existingPlanId, setExistingPlanId] = useState<string | null>(null);
+
+  // Estados de interfaz y navegación
+  const [variablesOpen, setVariablesOpen] = useState<boolean>(false);
+  const [activeTab, setActiveTab] = useState<number>(0);
+
+  // Estados del Plan (editables)
+  const [portada, setPortada] = useState<any>({
+    userName: '',
+    userGoal: '',
+    startDate: new Date().toISOString().split('T')[0],
+    planVigenciaPlan: '28',
+    trainerName: '',
+    whatsappLink: '',
+    instagramLink: '',
+    globalNote: 'Recuerda calentar 10 min antes. Respeta el RIR y tempo indicado. Hidrátate bien.'
+  });
+  const [globalVariables, setGlobalVariables] = useState<GlobalVariable[]>([]);
+  const [variableDefinitions, setVariableDefinitions] = useState<Record<string, string>>({});
+  const [weekdayMapping, setWeekdayMapping] = useState<Record<string, number>>({});
+  const [trainingDays, setTrainingDays] = useState<TrainingDay[]>([]);
+  const [trackerConfig, setTrackerConfig] = useState<any>({});
+  const [trackerRules, setTrackerRules] = useState<any[]>([]);
+
+  // Estado para el menú de automatización de progresión (Smart Block Builder)
+  const [autoProgExId, setAutoProgExId] = useState<string | null>(null);
+
+  // Estado para el panel de simetría de volumen
+  const [volumeChartOpen, setVolumeChartOpen] = useState<boolean>(false);
+
+  // Historial de ejercicios para permitir revertir cambios de automatización
+  const [exerciseHistory, setExerciseHistory] = useState<Record<string, {
+    variables: Record<string, string>;
+    progression_notes: string;
+    progression_type?: string;
+    progression_params?: any;
+  }>>({});
+
+  // Control del modal de automatización personalizada
+  const [progModal, setProgModal] = useState<{
+    isOpen: boolean;
+    dayId: string;
+    exId: string;
+    template: string;
+    params: any;
+  } | null>(null);
+
+  // Capitalizar texto respetando acentos en español (ej. "Extensión de rodilla")
+  const capitalizarEspanol = (str: string): string => {
+    if (!str) return '';
+    const conectores = ['de', 'con', 'en', 'para', 'la', 'el', 'un', 'una', 'del', 'al', 'y', 'a'];
+    return str
+      .trim()
+      .toLowerCase()
+      .split(/\s+/)
+      .map((word, index) => {
+        if (!word) return '';
+        if (index > 0 && conectores.includes(word)) {
+          return word;
+        }
+        return word.charAt(0).toUpperCase() + word.slice(1);
+      })
+      .join(' ');
+  };
+
+  // Estado: catalogo global de ejercicios (Supabase)
+  const [globalCatalog, setGlobalCatalog] = useState<EjercicioGlobal[]>([]);
+  const [globalCatalogNames, setGlobalCatalogNames] = useState<string[]>([]);
+
+  // Cargar catalogo global de ejercicios una sola vez
+  useEffect(() => {
+    const fetchGlobalCatalog = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('ejercicios_globales')
+          .select('nombre, imagen_url, descripcion')
+          .order('nombre');
+        if (!error && data) {
+          setGlobalCatalog(data as EjercicioGlobal[]);
+          setGlobalCatalogNames(data.map((e: any) => capitalizarEspanol(e.nombre)));
+        }
+      } catch (e) {
+        console.warn('No se pudo cargar el catalogo global de ejercicios:', e);
+      }
+    };
+    fetchGlobalCatalog();
+  }, []);
+
+  // Opciones de autocompletado recopiladas del plan actual, localStorage y catalogo global
+  const computedExerciseOptions = useMemo(() => {
+    try {
+      const setNames = new Set<string>();
+      
+      // 1. Catalogo global de ejercicios (Supabase)
+      globalCatalogNames.forEach(name => setNames.add(name));
+
+      // 2. Dias del plan actual
+      if (Array.isArray(trainingDays)) {
+        trainingDays.forEach(day => {
+          if (day && Array.isArray(day.exercises)) {
+            day.exercises.forEach(ex => {
+              if (ex && typeof ex.nombre === 'string' && ex.nombre.trim()) {
+                const pretty = capitalizarEspanol(ex.nombre);
+                if (pretty) setNames.add(pretty);
+              }
+            });
+          }
+        });
+      }
+      
+      // 3. Biblioteca local en localStorage (aislada por entrenador)
+      const trainerId = profile?.id || 'default';
+      const libraryStr = localStorage.getItem(`evolution_exercise_library_${trainerId}`);
+      if (libraryStr) {
+        const library = JSON.parse(libraryStr);
+        Object.keys(library).forEach(name => {
+          if (name && typeof name === 'string') {
+            const pretty = capitalizarEspanol(name);
+            if (pretty) setNames.add(pretty);
+          }
+        });
+      }
+      
+      return Array.from(setNames).sort();
+    } catch (e) {
+      console.error('Error al generar opciones de autocompletado:', e);
+      return [];
+    }
+  }, [trainingDays, globalCatalogNames, profile?.id]);
+
+  // Helper to parse volume series
+  const parseSeries = (seriesStr: string | undefined): number => {
+    if (!seriesStr) return 0;
+    const cleanStr = seriesStr.trim();
+    if (!cleanStr) return 0;
+    const rangeMatch = cleanStr.match(/^(\d+)\s*-\s*(\d+)$/);
+    if (rangeMatch) {
+      const min = parseInt(rangeMatch[1], 10);
+      const max = parseInt(rangeMatch[2], 10);
+      return (min + max) / 2;
+    }
+    const singleMatch = cleanStr.match(/^(\d+)/);
+    if (singleMatch) {
+      return parseInt(singleMatch[1], 10);
+    }
+    return 0;
+  };
+
+  // Calcular distribución de volumen (series efectivas) por grupo muscular en el día activo
+  const activeDayVolumeData = useMemo(() => {
+    const volumeMap: Record<string, number> = {
+      'Pecho': 0,
+      'Espalda': 0,
+      'Piernas': 0,
+      'Hombros': 0,
+      'Bíceps': 0,
+      'Tríceps': 0,
+      'Core': 0,
+      'Glúteos': 0,
+      'Cardio': 0
+    };
+
+    const safeIdx = activeTab >= trainingDays.length ? 0 : activeTab;
+    const day = trainingDays[safeIdx];
+    if (day && Array.isArray(day.exercises)) {
+      day.exercises.forEach(ex => {
+        const gm = (ex as any).grupo_muscular;
+        if (gm && volumeMap[gm] !== undefined) {
+          const seriesStr = ex.variables['series de trabajo'] || ex.variables['series'] || '';
+          volumeMap[gm] += parseSeries(seriesStr);
+        }
+      });
+    }
+
+    return volumeMap;
+  }, [trainingDays, activeTab]);
+
+  // Sumar volumen total del día activo
+  const totalActiveDayVolume = useMemo(() => {
+    return Object.values(activeDayVolumeData).reduce((sum, val) => sum + val, 0);
+  }, [activeDayVolumeData]);
+
+  // Generar datos detallados y porcentaje para las barras de progreso
+  const volumeSummaryStats = useMemo(() => {
+    const maxVal = Math.max(...Object.values(activeDayVolumeData), 1);
+    const list = Object.entries(activeDayVolumeData)
+      .filter(([_, val]) => val > 0)
+      .sort((a, b) => b[1] - a[1]);
+    return { list, maxVal };
+  }, [activeDayVolumeData]);
+
+  // Configurar datos del Radar Chart
+  const radarChartData = useMemo(() => {
+    const labels = Object.keys(activeDayVolumeData);
+    const data = Object.values(activeDayVolumeData);
+
+    return {
+      labels,
+      datasets: [
+        {
+          label: 'Series Efectivas',
+          data,
+          backgroundColor: 'rgba(255, 126, 46, 0.2)', // Naranja traslúcido
+          borderColor: '#ff7e2e',                     // Naranja
+          borderWidth: 2,
+          pointBackgroundColor: '#ff7e2e',
+          pointBorderColor: '#fff',
+          pointHoverBackgroundColor: '#fff',
+          pointHoverBorderColor: '#ff7e2e',
+        }
+      ]
+    };
+  }, [activeDayVolumeData]);
+
+  // Opciones del Radar Chart
+  const radarChartOptions = useMemo(() => ({
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      r: {
+        angleLines: {
+          color: 'rgba(255, 255, 255, 0.1)',
+        },
+        grid: {
+          color: 'rgba(255, 255, 255, 0.08)',
+        },
+        pointLabels: {
+          color: 'rgba(255, 255, 255, 0.7)',
+          font: {
+            family: "'Orbitron', sans-serif",
+            size: 10,
+          },
+        },
+        ticks: {
+          color: 'rgba(255, 255, 255, 0.4)',
+          backdropColor: 'transparent',
+          font: {
+            size: 9,
+          },
+          stepSize: 2,
+        },
+        suggestedMin: 0,
+        suggestedMax: 10,
+      },
+    },
+    plugins: {
+      legend: {
+        display: false,
+      },
+      tooltip: {
+        backgroundColor: 'rgba(15, 23, 42, 0.95)',
+        titleColor: '#ff7e2e',
+        bodyColor: '#fff',
+        borderColor: 'rgba(255, 255, 255, 0.1)',
+        borderWidth: 1,
+        titleFont: {
+          family: "'Orbitron', sans-serif",
+          weight: 'bold',
+        },
+        bodyFont: {
+          family: 'inherit',
+        },
+        callbacks: {
+          label: (context: any) => ` ${context.raw} series efectivas`,
+        },
+      },
+    },
+  }), []);
+
+  // Estados de variables temporales para agregar
+  const [newVarLabel, setNewVarLabel] = useState<string>('');
+  const [newVarDef, setNewVarDef] = useState<string>('');
+
+  // Estados de Toast
+  const [toastState, setToastState] = useState<{ visible: boolean; message: string; type: 'success' | 'error' | 'info' }>({
+    visible: false,
+    message: '',
+    type: 'success',
+  });
+
+  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
+    setToastState({ visible: true, message, type });
+    setTimeout(() => {
+      setToastState((prev) => ({ ...prev, visible: false }));
+    }, 3000);
+  };
+
+  // Generar ID aleatorio
+  const generateId = (): string => Math.random().toString(36).substring(2, 11);
+
+  // Inicializar plan limpio por defecto
+  const resetToDefaultPlan = (profileData?: Profile) => {
+    const defaultVars: GlobalVariable[] = [
+      { id: "series de aproximacion", label: "SERIES DE APROXIMACION", type: "number", defaultValue: "2" },
+      { id: "series de trabajo", label: "SERIES DE TRABAJO", type: "text", defaultValue: "3" },
+      { id: "repeticiones", label: "REPETICIONES", type: "text", defaultValue: "10-12" },
+      { id: "tempo", label: "TEMPO", type: "text", defaultValue: "2:1:1" },
+      { id: "rir", label: "RIR", type: "number", defaultValue: "2" },
+      { id: "descanso", label: "DESCANSO(MIN)", type: "number", defaultValue: "2" },
+      { id: "peso", label: "PESO(KG)", type: "text", defaultValue: "10" }
+    ];
+
+    const initialExercises = (count: number): Exercise[] => {
+      const arr: Exercise[] = [];
+      for (let i = 0; i < count; i++) {
+        arr.push({
+          id: generateId(),
+          nombre: '',
+          nombre_original: '',
+          variables: {},
+          video_url: '',
+          image_url: '',
+          gif_url: ''
+        });
+      }
+      return arr;
+    };
+
+    setGlobalVariables(defaultVars);
+    setVariableDefinitions(DEFAULT_VARIABLE_DEFINITIONS);
+    setWeekdayMapping({ '0': -1, '1': -1, '2': -1, '3': -1, '4': -1, '5': -1, '6': -1 });
+    setTrainingDays([
+      { id: "day_1", name: "Día 1 - Pecho y Tríceps", exercises: initialExercises(3) },
+      { id: "day_2", name: "Día 2 - Espalda y Bíceps", exercises: initialExercises(3) },
+      { id: "day_3", name: "Día 3 - Piernas (Cuádriceps y Femoral)", exercises: initialExercises(3) },
+      { id: "day_4", name: "Día 4 - Hombros y Abdominales", exercises: initialExercises(3) },
+      { id: "day_5", name: "Día 5 - Full Body / Cardio", exercises: initialExercises(3) }
+    ]);
+    setTrackerConfig({
+      minSesiones: 4,
+      ventana: 6,
+      diasDescansoExcesivo: 7,
+      diasOptimo: 3,
+      sesionesRegresionAlerta: 3,
+      semanasEstancamiento: 3
+    });
+    setTrackerRules([]);
+
+    if (profileData) {
+      setPortada({
+        userName: profileData.nombre || '',
+        userGoal: profileData.objetivo || '',
+        startDate: profileData.fecha_inicio || new Date().toISOString().split('T')[0],
+        planVigenciaPlan: String(profileData.vigencia_dias || '28'),
+        trainerName: profile?.nombre || '',
+        whatsappLink: '',
+        instagramLink: '',
+        globalNote: 'Recuerda calentar 10 min antes. Respeta el RIR y tempo indicado. Hidrátate bien.'
+      });
+    }
+  };
+
+  // Cargar datos del cliente y plan
+  useEffect(() => {
+    const loadData = async () => {
+      if (!clienteId) return;
+      setLoading(true);
+
+      try {
+        // 1. Cargar perfil del cliente
+        const { data: profData, error: profError } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', clienteId)
+          .single();
+
+        if (profError) throw profError;
+        setClientProfile(profData as Profile);
+
+        // Sincronizar los planes del entrenador desde Supabase para crear una biblioteca de autocompletado privada
+        try {
+          const trainerId = profile?.id;
+          if (trainerId) {
+            const { data: plansData } = await supabase
+              .from('planes')
+              .select('datos_plan')
+              .eq('creador_id', trainerId);
+
+            if (plansData) {
+              const libraryKey = `evolution_exercise_library_${trainerId}`;
+              const library = JSON.parse(localStorage.getItem(libraryKey) || '{}');
+              let updated = false;
+
+              plansData.forEach(p => {
+                const dp = p.datos_plan as any;
+                if (dp && Array.isArray(dp.trainingDays)) {
+                  dp.trainingDays.forEach((day: any) => {
+                    if (day && Array.isArray(day.exercises)) {
+                      day.exercises.forEach((ex: any) => {
+                        if (ex && ex.nombre) {
+                          const nameClean = ex.nombre.trim().toLowerCase();
+                          const imageVal = ex.image_url || ex.imageData || '';
+                          const gifVal = ex.gif_url || ex.gifData || '';
+                          const videoVal = ex.video_url || ex.videoUrl || '';
+                          const descVal = ex.description || '';
+                          const origVal = ex.nombre_original || '';
+
+                          if (nameClean && (imageVal || gifVal || videoVal || descVal || origVal)) {
+                            if (
+                              !library[nameClean] ||
+                              (imageVal && library[nameClean].imageData !== imageVal) ||
+                              (gifVal && library[nameClean].gifData !== gifVal) ||
+                              (videoVal && library[nameClean].videoUrl !== videoVal) ||
+                              (descVal && library[nameClean].description !== descVal) ||
+                              (origVal && library[nameClean].nombreOriginal !== origVal)
+                            ) {
+                              library[nameClean] = {
+                                imageData: imageVal || library[nameClean]?.imageData || '',
+                                gifData: gifVal || library[nameClean]?.gifData || '',
+                                videoUrl: videoVal || library[nameClean]?.videoUrl || '',
+                                description: descVal || library[nameClean]?.description || '',
+                                nombreOriginal: origVal || library[nameClean]?.nombreOriginal || ''
+                              };
+                              updated = true;
+                            }
+                          }
+                        }
+                      });
+                    }
+                  });
+                }
+              });
+
+              if (updated) {
+                localStorage.setItem(libraryKey, JSON.stringify(library));
+                console.log(`✨ [Biblioteca de Ejercicios] Biblioteca local del entrenador ${trainerId} sincronizada desde Supabase:`, library);
+              }
+            }
+          }
+        } catch (e) {
+          console.error('Error al sincronizar biblioteca de ejercicios desde Supabase:', e);
+        }
+
+        // 2. Cargar plan activo
+        const { data: planData, error: planError } = await supabase
+          .from('planes')
+          .select('*')
+          .eq('cliente_id', clienteId)
+          .eq('activo', true)
+          .maybeSingle();
+
+        if (planError) throw planError;
+
+        if (planData && planData.datos_plan) {
+          setExistingPlanId(planData.id);
+          const p = planData.datos_plan as PlanData;
+          if (p.globalVariables) setGlobalVariables(p.globalVariables);
+          setVariableDefinitions({
+            ...DEFAULT_VARIABLE_DEFINITIONS,
+            ...(p.variableDefinitions || {})
+          });
+          
+          if (p.trainingDays) {
+            const normalizedDays = p.trainingDays.map(day => {
+              const exercises = (day.exercises || []).map((ex: any) => ({
+                id: ex.id || 'ex_' + Math.random().toString(36).substring(2, 11),
+                nombre: ex.nombre !== undefined ? ex.nombre : (ex.name !== undefined ? ex.name : ''),
+                nombre_original: ex.nombre_original || '',
+                variables: ex.variables || {},
+                video_url: ex.video_url !== undefined ? ex.video_url : (ex.videoUrl !== undefined ? ex.videoUrl : ''),
+                image_url: ex.image_url !== undefined ? ex.image_url : (ex.imageData !== undefined ? ex.imageData : ''),
+                gif_url: ex.gif_url !== undefined ? ex.gif_url : (ex.gifData !== undefined ? ex.gifData : ''),
+                description: ex.description || '',
+                grupo_muscular: ex.grupo_muscular || '',
+                progression_notes: ex.progression_notes || '',
+                progression_type: ex.progression_type,
+                progression_params: ex.progression_params
+              }));
+
+              const currentExCount = exercises.length;
+              if (currentExCount < 3) {
+                const needed = 3 - currentExCount;
+                for (let i = 0; i < needed; i++) {
+                  exercises.push({
+                    id: generateId(),
+                    nombre: '',
+                    nombre_original: '',
+                    variables: {},
+                    video_url: '',
+                    image_url: '',
+                    gif_url: '',
+                    description: '',
+                    grupo_muscular: '',
+                    progression_notes: '',
+                    progression_type: undefined,
+                    progression_params: undefined
+                  });
+                }
+              }
+              return {
+                ...day,
+                exercises
+              };
+            });
+            setTrainingDays(normalizedDays);
+          }
+          
+          if (p.weekdayMapping) setWeekdayMapping(p.weekdayMapping);
+          if (p.trackerConfig) setTrackerConfig(p.trackerConfig);
+          if (p.trackerRules) setTrackerRules(p.trackerRules || []);
+          if (p.portada) setPortada(p.portada);
+          showToast('¡Plan activo cargado correctamente!', 'success');
+        } else {
+          resetToDefaultPlan(profData as Profile);
+          showToast('Creando plan nuevo por defecto.', 'info');
+        }
+      } catch (err: any) {
+        console.error('Error al cargar planificador:', err);
+        showToast('Error al cargar: ' + err.message, 'error');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [clienteId, profile]);
+
+  // Manejar cambios en portada
+  const handlePortadaChange = (field: string, val: string) => {
+    setPortada((prev: any) => ({ ...prev, [field]: val }));
+  };
+
+  // Mapear días de la semana
+  const handleWeekdayMap = (dayOfWeek: string, dayIndex: number) => {
+    setWeekdayMapping((prev) => ({ ...prev, [dayOfWeek]: dayIndex }));
+  };
+
+  // Variables globales
+  const handleAddGlobalVar = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newVarLabel.trim()) return;
+
+    const varId = newVarLabel.toLowerCase().trim();
+    if (globalVariables.some(v => v.id === varId)) {
+      alert('La variable ya existe.');
+      return;
+    }
+
+    const newVar: GlobalVariable = {
+      id: varId,
+      label: newVarLabel.toUpperCase().trim(),
+      type: 'text',
+      defaultValue: ''
+    };
+
+    setGlobalVariables(prev => [...prev, newVar]);
+    if (newVarDef.trim()) {
+      setVariableDefinitions(prev => ({ ...prev, [varId]: newVarDef.trim() }));
+    }
+
+    setNewVarLabel('');
+    setNewVarDef('');
+    showToast('Variable global añadida.', 'success');
+  };
+
+  const handleRemoveGlobalVar = (id: string) => {
+    if (window.confirm('¿Eliminar esta variable global del plan? Se quitará de todos los ejercicios.')) {
+      setGlobalVariables(prev => prev.filter(v => v.id !== id));
+      setVariableDefinitions(prev => {
+        const copy = { ...prev };
+        delete copy[id];
+        return copy;
+      });
+    }
+  };
+
+  // Días de entrenamiento
+  const handleAddDay = () => {
+    const nextIdx = trainingDays.length + 1;
+    const newDay: TrainingDay = {
+      id: `day_${generateId()}`,
+      name: `Día ${nextIdx} - Nuevo Día`,
+      exercises: [
+        { id: generateId(), nombre: '', nombre_original: '', variables: {} }
+      ]
+    };
+    setTrainingDays(prev => {
+      const next = [...prev, newDay];
+      setActiveTab(next.length - 1);
+      return next;
+    });
+  };
+
+  const handleRemoveDay = (dayId: string) => {
+    if (window.confirm('¿Seguro que deseas eliminar este día completo de entrenamiento?')) {
+      setTrainingDays(prev => {
+        const next = prev.filter(d => d.id !== dayId);
+        if (activeTab >= next.length) {
+          setActiveTab(Math.max(0, next.length - 1));
+        }
+        return next;
+      });
+    }
+  };
+
+  const handleDayNameChange = (dayId: string, newName: string) => {
+    setTrainingDays(prev =>
+      prev.map(d => (d.id === dayId ? { ...d, name: newName } : d))
+    );
+  };
+
+  // Ejercicios
+  const handleAddExercise = (dayId: string) => {
+    setTrainingDays(prev =>
+      prev.map(d => {
+        if (d.id === dayId) {
+          return {
+            ...d,
+            exercises: [
+              ...d.exercises,
+              { id: generateId(), nombre: '', nombre_original: '', variables: {} }
+            ]
+          };
+        }
+        return d;
+      })
+    );
+  };
+
+  const handleRemoveExercise = (dayId: string, exId: string) => {
+    setTrainingDays(prev =>
+      prev.map(d => {
+        if (d.id === dayId) {
+          return {
+            ...d,
+            exercises: d.exercises.filter(ex => ex.id !== exId)
+          };
+        }
+        return d;
+      })
+    );
+  };
+
+  const handleExerciseChange = (dayId: string, exId: string, field: keyof Exercise, val: any) => {
+    setTrainingDays(prev =>
+      prev.map(d => {
+        if (d.id === dayId) {
+          return {
+            ...d,
+            exercises: d.exercises.map(ex => {
+              if (ex.id === exId) {
+                // Si cambiamos el nombre, verificar si podemos auto-rellenar multimedia desde la biblioteca local o global
+                if (field === 'nombre') {
+                  try {
+                    const trainerId = profile?.id || 'default';
+                    const libraryKey = `evolution_exercise_library_${trainerId}`;
+                    const library = JSON.parse(localStorage.getItem(libraryKey) || '{}');
+                    const key = (val || '').trim().toLowerCase();
+
+                    const foundLocal = library[key];
+                    const foundGlobal = globalCatalog.find(
+                      g => g.nombre.trim().toLowerCase() === key
+                    );
+
+                    let nextImageUrl = ex.image_url || '';
+                    let nextGifUrl = ex.gif_url || '';
+                    let nextVideoUrl = ex.video_url || '';
+                    let nextDescription = (ex as any).description || '';
+                    let nextNombreOriginal = ex.nombre_original || '';
+
+                    const isCustomUpload = ex.image_url && ex.image_url.includes(`/${trainerId}/`);
+
+                    if (foundLocal || foundGlobal) {
+                      // Priorizar valores locales (historial) pero con fallback a valores globales si los locales están vacíos
+                      nextImageUrl = (foundLocal?.imageData) || (foundGlobal?.imagen_url) || '';
+                      nextGifUrl = (foundLocal?.gifData) || '';
+                      nextVideoUrl = (foundLocal?.videoUrl) || '';
+                      nextDescription = (foundLocal?.description) || (foundGlobal?.descripcion) || '';
+                      nextNombreOriginal = (foundGlobal?.nombre) || (foundLocal?.nombreOriginal) || '';
+                      
+                      if (foundLocal && foundGlobal) {
+                        showToast(`✨ ¡Auto-rellenado (historial + catálogo global) para "${val}"!`, 'info');
+                      } else if (foundLocal) {
+                        showToast(`✨ ¡Auto-rellenado personalizado para "${val}"!`, 'info');
+                      } else {
+                        if (foundGlobal?.imagen_url) {
+                          showToast(`✨ ¡Auto-rellenado global para "${val}"!`, 'info');
+                        } else {
+                          showToast(`ℹ️ "${val}" no tiene imagen. ¡Sube una para ayudar a otros!`, 'info');
+                        }
+                      }
+                    } else {
+                      // No hay coincidencia exacta (está escribiendo o es un ejercicio totalmente nuevo)
+                      if (nextNombreOriginal) {
+                        const origKey = nextNombreOriginal.trim().toLowerCase();
+                        const linkedLocal = library[origKey];
+                        const linkedGlobal = globalCatalog.find(
+                          g => g.nombre.trim().toLowerCase() === origKey
+                        );
+                        
+                        if (!isCustomUpload) {
+                          nextImageUrl = ex.image_url || (linkedLocal?.imageData) || (linkedGlobal?.imagen_url) || '';
+                          nextGifUrl = ex.gif_url || (linkedLocal?.gifData) || '';
+                          nextVideoUrl = ex.video_url || (linkedLocal?.videoUrl) || '';
+                          nextDescription = (ex as any).description || (linkedLocal?.description) || (linkedGlobal?.descripcion) || '';
+                        }
+                      } else {
+                        // Si la imagen actual NO es un upload personalizado, la limpiamos para no arrastrar la imagen del ejercicio anterior
+                        if (!isCustomUpload) {
+                          nextImageUrl = '';
+                          nextGifUrl = '';
+                          nextVideoUrl = '';
+                          nextDescription = '';
+                        }
+                      }
+                      if (val.trim() === '') {
+                        nextNombreOriginal = '';
+                        nextImageUrl = '';
+                        nextGifUrl = '';
+                        nextVideoUrl = '';
+                        nextDescription = '';
+                      }
+                    }
+
+                    return {
+                      ...ex,
+                      nombre: val,
+                      nombre_original: nextNombreOriginal,
+                      image_url: nextImageUrl,
+                      gif_url: nextGifUrl,
+                      video_url: nextVideoUrl,
+                      description: nextDescription
+                    };
+                  } catch (e) {
+                    console.error('Error al auto-rellenar ejercicio:', e);
+                  }
+                }
+                return { ...ex, [field]: val };
+              }
+              return ex;
+            })
+          };
+        }
+        return d;
+      })
+    );
+  };
+
+  const handleFileUpload = async (dayId: string, exId: string, field: 'image_url' | 'gif_url', file: File | null) => {
+    if (!file) return;
+
+    // 1. Obtener el nombre del ejercicio para crear un nombre de archivo limpio
+    let exName = 'ejercicio';
+    for (const day of trainingDays) {
+      const ex = day.exercises.find(e => e.id === exId);
+      if (ex) {
+        exName = ex.nombre || 'ejercicio';
+        break;
+      }
+    }
+
+    // 2. Limpiar el nombre (sanitizar a minúsculas, guiones bajos y sin caracteres especiales)
+    const nameClean = exName.trim().toLowerCase();
+    const isGeneric = nameClean.startsWith('ejercicio');
+    const slug = isGeneric 
+      ? exId 
+      : nameClean.replace(/[^a-z0-9_-]/g, '_').replace(/__+/g, '_');
+      
+    const ext = file.name.split('.').pop() || 'png';
+    const tipo = field === 'image_url' ? 'image' : 'gif';
+    const trainerId = profile?.id || 'default';
+    const filePath = `${trainerId}/${slug}_${tipo}.${ext}`;
+
+    showToast('⏳ Subiendo archivo al almacenamiento...', 'info');
+
+    try {
+      // 3. Subir el archivo al bucket "ejercicios" con upsert: true (sobrescribir si ya existe)
+      const { error } = await supabase.storage
+        .from('ejercicios')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: true
+        });
+
+      if (error) throw error;
+
+      // 4. Obtener la URL pública del archivo subido
+      const { data: publicData } = supabase.storage
+        .from('ejercicios')
+        .getPublicUrl(filePath);
+
+      if (!publicData || !publicData.publicUrl) {
+        throw new Error('No se pudo obtener la URL pública.');
+      }
+
+      // 5. Guardar la URL pública en el ejercicio
+      handleExerciseChange(dayId, exId, field, publicData.publicUrl);
+      showToast('¡Archivo subido con éxito al bucket! ☁️', 'success');
+
+      // 6. Sincronizar con ejercicios_globales si es una imagen
+      if (field === 'image_url' && exName && exName.trim() && !isGeneric) {
+        try {
+          const nameClean = exName.trim();
+          const { data: existingEx } = await supabase
+            .from('ejercicios_globales')
+            .select('*')
+            .ilike('nombre', nameClean);
+
+          if (existingEx && existingEx.length > 0) {
+            const targetEx = existingEx[0];
+            if (!targetEx.imagen_url) {
+              const { error: updateError } = await supabase
+                .from('ejercicios_globales')
+                .update({ imagen_url: publicData.publicUrl })
+                .eq('id', targetEx.id);
+              if (updateError) {
+                console.error('❌ Error al actualizar imagen en catálogo global:', updateError.message);
+              } else {
+                console.log('✅ Actualizado ejercicio global existente con nueva imagen:', nameClean);
+              }
+            }
+          } else {
+            const { error: insertError } = await supabase
+              .from('ejercicios_globales')
+              .insert({
+                nombre: capitalizarEspanol(exName),
+                grupo_muscular: 'General',
+                imagen_url: publicData.publicUrl
+              });
+            if (insertError) {
+              console.error('❌ Error al crear ejercicio global con imagen:', insertError.message);
+            } else {
+              console.log('✅ Creado nuevo ejercicio global con imagen:', nameClean);
+            }
+          }
+
+          // Recargar catálogo global en el estado
+          const { data: updatedCatalog } = await supabase
+            .from('ejercicios_globales')
+            .select('nombre, imagen_url, descripcion')
+            .order('nombre');
+          if (updatedCatalog) {
+            setGlobalCatalog(updatedCatalog as EjercicioGlobal[]);
+            setGlobalCatalogNames(updatedCatalog.map((e: any) => capitalizarEspanol(e.nombre)));
+          }
+        } catch (errGlobal) {
+          console.warn('Error al sincronizar ejercicio en catálogo global:', errGlobal);
+        }
+      }
+    } catch (err: any) {
+      console.error('Error al subir archivo a Storage:', err);
+      showToast('Error al subir archivo: ' + err.message, 'error');
+    }
+  };
+
+  const handleExerciseVarChange = (dayId: string, exId: string, varId: string, val: string) => {
+    setTrainingDays(prev =>
+      prev.map(d => {
+        if (d.id === dayId) {
+          return {
+            ...d,
+            exercises: d.exercises.map(ex => {
+              if (ex.id === exId) {
+                return {
+                  ...ex,
+                  variables: { ...ex.variables, [varId]: val }
+                };
+              }
+              return ex;
+            })
+          };
+        }
+        return d;
+      })
+    );
+  };
+
+  // Parámetros por defecto para cada plantilla de progresión
+  const getDefaultParamsForTemplate = (template: string) => {
+    switch (template) {
+      case 'linear':
+        return {
+          duracion: 4,
+          series: '3',
+          repeticiones: '8-10',
+          rir: '2',
+          incremento: '2.5',
+          cargaInicial: 'Peso base'
+        };
+      case 'double':
+        return {
+          duracion: 4,
+          series: '3',
+          repsIniciales: '8',
+          repsIntermedias: '10',
+          repsMaximas: '12',
+          rir: '2-3',
+          incremento: '2.5',
+          cargaInicial: 'Peso base'
+        };
+      case 'undulating':
+        return {
+          duracion: 4,
+          cargaInicial: 'Peso base',
+          incrementoFuerza: '2.5',
+          seriesFuerza: '4',
+          repsFuerza: '5',
+          rirFuerza: '1',
+          seriesHipertrofia: '3',
+          repsHipertrofia: '10',
+          rirHipertrofia: '2'
+        };
+      case 'deload':
+        return {
+          duracion: 1,
+          reduccionVolumen: '50-60',
+          cargaRecomendada: 'Moderada',
+          series: '2',
+          rir: '3-4'
+        };
+      default:
+        return {};
+    }
+  };
+
+  // Función que genera el texto descriptivo dinámicamente en base a los parámetros del modal
+  const generateProgressionText = (template: string, params: any): string => {
+    if (!params) return '';
+    
+    switch (template) {
+      case 'linear': {
+        return [
+          `📈 REGLA DE JUEGO: Progresión Lineal (${params.duracion} Semanas)`,
+          `• Objetivo: Realizar ${params.series} series de trabajo, buscando aumentar la carga semanalmente (+${params.incremento || '2.5'} kg) manteniendo RIR ${params.rir} y técnica perfecta.`,
+          `• Repeticiones base: ${params.repeticiones}.`,
+          `• Sinergia Smart Coach: Si completas las repeticiones objetivo en todas tus series de forma limpia, el Smart Coach te sugerirá automáticamente aumentar el peso (+${params.incremento || '2.5'} kg) para tu próxima sesión. Si no las completas, mantendrás la misma carga para consolidar.`
+        ].join('\n');
+      }
+
+      case 'double': {
+        return [
+          `🔁 REGLA DE JUEGO: Progresión Doble (${params.duracion} Semanas)`,
+          `• Objetivo: Realizar ${params.series} series, buscando progresar primero en volumen (repeticiones) desde ${params.repsIniciales} hasta ${params.repsMaximas} manteniendo RIR ${params.rir}.`,
+          `• Sinergia Smart Coach: Mantén el mismo peso sesión tras sesión intentando sumar repeticiones. Cuando completes las ${params.repsMaximas} reps en tus ${params.series} series, el Smart Coach te sugerirá subir peso (+${params.incremento || '2.5'} kg) y reiniciarás el ciclo a ${params.repsIniciales} reps.`
+        ].join('\n');
+      }
+
+      case 'undulating': {
+        return [
+          `🌊 REGLA DE JUEGO: Periodización Ondulante (${params.duracion} Semanas)`,
+          `• Objetivo: Este bloque alterna estímulos semanales de Fuerza (semanas impares) y de Hipertrofia (semanas pares) para evitar adaptaciones y optimizar fuerza y masa muscular.`,
+          `• Sinergia Smart Coach: El Smart Coach adaptará dinámicamente tus series, repeticiones y RIR en cada sesión:`,
+          `  - Semanas Impares (Fuerza): ${params.seriesFuerza} series × ${params.repsFuerza} reps @RIR ${params.rirFuerza} (alta intensidad).`,
+          `  - Semanas Pares (Hipertrofia): ${params.seriesHipertrofia} series × ${params.repsHipertrofia} reps @RIR ${params.rirHipertrofia} (carga moderada).`
+        ].join('\n');
+      }
+
+      case 'deload': {
+        return [
+          `💤 REGLA DE JUEGO: Descarga Activa (Deload - ${params.duracion} Semana/s)`,
+          `• Objetivo: Reducir las series a ${params.series} de trabajo y el volumen para disipar la fatiga acumulada a nivel articular y nervioso.`,
+          `• Sinergia Smart Coach: Mantente alejado del fallo (RIR objetivo: ${params.rir}) y usa una carga ${params.cargaRecomendada || 'moderada'}. El motor silenciará las alertas de regresión ya que esta descarga es planificada.`
+        ].join('\n');
+      }
+
+      default:
+        return '';
+    }
+  };
+
+  // Abrir el modal de personalización de automatización
+  const handleOpenProgression = (dayId: string, exId: string, template: string) => {
+    setProgModal({
+      isOpen: true,
+      dayId,
+      exId,
+      template,
+      params: getDefaultParamsForTemplate(template)
+    });
+    setAutoProgExId(null); // Cerrar el menú desplegable pequeño
+  };
+
+  // Aplicar la progresión con los parámetros del modal
+  const handleApplyProgressionCustom = (dayId: string, exId: string, template: string, params: any) => {
+    // 1. Encontrar el ejercicio para guardar su estado original en el historial (Undo)
+    let originalEx: Exercise | null = null;
+    for (const d of trainingDays) {
+      if (d.id === dayId) {
+        const found = d.exercises.find(e => e.id === exId);
+        if (found) {
+          originalEx = found;
+          break;
+        }
+      }
+    }
+
+    if (originalEx) {
+      const historyKey = `${dayId}_${exId}`;
+      setExerciseHistory(prev => ({
+        ...prev,
+        [historyKey]: {
+          variables: { ...originalEx!.variables },
+          progression_notes: originalEx!.progression_notes || '',
+          progression_type: originalEx!.progression_type,
+          progression_params: originalEx!.progression_params ? { ...originalEx!.progression_params } : undefined
+        }
+      }));
+    }
+
+    // 2. Generar el texto de progresión
+    const generatedText = generateProgressionText(template, params);
+
+    // 3. Actualizar variables principales y notas de progresión del ejercicio
+    setTrainingDays(prev =>
+      prev.map(d => {
+        if (d.id !== dayId) return d;
+        return {
+          ...d,
+          exercises: d.exercises.map(ex => {
+            if (ex.id !== exId) return ex;
+            const updatedVars = { ...ex.variables };
+            
+            // Escribir variables de control iniciales según la plantilla
+            if (template === 'linear' || template === 'deload') {
+              if (params.series) updatedVars['series de trabajo'] = params.series;
+              if (params.repeticiones) updatedVars['repeticiones'] = params.repeticiones;
+              if (params.rir) updatedVars['rir'] = params.rir;
+            } else if (template === 'double') {
+              if (params.series) updatedVars['series de trabajo'] = params.series;
+              if (params.repsIniciales) updatedVars['repeticiones'] = params.repsIniciales;
+              if (params.rir) updatedVars['rir'] = params.rir;
+            } else if (template === 'undulating') {
+              if (params.seriesFuerza) updatedVars['series de trabajo'] = `${params.seriesFuerza}-${params.seriesHipertrofia}`;
+              if (params.repsFuerza) updatedVars['repeticiones'] = `${params.repsFuerza}-${params.repsHipertrofia}`;
+              if (params.rirFuerza) updatedVars['rir'] = `${params.rirFuerza}-${params.rirHipertrofia}`;
+            }
+
+            return {
+              ...ex,
+              variables: updatedVars,
+              progression_notes: generatedText,
+              progression_type: template as any,
+              progression_params: params
+            };
+          })
+        };
+      })
+    );
+
+    setProgModal(null);
+    showToast(`Plantilla de progresión aplicada con éxito`, 'success');
+  };
+
+  // Revertir la automatización de un ejercicio (Deshacer)
+  const handleRevertProgression = (dayId: string, exId: string) => {
+    const historyKey = `${dayId}_${exId}`;
+    const previousState = exerciseHistory[historyKey];
+    if (!previousState) return;
+
+    setTrainingDays(prev =>
+      prev.map(d => {
+        if (d.id !== dayId) return d;
+        return {
+          ...d,
+          exercises: d.exercises.map(ex => {
+            if (ex.id !== exId) return ex;
+            return {
+              ...ex,
+              variables: { ...previousState.variables },
+              progression_notes: previousState.progression_notes,
+              progression_type: previousState.progression_type as any,
+              progression_params: previousState.progression_params
+            };
+          })
+        };
+      })
+    );
+
+    // Limpiar el historial para este ejercicio
+    setExerciseHistory(prev => {
+      const copy = { ...prev };
+      delete copy[historyKey];
+      return copy;
+    });
+
+    showToast(`Se revirtieron los cambios de progresión`, 'info');
+  };
+
+  // Guardar Plan
+  const handleSavePlan = async () => {
+    if (!clienteId) return;
+
+    // Validar nombres de días
+    for (const day of trainingDays) {
+      const dayNameClean = (day.name || '').trim();
+      if (!dayNameClean) {
+        showToast('Hay días de entrenamiento con el nombre vacío.', 'error');
+        return;
+      }
+    }
+
+    setSaving(true);
+    showToast('Guardando plan en la nube...', 'info');
+
+    const compatibleTrainingDays = trainingDays.map(day => ({
+      ...day,
+      exercises: day.exercises.map(ex => ({
+        ...ex,
+        nombre: ex.nombre || '',
+        nombre_original: ex.nombre_original || '',
+        video_url: ex.video_url || '',
+        image_url: ex.image_url || '',
+        gif_url: ex.gif_url || '',
+        name: ex.nombre || '',
+        videoUrl: ex.video_url || '',
+        imageData: ex.image_url || '',
+        gifData: ex.gif_url || '',
+        description: ex.description || '',
+        grupo_muscular: ex.grupo_muscular || '',
+        progression_notes: ex.progression_notes || '',
+        progression_type: ex.progression_type,
+        progression_params: ex.progression_params
+      }))
+    }));
+
+    // Inyectar nombre de marca y eslogan del entrenador logueado en la portada del plan al guardar
+    const compatiblePortada = {
+      ...portada,
+      trainerName: profile?.marca?.nombre_display || profile?.nombre || portada.trainerName || 'Evolution Lab',
+      trainerEslogan: profile?.marca?.eslogan || 'NO NECESITAS ENTRENAR MÁS.\nNECESITAS ENTRENAR MEJOR.'
+    };
+
+    const planDataPayload: PlanData = {
+      portada: compatiblePortada,
+      globalVariables,
+      variableDefinitions,
+      trainingDays: compatibleTrainingDays,
+      weekdayMapping,
+      trackerConfig,
+      trackerRules
+    };
+
+    try {
+      // 1. Guardar en Supabase (insert o update)
+      let result;
+      if (existingPlanId) {
+        result = await supabase
+          .from('planes')
+          .update({ datos_plan: planDataPayload })
+          .eq('id', existingPlanId);
+      } else {
+        const { data: { session } } = await supabase.auth.getSession();
+        result = await supabase
+          .from('planes')
+          .insert({
+            cliente_id: clienteId,
+            creador_id: session?.user?.id || null,
+            datos_plan: planDataPayload,
+            activo: true
+          })
+          .select('id')
+          .single();
+
+        if (result.data) {
+          setExistingPlanId(result.data.id);
+        }
+      }
+
+      if (result.error) throw result.error;
+
+      // 2. Actualizar metadatos básicos en el perfil de Supabase (inicio y vigencia)
+      const { error: profError } = await supabase
+        .from('profiles')
+        .update({
+          fecha_inicio: portada.startDate || null,
+          vigencia_dias: parseInt(portada.planVigenciaPlan, 10) || 28
+        })
+        .eq('id', clienteId);
+
+      if (profError) throw profError;
+
+      // 3. Emitir actualización en tiempo real por el Broadcast Channel
+      const channelName = 'plan-updates:' + clienteId;
+      const channel = supabase.channel(channelName);
+      channel.subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          channel.send({
+            type: 'broadcast',
+            event: 'plan-updated',
+            payload: { message: 'El entrenador ha modificado tu rutina.' }
+          });
+        }
+      });
+
+      // 4. Guardar ejercicios en la biblioteca local del entrenador para autocompletado posterior
+      try {
+        const trainerId = profile?.id || 'default';
+        const libraryKey = `evolution_exercise_library_${trainerId}`;
+        const library = JSON.parse(localStorage.getItem(libraryKey) || '{}');
+        let updated = false;
+        for (const day of trainingDays) {
+          for (const ex of day.exercises) {
+            const nameClean = ex.nombre.trim().toLowerCase();
+            if (nameClean && (ex.image_url || ex.gif_url || ex.video_url || (ex as any).description || ex.nombre_original)) {
+              if (
+                !library[nameClean] ||
+                (ex.image_url && library[nameClean].imageData !== ex.image_url) ||
+                (ex.gif_url && library[nameClean].gifData !== ex.gif_url) ||
+                (ex.video_url && library[nameClean].videoUrl !== ex.video_url) ||
+                ((ex as any).description && library[nameClean].description !== (ex as any).description) ||
+                (ex.nombre_original && library[nameClean].nombreOriginal !== ex.nombre_original)
+              ) {
+                library[nameClean] = {
+                  imageData: ex.image_url || library[nameClean]?.imageData || '',
+                  gifData: ex.gif_url || library[nameClean]?.gifData || '',
+                  videoUrl: ex.video_url || library[nameClean]?.videoUrl || '',
+                  description: (ex as any).description || library[nameClean]?.description || '',
+                  nombreOriginal: ex.nombre_original || library[nameClean]?.nombreOriginal || ''
+                };
+                updated = true;
+              }
+            }
+          }
+        }
+        if (updated) {
+          localStorage.setItem(libraryKey, JSON.stringify(library));
+          console.log(`✨ [Biblioteca de Ejercicios] Biblioteca local del entrenador ${trainerId} sincronizada:`, library);
+        }
+      } catch (e) {
+        console.error('Error al actualizar biblioteca de ejercicios:', e);
+      }
+
+      showToast('¡Plan guardado con éxito! Sincronizado en tiempo real. ☁️', 'success');
+    } catch (err: any) {
+      console.error('Error al guardar plan:', err);
+      showToast('Error al guardar: ' + err.message, 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: '#0b0f19', color: 'var(--theme-primary)', fontFamily: 'Orbitron, sans-serif' }}>
+        <span style={{ fontSize: '18px', fontWeight: 700, letterSpacing: '1.5px' }}>EVOLUTION LAB</span>
+        <span style={{ fontSize: '12px', opacity: 0.7 }}>Cargando Planificador de Rutina...</span>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ background: 'transparent', minHeight: '100vh', color: 'white', paddingBottom: '60px' }}>
+      
+      {/* HEADER PLANNER */}
+      {/* HEADER PLANNER */}
+      <div 
+        className="top-bar planner-header-container" 
+        style={{ 
+          position: 'sticky',
+          top: 0,
+          zIndex: 1000,
+          background: 'rgba(11, 15, 25, 0.88)',
+          backdropFilter: 'blur(12px)',
+          WebkitBackdropFilter: 'blur(12px)',
+          borderBottom: '1px solid var(--theme-border)',
+          marginBottom: '20px', 
+          padding: '12px 0' 
+        }}
+      >
+        <style>{`
+          @media (max-width: 768px) {
+            .planner-header-container {
+              padding: 5px 0 !important;
+              margin-bottom: 10px !important;
+            }
+            .top-bar-inner {
+              gap: 6px !important;
+              flex-wrap: nowrap !important;
+              justify-content: space-between !important;
+              align-items: center !important;
+              padding: 0 10px !important;
+            }
+            .planner-header-left-inner {
+              gap: 6px !important;
+            }
+            .planner-title-main {
+              display: none !important;
+            }
+            .planner-client-name {
+              font-size: 11px !important;
+              max-width: 130px !important;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+              margin-top: 0 !important;
+            }
+            .btn-back-mobile {
+              padding: 5px 8px !important;
+              font-size: 10px !important;
+              white-space: nowrap;
+              border-radius: 6px !important;
+            }
+            .btn-save-mobile {
+              padding: 6px 12px !important;
+              font-size: 10px !important;
+              white-space: nowrap;
+              height: auto !important;
+              border-radius: 6px !important;
+            }
+            .hide-mobile {
+              display: none !important;
+            }
+          }
+        `}</style>
+        <div className="top-bar-inner" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px', maxWidth: '1200px', margin: '0 auto', padding: '0 20px' }}>
+          
+          <div className="planner-header-left-inner" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <button
+               onClick={() => navigate('/trainer')}
+               className="btn-back-mobile"
+               style={{ background: 'none', border: 'none', color: 'var(--theme-primary)', fontSize: '12px', cursor: 'pointer', fontFamily: "'Orbitron', sans-serif", padding: '8px 12px', borderRadius: '8px', borderStyle: 'solid', borderWidth: '1px', borderColor: 'var(--theme-border)' }}
+            >
+              ← Volver
+            </button>
+            <div>
+              <h1 className="planner-title-main" style={{ fontFamily: 'Orbitron, sans-serif', fontSize: '15px', fontWeight: 800, margin: 0, letterSpacing: '1px' }}>
+                PLANIFICADOR DE RUTINA
+              </h1>
+              <div className="planner-client-name" style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', marginTop: '2px' }}>
+                Atleta: <span style={{ color: 'var(--theme-primary)', fontWeight: 600 }}>{clientProfile?.nombre}</span>
+              </div>
+            </div>
+          </div>
+
+          <button
+            onClick={handleSavePlan}
+            disabled={saving}
+            className={`btn btn-primary btn-save-mobile ${saving ? 'button-loading' : ''}`}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '10px 24px',
+              transition: 'all 0.3s ease',
+              opacity: saving ? 0.7 : 1
+            }}
+          >
+            {saving ? (
+              <>
+                <span className="spinner-icon" style={{ width: '14px', height: '14px', borderRadius: '50%', border: '2px solid rgba(255,255,255,0.3)', borderTop: '2px solid var(--theme-primary)' }} />
+                <span>GUARDANDO...</span>
+              </>
+            ) : (
+              <span>
+                ✓ GUARDAR<span className="hide-mobile"> EN LA NUBE</span>
+              </span>
+            )}
+          </button>
+
+        </div>
+      </div>
+
+      <div className="container stagger-3" style={{ padding: '0 20px', maxWidth: '1200px', margin: '0 auto' }}>
+        
+        {/* SECCIÓN 1: PORTADA / DETALLES DEL PLAN */}
+        <div style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '16px', padding: '20px', marginBottom: '24px', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', boxShadow: '0 8px 32px 0 var(--theme-glow)' }}>
+          <h3 style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '13px', color: 'var(--theme-primary)', letterSpacing: '0.5px', marginBottom: '16px', marginTop: 0 }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px', verticalAlign: '-1px', display: 'inline-block' }}><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg> DETALLES DE PORTADA DEL PLAN
+          </h3>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
+            <div>
+              <label htmlFor="portada-userName" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>NOMBRE DEL ATLETA</label>
+              <input
+                id="portada-userName"
+                type="text"
+                value={portada.userName}
+                onChange={(e) => handlePortadaChange('userName', e.target.value)}
+                style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '10px' }}
+              />
+            </div>
+            <div>
+              <label htmlFor="portada-userGoal" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>OBJETIVO</label>
+              <input
+                id="portada-userGoal"
+                type="text"
+                value={portada.userGoal}
+                onChange={(e) => handlePortadaChange('userGoal', e.target.value)}
+                style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '10px' }}
+              />
+            </div>
+            <div>
+              <label htmlFor="portada-startDate" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>FECHA INICIO</label>
+              <input
+                id="portada-startDate"
+                type="date"
+                value={portada.startDate}
+                onChange={(e) => handlePortadaChange('startDate', e.target.value)}
+                style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '10px' }}
+              />
+            </div>
+            <div>
+              <label htmlFor="portada-planVigenciaPlan" style={{ display: 'flex', alignItems: 'center', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>VIGENCIA PLAN (Días)<InfoTooltip title="Vigencia del Plan" body="Número de días que el plan estará activo para el atleta. Al vencer, el atleta verá una notificación de renovación. Un valor típico es 28-30 días (4 semanas)." /></label>
+              <input
+                id="portada-planVigenciaPlan"
+                type="number"
+                value={portada.planVigenciaPlan}
+                onChange={(e) => handlePortadaChange('planVigenciaPlan', e.target.value)}
+                style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '10px' }}
+              />
+            </div>
+            <div>
+              <label htmlFor="portada-trainerName" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>NOMBRE ENTRENADOR</label>
+              <input
+                id="portada-trainerName"
+                type="text"
+                value={portada.trainerName}
+                onChange={(e) => handlePortadaChange('trainerName', e.target.value)}
+                style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '10px' }}
+              />
+            </div>
+            <div>
+              <label htmlFor="portada-whatsappLink" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>WHATSAPP ENTRENADOR</label>
+              <input
+                id="portada-whatsappLink"
+                type="text"
+                value={portada.whatsappLink}
+                onChange={(e) => handlePortadaChange('whatsappLink', e.target.value)}
+                placeholder="https://wa.me/..."
+                style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '10px' }}
+              />
+            </div>
+            <div>
+              <label htmlFor="portada-instagramLink" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>INSTAGRAM ENTRENADOR</label>
+              <input
+                id="portada-instagramLink"
+                type="text"
+                value={portada.instagramLink}
+                onChange={(e) => handlePortadaChange('instagramLink', e.target.value)}
+                placeholder="https://instagram.com/..."
+                style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '10px' }}
+              />
+            </div>
+          </div>
+
+          <div style={{ marginTop: '16px' }}>
+            <label htmlFor="portada-globalNote" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>INDICACIONES GENERALES DEL ENTRENADOR</label>
+            <textarea
+              id="portada-globalNote"
+              rows={2}
+              value={portada.globalNote}
+              onChange={(e) => handlePortadaChange('globalNote', e.target.value)}
+              style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '10px', resize: 'vertical' }}
+            />
+          </div>
+        </div>
+
+        {/* SECCIÓN 2: SEMANA DE ENTRENAMIENTO MAP (WEEKDAY CONFIG) */}
+        <div style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '16px', padding: '20px', marginBottom: '24px', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', boxShadow: '0 8px 32px 0 var(--theme-glow)' }}>
+          <h3 style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '13px', color: 'var(--theme-primary)', letterSpacing: '0.5px', marginBottom: '8px', marginTop: 0 }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px', verticalAlign: '-1px', display: 'inline-block' }}><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> CONFIGURACIÓN DE DÍAS DE LA SEMANA
+            <InfoTooltip title="Configuración de Días" body="Asocia los días de la semana con tus días de entrenamiento. Los días que dejes como 'Descanso' no aparecerán como días de entrenamiento para el atleta. Esto permite que el plan se adapte al calendario real del cliente." />
+          </h3>
+          <p style={{ margin: '0 0 16px 0', fontSize: '11px', color: 'rgba(255,255,255,0.5)' }}>
+            Asigna qué día de entrenamiento le corresponde a cada día calendario de la semana.
+          </p>
+
+          <div className="weekday-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px' }}>
+            {['Dom', 'Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab'].map((dayName, idx) => {
+              const currentVal = weekdayMapping[String(idx)] ?? -1;
+              return (
+                <div
+                  key={idx}
+                  style={{
+                    textAlign: 'center',
+                    background: 'var(--theme-badge-bg)',
+                    padding: '12px 10px',
+                    border: '1px solid var(--theme-border)',
+                    borderRadius: '10px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between',
+                    gap: '8px',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <label
+                    htmlFor={`planner-weekday-${idx}`}
+                    style={{
+                      display: 'block',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.5px',
+                      color: '#ff7e2e',
+                      fontFamily: "'Orbitron', sans-serif",
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {dayName}
+                  </label>
+                  <select
+                    id={`planner-weekday-${idx}`}
+                    value={currentVal}
+                    onChange={(e) => handleWeekdayMap(String(idx), parseInt(e.target.value, 10))}
+                    style={{
+                      background: 'rgba(15, 23, 42, 0.6)',
+                      border: '1px solid rgba(255, 255, 255, 0.08)',
+                      color: 'white',
+                      fontSize: '12px',
+                      padding: '8px 6px',
+                      width: '100%',
+                      borderRadius: '8px',
+                      cursor: 'pointer',
+                      height: '36px',
+                      boxSizing: 'border-box',
+                      textAlign: 'center'
+                    }}
+                  >
+                    <option value={-1} style={{ background: '#0b0f19', color: 'white' }}>Descanso</option>
+                    {trainingDays.map((day, dIdx) => (
+                      <option key={day.id} value={dIdx} style={{ background: '#0b0f19', color: 'white' }}>
+                        {day.name.substring(0, 22)}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* SECCIÓN 3: VARIABLES GLOBALES */}
+        <div style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '16px', padding: '20px', marginBottom: '24px', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', boxShadow: '0 8px 32px 0 var(--theme-glow)' }}>
+          <div
+            onClick={() => setVariablesOpen(!variablesOpen)}
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              cursor: 'pointer',
+              userSelect: 'none'
+            }}
+          >
+            <h3 style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '13px', color: 'var(--theme-primary)', letterSpacing: '0.5px', margin: 0, display: 'flex', alignItems: 'center' }}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px' }}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              VARIABLES GLOBALES Y SIGNIFICADOS
+              <InfoTooltip title="Variables Globales" body="Son los parámetros que definen cada ejercicio del plan (series, repeticiones, tempo, RIR, descanso, etc.). El atleta verá estos valores como indicadores durante su entrenamiento. Puedes personalizar las definiciones para que tu cliente entienda cada concepto." />
+            </h3>
+            <span style={{ fontSize: '11px', color: 'var(--theme-primary)', fontWeight: 'bold', fontFamily: "'Orbitron', sans-serif" }}>
+              {variablesOpen ? '▲ OCULTAR' : '▼ CONFIGURAR'}
+            </span>
+          </div>
+
+          {variablesOpen && (
+            <div style={{ marginTop: '20px' }}>
+              <form onSubmit={handleAddGlobalVar} style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '20px', alignItems: 'flex-end' }}>
+                <div style={{ flex: 1, minWidth: '150px' }}>
+                  <label htmlFor="new-var-label" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, marginBottom: '6px' }}>NOMBRE VARIABLE</label>
+                  <input
+                    id="new-var-label"
+                    type="text"
+                    required
+                    value={newVarLabel}
+                    onChange={(e) => setNewVarLabel(e.target.value)}
+                    placeholder="Ej. RPE, Tempo, Series, etc."
+                    style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '10px' }}
+                  />
+                </div>
+                <div style={{ flex: 2, minWidth: '250px' }}>
+                  <label htmlFor="new-var-def" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, marginBottom: '6px' }}>EXPLICACIÓN TEÓRICA (opcional)</label>
+                  <input
+                    id="new-var-def"
+                    type="text"
+                    value={newVarDef}
+                    onChange={(e) => setNewVarDef(e.target.value)}
+                    placeholder="Escribe una breve guía para el atleta..."
+                    style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '10px' }}
+                  />
+                </div>
+                <button type="submit" className="btn btn-ghost" style={{ height: '42px', padding: '0 20px' }}>Añadir Variable</button>
+              </form>
+
+              {/* Listado de variables existentes */}
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '20px' }}>
+                {globalVariables.map(v => (
+                  <span
+                    key={v.id}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      background: 'rgba(255,255,255,0.03)',
+                      border: '1px solid rgba(255,255,255,0.05)',
+                      padding: '6px 12px',
+                      borderRadius: '12px',
+                      fontSize: '11px',
+                      fontWeight: 600
+                    }}
+                  >
+                    🛠️ {v.label}
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveGlobalVar(v.id)}
+                      style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '12px', cursor: 'pointer', marginLeft: '8px' }}
+                    >
+                      ✕
+                    </button>
+                  </span>
+                ))}
+              </div>
+
+              {/* Definiciones/Significados de las variables */}
+              <div style={{ marginTop: '24px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '20px' }}>
+                <h4 style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '11px', color: 'var(--theme-primary)', letterSpacing: '0.5px', marginBottom: '8px', textTransform: 'uppercase', marginTop: 0 }}>
+                  Significados de las Variables para el Atleta
+                </h4>
+                <p style={{ margin: '0 0 16px 0', fontSize: '11px', color: 'rgba(255,255,255,0.4)', lineHeight: '1.4' }}>
+                  Edita el significado de cada variable. Tu cliente podrá ver esta explicación al presionar el botón de información ⓘ en su panel de entrenamiento.
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+                  {globalVariables.map(v => {
+                    const varId = v.id.trim().toLowerCase();
+                    const currentDef = variableDefinitions[varId] || '';
+                    return (
+                      <div key={v.id} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '10px', padding: '12px' }}>
+                        <label
+                          htmlFor={`var-def-${varId}`}
+                          style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: 'var(--theme-primary)', marginBottom: '8px', fontFamily: "'Orbitron', sans-serif", cursor: 'pointer' }}
+                        >
+                          {v.label}
+                        </label>
+                        <textarea
+                          id={`var-def-${varId}`}
+                          rows={3}
+                          value={currentDef}
+                          onChange={(e) => {
+                            const val = e.target.value;
+                            setVariableDefinitions(prev => ({
+                              ...prev,
+                              [varId]: val
+                            }));
+                          }}
+                          placeholder={`Escribe la explicación teórica de ${v.label.toLowerCase()}...`}
+                          style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '6px', color: 'white', padding: '8px', fontSize: '11px', resize: 'vertical', fontFamily: 'inherit' }}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* SECCIÓN 4: DÍAS DE RUTINA Y EJERCICIOS */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '12px' }}>
+            <h2 style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '16px', fontWeight: 800, margin: 0 }}>DÍAS DE ENTRENAMIENTO PROGRAMADOS</h2>
+            <button
+              type="button"
+              className="btn btn-ghost"
+              onClick={handleAddDay}
+              style={{
+                fontSize: '11px',
+                padding: '8px 16px',
+                height: 'auto',
+                fontFamily: "'Orbitron', sans-serif",
+                fontWeight: 700,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+            >
+              ➕ Añadir Nuevo Día
+            </button>
+          </div>
+
+          {/* DAY TABS BAR (Igual que en el perfil del cliente) */}
+          {trainingDays.length > 0 && (
+            <div className="day-tabs-bar" style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '20px', padding: '4px', background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '12px', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
+              {trainingDays.map((day, idx) => {
+                const dayName = (day.name || `Día ${idx + 1}`).trim();
+                const shortName = dayName.length > 28 ? dayName.substring(0, 25) + '…' : dayName;
+                return (
+                  <button
+                    key={day.id}
+                    type="button"
+                    className={`day-tab-btn${activeTab === idx ? ' active' : ''}`}
+                    onClick={() => setActiveTab(idx)}
+                    style={{
+                      fontFamily: "'Orbitron',sans-serif",
+                      fontSize: '10px',
+                      fontWeight: 600,
+                      padding: '8px 16px',
+                      borderRadius: '8px',
+                      border: 'none',
+                      transition: 'all 0.2s',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {shortName}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+
+          {/* RENDERIZAR ÚNICAMENTE EL DÍA SELECCIONADO */}
+          {trainingDays.length > 0 ? (
+            (() => {
+              const safeIdx = activeTab >= trainingDays.length ? 0 : activeTab;
+              const day = trainingDays[safeIdx];
+              return (
+                <div key={day.id} className="day-card tab-content-enter">
+                  <div className="day-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
+                    <div className="day-title" style={{ flexGrow: 1 }}>
+                      <input
+                        type="text"
+                        className="day-name-input"
+                        value={day.name}
+                        onChange={(e) => handleDayNameChange(day.id, e.target.value)}
+                        style={{
+                          fontFamily: "'Orbitron', sans-serif",
+                          fontSize: '1.2rem',
+                          fontWeight: 700,
+                          background: 'rgba(255, 255, 255, 0.05)',
+                          border: '1px solid rgba(255, 255, 255, 0.1)',
+                          borderRadius: '8px',
+                          color: 'white',
+                          padding: '4px 8px',
+                          width: '100%',
+                          maxWidth: '300px'
+                        }}
+                      />
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <button
+                        type="button"
+                        onClick={() => setVolumeChartOpen(!volumeChartOpen)}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '8px 14px',
+                          borderRadius: '8px',
+                          background: volumeChartOpen ? 'rgba(255, 126, 46, 0.15)' : 'rgba(255, 255, 255, 0.04)',
+                          border: `1px solid ${volumeChartOpen ? 'rgba(255, 126, 46, 0.35)' : 'rgba(255, 255, 255, 0.08)'}`,
+                          color: volumeChartOpen ? 'var(--theme-primary)' : 'rgba(255, 255, 255, 0.8)',
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          fontFamily: "'Orbitron', sans-serif",
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                          textTransform: 'uppercase',
+                          letterSpacing: '0.5px'
+                        }}
+                      >
+                        📊 {volumeChartOpen ? 'Ocultar Simetría' : 'Ver Simetría'}
+                      </button>
+
+                      <button
+                        type="button"
+                        className="btn-remove-day"
+                        onClick={() => handleRemoveDay(day.id)}
+                        style={{ display: 'inline-flex', alignItems: 'center' }}
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px', verticalAlign: '-1px' }}>
+                          <polyline points="3 6 5 6 21 6" />
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                        </svg>
+                        Eliminar día
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* PANEL DE SIMETRÍA DE VOLUMEN (RADAR CHART) */}
+                  {volumeChartOpen && (
+                    <div style={{
+                      background: 'rgba(255, 255, 255, 0.02)',
+                      border: '1px solid rgba(255, 255, 255, 0.06)',
+                      borderRadius: '16px',
+                      padding: '20px',
+                      marginBottom: '20px',
+                      backdropFilter: 'blur(20px)',
+                      WebkitBackdropFilter: 'blur(20px)',
+                      boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.2)',
+                      animation: 'fadeIn 0.25s ease'
+                    }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
+                        {/* Gráfico Radar */}
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '260px', background: 'rgba(0,0,0,0.15)', borderRadius: '12px', padding: '12px', border: '1px solid rgba(255, 255, 255, 0.04)' }}>
+                          {totalActiveDayVolume > 0 ? (
+                            <div style={{ position: 'relative', width: '100%', height: '250px' }}>
+                              <Radar data={radarChartData} options={radarChartOptions as any} />
+                            </div>
+                          ) : (
+                            <div style={{ textAlign: 'center', padding: '20px', color: 'rgba(255,255,255,0.35)' }}>
+                              <div style={{ fontSize: '28px', marginBottom: '8px' }}>📊</div>
+                              <div style={{ fontSize: '11px', fontFamily: "'Orbitron', sans-serif", fontWeight: 700, color: 'var(--theme-primary)', letterSpacing: '0.5px' }}>SIN VOLUMEN PROGRAMADO</div>
+                              <p style={{ fontSize: '10px', margin: '6px 0 0 0', color: 'rgba(255,255,255,0.25)', lineHeight: '1.4' }}>
+                                Asigna grupos musculares y series de trabajo a tus ejercicios para ver la distribución de volumen en tiempo real.
+                              </p>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Resumen Detallado */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', justifyContent: 'center' }}>
+                          <div>
+                            <h4 style={{ margin: 0, fontSize: '12px', fontFamily: "'Orbitron', sans-serif", color: 'var(--theme-primary)', letterSpacing: '0.5px', fontWeight: 700 }}>
+                              DISTRIBUCIÓN DE VOLUMEN POR GRUPO MUSCULAR
+                            </h4>
+                            <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', marginTop: '2px' }}>
+                              Basado en {totalActiveDayVolume} series de trabajo totales en este día.
+                            </div>
+                          </div>
+                          
+                          {volumeSummaryStats.list.length > 0 ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', maxHeight: '180px', overflowY: 'auto', paddingRight: '6px' }}>
+                              {volumeSummaryStats.list.map(([gm, val]) => {
+                                const percentage = (val / volumeSummaryStats.maxVal) * 100;
+                                return (
+                                  <div key={gm} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}>
+                                      <span style={{ fontWeight: 600, color: 'rgba(255,255,255,0.85)' }}>{gm}</span>
+                                      <span style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 700, color: '#ff7e2e' }}>{val} series</span>
+                                    </div>
+                                    <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.06)', borderRadius: '3px', overflow: 'hidden' }}>
+                                      <div style={{ width: `${percentage}%`, height: '100%', background: 'linear-gradient(90deg, #ff7e2e, #ff9a52)', borderRadius: '3px' }} />
+                                    </div>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', margin: 0, lineHeight: '1.4' }}>
+                              No hay series efectivas asignadas a ningún grupo muscular. Por favor, especifica el grupo muscular y el número de series en las tarjetas de los ejercicios de abajo.
+                            </p>
+                          )}
+
+                          <div style={{ marginTop: '6px', padding: '10px 12px', background: 'rgba(255,126,46,0.05)', border: '1px solid rgba(255,126,46,0.15)', borderRadius: '10px', display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
+                            <span style={{ fontSize: '14px', color: '#ff7e2e', lineHeight: 1 }}>💡</span>
+                            <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)', lineHeight: '1.4' }}>
+                              <strong>Consejo científico:</strong> Un volumen balanceado previene asimetrías de fuerza y postura. Procura emparejar el volumen de empuje vertical/horizontal con tracciones similares para hombros sanos.
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* LISTA DE EJERCICIOS DEL DÍA SELECCIONADO */}
+                  <div className="exercises-list">
+                    {day.exercises.map((ex, exIndex) => {
+                      const hasStatic = !!ex.image_url;
+                      const hasAnimated = !!ex.gif_url;
+                      const isOnline = navigator.onLine;
+                      const imageUrl = isOnline
+                        ? (ex.image_url || ex.gif_url || '')
+                        : (ex.gif_url || ex.image_url || '');
+
+                      return (
+                        <div
+                          key={ex.id}
+                          className="exercise-card"
+                          data-exercise-id={ex.id}
+                          data-day-id={day.id}
+                        >
+                          <div className="exercise-header">
+                            <div className="exercise-checkbox client-only-checkbox" data-ex-id={ex.id} data-day-id={day.id}></div>
+                            
+                            <div className="exercise-name" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                              <input
+                                id={`ex-name-${day.id}-${ex.id}`}
+                                aria-label={`Nombre del ejercicio ${exIndex + 1}`}
+                                type="text"
+                                className="exercise-name-input"
+                                list="evolution-exercise-list"
+                                value={ex.nombre}
+                                onChange={(e) => handleExerciseChange(day.id, ex.id, 'nombre', e.target.value)}
+                                placeholder={`Ejercicio ${exIndex + 1}`}
+                                style={{ width: '100%' }}
+                              />
+                              {ex.nombre_original && (
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px', flexWrap: 'wrap' }}>
+                                  <span style={{ fontSize: '9px', color: 'var(--theme-primary)', background: 'rgba(249, 115, 22, 0.1)', border: '1px solid rgba(249, 115, 22, 0.3)', padding: '2px 8px', borderRadius: '4px', fontFamily: "'Orbitron', sans-serif", textTransform: 'uppercase', letterSpacing: '0.5px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                                    Vinculado a: {ex.nombre_original}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleExerciseChange(day.id, ex.id, 'nombre_original' as any, '')}
+                                    title="Desvincular del ejercicio global"
+                                    style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '11px', cursor: 'pointer', padding: '0 4px', display: 'flex', alignItems: 'center', fontFamily: "'Orbitron', sans-serif", fontWeight: 'bold' }}
+                                  >
+                                    ✕ Desvincular
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="img-zone">
+                              <div className="img-preview-container">
+                                {imageUrl ? (
+                                  <img
+                                    className="exercise-media img-preview"
+                                    src={imageUrl}
+                                    alt="preview"
+                                    style={{ display: 'block' }}
+                                  />
+                                ) : (
+                                  <div className="img-placeholder-wrapper" style={{ display: 'flex' }}>
+                                    <div className="img-placeholder">📷 Sin imagen</div>
+                                  </div>
+                                )}
+                              </div>
+
+                              <button
+                                type="button"
+                                className="img-upload-label"
+                                onClick={() => {
+                                  const el = document.getElementById(`img-file-${ex.id}`);
+                                  if (el) el.click();
+                                }}
+                                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                              >
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg> Subir foto {hasStatic ? '(Listo)' : ''}
+                              </button>
+                              
+                              <button
+                                type="button"
+                                className="gif-upload-label"
+                                onClick={() => {
+                                  const el = document.getElementById(`gif-file-${ex.id}`);
+                                  if (el) el.click();
+                                }}
+                                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                              >
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="2" ry="2"/><line x1="7" y1="2" x2="7" y2="22"/><line x1="17" y1="2" x2="17" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="2" y1="7" x2="7" y2="7"/><line x1="2" y1="17" x2="7" y2="17"/><line x1="17" y1="17" x2="22" y2="17"/><line x1="17" y1="7" x2="22" y2="7"/></svg> Animación Offline {hasAnimated ? '(Listo)' : ''}
+                              </button>
+
+                              <input
+                                type="file"
+                                id={`img-file-${ex.id}`}
+                                accept="image/png, image/jpeg"
+                                onChange={(e) => handleFileUpload(day.id, ex.id, 'image_url', e.target.files?.[0] ?? null)}
+                                style={{ display: 'none' }}
+                              />
+
+                              <input
+                                type="file"
+                                id={`gif-file-${ex.id}`}
+                                accept="image/gif"
+                                onChange={(e) => handleFileUpload(day.id, ex.id, 'gif_url', e.target.files?.[0] ?? null)}
+                                style={{ display: 'none' }}
+                              />
+                            </div>
+                          </div>
+
+                          <div className="variables-row">
+                            {globalVariables.map(v => {
+                              const val = ex.variables[v.id] ?? '';
+                              const uniqueVarInputId = `var-input-${day.id}-${ex.id}-${v.id.trim().replace(/\s+/g, '-')}`;
+                              return (
+                                <div key={v.id} className="var-item">
+                                  <label htmlFor={uniqueVarInputId}>{v.label}</label>
+                                  <input
+                                    id={uniqueVarInputId}
+                                    type="text"
+                                    className="var-input"
+                                    value={val}
+                                    onChange={(e) => handleExerciseVarChange(day.id, ex.id, v.id, e.target.value)}
+                                    placeholder={v.defaultValue}
+                                  />
+                                </div>
+                              );
+                            })}
+                          </div>
+
+                          {/* Grupo Muscular selector */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px', marginBottom: '4px' }}>
+                            <label htmlFor={`select-muscle-${day.id}-${ex.id}`} style={{ fontSize: '9px', fontWeight: 700, color: 'rgba(255,255,255,0.4)', fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.3px', whiteSpace: 'nowrap', cursor: 'pointer' }}>GRUPO MUSC.</label>
+                            <select
+                              id={`select-muscle-${day.id}-${ex.id}`}
+                              value={(ex as any).grupo_muscular || ''}
+                              onChange={(e) => handleExerciseChange(day.id, ex.id, 'grupo_muscular' as any, e.target.value)}
+                              style={{
+                                flex: 1, maxWidth: '180px',
+                                background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
+                                borderRadius: '6px', color: 'white', padding: '4px 8px', fontSize: '11px'
+                              }}
+                            >
+                              <option value="" style={{ background: '#0b0f19' }}>Sin asignar</option>
+                              {['Pecho', 'Espalda', 'Piernas', 'Hombros', 'Bíceps', 'Tríceps', 'Core', 'Glúteos', 'Cardio'].map(g => (
+                                <option key={g} value={g} style={{ background: '#0b0f19' }}>{g}</option>
+                              ))}
+                            </select>
+                            <InfoTooltip title="Grupo Muscular" body="Asigna el grupo muscular principal de este ejercicio. Se usa para calcular el gráfico de simetría y distribución de volumen del día de entrenamiento." size={14} />
+                          </div>
+
+                          <div className="video-link-item">
+                            <label htmlFor={`input-video-${day.id}-${ex.id}`} style={{ display: 'flex', alignItems: 'center', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text2)', marginBottom: '4px', cursor: 'pointer' }}>
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '5px', verticalAlign: '-1px' }}>
+                                <path d="M23 7l-7 5 7 5V7z"></path>
+                                <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+                              </svg>
+                              Video explicativo (URL)
+                              <InfoTooltip title="Video Explicativo" body="Enlace directo a un video de YouTube o Google Drive que muestre la técnica correcta del ejercicio. El atleta podrá verlo directamente desde su panel de entrenamiento para asegurar una ejecución segura." />
+                            </label>
+                            <input
+                              id={`input-video-${day.id}-${ex.id}`}
+                              type="text"
+                              className="video-url-input"
+                              value={ex.video_url || ''}
+                              onChange={(e) => handleExerciseChange(day.id, ex.id, 'video_url', e.target.value)}
+                              placeholder="Pega enlace de Drive o YouTube"
+                              style={{ width: '100%', marginBottom: '8px' }}
+                            />
+                            {ex.video_url && (
+                              <a
+                                href={ex.video_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{ display: 'inline-flex', alignItems: 'center', padding: '8px 12px', background: 'rgba(59, 130, 246, 0.12)', borderRadius: '40px', color: '#60a5fa', textDecoration: 'none', fontWeight: 600, textAlign: 'center', border: '1px solid rgba(59, 130, 246, 0.35)', transition: 'all 0.3s ease', fontSize: '10px', fontFamily: "'Orbitron',sans-serif", textTransform: 'uppercase', letterSpacing: '0.5px' }}
+                              >
+                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '5px', verticalAlign: '-1px' }}>
+                                  <path d="M23 7l-7 5 7 5V7z"></path>
+                                  <rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect>
+                                </svg>
+                                Ver video
+                              </a>
+                            )}
+                            <br />
+                            <small style={{ display: 'inline-flex', alignItems: 'center', marginTop: '6px', color: 'var(--text3)', fontSize: '0.7rem' }}>
+                              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px', flexShrink: 0, verticalAlign: '-1px' }}>
+                                <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A5 5 0 0 0 8 8c0 1 .3 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"></path>
+                                <path d="M9 18h6"></path>
+                                <path d="M10 22h4"></path>
+                              </svg>
+                              Si el video no se abre, mantén presionado el enlace y selecciona "Abrir en navegador".
+                            </small>
+                          </div>
+
+                          <div className="description-link-item" style={{ marginTop: '10px' }}>
+                            <label htmlFor={`input-desc-${day.id}-${ex.id}`} style={{ display: 'flex', alignItems: 'center', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text2)', marginBottom: '4px', cursor: 'pointer' }}>
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '5px', verticalAlign: '-1px' }}>
+                                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+                              </svg>
+                              Guía de ejecución teórica
+                              <InfoTooltip title="Guía de Ejecución" body="Instrucciones escritas detalladas sobre cómo realizar el ejercicio paso a paso. Incluye indicaciones posturales, respiración, errores comunes a evitar y tips de activación muscular. El atleta las verá en su panel de entrenamiento." />
+                            </label>
+                            <textarea
+                              id={`input-desc-${day.id}-${ex.id}`}
+                              className="exercise-description-input"
+                              value={ex.description || ''}
+                              onChange={(e) => handleExerciseChange(day.id, ex.id, 'description', e.target.value)}
+                              placeholder="Escribe aquí las indicaciones paso a paso de cómo realizar el ejercicio..."
+                              rows={3}
+                              style={{ width: '100%', padding: '8px 12px', border: '1px solid var(--border2)', background: 'rgba(255,255,255,0.03)', color: 'white', borderRadius: '12px', fontSize: '0.8rem', fontFamily: 'inherit', resize: 'vertical', transition: 'border-color 0.2s' }}
+                            />
+                          </div>
+
+                          <div className="progression-notes-item" style={{ marginTop: '10px' }}>
+                            <label htmlFor={`input-prog-${day.id}-${ex.id}`} style={{ display: 'flex', alignItems: 'center', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text2)', marginBottom: '4px', cursor: 'pointer' }}>
+                              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '5px', verticalAlign: '-1px' }}>
+                                <line x1="18" y1="20" x2="18" y2="10"></line>
+                                <line x1="12" y1="20" x2="12" y2="4"></line>
+                                <line x1="6" y1="20" x2="6" y2="14"></line>
+                              </svg>
+                              Notas de progresión y bloques (Automático/Manual)
+                              <InfoTooltip title="Notas de Progresión" body="Escribe aquí las pautas de progresión de volumen o carga a lo largo de las semanas. El sistema de automatización escribirá aquí directamente para no interferir con la técnica de ejecución de arriba." />
+                            </label>
+                            <textarea
+                              id={`input-prog-${day.id}-${ex.id}`}
+                              className="exercise-progression-notes-input"
+                              value={ex.progression_notes || ''}
+                              onChange={(e) => handleExerciseChange(day.id, ex.id, 'progression_notes', e.target.value)}
+                              placeholder="Ej: Sem 1: Peso base 3x10. Sem 2: +2.5kg 3x9... O deja que la automatización genere la pauta."
+                              rows={3}
+                              style={{ width: '100%', padding: '8px 12px', border: '1px solid var(--border2)', background: 'rgba(255,255,255,0.03)', color: 'white', borderRadius: '12px', fontSize: '0.8rem', fontFamily: 'inherit', resize: 'vertical', transition: 'border-color 0.2s' }}
+                            />
+                          </div>
+
+                          <div className="exercise-actions" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                            {/* Smart Block Builder */}
+                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                              <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                <button
+                                  type="button"
+                                  onClick={() => setAutoProgExId(autoProgExId === ex.id ? null : ex.id)}
+                                  style={{
+                                    display: 'inline-flex', alignItems: 'center', gap: '5px',
+                                    padding: '6px 12px', borderRadius: '8px',
+                                    background: autoProgExId === ex.id ? 'rgba(249, 115, 22, 0.15)' : 'rgba(255,255,255,0.04)',
+                                    border: `1px solid ${autoProgExId === ex.id ? 'rgba(249, 115, 22, 0.4)' : 'rgba(255,255,255,0.08)'}`,
+                                    color: autoProgExId === ex.id ? 'var(--theme-primary)' : 'rgba(255,255,255,0.6)',
+                                    fontSize: '10px', fontWeight: 700, fontFamily: "'Orbitron', sans-serif",
+                                    cursor: 'pointer', transition: 'all 0.2s', textTransform: 'uppercase', letterSpacing: '0.3px'
+                                  }}
+                                >
+                                  ⚙️ Progresión
+                                </button>
+                                <InfoTooltip title="Definir Progresión" body="Configura una estrategia de periodización científica (lineal, doble, ondulante, descarga). El Smart Coach usará esta estrategia junto con los registros del atleta para guiarlo e indicarle cuándo debe subir o mantener la carga." size={14} />
+                                
+                                {autoProgExId === ex.id && (
+                                  <div style={{
+                                    position: 'absolute', bottom: '100%', left: 0, marginBottom: '6px',
+                                    background: 'linear-gradient(165deg, rgba(20,20,24,0.98), rgba(12,12,16,0.99))',
+                                    backdropFilter: 'blur(30px)', WebkitBackdropFilter: 'blur(30px)',
+                                    border: '1px solid rgba(255,255,255,0.12)', borderRadius: '12px',
+                                    padding: '8px', minWidth: '220px', zIndex: 100,
+                                    boxShadow: '0 12px 40px rgba(0,0,0,0.6)',
+                                    animation: 'fadeIn 0.15s ease'
+                                  }}>
+                                    <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.4)', fontWeight: 700, fontFamily: "'Orbitron', sans-serif", padding: '4px 8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>PLANTILLAS DE PROGRESIÓN</div>
+                                    {[
+                                      { id: 'linear', label: '📈 Progresión Lineal', sub: 'Fuerza / Hipertrofia · 4 sem' },
+                                      { id: 'double', label: '🔁 Progresión Doble', sub: 'Volumen → Carga · 4 sem' },
+                                      { id: 'undulating', label: '🌊 Ondulante', sub: 'Fuerza + Hipertrofia alterno' },
+                                      { id: 'deload', label: '💤 Descarga (Deload)', sub: 'Recuperación activa · 1 sem' },
+                                    ].map(t => (
+                                      <button
+                                        key={t.id}
+                                        type="button"
+                                        onClick={() => handleOpenProgression(day.id, ex.id, t.id)}
+                                        style={{
+                                          display: 'block', width: '100%', textAlign: 'left',
+                                          padding: '8px 10px', borderRadius: '8px',
+                                          background: 'transparent', border: 'none',
+                                          color: 'rgba(255,255,255,0.85)', cursor: 'pointer',
+                                          transition: 'background 0.15s', fontSize: '12px'
+                                        }}
+                                        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
+                                        onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                                      >
+                                        <div style={{ fontWeight: 600 }}>{t.label}</div>
+                                        <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.4)', marginTop: '2px' }}>{t.sub}</div>
+                                      </button>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                              
+                              {/* Botón de Deshacer/Revertir */}
+                              {exerciseHistory[`${day.id}_${ex.id}`] && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleRevertProgression(day.id, ex.id)}
+                                  style={{
+                                    display: 'inline-flex', alignItems: 'center', gap: '4px',
+                                    padding: '6px 12px', borderRadius: '8px',
+                                    background: 'rgba(239, 68, 68, 0.1)',
+                                    border: '1px solid rgba(239, 68, 68, 0.35)',
+                                    color: '#ef4444',
+                                    fontSize: '10px', fontWeight: 700, fontFamily: "'Orbitron', sans-serif",
+                                    cursor: 'pointer', transition: 'all 0.2s', textTransform: 'uppercase', letterSpacing: '0.3px'
+                                  }}
+                                >
+                                  ↩️ Revertir
+                                </button>
+                              )}
+                            </div>
+                            <button
+                              type="button"
+                              className="btn-sm btn-rem-ex"
+                              onClick={() => handleRemoveExercise(day.id, ex.id)}
+                            >
+                              ❌ Eliminar ejercicio
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <div className="exercise-actions" style={{ marginTop: '15px' }}>
+                    <button
+                      type="button"
+                      className="btn-sm btn-add-ex"
+                      onClick={() => handleAddExercise(day.id)}
+                    >
+                      ➕ Añadir ejercicio
+                    </button>
+                  </div>
+                </div>
+              );
+            })()
+          ) : (
+            <div style={{ textAlign: 'center', padding: '40px', background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '16px' }}>
+              <p style={{ color: 'rgba(255,255,255,0.4)' }}>Aún no hay días de entrenamiento creados. Agrega uno para empezar a estructurar la rutina.</p>
+            </div>
+          )}
+
+        </div>
+      </div>
+
+      {/* DATALIST DE AUTOCOMPLETADO GLOBAL */}
+      <datalist id="evolution-exercise-list">
+        {computedExerciseOptions.map(name => (
+          <option key={name} value={name} />
+        ))}
+      </datalist>
+
+      {/* MODAL DE PERSONALIZACIÓN DE AUTOMATIZACIÓN (SMART BLOCK BUILDER) */}
+      {progModal && progModal.isOpen && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(5, 5, 8, 0.85)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+          zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          animation: 'fadeIn 0.2s ease', padding: '16px'
+        }}>
+          <div style={{
+            background: 'linear-gradient(165deg, rgba(20,20,24,0.98), rgba(12,12,16,0.99))',
+            border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '20px',
+            width: '100%', maxWidth: '520px', padding: '24px',
+            boxShadow: '0 24px 60px rgba(0,0,0,0.8)',
+            display: 'flex', flexDirection: 'column', gap: '20px'
+          }}>
+            {/* Cabecera */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+              <div>
+                <span style={{ fontSize: '9px', fontWeight: 800, color: 'var(--theme-primary)', fontFamily: "'Orbitron', sans-serif", letterSpacing: '1px', textTransform: 'uppercase' }}>
+                  Smart Block Builder
+                </span>
+                <h3 style={{ margin: '4px 0 0 0', fontSize: '18px', fontWeight: 800, fontFamily: "'Orbitron', sans-serif", color: 'white', letterSpacing: '0.5px' }}>
+                  {progModal.template === 'linear' && '📈 CONFIGURAR PROGRESIÓN LINEAL'}
+                  {progModal.template === 'double' && '🔁 CONFIGURAR PROGRESIÓN DOBLE'}
+                  {progModal.template === 'undulating' && '🌊 CONFIGURAR PERIODIZACIÓN ONDULANTE'}
+                  {progModal.template === 'deload' && '💤 CONFIGURAR DESCARGA (DELOAD)'}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setProgModal(null)}
+                style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', fontSize: '18px', cursor: 'pointer', transition: 'color 0.2s', fontWeight: 'bold' }}
+                onMouseEnter={e => (e.currentTarget.style.color = 'white')}
+                onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.4)')}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Formulario e Inputs de Criterios */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', maxHeight: '280px', overflowY: 'auto', paddingRight: '4px' }}>
+              
+              {/* Parámetros Lineal */}
+              {progModal.template === 'linear' && (
+                <>
+                  <div>
+                    <label htmlFor="prog-linear-duracion" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>DURACIÓN (SEMANAS)</label>
+                    <input
+                      id="prog-linear-duracion"
+                      type="number"
+                      min={2} max={12}
+                      value={progModal.params.duracion}
+                      onChange={e => setProgModal({ ...progModal, params: { ...progModal.params, duracion: parseInt(e.target.value, 10) || 4 } })}
+                      style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '8px 10px', fontSize: '12px' }}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="prog-linear-cargaInicial" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>CARGA INICIAL</label>
+                    <input
+                      id="prog-linear-cargaInicial"
+                      type="text"
+                      value={progModal.params.cargaInicial}
+                      onChange={e => setProgModal({ ...progModal, params: { ...progModal.params, cargaInicial: e.target.value } })}
+                      style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '8px 10px', fontSize: '12px' }}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="prog-linear-incremento" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>INCREMENTO CARGA (KG)</label>
+                    <input
+                      id="prog-linear-incremento"
+                      type="text"
+                      value={progModal.params.incremento}
+                      onChange={e => setProgModal({ ...progModal, params: { ...progModal.params, incremento: e.target.value } })}
+                      style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '8px 10px', fontSize: '12px' }}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="prog-linear-series" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>SERIES DE TRABAJO</label>
+                    <input
+                      id="prog-linear-series"
+                      type="text"
+                      value={progModal.params.series}
+                      onChange={e => setProgModal({ ...progModal, params: { ...progModal.params, series: e.target.value } })}
+                      style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '8px 10px', fontSize: '12px' }}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="prog-linear-repeticiones" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>REPETICIONES</label>
+                    <input
+                      id="prog-linear-repeticiones"
+                      type="text"
+                      value={progModal.params.repeticiones}
+                      onChange={e => setProgModal({ ...progModal, params: { ...progModal.params, repeticiones: e.target.value } })}
+                      style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '8px 10px', fontSize: '12px' }}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="prog-linear-rir" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>RIR OBJETIVO</label>
+                    <input
+                      id="prog-linear-rir"
+                      type="text"
+                      value={progModal.params.rir}
+                      onChange={e => setProgModal({ ...progModal, params: { ...progModal.params, rir: e.target.value } })}
+                      style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '8px 10px', fontSize: '12px' }}
+                    />
+                  </div>
+                </>
+              )}
+
+              {/* Parámetros Doble */}
+              {progModal.template === 'double' && (
+                <>
+                  <div>
+                    <label htmlFor="prog-double-duracion" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>DURACIÓN (SEMANAS)</label>
+                    <input
+                      id="prog-double-duracion"
+                      type="number"
+                      min={2} max={12}
+                      value={progModal.params.duracion}
+                      onChange={e => setProgModal({ ...progModal, params: { ...progModal.params, duracion: parseInt(e.target.value, 10) || 4 } })}
+                      style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '8px 10px', fontSize: '12px' }}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="prog-double-cargaInicial" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>CARGA INICIAL</label>
+                    <input
+                      id="prog-double-cargaInicial"
+                      type="text"
+                      value={progModal.params.cargaInicial}
+                      onChange={e => setProgModal({ ...progModal, params: { ...progModal.params, cargaInicial: e.target.value } })}
+                      style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '8px 10px', fontSize: '12px' }}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="prog-double-incremento" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>INCREMENTO CARGA (KG)</label>
+                    <input
+                      id="prog-double-incremento"
+                      type="text"
+                      value={progModal.params.incremento}
+                      onChange={e => setProgModal({ ...progModal, params: { ...progModal.params, incremento: e.target.value } })}
+                      style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '8px 10px', fontSize: '12px' }}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="prog-double-series" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>SERIES DE TRABAJO</label>
+                    <input
+                      id="prog-double-series"
+                      type="text"
+                      value={progModal.params.series}
+                      onChange={e => setProgModal({ ...progModal, params: { ...progModal.params, series: e.target.value } })}
+                      style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '8px 10px', fontSize: '12px' }}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="prog-double-repsIniciales" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>REPS INICIALES (MÍN)</label>
+                    <input
+                      id="prog-double-repsIniciales"
+                      type="text"
+                      value={progModal.params.repsIniciales}
+                      onChange={e => setProgModal({ ...progModal, params: { ...progModal.params, repsIniciales: e.target.value } })}
+                      style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '8px 10px', fontSize: '12px' }}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="prog-double-repsIntermedias" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>REPS INTERMEDIAS (OPCIONAL)</label>
+                    <input
+                      id="prog-double-repsIntermedias"
+                      type="text"
+                      value={progModal.params.repsIntermedias}
+                      onChange={e => setProgModal({ ...progModal, params: { ...progModal.params, repsIntermedias: e.target.value } })}
+                      style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '8px 10px', fontSize: '12px' }}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="prog-double-repsMaximas" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>REPS MÁXIMAS (MÁX)</label>
+                    <input
+                      id="prog-double-repsMaximas"
+                      type="text"
+                      value={progModal.params.repsMaximas}
+                      onChange={e => setProgModal({ ...progModal, params: { ...progModal.params, repsMaximas: e.target.value } })}
+                      style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '8px 10px', fontSize: '12px' }}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="prog-double-rir" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>RIR OBJETIVO</label>
+                    <input
+                      id="prog-double-rir"
+                      type="text"
+                      value={progModal.params.rir}
+                      onChange={e => setProgModal({ ...progModal, params: { ...progModal.params, rir: e.target.value } })}
+                      style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '8px 10px', fontSize: '12px' }}
+                    />
+                  </div>
+                </>
+              )}
+
+              {/* Parámetros Ondulante */}
+              {progModal.template === 'undulating' && (
+                <>
+                  <div>
+                    <label htmlFor="prog-undulating-duracion" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>DURACIÓN (SEMANAS)</label>
+                    <input
+                      id="prog-undulating-duracion"
+                      type="number"
+                      min={2} max={12}
+                      value={progModal.params.duracion}
+                      onChange={e => setProgModal({ ...progModal, params: { ...progModal.params, duracion: parseInt(e.target.value, 10) || 4 } })}
+                      style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '8px 10px', fontSize: '12px' }}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="prog-undulating-cargaInicial" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>CARGA INICIAL</label>
+                    <input
+                      id="prog-undulating-cargaInicial"
+                      type="text"
+                      value={progModal.params.cargaInicial}
+                      onChange={e => setProgModal({ ...progModal, params: { ...progModal.params, cargaInicial: e.target.value } })}
+                      style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '8px 10px', fontSize: '12px' }}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="prog-undulating-incrementoFuerza" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>INCREMENTO FUERZA (KG)</label>
+                    <input
+                      id="prog-undulating-incrementoFuerza"
+                      type="text"
+                      value={progModal.params.incrementoFuerza}
+                      onChange={e => setProgModal({ ...progModal, params: { ...progModal.params, incrementoFuerza: e.target.value } })}
+                      style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '8px 10px', fontSize: '12px' }}
+                    />
+                  </div>
+                  <div style={{ gridColumn: 'span 2', height: '1px', background: 'rgba(255,255,255,0.08)', margin: '4px 0' }} />
+                  <div>
+                    <label htmlFor="prog-undulating-seriesFuerza" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>SERIES FUERZA</label>
+                    <input
+                      id="prog-undulating-seriesFuerza"
+                      type="text"
+                      value={progModal.params.seriesFuerza}
+                      onChange={e => setProgModal({ ...progModal, params: { ...progModal.params, seriesFuerza: e.target.value } })}
+                      style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '8px 10px', fontSize: '12px' }}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="prog-undulating-repsFuerza" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>REPS FUERZA</label>
+                    <input
+                      id="prog-undulating-repsFuerza"
+                      type="text"
+                      value={progModal.params.repsFuerza}
+                      onChange={e => setProgModal({ ...progModal, params: { ...progModal.params, repsFuerza: e.target.value } })}
+                      style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '8px 10px', fontSize: '12px' }}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="prog-undulating-rirFuerza" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>RIR FUERZA</label>
+                    <input
+                      id="prog-undulating-rirFuerza"
+                      type="text"
+                      value={progModal.params.rirFuerza}
+                      onChange={e => setProgModal({ ...progModal, params: { ...progModal.params, rirFuerza: e.target.value } })}
+                      style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '8px 10px', fontSize: '12px' }}
+                    />
+                  </div>
+                  <div style={{ gridColumn: 'span 2', height: '1px', background: 'rgba(255,255,255,0.08)', margin: '4px 0' }} />
+                  <div>
+                    <label htmlFor="prog-undulating-seriesHipertrofia" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>SERIES HIPERTROFIA</label>
+                    <input
+                      id="prog-undulating-seriesHipertrofia"
+                      type="text"
+                      value={progModal.params.seriesHipertrofia}
+                      onChange={e => setProgModal({ ...progModal, params: { ...progModal.params, seriesHipertrofia: e.target.value } })}
+                      style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '8px 10px', fontSize: '12px' }}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="prog-undulating-repsHipertrofia" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>REPS HIPERTROFIA</label>
+                    <input
+                      id="prog-undulating-repsHipertrofia"
+                      type="text"
+                      value={progModal.params.repsHipertrofia}
+                      onChange={e => setProgModal({ ...progModal, params: { ...progModal.params, repsHipertrofia: e.target.value } })}
+                      style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '8px 10px', fontSize: '12px' }}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="prog-undulating-rirHipertrofia" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>RIR HIPERTROFIA</label>
+                    <input
+                      id="prog-undulating-rirHipertrofia"
+                      type="text"
+                      value={progModal.params.rirHipertrofia}
+                      onChange={e => setProgModal({ ...progModal, params: { ...progModal.params, rirHipertrofia: e.target.value } })}
+                      style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '8px 10px', fontSize: '12px' }}
+                    />
+                  </div>
+                </>
+              )}
+
+              {/* Parámetros Descarga */}
+              {progModal.template === 'deload' && (
+                <>
+                  <div>
+                    <label htmlFor="prog-deload-duracion" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>DURACIÓN (SEMANAS)</label>
+                    <input
+                      id="prog-deload-duracion"
+                      type="number"
+                      min={1} max={4}
+                      value={progModal.params.duracion}
+                      onChange={e => setProgModal({ ...progModal, params: { ...progModal.params, duracion: parseInt(e.target.value, 10) || 1 } })}
+                      style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '8px 10px', fontSize: '12px' }}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="prog-deload-volumen" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>VOLUMEN (%)</label>
+                    <input
+                      id="prog-deload-volumen"
+                      type="text"
+                      value={progModal.params.reduccionVolumen}
+                      onChange={e => setProgModal({ ...progModal, params: { ...progModal.params, reduccionVolumen: e.target.value } })}
+                      style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '8px 10px', fontSize: '12px' }}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="prog-deload-cargaRecomendada" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>CARGA SUGERIDA</label>
+                    <input
+                      id="prog-deload-cargaRecomendada"
+                      type="text"
+                      value={progModal.params.cargaRecomendada}
+                      onChange={e => setProgModal({ ...progModal, params: { ...progModal.params, cargaRecomendada: e.target.value } })}
+                      style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '8px 10px', fontSize: '12px' }}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="prog-deload-series" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>SERIES EFECTIVAS</label>
+                    <input
+                      id="prog-deload-series"
+                      type="text"
+                      value={progModal.params.series}
+                      onChange={e => setProgModal({ ...progModal, params: { ...progModal.params, series: e.target.value } })}
+                      style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '8px 10px', fontSize: '12px' }}
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="prog-deload-rir" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>RIR OBJETIVO</label>
+                    <input
+                      id="prog-deload-rir"
+                      type="text"
+                      value={progModal.params.rir}
+                      onChange={e => setProgModal({ ...progModal, params: { ...progModal.params, rir: e.target.value } })}
+                      style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '8px 10px', fontSize: '12px' }}
+                    />
+                  </div>
+                </>
+              )}
+
+            </div>
+
+            {/* Vista Previa del Texto autogenerado */}
+            <div style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '10px', padding: '12px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                <span style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(255,255,255,0.4)', fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.5px' }}>
+                  VISTA PREVIA DE LA PAUTA
+                </span>
+                <span style={{ fontSize: '9px', color: '#ff7e2e', background: 'rgba(255, 126, 46, 0.1)', padding: '2px 8px', borderRadius: '4px', fontFamily: "'Orbitron', sans-serif" }}>
+                  AUTOGENERADO
+                </span>
+              </div>
+              <pre style={{
+                margin: 0,
+                fontSize: '11px',
+                color: 'rgba(255,255,255,0.85)',
+                whiteSpace: 'pre-wrap',
+                fontFamily: 'monospace',
+                maxHeight: '130px',
+                overflowY: 'auto',
+                lineHeight: '1.4'
+              }}>
+                {generateProgressionText(progModal.template, progModal.params)}
+              </pre>
+            </div>
+
+            {/* Acciones */}
+            <div style={{ display: 'flex', gap: '10px', marginTop: '6px' }}>
+              <button
+                type="button"
+                className="btn btn-ghost"
+                onClick={() => setProgModal(null)}
+                style={{ flex: 1, height: '42px', fontSize: '11px', fontFamily: "'Orbitron', sans-serif", fontWeight: 700 }}
+              >
+                CANCELAR
+              </button>
+              <button
+                type="button"
+                onClick={() => handleApplyProgressionCustom(progModal.dayId, progModal.exId, progModal.template, progModal.params)}
+                style={{
+                  flex: 2, height: '42px', borderRadius: '10px', border: 'none',
+                  background: 'linear-gradient(135deg, #ff7e2e, #ff9a52)',
+                  color: 'white', fontSize: '11px', fontFamily: "'Orbitron', sans-serif", fontWeight: 800,
+                  cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 4px 15px rgba(255, 126, 46, 0.25)'
+                }}
+                onMouseEnter={e => (e.currentTarget.style.transform = 'translateY(-1px)')}
+                onMouseLeave={e => (e.currentTarget.style.transform = 'none')}
+              >
+                APLICAR PROGRESIÓN
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      <Toast message={toastState.message} type={toastState.type} visible={toastState.visible} />
+    </div>
+  );
+};
+
+export default PlanPlanner;
