@@ -191,7 +191,8 @@ export const PlanPlanner: React.FC = () => {
     const volumeMap: Record<string, number> = {
       'Pecho': 0,
       'Espalda': 0,
-      'Piernas': 0,
+      'Cuádriceps': 0,
+      'Isquiosurales': 0,
       'Hombros': 0,
       'Bíceps': 0,
       'Tríceps': 0,
@@ -362,7 +363,7 @@ export const PlanPlanner: React.FC = () => {
     setTrainingDays([
       { id: "day_1", name: "Día 1 - Pecho y Tríceps", exercises: initialExercises(3) },
       { id: "day_2", name: "Día 2 - Espalda y Bíceps", exercises: initialExercises(3) },
-      { id: "day_3", name: "Día 3 - Piernas (Cuádriceps y Femoral)", exercises: initialExercises(3) },
+      { id: "day_3", name: "Día 3 - Cuádriceps e Isquiosurales", exercises: initialExercises(3) },
       { id: "day_4", name: "Día 4 - Hombros y Abdominales", exercises: initialExercises(3) },
       { id: "day_5", name: "Día 5 - Full Body / Cardio", exercises: initialExercises(3) }
     ]);
@@ -2023,7 +2024,7 @@ export const PlanPlanner: React.FC = () => {
                               }}
                             >
                               <option value="" style={{ background: '#0b0f19' }}>Sin asignar</option>
-                              {['Pecho', 'Espalda', 'Piernas', 'Hombros', 'Bíceps', 'Tríceps', 'Core', 'Glúteos', 'Cardio'].map(g => (
+                              {['Pecho', 'Espalda', 'Cuádriceps', 'Isquiosurales', 'Hombros', 'Bíceps', 'Tríceps', 'Core', 'Glúteos', 'Cardio'].map(g => (
                                 <option key={g} value={g} style={{ background: '#0b0f19' }}>{g}</option>
                               ))}
                             </select>

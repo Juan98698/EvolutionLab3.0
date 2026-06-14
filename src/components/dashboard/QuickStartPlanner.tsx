@@ -10,7 +10,7 @@ import { PlanData, TrainingDay, Exercise, GlobalVariable, EjercicioGlobal } from
 const genDayId = () => 'day_' + Math.random().toString(36).substring(2, 9);
 const genExId = () => 'ex_' + Math.random().toString(36).substring(2, 9);
 
-const MUSCLE_GROUPS = ['Pecho', 'Espalda', 'Piernas', 'Hombros', 'Bíceps', 'Tríceps', 'Abdomen'] as const;
+const MUSCLE_GROUPS = ['Pecho', 'Espalda', 'Cuádriceps', 'Isquiosurales', 'Hombros', 'Bíceps', 'Tríceps', 'Glúteos', 'Abdomen'] as const;
 
 interface LocalExercise {
   id: string;
@@ -78,7 +78,7 @@ const ROUTINE_TEMPLATES: Record<string, { title: string; days: TemplateDay[] }> 
       {
         name: 'Día 1: Fuerza & Empuje',
         exercises: [
-          { nombre: 'Sentadilla Libre con Barra', grupoMuscular: 'Piernas' },
+          { nombre: 'Sentadilla Libre con Barra', grupoMuscular: 'Cuádriceps' },
           { nombre: 'Press de Banca Plano con Barra', grupoMuscular: 'Pecho' },
           { nombre: 'Remo con Barra', grupoMuscular: 'Espalda' },
           { nombre: 'Elevaciones Laterales con Mancuernas', grupoMuscular: 'Hombros' },
@@ -88,27 +88,27 @@ const ROUTINE_TEMPLATES: Record<string, { title: string; days: TemplateDay[] }> 
       {
         name: 'Día 2: Cadena Posterior & Tracción',
         exercises: [
-          { nombre: 'Peso Muerto Convencional', grupoMuscular: 'Piernas' },
+          { nombre: 'Peso Muerto Convencional', grupoMuscular: 'Isquiosurales' },
           { nombre: 'Press Militar con Barra', grupoMuscular: 'Hombros' },
           { nombre: 'Dominadas Pronas (o Jalón al Pecho)', grupoMuscular: 'Espalda' },
-          { nombre: 'Prensa de Piernas inclinada', grupoMuscular: 'Piernas' },
+          { nombre: 'Prensa de Piernas inclinada', grupoMuscular: 'Cuádriceps' },
           { nombre: 'Copa de Tríceps con Mancuerna', grupoMuscular: 'Tríceps' },
         ],
       },
       {
         name: 'Día 3: Hipertrofia & Accesorios',
         exercises: [
-          { nombre: 'Zancadas Dinámicas con Mancuernas', grupoMuscular: 'Piernas' },
+          { nombre: 'Zancadas Dinámicas con Mancuernas', grupoMuscular: 'Cuádriceps' },
           { nombre: 'Press de Banca Inclinado con Mancuernas', grupoMuscular: 'Pecho' },
           { nombre: 'Remo Gironda (Remo Sentado en Polea)', grupoMuscular: 'Espalda' },
-          { nombre: 'Elevación de Talones de Pie (Prensa)', grupoMuscular: 'Piernas' },
+          { nombre: 'Elevación de Talones de Pie (Prensa)', grupoMuscular: 'Cuádriceps' },
           { nombre: 'Abdominales de tipo Crunch en Colchoneta', grupoMuscular: 'Abdomen' },
         ],
       },
     ],
   },
   torso_pierna: {
-    title: 'Torso / Pierna (4 Días)',
+    title: 'Torso / Extremidades (4 Días)',
     days: [
       {
         name: 'Día 1: Torso Enfocado en Empuje',
@@ -122,13 +122,13 @@ const ROUTINE_TEMPLATES: Record<string, { title: string; days: TemplateDay[] }> 
         ],
       },
       {
-        name: 'Día 2: Pierna Fuerza & Cuádriceps',
+        name: 'Día 2: Cuádriceps & Glúteos (Fuerza)',
         exercises: [
-          { nombre: 'Sentadilla Libre con Barra', grupoMuscular: 'Piernas' },
-          { nombre: 'Peso Muerto Rumano con Mancuernas', grupoMuscular: 'Piernas' },
-          { nombre: 'Prensa de Piernas', grupoMuscular: 'Piernas' },
-          { nombre: 'Curl de Piernas Acostado en Máquina', grupoMuscular: 'Piernas' },
-          { nombre: 'Elevación de Talones Sentado en Máquina', grupoMuscular: 'Piernas' },
+          { nombre: 'Sentadilla Libre con Barra', grupoMuscular: 'Cuádriceps' },
+          { nombre: 'Peso Muerto Rumano con Mancuernas', grupoMuscular: 'Isquiosurales' },
+          { nombre: 'Prensa de Piernas', grupoMuscular: 'Cuádriceps' },
+          { nombre: 'Curl de Piernas Acostado en Máquina', grupoMuscular: 'Isquiosurales' },
+          { nombre: 'Elevación de Talones Sentado en Máquina', grupoMuscular: 'Cuádriceps' },
           { nombre: 'Plancha Abdominal Estática', grupoMuscular: 'Abdomen' },
         ],
       },
@@ -144,13 +144,13 @@ const ROUTINE_TEMPLATES: Record<string, { title: string; days: TemplateDay[] }> 
         ],
       },
       {
-        name: 'Día 4: Pierna Volumen & Femorales',
+        name: 'Día 4: Isquiosurales & Pantorrillas (Volumen)',
         exercises: [
-          { nombre: 'Peso Muerto Rumano con Barra', grupoMuscular: 'Piernas' },
-          { nombre: 'Prensa de Piernas inclinada', grupoMuscular: 'Piernas' },
-          { nombre: 'Zancadas Búlgaras con Mancuernas', grupoMuscular: 'Piernas' },
-          { nombre: 'Extensiones de Cuádriceps en Máquina', grupoMuscular: 'Piernas' },
-          { nombre: 'Elevación de Talones de Pie', grupoMuscular: 'Piernas' },
+          { nombre: 'Peso Muerto Rumano con Barra', grupoMuscular: 'Isquiosurales' },
+          { nombre: 'Prensa de Piernas inclinada', grupoMuscular: 'Cuádriceps' },
+          { nombre: 'Zancadas Búlgaras con Mancuernas', grupoMuscular: 'Cuádriceps' },
+          { nombre: 'Extensiones de Cuádriceps en Máquina', grupoMuscular: 'Cuádriceps' },
+          { nombre: 'Elevación de Talones de Pie', grupoMuscular: 'Cuádriceps' },
           { nombre: 'Elevación de Piernas Colgado en barra', grupoMuscular: 'Abdomen' },
         ],
       },
@@ -180,13 +180,13 @@ const ROUTINE_TEMPLATES: Record<string, { title: string; days: TemplateDay[] }> 
         ],
       },
       {
-        name: 'Día 3: Pierna (Legs)',
+        name: 'Día 3: Pierna (Cuádriceps & Femorales)',
         exercises: [
-          { nombre: 'Sentadilla Libre con Barra', grupoMuscular: 'Piernas' },
-          { nombre: 'Peso Muerto Rumano con Barra', grupoMuscular: 'Piernas' },
-          { nombre: 'Prensa de Piernas inclinada', grupoMuscular: 'Piernas' },
-          { nombre: 'Curl de Piernas Acostado en Máquina', grupoMuscular: 'Piernas' },
-          { nombre: 'Elevación de Talones de Pie (Prensa)', grupoMuscular: 'Piernas' },
+          { nombre: 'Sentadilla Libre con Barra', grupoMuscular: 'Cuádriceps' },
+          { nombre: 'Peso Muerto Rumano con Barra', grupoMuscular: 'Isquiosurales' },
+          { nombre: 'Prensa de Piernas inclinada', grupoMuscular: 'Cuádriceps' },
+          { nombre: 'Curl de Piernas Acostado en Máquina', grupoMuscular: 'Isquiosurales' },
+          { nombre: 'Elevación de Talones de Pie (Prensa)', grupoMuscular: 'Cuádriceps' },
         ],
       },
     ],

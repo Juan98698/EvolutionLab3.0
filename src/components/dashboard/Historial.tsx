@@ -67,7 +67,7 @@ export const Historial: React.FC = () => {
   const [editDescanso, setEditDescanso] = useState<string>('');
   const [editNotas, setEditNotas] = useState<string>('');
 
-  const GRUPOS_MUSCULARES = ['Pecho', 'Espalda', 'Piernas', 'Hombros', 'Bíceps', 'Tríceps', 'Core', 'Cardio', 'General'];
+  const GRUPOS_MUSCULARES = ['Pecho', 'Espalda', 'Cuádriceps', 'Isquiosurales', 'Hombros', 'Bíceps', 'Tríceps', 'Core', 'Glúteos', 'Cardio', 'General'];
 
   const handleStartEdit = (f: any) => {
     setEditingId(`${f.id_sesion}_${f.id_ej}`);
