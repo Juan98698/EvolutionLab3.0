@@ -8,8 +8,8 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 // Configurar llaves VAPID (fallback de desarrollo por si no están configuradas en Vercel)
-const vapidPublicKey = process.env.VITE_VAPID_PUBLIC_KEY || 'BFGv5gZkL0vN-aC1V0dTL2m_k4v5XnNlV3gZ6L7vN8c9d0e1f2a3b4c5d6e7f8a9';
-const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY || 'FallbackPrivateKeyForDevelopment_ConfigureCorrectlyInVercel';
+const vapidPublicKey = process.env.VITE_VAPID_PUBLIC_KEY || 'BNXllPMOAb4gZfbJx_wO_MOeozQjZTTFxyPSwXPBCRgOebjYoPRWeLgfySgqCyj0_o7exBTN4ttD_yxtFv63N7Q';
+const vapidPrivateKey = process.env.VAPID_PRIVATE_KEY || 'BcUaRTZ9a8VVs_S6yrT6ZmGQfWfAjPT7w_vz3pyXaUI';
 
 webpush.setVapidDetails(
   'mailto:soporte@evolutionlab.com',

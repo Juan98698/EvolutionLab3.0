@@ -1093,11 +1093,21 @@ export const AthleteDashboard: React.FC = () => {
               <button
                 onClick={async () => {
                   if (user) {
+                    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+                      showToast('Tu navegador no soporta notificaciones. Instala la PWA en tu pantalla de inicio o usa un navegador moderno.', 'info');
+                      setShowPushPrompt(false);
+                      return;
+                    }
+                    if (Notification.permission === 'denied') {
+                      showToast('Las notificaciones están bloqueadas. Restablécelas en los ajustes del navegador.', 'info');
+                      setShowPushPrompt(false);
+                      return;
+                    }
                     const ok = await subscribirNotificacionesPush(user.id);
                     if (ok) {
                       showToast('🔔 ¡Notificaciones activadas exitosamente!', 'success');
                     } else {
-                      showToast('No se pudieron activar las notificaciones en este navegador.', 'info');
+                      showToast('No se pudo activar la suscripción. Inténtalo de nuevo más tarde.', 'info');
                     }
                     setShowPushPrompt(false);
                   }

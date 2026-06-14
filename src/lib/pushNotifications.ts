@@ -1,7 +1,7 @@
 // src/lib/pushNotifications.ts
 // Gestión de suscripciones y permisos de notificaciones push en el navegador
 
-const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY || 'BFGv5gZkL0vN-aC1V0dTL2m_k4v5XnNlV3gZ6L7vN8c9d0e1f2a3b4c5d6e7f8a9';
+const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY || 'BNXllPMOAb4gZfbJx_wO_MOeozQjZTTFxyPSwXPBCRgOebjYoPRWeLgfySgqCyj0_o7exBTN4ttD_yxtFv63N7Q';
 
 function urlBase64ToUint8Array(base64String: string) {
   const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
