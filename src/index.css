@@ -38,6 +38,11 @@
   --theme-input-focus: #00d4ff;
   --theme-input-focus-glow: rgba(0, 212, 255, 0.18);
   --theme-badge-bg: rgba(0, 212, 255, 0.20);
+
+  /* Hexagon Tech Grid & Circuits fallbacks */
+  --bg-hex-grid: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='49' viewBox='0 0 28 49'%3E%3Cpath d='M0 0 L14 8 L28 0 M14 8 L14 24 M0 32 L14 24 L28 32 M14 24 L14 41 M0 49 L14 41 L28 49' fill='none' stroke='rgba(0, 212, 255, 0.025)' stroke-width='1'/%3E%3C/svg%3E");
+  --bg-circuit-top-left: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 400 400' fill='none'%3E%3Cg stroke='%2300d4ff' stroke-width='2' opacity='0.25'%3E%3Cpath d='M-10 150 L150 150 L250 50 L350 50'/%3E%3Ccircle cx='350' cy='50' r='4' fill='%2300d4ff'/%3E%3C/g%3E%3Cg stroke='%237b2ff7' stroke-width='2' opacity='0.25'%3E%3Cpath d='M-10 220 L120 220 L220 120 L320 120'/%3E%3Ccircle cx='320' cy='120' r='4' fill='%237b2ff7'/%3E%3C/g%3E%3Cg stroke='%2300d4ff' stroke-width='1.5' opacity='0.15'%3E%3Cpath d='M200 -10 L200 80 L280 160 L280 250'/%3E%3Ccircle cx='280' cy='250' r='3' fill='%2300d4ff'/%3E%3C/g%3E%3C/svg%3E");
+  --bg-circuit-bottom-right: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 400 400' fill='none'%3E%3Cg stroke='%237b2ff7' stroke-width='2' opacity='0.25'%3E%3Cpath d='M410 250 L250 250 L150 350 L50 350'/%3E%3Ccircle cx='50' cy='350' r='4' fill='%237b2ff7'/%3E%3C/g%3E%3Cg stroke='%2300d4ff' stroke-width='2' opacity='0.25'%3E%3Cpath d='M410 180 L280 180 L180 280 L80 280'/%3E%3Ccircle cx='80' cy='280' r='4' fill='%2300d4ff'/%3E%3C/g%3E%3Cg stroke='%237b2ff7' stroke-width='1.5' opacity='0.15'%3E%3Cpath d='M200 410 L200 320 L120 240 L120 150'/%3E%3Ccircle cx='120' cy='150' r='3' fill='%237b2ff7'/%3E%3C/g%3E%3C/svg%3E");
 }
 
 /* --- THEME 1: Evolution Cyan --- */
@@ -58,6 +63,10 @@
   /* Global background variables overrides */
   --bg: rgba(15, 23, 42, 0.85);
   --bg2: rgba(15, 23, 42, 0.72);
+
+  --bg-hex-grid: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='49' viewBox='0 0 28 49'%3E%3Cpath d='M0 0 L14 8 L28 0 M14 8 L14 24 M0 32 L14 24 L28 32 M14 24 L14 41 M0 49 L14 41 L28 49' fill='none' stroke='rgba(0, 212, 255, 0.025)' stroke-width='1'/%3E%3C/svg%3E");
+  --bg-circuit-top-left: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 400 400' fill='none'%3E%3Cg stroke='%2300d4ff' stroke-width='2' opacity='0.25'%3E%3Cpath d='M-10 150 L150 150 L250 50 L350 50'/%3E%3Ccircle cx='350' cy='50' r='4' fill='%2300d4ff'/%3E%3C/g%3E%3Cg stroke='%237b2ff7' stroke-width='2' opacity='0.25'%3E%3Cpath d='M-10 220 L120 220 L220 120 L320 120'/%3E%3Ccircle cx='320' cy='120' r='4' fill='%237b2ff7'/%3E%3C/g%3E%3Cg stroke='%2300d4ff' stroke-width='1.5' opacity='0.15'%3E%3Cpath d='M200 -10 L200 80 L280 160 L280 250'/%3E%3Ccircle cx='280' cy='250' r='3' fill='%2300d4ff'/%3E%3C/g%3E%3C/svg%3E");
+  --bg-circuit-bottom-right: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 400 400' fill='none'%3E%3Cg stroke='%237b2ff7' stroke-width='2' opacity='0.25'%3E%3Cpath d='M410 250 L250 250 L150 350 L50 350'/%3E%3Ccircle cx='50' cy='350' r='4' fill='%237b2ff7'/%3E%3C/g%3E%3Cg stroke='%2300d4ff' stroke-width='2' opacity='0.25'%3E%3Cpath d='M410 180 L280 180 L180 280 L80 280'/%3E%3Ccircle cx='80' cy='280' r='4' fill='%2300d4ff'/%3E%3C/g%3E%3Cg stroke='%237b2ff7' stroke-width='1.5' opacity='0.15'%3E%3Cpath d='M200 410 L200 320 L120 240 L120 150'/%3E%3Ccircle cx='120' cy='150' r='3' fill='%237b2ff7'/%3E%3C/g%3E%3C/svg%3E");
 }
 
 /* --- THEME 2: Cyberpunk Acid --- */
@@ -78,6 +87,10 @@
   /* Global background variables overrides */
   --bg: rgba(20, 10, 30, 0.88);
   --bg2: rgba(20, 10, 30, 0.76);
+
+  --bg-hex-grid: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='49' viewBox='0 0 28 49'%3E%3Cpath d='M0 0 L14 8 L28 0 M14 8 L14 24 M0 32 L14 24 L28 32 M14 24 L14 41 M0 49 L14 41 L28 49' fill='none' stroke='rgba(204, 255, 0, 0.025)' stroke-width='1'/%3E%3C/svg%3E");
+  --bg-circuit-top-left: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 400 400' fill='none'%3E%3Cg stroke='%23ccff00' stroke-width='2' opacity='0.25'%3E%3Cpath d='M-10 150 L150 150 L250 50 L350 50'/%3E%3Ccircle cx='350' cy='50' r='4' fill='%23ccff00'/%3E%3C/g%3E%3Cg stroke='%23ff0055' stroke-width='2' opacity='0.25'%3E%3Cpath d='M-10 220 L120 220 L220 120 L320 120'/%3E%3Ccircle cx='320' cy='120' r='4' fill='%23ff0055'/%3E%3C/g%3E%3Cg stroke='%23ccff00' stroke-width='1.5' opacity='0.15'%3E%3Cpath d='M200 -10 L200 80 L280 160 L280 250'/%3E%3Ccircle cx='280' cy='250' r='3' fill='%23ccff00'/%3E%3C/g%3E%3C/svg%3E");
+  --bg-circuit-bottom-right: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 400 400' fill='none'%3E%3Cg stroke='%23ff0055' stroke-width='2' opacity='0.25'%3E%3Cpath d='M410 250 L250 250 L150 350 L50 350'/%3E%3Ccircle cx='50' cy='350' r='4' fill='%23ff0055'/%3E%3C/g%3E%3Cg stroke='%23ccff00' stroke-width='2' opacity='0.25'%3E%3Cpath d='M410 180 L280 180 L180 280 L80 280'/%3E%3Ccircle cx='80' cy='280' r='4' fill='%23ccff00'/%3E%3C/g%3E%3Cg stroke='%23ff0055' stroke-width='1.5' opacity='0.15'%3E%3Cpath d='M200 410 L200 320 L120 240 L120 150'/%3E%3Ccircle cx='120' cy='150' r='3' fill='%23ff0055'/%3E%3C/g%3E%3C/svg%3E");
 }
 
 /* --- THEME 3: Monochrome Raw --- */
@@ -98,6 +111,10 @@
   /* Global background variables overrides */
   --bg: rgba(10, 10, 10, 0.94);
   --bg2: rgba(10, 10, 10, 0.84);
+
+  --bg-hex-grid: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='49' viewBox='0 0 28 49'%3E%3Cpath d='M0 0 L14 8 L28 0 M14 8 L14 24 M0 32 L14 24 L28 32 M14 24 L14 41 M0 49 L14 41 L28 49' fill='none' stroke='rgba(255, 255, 255, 0.02)' stroke-width='1'/%3E%3C/svg%3E");
+  --bg-circuit-top-left: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 400 400' fill='none'%3E%3Cg stroke='%23ffffff' stroke-width='2' opacity='0.25'%3E%3Cpath d='M-10 150 L150 150 L250 50 L350 50'/%3E%3Ccircle cx='350' cy='50' r='4' fill='%23ffffff'/%3E%3C/g%3E%3Cg stroke='%23888888' stroke-width='2' opacity='0.25'%3E%3Cpath d='M-10 220 L120 220 L220 120 L320 120'/%3E%3Ccircle cx='320' cy='120' r='4' fill='%23888888'/%3E%3C/g%3E%3Cg stroke='%23ffffff' stroke-width='1.5' opacity='0.15'%3E%3Cpath d='M200 -10 L200 80 L280 160 L280 250'/%3E%3Ccircle cx='280' cy='250' r='3' fill='%23ffffff'/%3E%3C/g%3E%3C/svg%3E");
+  --bg-circuit-bottom-right: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 400 400' fill='none'%3E%3Cg stroke='%23888888' stroke-width='2' opacity='0.25'%3E%3Cpath d='M410 250 L250 250 L150 350 L50 350'/%3E%3Ccircle cx='50' cy='350' r='4' fill='%23888888'/%3E%3C/g%3E%3Cg stroke='%23ffffff' stroke-width='2' opacity='0.25'%3E%3Cpath d='M410 180 L280 180 L180 280 L80 280'/%3E%3Ccircle cx='80' cy='280' r='4' fill='%23ffffff'/%3E%3C/g%3E%3Cg stroke='%23888888' stroke-width='1.5' opacity='0.15'%3E%3Cpath d='M200 410 L200 320 L120 240 L120 150'/%3E%3Ccircle cx='120' cy='150' r='3' fill='%23888888'/%3E%3C/g%3E%3C/svg%3E");
 }
 
 /* --- THEME 4: Forest Bio-Green --- */
@@ -118,6 +135,10 @@
   /* Global background variables overrides */
   --bg: rgba(10, 25, 20, 0.85);
   --bg2: rgba(10, 25, 20, 0.74);
+
+  --bg-hex-grid: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='49' viewBox='0 0 28 49'%3E%3Cpath d='M0 0 L14 8 L28 0 M14 8 L14 24 M0 32 L14 24 L28 32 M14 24 L14 41 M0 49 L14 41 L28 49' fill='none' stroke='rgba(0, 255, 135, 0.025)' stroke-width='1'/%3E%3C/svg%3E");
+  --bg-circuit-top-left: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 400 400' fill='none'%3E%3Cg stroke='%2300ff87' stroke-width='2' opacity='0.25'%3E%3Cpath d='M-10 150 L150 150 L250 50 L350 50'/%3E%3Ccircle cx='350' cy='50' r='4' fill='%2300ff87'/%3E%3C/g%3E%3Cg stroke='%2300a8ff' stroke-width='2' opacity='0.25'%3E%3Cpath d='M-10 220 L120 220 L220 120 L320 120'/%3E%3Ccircle cx='320' cy='120' r='4' fill='%2300a8ff'/%3E%3C/g%3E%3Cg stroke='%2300ff87' stroke-width='1.5' opacity='0.15'%3E%3Cpath d='M200 -10 L200 80 L280 160 L280 250'/%3E%3Ccircle cx='280' cy='250' r='3' fill='%2300ff87'/%3E%3C/g%3E%3C/svg%3E");
+  --bg-circuit-bottom-right: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 400 400' fill='none'%3E%3Cg stroke='%2300a8ff' stroke-width='2' opacity='0.25'%3E%3Cpath d='M410 250 L250 250 L150 350 L50 350'/%3E%3Ccircle cx='50' cy='350' r='4' fill='%2300a8ff'/%3E%3C/g%3E%3Cg stroke='%2300ff87' stroke-width='2' opacity='0.25'%3E%3Cpath d='M410 180 L280 180 L180 280 L80 280'/%3E%3Ccircle cx='80' cy='280' r='4' fill='%2300ff87'/%3E%3C/g%3E%3Cg stroke='%2300a8ff' stroke-width='1.5' opacity='0.15'%3E%3Cpath d='M200 410 L200 320 L120 240 L120 150'/%3E%3Ccircle cx='120' cy='150' r='3' fill='%2300a8ff'/%3E%3C/g%3E%3C/svg%3E");
 }
 
 /* --- THEME 5: Lava Crimson --- */
@@ -138,6 +159,10 @@
   /* Global background variables overrides */
   --bg: rgba(24, 10, 10, 0.88);
   --bg2: rgba(24, 10, 10, 0.76);
+
+  --bg-hex-grid: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='49' viewBox='0 0 28 49'%3E%3Cpath d='M0 0 L14 8 L28 0 M14 8 L14 24 M0 32 L14 24 L28 32 M14 24 L14 41 M0 49 L14 41 L28 49' fill='none' stroke='rgba(255, 107, 0, 0.025)' stroke-width='1'/%3E%3C/svg%3E");
+  --bg-circuit-top-left: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 400 400' fill='none'%3E%3Cg stroke='%23ff6b00' stroke-width='2' opacity='0.25'%3E%3Cpath d='M-10 150 L150 150 L250 50 L350 50'/%3E%3Ccircle cx='350' cy='50' r='4' fill='%23ff6b00'/%3E%3C/g%3E%3Cg stroke='%23ff003c' stroke-width='2' opacity='0.25'%3E%3Cpath d='M-10 220 L120 220 L220 120 L320 120'/%3E%3Ccircle cx='320' cy='120' r='4' fill='%23ff003c'/%3E%3C/g%3E%3Cg stroke='%23ff6b00' stroke-width='1.5' opacity='0.15'%3E%3Cpath d='M200 -10 L200 80 L280 160 L280 250'/%3E%3Ccircle cx='280' cy='250' r='3' fill='%23ff6b00'/%3E%3C/g%3E%3C/svg%3E");
+  --bg-circuit-bottom-right: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 400 400' fill='none'%3E%3Cg stroke='%23ff003c' stroke-width='2' opacity='0.25'%3E%3Cpath d='M410 250 L250 250 L150 350 L50 350'/%3E%3Ccircle cx='50' cy='350' r='4' fill='%23ff003c'/%3E%3C/g%3E%3Cg stroke='%23ff6b00' stroke-width='2' opacity='0.25'%3E%3Cpath d='M410 180 L280 180 L180 280 L80 280'/%3E%3Ccircle cx='80' cy='280' r='4' fill='%23ff6b00'/%3E%3C/g%3E%3Cg stroke='%23ff003c' stroke-width='1.5' opacity='0.15'%3E%3Cpath d='M200 410 L200 320 L120 240 L120 150'/%3E%3Ccircle cx='120' cy='150' r='3' fill='%23ff003c'/%3E%3C/g%3E%3C/svg%3E");
 }
 
 /* --- THEME 6: Royal Gold --- */
@@ -158,6 +183,10 @@
   /* Global background variables overrides */
   --bg: rgba(20, 18, 12, 0.88);
   --bg2: rgba(20, 18, 12, 0.76);
+
+  --bg-hex-grid: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='49' viewBox='0 0 28 49'%3E%3Cpath d='M0 0 L14 8 L28 0 M14 8 L14 24 M0 32 L14 24 L28 32 M14 24 L14 41 M0 49 L14 41 L28 49' fill='none' stroke='rgba(212, 175, 55, 0.02)' stroke-width='1'/%3E%3C/svg%3E");
+  --bg-circuit-top-left: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 400 400' fill='none'%3E%3Cg stroke='%23d4af37' stroke-width='2' opacity='0.25'%3E%3Cpath d='M-10 150 L150 150 L250 50 L350 50'/%3E%3Ccircle cx='350' cy='50' r='4' fill='%23d4af37'/%3E%3C/g%3E%3Cg stroke='%23aa7c11' stroke-width='2' opacity='0.25'%3E%3Cpath d='M-10 220 L120 220 L220 120 L320 120'/%3E%3Ccircle cx='320' cy='120' r='4' fill='%23aa7c11'/%3E%3C/g%3E%3Cg stroke='%23d4af37' stroke-width='1.5' opacity='0.15'%3E%3Cpath d='M200 -10 L200 80 L280 160 L280 250'/%3E%3Ccircle cx='280' cy='250' r='3' fill='%23d4af37'/%3E%3C/g%3E%3C/svg%3E");
+  --bg-circuit-bottom-right: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 400 400' fill='none'%3E%3Cg stroke='%23aa7c11' stroke-width='2' opacity='0.25'%3E%3Cpath d='M410 250 L250 250 L150 350 L50 350'/%3E%3Ccircle cx='50' cy='350' r='4' fill='%23aa7c11'/%3E%3C/g%3E%3Cg stroke='%23d4af37' stroke-width='2' opacity='0.25'%3E%3Cpath d='M410 180 L280 180 L180 280 L80 280'/%3E%3Ccircle cx='80' cy='280' r='4' fill='%23d4af37'/%3E%3C/g%3E%3Cg stroke='%23aa7c11' stroke-width='1.5' opacity='0.15'%3E%3Cpath d='M200 410 L200 320 L120 240 L120 150'/%3E%3Ccircle cx='120' cy='150' r='3' fill='%23aa7c11'/%3E%3C/g%3E%3C/svg%3E");
 }
 
 /* --- THEME 7: Gothic Void --- */
@@ -183,6 +212,10 @@
   --theme-input-focus: #b91c1c;
   --theme-input-focus-glow: rgba(185, 28, 28, 0.2);
   --theme-badge-bg: rgba(185, 28, 28, 0.24);
+
+  --bg-hex-grid: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='28' height='49' viewBox='0 0 28 49'%3E%3Cpath d='M0 0 L14 8 L28 0 M14 8 L14 24 M0 32 L14 24 L28 32 M14 24 L14 41 M0 49 L14 41 L28 49' fill='none' stroke='rgba(153, 27, 27, 0.02)' stroke-width='1'/%3E%3C/svg%3E");
+  --bg-circuit-top-left: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 400 400' fill='none'%3E%3Cg stroke='%23990000' stroke-width='2' opacity='0.25'%3E%3Cpath d='M-10 150 L150 150 L250 50 L350 50'/%3E%3Ccircle cx='350' cy='50' r='4' fill='%23990000'/%3E%3C/g%3E%3Cg stroke='%233a0204' stroke-width='2' opacity='0.25'%3E%3Cpath d='M-10 220 L120 220 L220 120 L320 120'/%3E%3Ccircle cx='320' cy='120' r='4' fill='%233a0204'/%3E%3C/g%3E%3Cg stroke='%23990000' stroke-width='1.5' opacity='0.15'%3E%3Cpath d='M200 -10 L200 80 L280 160 L280 250'/%3E%3Ccircle cx='280' cy='250' r='3' fill='%23990000'/%3E%3C/g%3E%3C/svg%3E");
+  --bg-circuit-bottom-right: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 400 400' fill='none'%3E%3Cg stroke='%233a0204' stroke-width='2' opacity='0.25'%3E%3Cpath d='M410 250 L250 250 L150 350 L50 350'/%3E%3Ccircle cx='50' cy='350' r='4' fill='%233a0204'/%3E%3C/g%3E%3Cg stroke='%23990000' stroke-width='2' opacity='0.25'%3E%3Cpath d='M410 180 L280 180 L180 280 L80 280'/%3E%3Ccircle cx='80' cy='280' r='4' fill='%23990000'/%3E%3C/g%3E%3Cg stroke='%233a0204' stroke-width='1.5' opacity='0.15'%3E%3Cpath d='M200 410 L200 320 L120 240 L120 150'/%3E%3Ccircle cx='120' cy='150' r='3' fill='%233a0204'/%3E%3C/g%3E%3C/svg%3E");
 }
 
 /* Static utilities to resolve Chromium dynamic background-clip rendering bugs */
@@ -3309,4 +3342,43 @@ textarea:focus,
 }
 .exercise-checkbox.checked {
   background-color: var(--theme-primary) !important;
+}
+
+
+/* ==========================================================================
+   PURE CSS / RESPONSIVE SCI-FI HUD TECH grid & CIRCUITS BACKGROUND
+   ========================================================================== */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: 
+    var(--bg-circuit-top-left), 
+    var(--bg-circuit-bottom-right), 
+    var(--bg-hex-grid);
+  background-position: 
+    top 0px left 0px, 
+    bottom 0px right 0px, 
+    center center;
+  background-repeat: 
+    no-repeat, 
+    no-repeat, 
+    repeat;
+  background-size: 
+    400px 400px, 
+    400px 400px, 
+    28px 49px;
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0.9;
+  transition: background-image 0.3s ease;
+}
+
+@media (max-width: 768px) {
+  body::before {
+    background-size: 
+      250px 250px, 
+      250px 250px, 
+      28px 49px;
+  }
 }
