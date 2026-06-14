@@ -314,7 +314,7 @@ export const ShareableProgressCard: React.FC<ShareableProgressCardProps> = ({
           <h3 style={{ margin: 0, fontFamily: "'Orbitron', sans-serif", color: 'var(--theme-primary)', fontSize: '13px', letterSpacing: '1px', textTransform: 'uppercase' }}>
             Compartir Progreso 📸
           </h3>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', fontSize: '24px', cursor: 'pointer', lineHeght: 1 }}>&times;</button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', fontSize: '24px', cursor: 'pointer', lineHeight: 1 }}>&times;</button>
         </div>
 
         {/* Canvas preview */}

@@ -226,6 +226,7 @@ export const AthleteDashboard: React.FC = () => {
     suscripcion_plan?: string;
     suscripcion_estado?: string;
     suscripcion_expira_at?: string | null;
+    insignias_custom?: any[] | null;
   } | null>(null);
 
   const wsHref = useMemo(() => {
@@ -579,13 +580,6 @@ export const AthleteDashboard: React.FC = () => {
 
   const showNotificationsPanel =
     notificationsEmptyState !== null || visibleNotificaciones.length > 0;
-
-  const dismissNotification = useCallback(
-    (key: string) => {
-      setDismissedKeys((prev) => (prev.includes(key) ? prev : [...prev, key]));
-    },
-    [setDismissedKeys]
-  );
 
   // Verificar expiración del plan
   const planExpiration = useMemo(() => {
