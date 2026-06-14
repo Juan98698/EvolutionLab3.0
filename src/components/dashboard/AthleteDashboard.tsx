@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import NotificationCard from './NotificationCard';
 import NotificationsEmptyState from './NotificationsEmptyState';
@@ -564,7 +564,7 @@ export const AthleteDashboard: React.FC = () => {
     [plan, overloadSessions, overloadRules, overloadConfig]
   );
 
-  const [dismissedKeys, setDismissedKeys] = useLocalStorage<string[]>(DISMISSED_NOTIFS_KEY, []);
+  const [dismissedKeys, _setDismissedKeys] = useLocalStorage<string[]>(DISMISSED_NOTIFS_KEY, []);
 
   const minSesiones = overloadConfig.minSesiones ?? DEFAULT_OVERLOAD_CONFIG.minSesiones;
 

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Evolution Lab - Redirección</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      background: #0b0f19;
+      color: #f8fafc;
+      font-family: 'Inter', sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      margin: 0;
+    }
+    .card {
+      text-align: center;
+      padding: 40px 30px;
+      border-radius: 16px;
+      background: rgba(15, 23, 42, 0.45);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      max-width: 400px;
+      box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.5);
+    }
+    h2 {
+      font-family: 'Orbitron', sans-serif;
+      color: #00d4ff;
+      margin-bottom: 12px;
+      letter-spacing: 1px;
+    }
+    p {
+      color: #94a3b8;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .spinner {
+      width: 32px;
+      height: 32px;
+      border: 3px solid rgba(0, 214, 255, 0.1);
+      border-top: 3px solid #00d4ff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 24px auto;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+  <script>
+    try {
+      localStorage.removeItem('pwa_client_url');
+    } catch(e) {}
+    window.location.replace("/index.html");
+  </script>
+</head>
+<body>
+  <div class="card">
+    <div class="spinner"></div>
+    <h2>Actualizando Plan...</h2>
+    <p>Te estamos redirigiendo a la plataforma en la nube de <strong>Evolution Lab</strong> para cargar tu rutina actualizada en tiempo real.</p>
+    <p style="font-size: 12px; margin-top: 20px;">Si no se redirige automáticamente, <a href="/index.html" style="color: #00d4ff; text-decoration: underline; font-weight: 600;">haz clic aquí</a>.</p>
+  </div>
+</body>
+</html>
