@@ -13,21 +13,44 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   const { userId, subscription } = req.body;
 
-  if (!userId || !subscription) {
-    return res.status(400).json({ error: 'Faltan parámetros requeridos: userId, subscription' });
+  if (!userId || !subscription || !subscription.endpoint) {
+    return res.status(400).json({ error: 'Faltan parámetros requeridos o estructura inválida (userId, subscription.endpoint)' });
   }
 
   try {
-    // Buscar si ya existe una suscripción idéntica o si actualizamos
-    const { error } = await supabase
+    // Buscar si ya existe la suscripción de este usuario mediante el endpoint único del navegador
+    const { data: existing, error: findError } = await supabase
       .from('push_subscriptions')
-      .upsert({
-        cliente_id: userId,
-        subscription: subscription,
-        updated_at: new Date().toISOString()
-      }, { onConflict: 'cliente_id,subscription' }); // Si soporta, o simplemente guardamos múltiples suscripciones (dispositivos)
+      .select('id')
+      .eq('cliente_id', userId)
+      .eq('subscription->>endpoint', subscription.endpoint)
+      .maybeSingle();
 
-    if (error) throw error;
+    if (findError) throw findError;
+
+    if (existing) {
+      // Si existe, actualizamos la fecha de actualización
+      const { error: updateError } = await supabase
+        .from('push_subscriptions')
+        .update({
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', existing.id);
+      
+      if (updateError) throw updateError;
+    } else {
+      // Si no existe, creamos el registro
+      const { error: insertError } = await supabase
+        .from('push_subscriptions')
+        .insert({
+          cliente_id: userId,
+          subscription: subscription,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        });
+
+      if (insertError) throw insertError;
+    }
 
     return res.status(200).json({ success: true, message: 'Suscripción push guardada con éxito.' });
   } catch (err: any) {
