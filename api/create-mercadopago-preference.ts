@@ -61,9 +61,38 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         return res.status(400).json({ error: 'Invalid plan selected' });
     }
 
-    const origin = req.headers.origin || 'http://localhost:5173';
     const host = req.headers.host || '';
-    const isLocal = host.includes('localhost') || host.includes('127.0.0.1');
+    const isLocal = host.includes('localhost') || host.includes('127.0.0.1') || host.includes('[::1]');
+    const protocol = req.headers['x-forwarded-proto'] || (isLocal ? 'http' : 'https');
+    
+    // Determine sandbox mode based on token prefix, environment variable, or local execution
+    const isSandbox =
+      accessToken.startsWith('TEST-') ||
+      process.env.MERCADOPAGO_SANDBOX === 'true' ||
+      isLocal ||
+      !process.env.VERCEL_ENV ||
+      process.env.VERCEL_ENV === 'development';
+
+    // Determine client origin robustly
+    let origin = req.headers.origin;
+    if (!origin || origin === 'null') {
+      origin = host ? `${protocol}://${host}` : '';
+    }
+    if (!origin) {
+      origin = isLocal ? 'http://localhost:3000' : 'https://evolution-lab.vercel.app';
+    }
+
+    // Standardize URL to avoid double slashes or missing slashes
+    const cleanOrigin = origin.endsWith('/') ? origin.slice(0, -1) : origin;
+    const cleanPath = redirectPath.startsWith('/') ? redirectPath : `/${redirectPath}`;
+    let baseRedirectUrl = `${cleanOrigin}${cleanPath}`;
+
+    // MercadoPago strictly requires HTTPS for all back_urls.
+    // If it starts with http:// (e.g. during local testing on localhost), we force it to https://
+    // so that MercadoPago accepts preference creation.
+    if (baseRedirectUrl.startsWith('http://')) {
+      baseRedirectUrl = baseRedirectUrl.replace('http://', 'https://');
+    }
 
     // Determine webhook notification url
     let notificationUrl = '';
@@ -72,6 +101,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     } else if (host && !isLocal) {
       notificationUrl = `https://${host}/api/mercadopago-webhook`;
     }
+
+    // In sandbox mode, we override the payer email with the official test buyer email configured
+    // in environment variables to allow payments to be processed successfully in Sandbox.
+    // In production, we use the user's real email.
+    const testBuyerEmail = process.env.MERCADOPAGO_TEST_BUYER_EMAIL || 'TESTUSER3169499133033229626@testuser.com';
+    const payerEmail = isSandbox
+      ? testBuyerEmail
+      : email;
 
     // MercadoPago Preference body
     const preferenceBody: any = {
@@ -86,12 +123,12 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         },
       ],
       payer: {
-        email: email,
+        email: payerEmail,
       },
       back_urls: {
-        success: `${origin}${redirectPath}?payment_success=true&plan=${plan}`,
-        failure: `${origin}${redirectPath}?payment_cancel=true`,
-        pending: `${origin}${redirectPath}?payment_success=pending&plan=${plan}`,
+        success: `${baseRedirectUrl}?payment_success=true&plan=${plan}`,
+        failure: `${baseRedirectUrl}?payment_cancel=true`,
+        pending: `${baseRedirectUrl}?payment_success=pending&plan=${plan}`,
       },
       auto_return: 'approved',
       metadata: {
@@ -100,6 +137,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         email: email,
       },
     };
+
+    console.log('Sending Preference Body to MercadoPago:', JSON.stringify(preferenceBody, null, 2));
 
     // Attach notification url only if it's set (must be a public HTTPS url)
     if (notificationUrl) {
@@ -124,9 +163,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     const preference = await mpResponse.json();
 
-    // Use init_point for live or fallback, sandbox_init_point for testing if token is test-token
-    const isSandbox = accessToken.startsWith('TEST-');
-    const redirectUrl = isSandbox ? preference.sandbox_init_point : preference.init_point;
+    const redirectUrl = (isSandbox && preference.sandbox_init_point) ? preference.sandbox_init_point : preference.init_point;
 
     return res.status(200).json({ id: preference.id, url: redirectUrl });
   } catch (error: any) {

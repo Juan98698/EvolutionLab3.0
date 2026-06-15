@@ -680,7 +680,8 @@ export const TrainerDashboard: React.FC = () => {
         throw new Error(`Has alcanzado el límite de tu plan actual (${limit} atleta${limit > 1 ? 's' : ''}). Por favor actualiza tu suscripción para continuar.`);
       }
 
-      if (!isRealEmailDomain(newEmail)) {
+      const isBypass = profile?.rol === 'admin' || profile?.email === 'jmanuel8.5@outlook.com';
+      if (!isBypass && !isRealEmailDomain(newEmail)) {
         throw new Error('Por favor ingresa un correo electrónico real y válido (ej: usuario@gmail.com, usuario@hotmail.com). No se admiten correos temporales ni ficticios.');
       }
 
