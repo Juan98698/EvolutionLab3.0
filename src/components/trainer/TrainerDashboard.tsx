@@ -1528,7 +1528,13 @@ export const TrainerDashboard: React.FC = () => {
                       if (ok) {
                         showToast('🔔 ¡Notificaciones push activadas con éxito!', 'success');
                       } else {
-                        showToast('No se pudo activar la suscripción. Inténtalo de nuevo más tarde.', 'info');
+                        const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+                        showToast(
+                          isLocal
+                            ? 'Las notificaciones push solo funcionan en producción (HTTPS). Sube los cambios a tu repositorio y prueba desde tu dominio desplegado.'
+                            : 'No se pudo activar las notificaciones. Verifica que hayas aceptado los permisos e inténtalo de nuevo.',
+                          'info'
+                        );
                       }
                       setShowPushPrompt(false);
                     }

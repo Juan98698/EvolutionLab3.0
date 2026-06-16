@@ -21,7 +21,7 @@ window.addEventListener('beforeinstallprompt', (e) => {
 // desregistra TODOS los SW activos, vacía TODAS las cachés, y recarga la página.
 const purgeOldServiceWorkersAndCaches = async (): Promise<boolean> => {
   try {
-    const CLEANUP_KEY = 'evolab_sw_cleanup_v4.1';
+    const CLEANUP_KEY = 'evolab_sw_cleanup_v4.2';
     if (localStorage.getItem(CLEANUP_KEY) !== 'true') {
       console.log('🔄 Iniciando purga automática de Service Workers y cachés obsoletos...');
 

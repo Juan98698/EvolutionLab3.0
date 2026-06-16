@@ -8,10 +8,6 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      devOptions: {
-        enabled: true,
-        type: 'module'
-      },
       // NO usar includeAssets — los iconos y fondo ya están cubiertos por globPatterns.
       // Duplicarlos causa entradas precache duplicadas con revisiones conflictivas
       // que corrompen la caché del SW en dispositivos móviles.
@@ -40,6 +36,8 @@ export default defineConfig({
       },
 
       workbox: {
+        // Importar el script de push para que el SW maneje eventos push y notificationclick
+        importScripts: ['sw-push.js'],
         // Solo pre-cachear los bundles generados por Vite (JS, CSS, HTML).
         // Los iconos y fondo se cargan bajo demanda, no necesitan precache.
         globPatterns: ['**/*.{js,css,html}'],
