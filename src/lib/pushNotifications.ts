@@ -1,5 +1,7 @@
 // src/lib/pushNotifications.ts
 // Gestión de suscripciones y permisos de notificaciones push en el navegador
+import { supabase } from './supabaseClient';
+
 
 const VAPID_PUBLIC_KEY = import.meta.env.VITE_VAPID_PUBLIC_KEY || 'BNXllPMOAb4gZfbJx_wO_MOeozQjZTTFxyPSwXPBCRgOebjYoPRWeLgfySgqCyj0_o7exBTN4ttD_yxtFv63N7Q';
 
@@ -48,20 +50,40 @@ export async function subscribirNotificacionesPush(userId: string): Promise<bool
     const subscription = await registration.pushManager.subscribe(subscribeOptions);
     console.log('Suscrito a notificaciones push exitosamente en PWA:', subscription);
 
-    // 4. Registrar la suscripción en el backend a través de la API Serverless
-    const response = await fetch('/api/save-subscription', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        userId,
-        subscription,
-      }),
-    });
+    // 4. Registrar la suscripción directamente en la tabla push_subscriptions en Supabase
+    // Esto es robusto en local y producción, evitando fallos de conexión en la API Vercel
+    const { data: existing, error: findError } = await supabase
+      .from('push_subscriptions')
+      .select('id')
+      .eq('cliente_id', userId)
+      .eq('subscription->>endpoint', subscription.endpoint)
+      .maybeSingle();
 
-    const result = await response.json();
-    return response.ok && result.success;
+    if (findError) {
+      console.warn('Error al buscar suscripción previa:', findError);
+    }
+
+    if (existing) {
+      const { error: updateError } = await supabase
+        .from('push_subscriptions')
+        .update({
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', existing.id);
+      if (updateError) throw updateError;
+    } else {
+      const { error: insertError } = await supabase
+        .from('push_subscriptions')
+        .insert({
+          cliente_id: userId,
+          subscription: subscription,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        });
+      if (insertError) throw insertError;
+    }
+
+    return true;
   } catch (err) {
     console.error('Error al suscribir a notificaciones push:', err);
     return false;

@@ -1976,7 +1976,11 @@ export const AthleteDashboard: React.FC = () => {
 
       {/* Onboarding welcome modal */}
       {showOnboarding && (
-        <OnboardingModal onClose={() => setShowOnboarding(false)} />
+        <OnboardingModal 
+          onClose={() => setShowOnboarding(false)} 
+          rol={isSoloClient ? 'cliente_autonomo' : 'cliente_guiado'}
+          suscripcionPlan={profile?.suscripcion_plan || 'free'}
+        />
       )}
 
       {/* Shareable Progress Card Modal */}
@@ -1987,6 +1991,8 @@ export const AthleteDashboard: React.FC = () => {
           themeColor={trainerProfile?.marca?.color_primario || 'var(--theme-primary)'}
           themeSecondaryColor={trainerProfile?.marca?.color_secundario || 'var(--theme-secondary)'}
           sesiones={overloadSessions}
+          rol={isSoloClient ? 'cliente_autonomo' : 'cliente_guiado'}
+          suscripcionPlan={profile?.suscripcion_plan || 'free'}
         />
       )}
 

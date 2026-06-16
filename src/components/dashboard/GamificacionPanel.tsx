@@ -220,18 +220,18 @@ export const GamificacionPanel: React.FC<GamificacionPanelProps> = ({ sesiones, 
 
   // Score and Level Calculations
   const totalPoints = useMemo(() => {
-    return (totalSesiones * 100) + (earnedBadges.length * 500) + (racha.actual * 50) + (prCount * 200);
+    return (totalSesiones * 50) + (earnedBadges.length * 200) + (racha.actual * 25) + (prCount * 100);
   }, [totalSesiones, earnedBadges.length, racha.actual, prCount]);
 
   const currentLevel = useMemo(() => {
-    return Math.floor(Math.sqrt(totalPoints / 100)) + 1;
+    return Math.floor(Math.sqrt(totalPoints / 250)) + 1;
   }, [totalPoints]);
 
   const levelProgress = useMemo(() => {
     const nextLvl = currentLevel;
     const currentLvl = currentLevel - 1;
-    const currentLvlPoints = Math.pow(currentLvl, 2) * 100;
-    const nextLvlPoints = Math.pow(nextLvl, 2) * 100;
+    const currentLvlPoints = Math.pow(currentLvl, 2) * 250;
+    const nextLvlPoints = Math.pow(nextLvl, 2) * 250;
     const ptsGained = totalPoints - currentLvlPoints;
     const ptsNeeded = nextLvlPoints - currentLvlPoints;
     return {
@@ -549,7 +549,7 @@ export const GamificacionPanel: React.FC<GamificacionPanelProps> = ({ sesiones, 
               borderRadius: '12px', padding: '12px 20px', fontSize: '11px',
               color: '#34d399', fontWeight: 700, fontFamily: "'Orbitron', sans-serif"
             }}>
-              ⭐ +500 PTS DE EXPERIENCIA
+              ⭐ +200 PTS DE EXPERIENCIA
             </div>
             <button
               onClick={() => setCelebratingBadge(null)}

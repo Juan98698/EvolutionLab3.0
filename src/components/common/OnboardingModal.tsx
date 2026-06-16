@@ -3,46 +3,121 @@ import React, { useState } from 'react';
 
 interface OnboardingModalProps {
   onClose: () => void;
+  rol: 'entrenador' | 'cliente_guiado' | 'cliente_autonomo';
+  suscripcionPlan?: string;
 }
 
-export const OnboardingModal: React.FC<OnboardingModalProps> = ({ onClose }) => {
+export const OnboardingModal: React.FC<OnboardingModalProps> = ({ 
+  onClose,
+  rol,
+  suscripcionPlan = 'free'
+}) => {
   const [step, setStep] = useState<number>(1);
 
   const handleNext = () => {
     if (step < 4) {
       setStep(step + 1);
     } else {
-      localStorage.setItem('evolution_onboarded_v1', 'true');
+      if (rol === 'entrenador') {
+        localStorage.setItem('evolution_trainer_onboarded_v1', 'true');
+      } else {
+        localStorage.setItem('evolution_onboarded_v1', 'true');
+      }
       onClose();
     }
   };
 
-  const stepsData = [
-    {
-      title: 'BIENVENIDO A EVOLUTION LAB',
-      emoji: '🧬',
-      description: 'Tu nuevo sistema de entrenamiento de precisión científica. Aquí no entrenamos por instinto o motivación temporal; entrenamos con estructura, control de variables y progresión matemática.',
-      accent: '#00d4ff'
-    },
-    {
-      title: '🧠 SMART COACH',
-      emoji: '🧠',
-      description: 'Nuestro motor inteligente basado en autorregulación (RIR) y RPE analiza tu volumen de entrenamiento, fatiga acumulada y constancia para sugerirte incrementos de carga precisos y disipar el estancamiento.',
-      accent: '#7b2ff7'
-    },
-    {
-      title: '🎮 GAMIFICACIÓN Y LOGROS',
-      emoji: '🏆',
-      description: 'Acumula puntos de experiencia (XP) por cada serie y sesión completada. Sube de nivel y desbloquea insignias de rendimiento, además de los logros personalizados que tu propio entrenador diseñe para ti.',
-      accent: '#fda4af'
-    },
-    {
-      title: '🔌 MODO OFFLINE (PWA)',
-      emoji: '⚡',
-      description: '¿Sin señal en el gimnasio? No hay problema. Evolution Lab almacena de forma segura tu plan y tus entrenamientos localmente en tu dispositivo. Al volver a tener red, se sincronizarán automáticamente con la nube.',
-      accent: '#10b981'
+  const stepsData = (() => {
+    if (rol === 'entrenador') {
+      return [
+        {
+          title: 'BIENVENIDO A EVOLUTION LAB COACH',
+          emoji: '🧬',
+          description: 'Tu plataforma de gestión y planificación de precisión científica. Diseña rutinas estructuradas, visualiza el progreso y define las reglas de sobrecarga de tus atletas de manera profesional.',
+          accent: '#00d4ff'
+        },
+        {
+          title: '👥 GESTIÓN DE ATLETAS',
+          emoji: '👥',
+          description: 'Controla el volumen de entrenamiento, marcas históricas y vigencias de tus alumnos. Todo consolidado en un panel interactivo y veloz.',
+          accent: '#7b2ff7'
+        },
+        {
+          title: '⚙️ MOTOR DE SOBRECARGA',
+          emoji: '⚙️',
+          description: 'Personaliza de forma individualizada cómo debe actuar el motor ante estancamientos, progresiones lineales, ondulantes o descargas para cada ejercicio y atleta.',
+          accent: '#fda4af'
+        },
+        {
+          title: '🔔 AUDITORÍA Y ALERTAS PUSH',
+          emoji: '🔔',
+          description: 'Mantente al tanto de la fatiga, racha e incrementos de carga de tus atletas. Activa las notificaciones push para recibir alertas al instante.',
+          accent: '#10b981'
+        }
+      ];
+    } else if (rol === 'cliente_guiado') {
+      return [
+        {
+          title: 'BIENVENIDO A EVOLUTION LAB',
+          emoji: '🧬',
+          description: 'Tu coach ha preparado tu plan de entrenamiento personalizado. Aquí registrarás tus marcas y cada serie con precisión científica.',
+          accent: '#00d4ff'
+        },
+        {
+          title: '🧠 SMART COACH',
+          emoji: '🧠',
+          description: 'Sugerencias de cargas y repeticiones en tiempo real basadas en tu rendimiento real y la configuración de sobrecarga definida por tu entrenador.',
+          accent: '#7b2ff7'
+        },
+        {
+          title: '🔥 TU PROGRESO Y LOGROS',
+          emoji: '🏆',
+          description: 'Gana puntos de experiencia (XP), sube de nivel y desbloquea insignias a medida que cumples tus entrenamientos y superas tus marcas.',
+          accent: '#fda4af'
+        },
+        {
+          title: '🔌 ENTRENAMIENTO OFFLINE',
+          emoji: '⚡',
+          description: '¿Sin señal en el gimnasio? La PWA guarda tus registros de manera local y los sincroniza automáticamente en la nube cuando recuperes internet.',
+          accent: '#10b981'
+        }
+      ];
+    } else { // cliente_autonomo
+      const isPremium = suscripcionPlan === 'premium';
+      return [
+        {
+          title: isPremium ? 'EVOLUTION LAB SOLO PRO ⚡' : 'EVOLUTION LAB SOLO FREE 🧬',
+          emoji: '🧬',
+          description: isPremium
+            ? 'Tienes acceso ILIMITADO y completo a todas las funciones profesionales de entrenamiento autónomo. ¡Lera tu físico al límite!'
+            : 'Tu cuenta gratuita para entrenar de forma autónoma. Planifica, registra tus rutinas y visualiza tus marcas en cualquier momento.',
+          accent: '#00d4ff'
+        },
+        {
+          title: '🧠 SMART COACH',
+          emoji: '🧠',
+          description: isPremium
+            ? '¡Desbloqueado! El Smart Coach analiza tu rendimiento histórico y te da sugerencias en tiempo real de pesos y repeticiones para cada serie.'
+            : '🔒 Bloqueado en Plan Free. Smart Coach te daría sugerencias automáticas de carga y repeticiones. Puedes actualizar a Pro para activarlo.',
+          accent: '#7b2ff7'
+        },
+        {
+          title: '⚙️ CONFIGURACIÓN DEL MOTOR',
+          emoji: '⚙️',
+          description: isPremium
+            ? '¡Desbloqueado! Personaliza de forma avanzada tus propias reglas de sobrecarga (lineal, ondulante, descarga) por ejercicio de manera individual.'
+            : '🔒 Bloqueado en Plan Free. Solo los usuarios Pro pueden guardar reglas de progresión personalizadas para automatizar las sugerencias del motor.',
+          accent: '#fda4af'
+        },
+        {
+          title: '🏆 EXPERIENCIA Y OFFLINE',
+          emoji: '⚡',
+          description: 'Disfruta de la calculadora 1RM, historial de PRs, sube de nivel ganando XP y registra tus entrenamientos sin conexión con la PWA.',
+          accent: '#10b981'
+        }
+      ];
     }
-  ];
+  })();
 
   const currentData = stepsData[step - 1];
 

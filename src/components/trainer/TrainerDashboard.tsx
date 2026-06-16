@@ -6,7 +6,9 @@ import { supabase } from '../../lib/supabaseClient';
 import { Profile } from '../../types/database.types';
 import Toast from '../common/Toast';
 import TrainerAlertsHub from './TrainerAlertsHub';
-import { analizarSobrecargaProgresiva, Session, Notification } from '../../lib/overload';
+import OnboardingModal from '../common/OnboardingModal';
+import { verificarSuscripcionPushActiva, subscribirNotificacionesPush } from '../../lib/pushNotifications';
+import { analizarSobrecargaProgresiva, Session, type Notification } from '../../lib/overload';
 import { DEFAULT_RULES } from '../../lib/rules';
 import { resolveOverloadRules, resolveOverloadConfig } from '../../lib/sessions';
 import { isRealEmailDomain } from '../../lib/validations';
@@ -146,6 +148,34 @@ export const TrainerDashboard: React.FC = () => {
   const [philosophyOpen, setPhilosophyOpen] = useState<boolean>(false);
   const [showAlertsHub, setShowAlertsHub] = useState<boolean>(false);
   const [updatingVigenciaId, setUpdatingVigenciaId] = useState<string | null>(null);
+
+  const [showOnboarding, setShowOnboarding] = useState<boolean>(false);
+  const [showPushPrompt, setShowPushPrompt] = useState<boolean>(false);
+
+  // Verificar si es la primera vez que inicia sesión para el Onboarding del Entrenador
+  useEffect(() => {
+    if (profile) {
+      const isOnboarded = localStorage.getItem('evolution_trainer_onboarded_v1');
+      if (!isOnboarded) {
+        setShowOnboarding(true);
+      }
+    }
+  }, [profile]);
+
+  // Verificar si las notificaciones push están activas y mostrar prompt al entrenador
+  useEffect(() => {
+    const comprobarPush = async () => {
+      if (profile && 'serviceWorker' in navigator && 'PushManager' in window) {
+        const activa = await verificarSuscripcionPushActiva();
+        const rechazada = localStorage.getItem(`pwa_push_prompt_dismissed_${profile.id}`);
+        if (!activa && !rechazada) {
+          setShowPushPrompt(true);
+        }
+      }
+    };
+    const t = setTimeout(comprobarPush, 4000);
+    return () => clearTimeout(t);
+  }, [profile]);
 
   const handleVigenciaLocalChange = (atletaId: string, value: string) => {
     const num = parseInt(value, 10);
@@ -1456,6 +1486,94 @@ export const TrainerDashboard: React.FC = () => {
         </div>
       ) : (
         <div className="container stagger-3" style={{ padding: '0 20px', maxWidth: '1200px', margin: '0 auto' }}>
+          {/* Banner de invitación a activar notificaciones Push */}
+          {showPushPrompt && (
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(123, 47, 247, 0.08))',
+              border: '1px solid var(--theme-border)',
+              borderRadius: '14px',
+              padding: '16px 20px',
+              marginBottom: '20px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '16px',
+              flexWrap: 'wrap',
+              boxShadow: '0 4px 16px var(--theme-glow)',
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: '1 1 300px' }}>
+                <span style={{ fontSize: '24px' }}>🔔</span>
+                <div style={{ textAlign: 'left' }}>
+                  <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--theme-primary)', fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.5px' }}>ACTIVAR NOTIFICACIONES PUSH</div>
+                  <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)', marginTop: '4px', lineHeight: '1.4' }}>Recibe alertas al instante en tu celular sobre el rendimiento, fatiga e incrementos de carga de tus atletas.</div>
+                </div>
+              </div>
+              <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                <button
+                  onClick={async () => {
+                    if (profile) {
+                      if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+                        showToast('Tu navegador no soporta notificaciones push.', 'info');
+                        setShowPushPrompt(false);
+                        return;
+                      }
+                      if (Notification.permission === 'denied') {
+                        showToast('Las notificaciones están bloqueadas en los ajustes del navegador.', 'info');
+                        setShowPushPrompt(false);
+                        return;
+                      }
+                      const ok = await subscribirNotificacionesPush(profile.id);
+                      if (ok) {
+                        showToast('🔔 ¡Notificaciones push activadas con éxito!', 'success');
+                      } else {
+                        showToast('No se pudo activar la suscripción. Inténtalo de nuevo más tarde.', 'info');
+                      }
+                      setShowPushPrompt(false);
+                    }
+                  }}
+                  style={{
+                    background: 'var(--theme-btn-gradient)',
+                    color: 'white',
+                    border: 'none',
+                    borderRadius: '30px',
+                    padding: '8px 18px',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    fontFamily: "'Orbitron', sans-serif",
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 10px var(--theme-btn-glow)',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  ACTIVAR
+                </button>
+                <button
+                  onClick={() => {
+                    if (profile) {
+                      localStorage.setItem(`pwa_push_prompt_dismissed_${profile.id}`, 'true');
+                      setShowPushPrompt(false);
+                    }
+                  }}
+                  style={{
+                    background: 'rgba(255,255,255,0.05)',
+                    color: 'rgba(255,255,255,0.6)',
+                    border: '1px solid rgba(255,255,255,0.1)',
+                    borderRadius: '30px',
+                    padding: '8px 18px',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    fontFamily: "'Orbitron', sans-serif",
+                    cursor: 'pointer',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  DESCARTAR
+                </button>
+              </div>
+            </div>
+          )}
           <div style={{ display: activeSubTab === 'atletas' ? 'block' : 'none' }}>
             {/* STATS OVERVIEW CARDS */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '20px', marginBottom: '24px' }}>
@@ -2558,6 +2676,14 @@ export const TrainerDashboard: React.FC = () => {
 
       {/* Alerts Hub Modal */}
       <TrainerAlertsHub visible={showAlertsHub} onClose={() => setShowAlertsHub(false)} />
+
+      {/* Onboarding welcome modal */}
+      {showOnboarding && (
+        <OnboardingModal 
+          onClose={() => setShowOnboarding(false)} 
+          rol="entrenador" 
+        />
+      )}
 
       <Toast message={toastState.message} type={toastState.type} visible={toastState.visible} />
     </div>
