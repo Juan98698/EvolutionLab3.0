@@ -8,6 +8,10 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      devOptions: {
+        enabled: true,
+        type: 'module'
+      },
       // NO usar includeAssets — los iconos y fondo ya están cubiertos por globPatterns.
       // Duplicarlos causa entradas precache duplicadas con revisiones conflictivas
       // que corrompen la caché del SW en dispositivos móviles.

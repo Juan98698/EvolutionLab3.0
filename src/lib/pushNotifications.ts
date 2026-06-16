@@ -63,6 +63,12 @@ export async function subscribirNotificacionesPush(userId: string): Promise<bool
       console.warn('Error al buscar suscripción previa:', findError);
     }
 
+    // Convertir a un objeto plano serializable para evitar fallos en la persistencia de Supabase
+    const subJson = subscription.toJSON();
+    if (!subJson.endpoint) {
+      subJson.endpoint = subscription.endpoint;
+    }
+
     if (existing) {
       const { error: updateError } = await supabase
         .from('push_subscriptions')
@@ -76,7 +82,7 @@ export async function subscribirNotificacionesPush(userId: string): Promise<bool
         .from('push_subscriptions')
         .insert({
           cliente_id: userId,
-          subscription: subscription,
+          subscription: subJson,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString()
         });
