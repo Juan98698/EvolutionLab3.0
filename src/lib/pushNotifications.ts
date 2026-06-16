@@ -156,20 +156,39 @@ export async function subscribirNotificacionesPush(userId: string): Promise<bool
 }
 
 /**
- * Comprueba si el usuario tiene actualmente activa la suscripción push.
- * Usa timeout para no quedarse colgada en desarrollo.
+ * Comprueba si el usuario tiene actualmente activa la suscripción push
+ * tanto en su navegador local como registrada en la base de datos de Supabase.
  */
-export async function verificarSuscripcionPushActiva(): Promise<boolean> {
+export async function verificarSuscripcionPushActiva(userId: string): Promise<boolean> {
   if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
     return false;
   }
 
   try {
+    // 1. Comprobar estado local en el navegador
     const registration = await getServiceWorkerRegistration(3000);
     if (!registration) return false;
 
     const subscription = await registration.pushManager.getSubscription();
-    return subscription !== null && Notification.permission === 'granted';
+    const localActiva = subscription !== null && Notification.permission === 'granted';
+
+    if (!localActiva) {
+      return false;
+    }
+
+    // 2. Comprobar que realmente exista guardada en Supabase
+    const { data, error } = await supabase
+      .from('push_subscriptions')
+      .select('id')
+      .eq('cliente_id', userId)
+      .maybeSingle();
+
+    if (error || !data) {
+      console.warn('[Push] Suscripción local activa pero ausente en Supabase (o acceso restringido).');
+      return false;
+    }
+
+    return true;
   } catch (err) {
     console.warn('[Push] Error al verificar suscripción push:', err);
     return false;

@@ -69,11 +69,10 @@ export const AthleteDashboard: React.FC = () => {
     }
   }, [location.search, navigate, location.pathname, refreshProfile]);
 
-  // Verificar si las notificaciones push están activas y mostrar prompt
   useEffect(() => {
     const comprobarPush = async () => {
       if (user && 'serviceWorker' in navigator && 'PushManager' in window) {
-        const activa = await verificarSuscripcionPushActiva();
+        const activa = await verificarSuscripcionPushActiva(user.id);
         const rechazada = localStorage.getItem(`pwa_push_prompt_dismissed_${user.id}`);
         if (!activa && !rechazada) {
           setShowPushPrompt(true);
