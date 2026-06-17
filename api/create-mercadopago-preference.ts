@@ -43,7 +43,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         planDescription = 'Sugerencias de Smart Coach y reglas avanzadas para atletas autónomos.';
         break;
       case 'iniciacion':
-        amount = 14900;
+        amount = 17900;
         planName = 'Plan Iniciación (Coach)';
         planDescription = 'Gestión de hasta 2 atletas vinculados.';
         break;
