@@ -180,6 +180,27 @@ export const TrainerBranding: React.FC = () => {
     showToast('⏳ Subiendo logo al servidor...', 'info');
 
     try {
+      // 1. List and delete any existing files starting with 'brand_logo' to avoid duplicates of different extensions
+      try {
+        const { data: files } = await supabase.storage
+          .from('ejercicios')
+          .list(profile.id);
+        
+        if (files && files.length > 0) {
+          const filesToDelete = files
+            .filter(f => f.name.startsWith('brand_logo'))
+            .map(f => `${profile.id}/${f.name}`);
+            
+          if (filesToDelete.length > 0) {
+            console.log('Deleting old brand logos:', filesToDelete);
+            await supabase.storage.from('ejercicios').remove(filesToDelete);
+          }
+        }
+      } catch (listError) {
+        console.warn('Non-blocking: Failed to clean up old logos before uploading:', listError);
+      }
+
+      // 2. Upload the new file
       const { error: uploadError } = await supabase.storage
         .from('ejercicios')
         .upload(filePath, file, {
@@ -189,6 +210,7 @@ export const TrainerBranding: React.FC = () => {
 
       if (uploadError) throw uploadError;
 
+      // 3. Get public URL
       const { data: publicData } = supabase.storage
         .from('ejercicios')
         .getPublicUrl(filePath);
@@ -197,7 +219,10 @@ export const TrainerBranding: React.FC = () => {
         throw new Error('No se pudo obtener la URL pública del logo.');
       }
 
-      setLogoUrl(publicData.publicUrl);
+      // 4. Cache bust: append a timestamp so that the PWA/browsers bypass cache and show the new logo immediately
+      const cacheBustUrl = `${publicData.publicUrl}?t=${Date.now()}`;
+
+      setLogoUrl(cacheBustUrl);
       showToast('¡Logo subido con éxito! Guarda los cambios para aplicar.', 'success');
     } catch (err: any) {
       console.error('Error al subir logo:', err);
