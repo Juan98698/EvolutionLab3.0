@@ -837,16 +837,16 @@ export const TrainerDashboard: React.FC = () => {
           {/* Logo & Greeting */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             {profile?.logo_url ? (
-              <div style={{ height: '42px', minWidth: '42px', maxWidth: '140px', borderRadius: '8px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent' }}>
+              <div style={{ height: '54px', minWidth: '54px', maxWidth: '160px', borderRadius: '10px', overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'transparent', border: '1px solid rgba(255,255,255,0.06)' }}>
                 <img src={profile.logo_url} alt="Brand Logo" style={{ maxHeight: '100%', maxWidth: '100%', objectFit: 'contain', display: 'block' }} />
               </div>
             ) : profile?.marca ? (
               <div
                 className="logo-symbol"
                 style={{
-                  width: '42px',
-                  height: '42px',
-                  borderRadius: '10px',
+                  width: '54px',
+                  height: '54px',
+                  borderRadius: '12px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -854,13 +854,13 @@ export const TrainerDashboard: React.FC = () => {
                   boxShadow: `0 0 12px ${(profile.marca.color_primario || '#00d4ff')}40`
                 }}
               >
-                <span style={{ fontSize: '13px', fontWeight: 800, color: 'white', fontFamily: "'Orbitron', sans-serif" }}>
+                <span style={{ fontSize: '16px', fontWeight: 800, color: 'white', fontFamily: "'Orbitron', sans-serif" }}>
                   {(profile.marca.nombre_display || profile.nombre || 'T').split(' ').map((w: string) => w[0]).join('').substring(0, 2).toUpperCase()}
                 </span>
               </div>
             ) : (
-              <div className="logo-symbol" style={{ width: '42px', height: '42px', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--theme-btn-gradient)', boxShadow: '0 0 15px var(--theme-glow)' }}>
-                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <div className="logo-symbol" style={{ width: '54px', height: '54px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--theme-btn-gradient)', boxShadow: '0 0 15px var(--theme-glow)' }}>
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M12 2L2 7l10 5 10-5-10-5z" />
                   <path d="M2 17l10 5 10-5" />
                   <path d="M2 12l10 5 10-5" />
