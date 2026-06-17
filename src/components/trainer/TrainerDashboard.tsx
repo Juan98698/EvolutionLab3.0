@@ -897,7 +897,7 @@ export const TrainerDashboard: React.FC = () => {
         nombre: ex.nombre,
         grupo: ex.grupoMuscular || 'General',
         descanso: Number(ex.descanso) || 90,
-        series: Array(Number(ex.series) || 3).fill(null).map(() => ({ reps: '', peso: '', rpe: '8' }))
+        series: Array(Number(ex.series) || 3).fill(null).map(() => ({ reps: '', peso: '', rpe: '2' }))
       }));
       setSessionExercises(mapped);
     } else {
@@ -934,7 +934,7 @@ export const TrainerDashboard: React.FC = () => {
       nombre: exName,
       grupo,
       descanso: 90,
-      series: [{ reps: '', peso: '', rpe: '8' }, { reps: '', peso: '', rpe: '8' }, { reps: '', peso: '', rpe: '8' }]
+      series: [{ reps: '', peso: '', rpe: '2' }, { reps: '', peso: '', rpe: '2' }, { reps: '', peso: '', rpe: '2' }]
     };
 
     setSessionExercises(prev => [...prev, newEx]);
@@ -2940,7 +2940,7 @@ export const TrainerDashboard: React.FC = () => {
                                       </div>
                                     </div>
                                     <div>
-                                      <span style={{ color: 'rgba(255,255,255,0.4)' }}>RPE / RIR:</span>{' '}
+                                      <span style={{ color: 'rgba(255,255,255,0.4)' }}>RIR:</span>{' '}
                                       <span style={{ fontWeight: 600, color: '#fbbf24' }}>{ej.rpe_rir}</span>
                                     </div>
                                     {ej.descanso && (
@@ -3440,7 +3440,7 @@ export const TrainerDashboard: React.FC = () => {
                             </div>
 
                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', fontFamily: "'Orbitron', sans-serif" }}>RPE:</span>
+                              <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', fontFamily: "'Orbitron', sans-serif" }}>RIR:</span>
                               <select
                                 value={s.rpe}
                                 onChange={(e) => {
@@ -3453,7 +3453,7 @@ export const TrainerDashboard: React.FC = () => {
                                 }}
                                 style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px', fontSize: '11px', outline: 'none' }}
                               >
-                                {['10', '9.5', '9', '8.5', '8', '7.5', '7', '6.5', '6'].map(r => (
+                                {['0', '0.5', '1', '1.5', '2', '2.5', '3', '3.5', '4'].map(r => (
                                   <option key={r} value={r}>{r}</option>
                                 ))}
                               </select>
@@ -3469,7 +3469,7 @@ export const TrainerDashboard: React.FC = () => {
                             onClick={() => {
                               setSessionExercises(prev => {
                                 const next = [...prev];
-                                next[exIdx].series.push({ reps: '', peso: '', rpe: '8' });
+                                next[exIdx].series.push({ reps: '', peso: '', rpe: '2' });
                                 return next;
                               });
                             }}
