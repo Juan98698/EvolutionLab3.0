@@ -20,6 +20,36 @@ const ALERT_COLORS: Record<string, { bg: string; border: string; text: string; i
   info: { bg: 'rgba(99, 102, 241, 0.1)', border: 'rgba(99, 102, 241, 0.25)', text: '#a5b4fc', icon: '🔵' },
 };
 
+const SUGGESTIONS_EJERCICIOS = [
+  'Sentadilla Libre con Barra',
+  'Prensa de Piernas',
+  'Peso Muerto Rumano',
+  'Peso Muerto Convencional',
+  'Curl de Piernas Acostado',
+  'Extensiones de Cuádriceps',
+  'Zancadas Búlgaras',
+  'Elevación de Talones de Pie',
+  'Press de Banca Plano con Barra',
+  'Press de Banca Inclinado con Mancuernas',
+  'Aperturas con Mancuernas',
+  'Cruces de Polea',
+  'Remo con Barra',
+  'Jalón al Pecho',
+  'Remo Gironda en Polea',
+  'Dominadas',
+  'Press Militar con Barra',
+  'Elevaciones Laterales con Mancuernas',
+  'Pájaros con Mancuernas',
+  'Curl de Bíceps Alterno con Mancuernas',
+  'Curl de Bíceps en Banco Scott',
+  'Copa de Tríceps a una Mano',
+  'Extensiones de Tríceps en Polea Alta',
+  'Fondos de Tríceps',
+  'Plancha Abdominal',
+  'Crunch Abdominal en Polea'
+];
+
+
 const calculateVolume = (peso: any, seriesReps: any): number => {
   const weight = parseFloat(String(peso)) || 0;
   let totalReps = 0;
@@ -208,6 +238,7 @@ export const TrainerDashboard: React.FC = () => {
   const [newPassword, setNewPassword] = useState<string>('');
   const [newName, setNewName] = useState<string>('');
   const [newGoal, setNewGoal] = useState<string>('');
+  const [newModality, setNewModality] = useState<'remoto' | 'presencial'>('remoto');
   const [registerLoading, setRegisterLoading] = useState<boolean>(false);
 
   // Estados de la calculadora 1RM
@@ -226,6 +257,38 @@ export const TrainerDashboard: React.FC = () => {
     message: '',
     type: 'success',
   });
+
+  // ==========================================
+  // ESTADOS DEL REGISTRADOR DE SESIONES (ENTRENADOR)
+  // ==========================================
+  const [isRegisterSessionModalOpen, setIsRegisterSessionModalOpen] = useState<boolean>(false);
+  const [selectedAthleteForSession, setSelectedAthleteForSession] = useState<Profile | null>(null);
+  const [sessionDate, setSessionDate] = useState<string>(() => new Date().toISOString().split('T')[0]);
+  const [athleteActivePlan, setAthleteActivePlan] = useState<any | null>(null);
+  const [selectedPlanDayIndex, setSelectedPlanDayIndex] = useState<string>('-1'); // -1 = Libre, 0, 1, 2... = Día de Plan
+  const [sessionExercises, setSessionExercises] = useState<any[]>([]);
+  const [sessionNotes, setSessionNotes] = useState<string>('');
+  const [isSavingSession, setIsSavingSession] = useState<boolean>(false);
+  const [searchExerciseQuery, setSearchExerciseQuery] = useState<string>('');
+  const [exerciseSuggestions, setExerciseSuggestions] = useState<string[]>([]);
+
+  // ==========================================
+  // ESTADOS DE LA VISTA DE EVOLUCIÓN Y PDF
+  // ==========================================
+  const [isEvolutionModalOpen, setIsEvolutionModalOpen] = useState<boolean>(false);
+  const [selectedAthleteForEvolution, setSelectedAthleteForEvolution] = useState<Profile | null>(null);
+  const [evolutionExercises, setEvolutionExercises] = useState<string[]>([]);
+  const [selectedEvolutionExercise, setSelectedEvolutionExercise] = useState<string>('all');
+  const [evolutionHistoryData, setEvolutionHistoryData] = useState<any[]>([]);
+  const [loadingEvolution, setLoadingEvolution] = useState<boolean>(false);
+  const [pdfDateRange, setPdfDateRange] = useState<'30' | '60' | '90' | 'custom'>('30');
+  const [pdfStartDate, setPdfStartDate] = useState<string>(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 30);
+    return d.toISOString().split('T')[0];
+  });
+  const [pdfEndDate, setPdfEndDate] = useState<string>(() => new Date().toISOString().split('T')[0]);
+  const [pdfFeedbackText, setPdfFeedbackText] = useState<string>('');
 
   const [activePlanDays, setActivePlanDays] = useState<string>('7 Días / Sem');
   const [trainerSubscription, setTrainerSubscription] = useState<{
@@ -705,8 +768,23 @@ export const TrainerDashboard: React.FC = () => {
       else if (plan === 'intermedio') limit = 10;
       else if (plan === 'profesional') limit = 999999;
 
-      if (clientes.length >= limit) {
-        throw new Error(`Has alcanzado el límite de tu plan actual (${limit} atleta${limit > 1 ? 's' : ''}). Por favor actualiza tu suscripción para continuar.`);
+      const countRemotos = clientes.filter(c => c.modalidad === 'remoto' || !c.modalidad).length;
+      const countPresenciales = clientes.filter(c => c.modalidad === 'presencial').length;
+
+      if (plan === 'free') {
+        if (newModality === 'remoto' && countRemotos >= 1) {
+          throw new Error('El plan gratuito permite un máximo de 1 atleta remoto. Actualiza tu plan para registrar más atletas remotos.');
+        }
+        if (newModality === 'presencial' && countPresenciales >= 1) {
+          throw new Error('El plan gratuito permite un máximo de 1 atleta presencial. Actualiza tu plan para registrar más atletas presenciales.');
+        }
+        if (clientes.length >= 2) {
+          throw new Error('Has alcanzado el límite del plan gratuito (máximo 2 atletas: 1 remoto y 1 presencial).');
+        }
+      } else {
+        if (clientes.length >= limit) {
+          throw new Error(`Has alcanzado el límite de tu plan actual (${limit} atleta${limit > 1 ? 's' : ''}). Por favor actualiza tu suscripción para continuar.`);
+        }
       }
 
       const isBypass = profile?.rol === 'admin' || profile?.email === 'jmanuel8.5@outlook.com';
@@ -725,7 +803,7 @@ export const TrainerDashboard: React.FC = () => {
         }
       );
 
-      const { error } = await secondarySupabase.auth.signUp({
+      const { data: signUpData, error } = await secondarySupabase.auth.signUp({
         email: newEmail.trim(),
         password: newPassword,
         options: {
@@ -734,11 +812,20 @@ export const TrainerDashboard: React.FC = () => {
             rol: 'cliente',
             objetivo: newGoal.trim(),
             entrenador_id: profile?.id, // Vincula este atleta al entrenador actual
+            modalidad: newModality, // Diferenciar modalidad
           },
         },
       });
 
       if (error) throw error;
+
+      // Para asegurar compatibilidad total en caso de que el trigger no actualice la modalidad
+      if (signUpData?.user?.id) {
+        await supabase
+          .from('profiles')
+          .update({ modalidad: newModality })
+          .eq('id', signUpData.user.id);
+      }
 
       showToast(`🎉 ¡Atleta ${newName} registrado con éxito!`, 'success');
       
@@ -747,6 +834,7 @@ export const TrainerDashboard: React.FC = () => {
       setNewPassword('');
       setNewName('');
       setNewGoal('');
+      setNewModality('remoto');
       setRegisterOpen(false);
 
       // Recargar lista
@@ -758,6 +846,388 @@ export const TrainerDashboard: React.FC = () => {
       setRegisterLoading(false);
     }
   };
+
+  // ==========================================
+  // FUNCIONES PARA REGISTRAR SESIÓN (ENTRENADOR)
+  // ==========================================
+  const handleOpenRegisterSessionModal = async (atleta: Profile) => {
+    setSelectedAthleteForSession(atleta);
+    setSessionDate(new Date().toISOString().split('T')[0]);
+    setSessionNotes('');
+    setSessionExercises([]);
+    setSelectedPlanDayIndex('-1');
+
+    try {
+      // 1. Obtener plan activo del atleta
+      const { data, error } = await supabase
+        .from('planes')
+        .select('*')
+        .eq('cliente_id', atleta.id)
+        .eq('activo', true)
+        .maybeSingle();
+
+      if (error) throw error;
+
+      if (data && data.datos_plan) {
+        setAthleteActivePlan(data.datos_plan);
+        const plan = data.datos_plan as any;
+        if (plan.trainingDays && plan.trainingDays.length > 0) {
+          setSelectedPlanDayIndex('0');
+          loadExercisesFromPlanDay(plan.trainingDays[0]);
+        }
+      } else {
+        setAthleteActivePlan(null);
+        setSelectedPlanDayIndex('-1'); // Registro libre
+      }
+    } catch (err: any) {
+      console.error('Error al cargar plan del atleta:', err);
+      showToast('Error al cargar el plan del atleta: ' + err.message, 'error');
+      setAthleteActivePlan(null);
+      setSelectedPlanDayIndex('-1');
+    }
+
+    setIsRegisterSessionModalOpen(true);
+  };
+
+  const loadExercisesFromPlanDay = (day: any) => {
+    if (day && day.exercises && day.exercises.length > 0) {
+      const mapped = day.exercises.map((ex: any) => ({
+        nombre: ex.nombre,
+        grupo: ex.grupoMuscular || 'General',
+        descanso: Number(ex.descanso) || 90,
+        series: Array(Number(ex.series) || 3).fill(null).map(() => ({ reps: '', peso: '', rpe: '8' }))
+      }));
+      setSessionExercises(mapped);
+    } else {
+      setSessionExercises([]);
+    }
+  };
+
+  const handlePlanDayChange = (val: string) => {
+    setSelectedPlanDayIndex(val);
+    if (val === '-1') {
+      setSessionExercises([]);
+    } else {
+      const idx = parseInt(val, 10);
+      if (athleteActivePlan && athleteActivePlan.trainingDays && athleteActivePlan.trainingDays[idx]) {
+        loadExercisesFromPlanDay(athleteActivePlan.trainingDays[idx]);
+      }
+    }
+  };
+
+  const handleAddFreeExercise = (exName: string) => {
+    const norm = exName.toLowerCase().trim();
+    let grupo = 'General';
+    
+    if (norm.includes('pecho') || norm.includes('press plano') || norm.includes('press inclinado') || norm.includes('aperturas') || norm.includes('cruces')) grupo = 'Pecho';
+    else if (norm.includes('espalda') || norm.includes('remo') || norm.includes('jalon') || norm.includes('dominadas') || norm.includes('pull') || norm.includes('lumbares')) grupo = 'Espalda';
+    else if (norm.includes('femoral') || norm.includes('isquio') || norm.includes('curl de pierna')) grupo = 'Isquiosurales';
+    else if (norm.includes('pierna') || norm.includes('cuad') || norm.includes('sentadilla') || norm.includes('prensa') || norm.includes('extension') || norm.includes('zancada') || norm.includes('bulgara')) grupo = 'Cuádriceps';
+    else if (norm.includes('glute') || norm.includes('cadera') || norm.includes('pantorrilla') || norm.includes('gemelos')) grupo = 'Glúteos';
+    else if (norm.includes('hombro') || norm.includes('lateral') || norm.includes('militar') || norm.includes('deltoide')) grupo = 'Hombros';
+    else if (norm.includes('biceps') || norm.includes('triceps') || norm.includes('curl') || norm.includes('copa') || norm.includes('brazos')) grupo = 'Brazos';
+    else if (norm.includes('core') || norm.includes('abdomen') || norm.includes('plancha') || norm.includes('crunch')) grupo = 'Core';
+
+    const newEx = {
+      nombre: exName,
+      grupo,
+      descanso: 90,
+      series: [{ reps: '', peso: '', rpe: '8' }, { reps: '', peso: '', rpe: '8' }, { reps: '', peso: '', rpe: '8' }]
+    };
+
+    setSessionExercises(prev => [...prev, newEx]);
+    setSearchExerciseQuery('');
+    setExerciseSuggestions([]);
+  };
+
+  const handleSaveSession = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedAthleteForSession) return;
+    if (sessionExercises.length === 0) {
+      showToast('Por favor, agrega al menos un ejercicio a la sesión.', 'error');
+      return;
+    }
+
+    for (let i = 0; i < sessionExercises.length; i++) {
+      const ex = sessionExercises[i];
+      for (let j = 0; j < ex.series.length; j++) {
+        const s = ex.series[j];
+        if (!s.reps || isNaN(parseInt(s.reps)) || !s.peso || isNaN(parseFloat(s.peso))) {
+          showToast(`Completa los valores de Peso y Repeticiones de todas las series para: ${ex.nombre}`, 'error');
+          return;
+        }
+      }
+    }
+
+    setIsSavingSession(true);
+    try {
+      const { data: histData, error: histError } = await supabase
+        .from('sesiones_historial')
+        .insert({
+          cliente_id: selectedAthleteForSession.id,
+          fecha: sessionDate,
+          notas_generales: sessionNotes.trim() || null
+        })
+        .select('id')
+        .single();
+
+      if (histError) throw histError;
+      const sesionId = histData.id;
+
+      const inserts = sessionExercises.map((ex) => {
+        const repsList = ex.series.map((s: any) => parseInt(s.reps, 10));
+        const pesosList = ex.series.map((s: any) => parseFloat(s.peso));
+        const rpesList = ex.series.map((s: any) => parseFloat(s.rpe));
+
+        const avgPeso = pesosList.reduce((sum: number, p: number) => sum + p, 0) / pesosList.length;
+        const totalReps = repsList.reduce((sum: number, r: number) => sum + r, 0);
+        const volumen = avgPeso * totalReps;
+
+        let maxRM = 0;
+        for (let idx = 0; idx < ex.series.length; idx++) {
+          const w = pesosList[idx];
+          const r = repsList[idx];
+          if (w > 0 && r > 0) {
+            const epley = w * (1 + r / 30);
+            const brzycki = w / (1.0278 - 0.0278 * r);
+            const rmVal = (epley + brzycki) / 2;
+            if (rmVal > maxRM) maxRM = rmVal;
+          }
+        }
+
+        const avgRpe = rpesList.reduce((sum: number, r: number) => sum + r, 0) / rpesList.length;
+
+        return {
+          sesion_id: sesionId,
+          nombre_ejercicio: ex.nombre,
+          grupo_muscular: ex.grupo,
+          series_reps: repsList,
+          peso: avgPeso,
+          rpe_rir: avgRpe,
+          descanso: ex.descanso,
+          volumen,
+          rm_estimado: maxRM
+        };
+      });
+
+      const { error: ejerError } = await supabase
+        .from('sesiones_ejercicios')
+        .insert(inserts);
+
+      if (ejerError) throw ejerError;
+
+      showToast(`✅ Sesión guardada con éxito para ${selectedAthleteForSession.nombre}`, 'success');
+      setIsRegisterSessionModalOpen(false);
+      fetchAuditoria(true);
+    } catch (err: any) {
+      console.error('Error al guardar la sesión:', err);
+      showToast('Error al guardar la sesión: ' + err.message, 'error');
+    } finally {
+      setIsSavingSession(false);
+    }
+  };
+
+  // ==========================================
+  // FUNCIONES PARA LA VISTA DE EVOLUCIÓN
+  // ==========================================
+  const handleOpenEvolutionModal = async (atleta: Profile) => {
+    setSelectedAthleteForEvolution(atleta);
+    setEvolutionExercises([]);
+    setSelectedEvolutionExercise('all');
+    setEvolutionHistoryData([]);
+    setPdfFeedbackText('');
+    setLoadingEvolution(true);
+
+    try {
+      const { data, error } = await supabase
+        .from('sesiones_historial')
+        .select(`
+          id,
+          fecha,
+          notas_generales,
+          sesiones_ejercicios(*)
+        `)
+        .eq('cliente_id', atleta.id)
+        .order('fecha', { ascending: true });
+
+      if (error) throw error;
+
+      const uniqueEx = new Set<string>();
+      const rows: any[] = [];
+
+      data?.forEach((sesion: any) => {
+        const ejercicios = sesion.sesiones_ejercicios || [];
+        ejercicios.forEach((ej: any) => {
+          if (ej.nombre_ejercicio) {
+            uniqueEx.add(ej.nombre_ejercicio.trim());
+            
+            const repsArray = Array.isArray(ej.series_reps) ? ej.series_reps : [];
+            rows.push({
+              fecha: sesion.fecha,
+              ejercicio: ej.nombre_ejercicio.trim(),
+              peso: ej.peso,
+              reps: repsArray.join('-'),
+              volumen: ej.volumen,
+              rm: ej.rm_estimado,
+              rpe: ej.rpe_rir
+            });
+          }
+        });
+      });
+
+      const exerciseList = Array.from(uniqueEx).sort();
+      setEvolutionExercises(exerciseList);
+      setEvolutionHistoryData(rows);
+
+      if (exerciseList.length > 0) {
+        setSelectedEvolutionExercise(exerciseList[0]);
+      }
+    } catch (err: any) {
+      console.error('Error al cargar evolución:', err);
+      showToast('Error al cargar datos de evolución: ' + err.message, 'error');
+    } finally {
+      setLoadingEvolution(false);
+    }
+
+    setIsEvolutionModalOpen(true);
+  };
+
+  // ==========================================
+  // CALCULOS Y MEMOS PARA GRÁFICA SVG Y PDF
+  // ==========================================
+  const chartPoints = useMemo(() => {
+    if (selectedEvolutionExercise === 'all' || !selectedEvolutionExercise) return [];
+    return evolutionHistoryData.filter(d => d.ejercicio === selectedEvolutionExercise);
+  }, [evolutionHistoryData, selectedEvolutionExercise]);
+
+  const svgDimensions = { width: 520, height: 200, padding: 30 };
+
+  const svgElements = useMemo(() => {
+    if (chartPoints.length === 0) return { pathRm: '', pathVol: '', points: [], minRm: 0, maxRm: 0, minVol: 0, maxVol: 0 };
+
+    const rms = chartPoints.map(p => p.rm);
+    const vols = chartPoints.map(p => p.volumen);
+
+    const minRm = Math.min(...rms) * 0.9;
+    const maxRm = Math.max(...rms) * 1.1;
+    const rmDiff = (maxRm - minRm) || 1;
+
+    const minVol = Math.min(...vols) * 0.9;
+    const maxVol = Math.max(...vols) * 1.1;
+    const volDiff = (maxVol - minVol) || 1;
+
+    const points: any[] = [];
+    const width = svgDimensions.width;
+    const height = svgDimensions.height;
+    const padding = svgDimensions.padding;
+
+    const pointsRm = chartPoints.map((p, idx) => {
+      const x = padding + (idx / Math.max(chartPoints.length - 1, 1)) * (width - padding * 2);
+      const y = height - padding - ((p.rm - minRm) / rmDiff) * (height - padding * 2);
+      const yVol = height - padding - ((p.volumen - minVol) / volDiff) * (height - padding * 2);
+
+      points.push({
+        x,
+        yRm: y,
+        yVol,
+        fecha: p.fecha.split('-').reverse().join('/'),
+        rm: p.rm,
+        volumen: p.volumen,
+        reps: p.reps,
+        peso: p.peso
+      });
+
+      return `${x},${y}`;
+    });
+
+    const pointsVol = chartPoints.map((p, idx) => {
+      const x = padding + (idx / Math.max(chartPoints.length - 1, 1)) * (width - padding * 2);
+      const y = height - padding - ((p.volumen - minVol) / volDiff) * (height - padding * 2);
+      return `${x},${y}`;
+    });
+
+    const pathRm = chartPoints.length > 1 ? `M ${pointsRm.join(' L ')}` : '';
+    const pathVol = chartPoints.length > 1 ? `M ${pointsVol.join(' L ')}` : '';
+
+    return { pathRm, pathVol, points, minRm, maxRm, minVol, maxVol };
+  }, [chartPoints]);
+
+  const pdfReportSummary = useMemo(() => {
+    if (!selectedAthleteForEvolution) return [];
+    
+    const start = new Date(pdfStartDate);
+    const end = new Date(pdfEndDate);
+    end.setHours(23, 59, 59, 999);
+
+    const historyInPeriod = evolutionHistoryData.filter(d => {
+      const dDate = new Date(d.fecha);
+      return dDate >= start && dDate <= end;
+    });
+
+    const grouped: Record<string, any[]> = {};
+    historyInPeriod.forEach(row => {
+      if (!grouped[row.ejercicio]) {
+        grouped[row.ejercicio] = [];
+      }
+      grouped[row.ejercicio].push(row);
+    });
+
+    const summaryList: any[] = [];
+    Object.entries(grouped).forEach(([exName, list]) => {
+      const first = list[0];
+      const last = list[list.length - 1];
+      
+      const rmStart = first.rm || 0;
+      const rmEnd = last.rm || 0;
+      const rmDiff = rmEnd - rmStart;
+      const rmPct = rmStart > 0 ? (rmDiff / rmStart) * 100 : 0;
+
+      const volStart = first.volumen || 0;
+      const volEnd = last.volumen || 0;
+      const volDiff = volEnd - volStart;
+      const volPct = volStart > 0 ? (volDiff / volStart) * 100 : 0;
+
+      summaryList.push({
+        ejercicio: exName,
+        rmInicial: rmStart,
+        rmFinal: rmEnd,
+        rmDeltaPct: rmPct,
+        volInicial: volStart,
+        volFinal: volEnd,
+        volDeltaPct: volPct,
+        sesionesRegistradas: list.length
+      });
+    });
+
+    return summaryList;
+  }, [evolutionHistoryData, selectedAthleteForEvolution, pdfStartDate, pdfEndDate]);
+
+  const handlePdfDateRangeChange = (val: '30' | '60' | '90' | 'custom') => {
+    setPdfDateRange(val);
+    if (val !== 'custom') {
+      const days = parseInt(val, 10);
+      const d = new Date();
+      d.setDate(d.getDate() - days);
+      setPdfStartDate(d.toISOString().split('T')[0]);
+      setPdfEndDate(new Date().toISOString().split('T')[0]);
+    }
+  };
+
+  const handlePrintPDFReport = () => {
+    if (!selectedAthleteForEvolution) return;
+
+    const plan = trainerSubscription?.plan || 'free';
+    if (plan === 'free') {
+      showToast('⚠️ Generar Reportes PDF de Progreso es una funcionalidad Premium. Actualiza a un plan de pago (Iniciación, Intermedio o Profesional) para usarla.', 'info');
+      return;
+    }
+
+    setTimeout(() => {
+      window.print();
+    }, 150);
+  };
+
+
 
   const handleCalculate1RM = (e: React.FormEvent) => {
     e.preventDefault();
@@ -1919,6 +2389,18 @@ export const TrainerDashboard: React.FC = () => {
                   />
                 </div>
 
+                <div>
+                  <label style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.6)', fontWeight: 700, marginBottom: '6px' }}>MODALIDAD DE ENTRENAMIENTO</label>
+                  <select
+                    value={newModality}
+                    onChange={(e) => setNewModality(e.target.value as 'remoto' | 'presencial')}
+                    style={{ width: '100%', background: 'rgba(0,0,0,0.45)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '13px', outline: 'none' }}
+                  >
+                    <option value="remoto">🌐 Remoto (Online)</option>
+                    <option value="presencial">🏋️ Presencial (En Gimnasio)</option>
+                  </select>
+                </div>
+
                 <button type="submit" className="btn btn-primary" disabled={registerLoading} style={{ marginTop: '10px' }}>
                   <span>{registerLoading ? 'REGISTRANDO ATLETA...' : 'Confirmar y Guardar'}</span>
                 </button>
@@ -1962,8 +2444,27 @@ export const TrainerDashboard: React.FC = () => {
                   {/* Conic Glow top highlight */}
                   <div style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '4px', background: 'var(--theme-btn-gradient)' }} />
 
+                  {/* Badge de Modalidad */}
+                  <span style={{
+                    position: 'absolute',
+                    top: '12px',
+                    right: '16px',
+                    background: atleta.modalidad === 'presencial' ? 'rgba(255, 107, 0, 0.15)' : 'rgba(0, 212, 255, 0.15)',
+                    border: atleta.modalidad === 'presencial' ? '1px solid rgba(255, 107, 0, 0.4)' : '1px solid rgba(0, 212, 255, 0.4)',
+                    color: atleta.modalidad === 'presencial' ? '#ff8c00' : '#00d4ff',
+                    padding: '3px 8px',
+                    borderRadius: '8px',
+                    fontSize: '9px',
+                    fontWeight: 700,
+                    textTransform: 'uppercase',
+                    fontFamily: "'Orbitron', sans-serif",
+                    letterSpacing: '0.5px'
+                  }}>
+                    {atleta.modalidad === 'presencial' ? '🏋️ Presencial' : '🌐 Remoto'}
+                  </span>
+
                   <div>
-                    <h3 style={{ margin: '0 0 4px 0', fontSize: '16px', fontWeight: 700, color: 'white', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <h3 style={{ margin: '0 0 4px 0', fontSize: '16px', fontWeight: 700, color: 'white', display: 'flex', alignItems: 'center', gap: '6px', paddingRight: '90px' }}>
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--theme-primary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> {atleta.nombre}
                     </h3>
                     <p style={{ margin: '0 0 14px 0', fontSize: '12px', color: 'rgba(255,255,255,0.4)' }}>{atleta.email}</p>
@@ -2040,21 +2541,69 @@ export const TrainerDashboard: React.FC = () => {
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
-                    <button
-                      className="btn btn-primary"
-                      onClick={() => navigate(`/trainer/plan/${atleta.id}`)}
-                      style={{ flex: 1, padding: '10px 0', fontSize: '11px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '4px' }}
-                    >
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Planificar
-                    </button>
-                    <button
-                      className="btn btn-ghost"
-                      onClick={() => navigate('/trainer/config')}
-                      style={{ flex: 1, padding: '10px 0', fontSize: '11px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '4px' }}
-                    >
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> Reglas
-                    </button>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', width: '100%' }}>
+                    <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
+                      <button
+                        className="btn btn-primary"
+                        onClick={() => navigate(`/trainer/plan/${atleta.id}`)}
+                        style={{ flex: 1, padding: '10px 0', fontSize: '11px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '4px' }}
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg> Planificar
+                      </button>
+                      <button
+                        className="btn btn-ghost"
+                        onClick={() => navigate('/trainer/config')}
+                        style={{ flex: 1, padding: '10px 0', fontSize: '11px', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '4px' }}
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> Reglas
+                      </button>
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
+                      <button
+                        className="btn"
+                        onClick={() => handleOpenRegisterSessionModal(atleta)}
+                        style={{
+                          flex: 1,
+                          padding: '10px 0',
+                          fontSize: '11px',
+                          display: 'flex',
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          gap: '4px',
+                          background: 'rgba(255, 107, 0, 0.08)',
+                          border: '1px solid rgba(255, 107, 0, 0.25)',
+                          borderRadius: '8px',
+                          color: '#ff8c00',
+                          cursor: 'pointer',
+                          fontFamily: "'Orbitron', sans-serif",
+                          fontWeight: 700
+                        }}
+                      >
+                        ⏱️ Registrar Sesión
+                      </button>
+                      <button
+                        className="btn"
+                        onClick={() => handleOpenEvolutionModal(atleta)}
+                        style={{
+                          flex: 1,
+                          padding: '10px 0',
+                          fontSize: '11px',
+                          display: 'flex',
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          gap: '4px',
+                          background: 'rgba(0, 212, 255, 0.08)',
+                          border: '1px solid rgba(0, 212, 255, 0.25)',
+                          borderRadius: '8px',
+                          color: '#00d4ff',
+                          cursor: 'pointer',
+                          fontFamily: "'Orbitron', sans-serif",
+                          fontWeight: 700
+                        }}
+                      >
+                        📈 Evolución / PDF
+                      </button>
+                    </div>
                   </div>
 
                 </div>
@@ -2678,6 +3227,644 @@ export const TrainerDashboard: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* MODAL REGISTRAR SESIÓN ENTRENADOR */}
+      {isRegisterSessionModalOpen && selectedAthleteForSession && (
+        <div className="modal-overlay modal-overlay-enter open" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999 }} onClick={(e) => { if (e.target === e.currentTarget) setIsRegisterSessionModalOpen(false); }}>
+          <div className="modal-box modal-enter" style={{ maxWidth: '650px', width: '90%', maxHeight: '85vh', overflowY: 'auto', border: '1px solid var(--theme-border)', boxShadow: '0 20px 50px var(--theme-glow)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '12px', marginBottom: '15px' }}>
+              <h3 style={{ margin: 0, fontFamily: "'Orbitron', sans-serif", color: 'var(--theme-primary)', fontSize: '1.05rem', letterSpacing: '0.5px' }}>
+                ⏱️ REGISTRAR ENTRENAMIENTO
+              </h3>
+              <button onClick={() => setIsRegisterSessionModalOpen(false)} style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '20px', cursor: 'pointer' }}>&times;</button>
+            </div>
+            
+            <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)', marginBottom: '15px' }}>
+              Atleta: <span style={{ color: 'white', fontWeight: 700 }}>{selectedAthleteForSession.nombre}</span> ({selectedAthleteForSession.modalidad === 'presencial' ? 'Presencial 🏋️' : 'Remoto 🌐'})
+            </div>
+
+            <form onSubmit={handleSaveSession} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+                <div style={{ flex: 1, minWidth: '150px' }}>
+                  <label style={{ display: 'block', fontSize: '9px', fontWeight: 700, color: 'rgba(255,255,255,0.4)', fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.5px', marginBottom: '6px' }}>FECHA DEL ENTRENAMIENTO</label>
+                  <input
+                    type="date"
+                    required
+                    value={sessionDate}
+                    onChange={(e) => setSessionDate(e.target.value)}
+                    style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '13px' }}
+                  />
+                </div>
+
+                <div style={{ flex: 1, minWidth: '200px' }}>
+                  <label style={{ display: 'block', fontSize: '9px', fontWeight: 700, color: 'rgba(255,255,255,0.4)', fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.5px', marginBottom: '6px' }}>PLAN/DÍA DE ENTRENAMIENTO</label>
+                  <select
+                    value={selectedPlanDayIndex}
+                    onChange={(e) => handlePlanDayChange(e.target.value)}
+                    style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '13px', outline: 'none' }}
+                  >
+                    {athleteActivePlan ? (
+                      <>
+                        {athleteActivePlan.trainingDays?.map((day: any, idx: number) => (
+                          <option key={idx} value={String(idx)}>📋 Día {idx + 1}: {day.name || `Rutina ${idx + 1}`}</option>
+                        ))}
+                        <option value="-1">➕ Registrar Entrenamiento Libre</option>
+                      </>
+                    ) : (
+                      <option value="-1">🏋️ Sin Plan Activo (Entrenamiento Libre)</option>
+                    )}
+                  </select>
+                </div>
+              </div>
+
+              {/* LISTA DE EJERCICIOS A REGISTRAR */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginTop: '10px' }}>
+                <div style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(255,255,255,0.4)', fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.5px', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '6px' }}>
+                  EJERCICIOS COMPLETADOS ({sessionExercises.length})
+                </div>
+
+                {sessionExercises.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '24px', background: 'rgba(255,255,255,0.01)', border: '1px dashed rgba(255,255,255,0.1)', borderRadius: '10px', color: 'rgba(255,255,255,0.4)', fontSize: '12px' }}>
+                    No hay ejercicios en la lista. Agrega ejercicios usando el buscador de abajo.
+                  </div>
+                ) : (
+                  sessionExercises.map((ex, exIdx) => (
+                    <div key={exIdx} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '12px', padding: '14px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ fontWeight: 700, color: 'white', fontSize: '13px' }}>🏋️ {ex.nombre}</span>
+                          <span className={`badge badge-${ex.grupo.toLowerCase()}`} style={{ padding: '2px 6px', borderRadius: '4px', fontSize: '8px', fontWeight: 700, textTransform: 'uppercase' }}>{ex.grupo}</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setSessionExercises(prev => prev.filter((_, idx) => idx !== exIdx))}
+                          style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '11px', cursor: 'pointer', fontFamily: "'Orbitron', sans-serif", fontWeight: 700 }}
+                        >
+                          ✕ Eliminar Ejercicio
+                        </button>
+                      </div>
+
+                      {/* Series list */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '10px' }}>
+                        {ex.series.map((s: any, sIdx: number) => (
+                          <div key={sIdx} style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                            <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', minWidth: '50px', fontFamily: "'Orbitron', sans-serif" }}>Serie {sIdx + 1}:</span>
+                            
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <input
+                                type="number"
+                                step="any"
+                                required
+                                placeholder="Peso"
+                                value={s.peso}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setSessionExercises(prev => {
+                                    const next = [...prev];
+                                    next[exIdx].series[sIdx] = { ...next[exIdx].series[sIdx], peso: val };
+                                    return next;
+                                  });
+                                }}
+                                style={{ width: '70px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px 8px', fontSize: '11px', textAlign: 'center' }}
+                              />
+                              <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>kg</span>
+                            </div>
+
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <input
+                                type="number"
+                                required
+                                placeholder="Reps"
+                                value={s.reps}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setSessionExercises(prev => {
+                                    const next = [...prev];
+                                    next[exIdx].series[sIdx] = { ...next[exIdx].series[sIdx], reps: val };
+                                    return next;
+                                  });
+                                }}
+                                style={{ width: '60px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px 8px', fontSize: '11px', textAlign: 'center' }}
+                              />
+                              <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>reps</span>
+                            </div>
+
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', fontFamily: "'Orbitron', sans-serif" }}>RPE:</span>
+                              <select
+                                value={s.rpe}
+                                onChange={(e) => {
+                                  const val = e.target.value;
+                                  setSessionExercises(prev => {
+                                    const next = [...prev];
+                                    next[exIdx].series[sIdx] = { ...next[exIdx].series[sIdx], rpe: val };
+                                    return next;
+                                  });
+                                }}
+                                style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px', fontSize: '11px', outline: 'none' }}
+                              >
+                                {['10', '9.5', '9', '8.5', '8', '7.5', '7', '6.5', '6'].map(r => (
+                                  <option key={r} value={r}>{r}</option>
+                                ))}
+                              </select>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '10px', alignItems: 'center', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,0.03)', paddingTop: '8px' }}>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setSessionExercises(prev => {
+                                const next = [...prev];
+                                next[exIdx].series.push({ reps: '', peso: '', rpe: '8' });
+                                return next;
+                              });
+                            }}
+                            style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '6px', color: '#a5b4fc', padding: '4px 8px', fontSize: '10px', cursor: 'pointer', fontFamily: "'Orbitron', sans-serif", fontWeight: 700 }}
+                          >
+                            ➕ Añadir Serie
+                          </button>
+                          {ex.series.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSessionExercises(prev => {
+                                  const next = [...prev];
+                                  next[exIdx].series.pop();
+                                  return next;
+                                });
+                              }}
+                              style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '6px', color: '#fda4af', padding: '4px 8px', fontSize: '10px', cursor: 'pointer', fontFamily: "'Orbitron', sans-serif", fontWeight: 700 }}
+                            >
+                              ➖ Quitar Serie
+                            </button>
+                          )}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: 'rgba(255,255,255,0.5)' }}>
+                          <span>Descanso:</span>
+                          <input
+                            type="number"
+                            value={ex.descanso}
+                            onChange={(e) => {
+                              const val = parseInt(e.target.value, 10) || 0;
+                              setSessionExercises(prev => {
+                                const next = [...prev];
+                                next[exIdx].descanso = val;
+                                return next;
+                              });
+                            }}
+                            style={{ width: '50px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px', color: 'white', padding: '4px 6px', fontSize: '11px', textAlign: 'center' }}
+                          />
+                          <span>seg</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+
+              {/* BUSCADOR DE EJERCICIOS LIBRES */}
+              <div style={{ background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '12px', padding: '14px', position: 'relative' }}>
+                <label style={{ display: 'block', fontSize: '9px', fontWeight: 700, color: 'rgba(255,255,255,0.4)', fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.5px', marginBottom: '6px' }}>BUSCAR O AGREGAR EJERCICIO EXTRA</label>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <input
+                    type="text"
+                    placeholder="Escribe el ejercicio... (Ej: Press de banca)"
+                    value={searchExerciseQuery}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      setSearchExerciseQuery(val);
+                      if (val.trim().length >= 2) {
+                        const filtered = SUGGESTIONS_EJERCICIOS.filter(item => 
+                          item.toLowerCase().includes(val.toLowerCase())
+                        );
+                        setExerciseSuggestions(filtered);
+                      } else {
+                        setExerciseSuggestions([]);
+                      }
+                    }}
+                    style={{ flex: 1, background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '13px' }}
+                  />
+                  {searchExerciseQuery.trim() && (
+                    <button
+                      type="button"
+                      onClick={() => handleAddFreeExercise(searchExerciseQuery)}
+                      style={{
+                        background: 'var(--theme-btn-gradient)',
+                        border: 'none',
+                        color: 'white',
+                        borderRadius: '8px',
+                        padding: '10px 14px',
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        fontFamily: "'Orbitron', sans-serif",
+                        cursor: 'pointer',
+                        boxShadow: '0 0 10px var(--theme-btn-glow)'
+                      }}
+                    >
+                      Añadir
+                    </button>
+                  )}
+                </div>
+
+                {/* Suggestions popover */}
+                {exerciseSuggestions.length > 0 && (
+                  <div style={{ position: 'absolute', top: '100%', left: '14px', right: '14px', background: '#090f1d', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', zIndex: 100, maxHeight: '180px', overflowY: 'auto', marginTop: '4px', boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }}>
+                    {exerciseSuggestions.map((item, idx) => (
+                      <div
+                        key={idx}
+                        onClick={() => handleAddFreeExercise(item)}
+                        style={{ padding: '10px 14px', fontSize: '12px', color: 'rgba(255,255,255,0.8)', borderBottom: '1px solid rgba(255,255,255,0.03)', cursor: 'pointer', transition: 'background 0.2s' }}
+                        onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
+                        onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                      >
+                        🏋️ {item}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* NOTAS GENERALES */}
+              <div>
+                <label style={{ display: 'block', fontSize: '9px', fontWeight: 700, color: 'rgba(255,255,255,0.4)', fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.5px', marginBottom: '6px' }}>NOTAS DE LA SESIÓN</label>
+                <textarea
+                  placeholder="Escribe comentarios, sensaciones del cliente, fatiga percibida, etc..."
+                  value={sessionNotes}
+                  onChange={(e) => setSessionNotes(e.target.value)}
+                  rows={2}
+                  style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '13px', resize: 'vertical' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '15px', marginTop: '10px' }}>
+                <button
+                  type="button"
+                  onClick={() => setIsRegisterSessionModalOpen(false)}
+                  style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', padding: '10px 20px', borderRadius: '8px', fontSize: '11px', fontFamily: "'Orbitron', sans-serif", fontWeight: 700, cursor: 'pointer' }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingSession}
+                  style={{
+                    background: 'var(--theme-btn-gradient)',
+                    border: 'none',
+                    color: 'white',
+                    padding: '10px 24px',
+                    borderRadius: '8px',
+                    fontSize: '11px',
+                    fontFamily: "'Orbitron', sans-serif",
+                    fontWeight: 700,
+                    cursor: isSavingSession ? 'not-allowed' : 'pointer',
+                    boxShadow: '0 0 15px var(--theme-btn-glow)',
+                    opacity: isSavingSession ? 0.7 : 1
+                  }}
+                >
+                  {isSavingSession ? 'GUARDANDO ENTRENAMIENTO...' : '💾 Guardar Entrenamiento'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DE EVOLUCIÓN Y REPORTES */}
+      {isEvolutionModalOpen && selectedAthleteForEvolution && (
+        <div className="modal-overlay modal-overlay-enter open" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999 }} onClick={(e) => { if (e.target === e.currentTarget) setIsEvolutionModalOpen(false); }}>
+          <div className="modal-box modal-enter" style={{ maxWidth: '800px', width: '95%', maxHeight: '85vh', overflowY: 'auto', border: '1px solid var(--theme-border)', boxShadow: '0 20px 50px var(--theme-glow)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '12px', marginBottom: '15px' }}>
+              <h3 style={{ margin: 0, fontFamily: "'Orbitron', sans-serif", color: 'var(--theme-primary)', fontSize: '1.05rem', letterSpacing: '0.5px' }}>
+                📈 EVOLUCIÓN Y REPORTES
+              </h3>
+              <button onClick={() => setIsEvolutionModalOpen(false)} style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '20px', cursor: 'pointer' }}>&times;</button>
+            </div>
+
+            <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)', marginBottom: '15px' }}>
+              Atleta: <span style={{ color: 'white', fontWeight: 700 }}>{selectedAthleteForEvolution.nombre}</span> | Objetivo: <span style={{ color: 'var(--theme-secondary)', fontWeight: 600 }}>{selectedAthleteForEvolution.objetivo || 'Sin objetivo'}</span>
+            </div>
+
+            {loadingEvolution ? (
+              <div style={{ textAlign: 'center', padding: '40px', color: 'var(--theme-primary)', fontFamily: 'Orbitron, sans-serif', fontSize: '12px' }}>
+                Cargando historial de progresión del atleta...
+              </div>
+            ) : evolutionHistoryData.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '40px', color: 'rgba(255,255,255,0.4)', fontSize: '12px', background: 'rgba(255,255,255,0.01)', border: '1px dashed rgba(255,255,255,0.1)', borderRadius: '10px' }}>
+                El atleta aún no tiene sesiones registradas. Registra entrenamientos para ver las métricas de evolución.
+              </div>
+            ) : (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                
+                {/* Contenedor Principal: Dos columnas */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
+                  
+                  {/* COLUMNA IZQUIERDA: GRÁFICO DE PANTALLA */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', background: 'rgba(255,255,255,0.01)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.04)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+                      <span style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(255,255,255,0.4)', fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.5px' }}>AUDITAR EJERCICIO</span>
+                      
+                      <select
+                        value={selectedEvolutionExercise}
+                        onChange={(e) => setSelectedEvolutionExercise(e.target.value)}
+                        style={{ background: 'rgba(0,0,0,0.35)', border: '1px solid var(--theme-border)', borderRadius: '6px', color: 'white', padding: '6px 12px', fontSize: '11px', outline: 'none' }}
+                      >
+                        {evolutionExercises.map(exName => (
+                          <option key={exName} value={exName}>🏋️ {exName}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Gráfica SVG */}
+                    {chartPoints.length === 0 ? (
+                      <div style={{ textAlign: 'center', padding: '30px', color: 'rgba(255,255,255,0.4)', fontSize: '11px' }}>
+                        Selecciona un ejercicio válido del historial.
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        <div style={{ position: 'relative' }}>
+                          <svg viewBox="0 0 520 200" style={{ width: '100%', height: 'auto', background: 'rgba(0,0,0,0.4)', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.05)', padding: '10px' }}>
+                            <line x1="30" y1="20" x2="30" y2="170" stroke="rgba(255,255,255,0.15)" strokeWidth="1" />
+                            <line x1="30" y1="170" x2="490" y2="170" stroke="rgba(255,255,255,0.15)" strokeWidth="1" />
+                            
+                            <line x1="30" y1="57" x2="490" y2="57" stroke="rgba(255,255,255,0.03)" strokeWidth="1" strokeDasharray="3,3" />
+                            <line x1="30" y1="95" x2="490" y2="95" stroke="rgba(255,255,255,0.03)" strokeWidth="1" strokeDasharray="3,3" />
+                            <line x1="30" y1="132" x2="490" y2="132" stroke="rgba(255,255,255,0.03)" strokeWidth="1" strokeDasharray="3,3" />
+
+                            {/* Línea 1RM */}
+                            {svgElements.pathRm && (
+                              <path
+                                d={svgElements.pathRm}
+                                fill="none"
+                                stroke="#fbbf24"
+                                strokeWidth="2.5"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                style={{ filter: 'drop-shadow(0 0 4px rgba(251, 191, 36, 0.4))' }}
+                              />
+                            )}
+
+                            {/* Línea Volumen */}
+                            {svgElements.pathVol && (
+                              <path
+                                d={svgElements.pathVol}
+                                fill="none"
+                                stroke="#00d4ff"
+                                strokeWidth="1.8"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeDasharray="4,2"
+                                style={{ filter: 'drop-shadow(0 0 3px rgba(0, 212, 255, 0.3))' }}
+                              />
+                            )}
+
+                            {/* Círculos 1RM */}
+                            {svgElements.points.map((pt, idx) => (
+                              <g key={idx}>
+                                <circle
+                                  cx={pt.x}
+                                  cy={pt.yRm}
+                                  r="4"
+                                  fill="#fbbf24"
+                                  stroke="#090f1d"
+                                  strokeWidth="1.5"
+                                />
+                                <title>{`Fecha: ${pt.fecha}\n1RM: ${Math.round(pt.rm)} kg\nPeso: ${pt.peso} kg\nReps: ${pt.reps}`}</title>
+                              </g>
+                            ))}
+                          </svg>
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', fontSize: '10px', fontFamily: "'Orbitron', sans-serif", color: 'rgba(255,255,255,0.6)' }}>
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#fbbf24' }}></span> Fuerza (1RM)
+                          </span>
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#00d4ff' }}></span> Volumen
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* COLUMNA DERECHA: GENERADOR DE REPORTE PDF */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', background: 'rgba(255,255,255,0.01)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.04)', justifyContent: 'space-between' }}>
+                    
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      <span style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(255,255,255,0.4)', fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.5px' }}>GENERADOR DE REPORTES PDF</span>
+                      
+                      {/* Periodo del PDF */}
+                      <div>
+                        <label style={{ display: 'block', fontSize: '9px', fontWeight: 700, color: 'rgba(255,255,255,0.5)', fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.5px', marginBottom: '4px' }}>RANGO DE FECHAS</label>
+                        <select
+                          value={pdfDateRange}
+                          onChange={(e) => handlePdfDateRangeChange(e.target.value as any)}
+                          style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'white', padding: '8px 10px', fontSize: '12px', outline: 'none', marginBottom: '8px' }}
+                        >
+                          <option value="30">📅 Últimos 30 días</option>
+                          <option value="60">📅 Últimos 60 días</option>
+                          <option value="90">📅 Últimos 90 días</option>
+                          <option value="custom">⚙️ Rango personalizado</option>
+                        </select>
+                        
+                        {pdfDateRange === 'custom' && (
+                          <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
+                            <input
+                              type="date"
+                              value={pdfStartDate}
+                              onChange={(e) => setPdfStartDate(e.target.value)}
+                              style={{ flex: 1, background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px', fontSize: '11px' }}
+                            />
+                            <input
+                              type="date"
+                              value={pdfEndDate}
+                              onChange={(e) => setPdfEndDate(e.target.value)}
+                              style={{ flex: 1, background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px', fontSize: '11px' }}
+                            />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Feedback Textbox */}
+                      <div>
+                        <label style={{ display: 'block', fontSize: '9px', fontWeight: 700, color: 'rgba(255,255,255,0.5)', fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.5px', marginBottom: '4px' }}>COMENTARIOS / FEEDBACK DEL COACH</label>
+                        <textarea
+                          placeholder="Consejos de recuperación, fatiga percibida, qué mejorar el próximo mes..."
+                          value={pdfFeedbackText}
+                          onChange={(e) => setPdfFeedbackText(e.target.value)}
+                          rows={3}
+                          style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '12px', resize: 'vertical' }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Botón de impresión y estatus de plan */}
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
+                      {trainerSubscription?.plan === 'free' ? (
+                        <div style={{ background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(123, 47, 247, 0.05))', border: '1px solid rgba(239, 68, 68, 0.25)', borderRadius: '10px', padding: '10px 14px', fontSize: '10px', color: 'rgba(255,255,255,0.85)', lineHeight: '1.4' }}>
+                          🔒 <strong>REPORTES DE PROGRESO PDF:</strong> Esta es una función exclusiva de los planes premium (Iniciación, Intermedio, Profesional). Permite generar reportes de progreso listos para imprimir con tu logotipo y eslogan.
+                        </div>
+                      ) : (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '10px', color: '#34d399', fontFamily: "'Orbitron', sans-serif" }}>
+                          ⭐ Premium Activo ({trainerSubscription?.plan.toUpperCase()}) — Reportes ilimitados habilitados.
+                        </div>
+                      )}
+
+                      <button
+                        type="button"
+                        onClick={handlePrintPDFReport}
+                        style={{
+                          width: '100%',
+                          background: trainerSubscription?.plan === 'free' ? 'rgba(255,255,255,0.03)' : 'var(--theme-btn-gradient)',
+                          border: trainerSubscription?.plan === 'free' ? '1px solid rgba(255,255,255,0.08)' : 'none',
+                          color: trainerSubscription?.plan === 'free' ? 'rgba(255,255,255,0.4)' : 'white',
+                          padding: '12px',
+                          borderRadius: '8px',
+                          fontSize: '11px',
+                          fontFamily: "'Orbitron', sans-serif",
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          boxShadow: trainerSubscription?.plan === 'free' ? 'none' : '0 0 15px var(--theme-btn-glow)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '6px'
+                        }}
+                      >
+                        {trainerSubscription?.plan === 'free' ? '🔒 Descargar Reporte PDF' : '📄 Generar e Imprimir Reporte PDF'}
+                      </button>
+                    </div>
+
+                  </div>
+                </div>
+
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* CONTENIDO DEL REPORTE IMPRIMIBLE (SOLO SE MUESTRA AL IMPRIMIR) */}
+      {selectedAthleteForEvolution && (
+        <div id="evolutionlab-pdf-report">
+          {/* Cabecera del Reporte */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #ff6b00', paddingBottom: '15px', marginBottom: '20px' }}>
+            <div>
+              {profile?.logo_url ? (
+                <img src={profile.logo_url} alt="Logo" style={{ maxHeight: '60px', maxWidth: '150px', objectFit: 'contain' }} />
+              ) : (
+                <h2 style={{ margin: 0, color: '#ff6b00', fontFamily: "'Orbitron', sans-serif", fontSize: '20px' }}>
+                  {profile?.marca?.nombre_display || 'EVOLUTION LAB'}
+                </h2>
+              )}
+              {profile?.marca?.eslogan && (
+                <p style={{ margin: '4px 0 0 0', fontSize: '9px', fontStyle: 'italic', color: '#666' }}>{profile.marca.eslogan}</p>
+              )}
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <h1 style={{ margin: 0, fontSize: '16px', fontFamily: "'Orbitron', sans-serif', sans-serif" }}>REPORTE DE EVOLUCIÓN MENSUAL</h1>
+              <p style={{ margin: '4px 0 0 0', fontSize: '10px', color: '#555' }}>
+                Periodo: {new Date(pdfStartDate).toLocaleDateString()} al {new Date(pdfEndDate).toLocaleDateString()}
+              </p>
+            </div>
+          </div>
+
+          {/* Datos del Cliente */}
+          <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '12px 15px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#333' }}>
+            <div>
+              <p style={{ margin: '0 0 4px 0' }}><strong>Atleta:</strong> {selectedAthleteForEvolution.nombre}</p>
+              <p style={{ margin: 0 }}><strong>Email:</strong> {selectedAthleteForEvolution.email}</p>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <p style={{ margin: '0 0 4px 0' }}><strong>Objetivo:</strong> {selectedAthleteForEvolution.objetivo || 'Hipertrofia / Fuerza'}</p>
+              <p style={{ margin: 0 }}><strong>Coach:</strong> {profile?.nombre}</p>
+            </div>
+          </div>
+
+          {/* Resumen del Progreso */}
+          <h3 style={{ fontFamily: "'Orbitron', sans-serif", borderBottom: '1px solid #ddd', paddingBottom: '4px', fontSize: '12px', color: '#1a1a1a', marginTop: '20px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            📊 ANÁLISIS DE SOBRECARGA PROGRESIVA
+          </h3>
+          
+          {pdfReportSummary.length === 0 ? (
+            <p style={{ fontSize: '11px', fontStyle: 'italic', color: '#666', padding: '15px 0' }}>No hay registros de ejercicios completados en este periodo.</p>
+          ) : (
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px', marginTop: '10px', textAlign: 'left' }}>
+              <thead>
+                <tr style={{ background: '#f1f5f9', borderBottom: '2px solid #cbd5e1', color: '#334155' }}>
+                  <th style={{ padding: '8px 10px' }}>Ejercicio</th>
+                  <th style={{ padding: '8px 10px', textAlign: 'center' }}>Sesiones</th>
+                  <th style={{ padding: '8px 10px', textAlign: 'right' }}>1RM Inicial</th>
+                  <th style={{ padding: '8px 10px', textAlign: 'right' }}>1RM Final</th>
+                  <th style={{ padding: '8px 10px', textAlign: 'right' }}>Progreso 1RM</th>
+                  <th style={{ padding: '8px 10px', textAlign: 'right' }}>Vol. Inicial</th>
+                  <th style={{ padding: '8px 10px', textAlign: 'right' }}>Vol. Final</th>
+                  <th style={{ padding: '8px 10px', textAlign: 'right' }}>Progreso Vol.</th>
+                </tr>
+              </thead>
+              <tbody>
+                {pdfReportSummary.map((item, idx) => (
+                  <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0', color: '#0f172a' }}>
+                    <td style={{ padding: '8px 10px', fontWeight: 'bold' }}>{item.ejercicio}</td>
+                    <td style={{ padding: '8px 10px', textAlign: 'center' }}>{item.sesionesRegistradas}</td>
+                    <td style={{ padding: '8px 10px', textAlign: 'right' }}>{Math.round(item.rmInicial)} kg</td>
+                    <td style={{ padding: '8px 10px', textAlign: 'right' }}>{Math.round(item.rmFinal)} kg</td>
+                    <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 'bold', color: item.rmDeltaPct >= 0 ? '#15803d' : '#b91c1c' }}>
+                      {item.rmDeltaPct >= 0 ? '+' : ''}{item.rmDeltaPct.toFixed(1)}%
+                    </td>
+                    <td style={{ padding: '8px 10px', textAlign: 'right' }}>{Math.round(item.volInicial).toLocaleString()} kg</td>
+                    <td style={{ padding: '8px 10px', textAlign: 'right' }}>{Math.round(item.volFinal).toLocaleString()} kg</td>
+                    <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 'bold', color: item.volDeltaPct >= 0 ? '#15803d' : '#b91c1c' }}>
+                      {item.volDeltaPct >= 0 ? '+' : ''}{item.volDeltaPct.toFixed(1)}%
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+
+          {/* Feedback del Entrenador */}
+          {pdfFeedbackText.trim() && (
+            <div style={{ marginTop: '25px' }}>
+              <h3 style={{ fontFamily: "'Orbitron', sans-serif", borderBottom: '1px solid #ddd', paddingBottom: '4px', fontSize: '12px', color: '#1a1a1a', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                📝 CONSEJOS Y FEEDBACK DEL COACH
+              </h3>
+              <div style={{ padding: '12px 16px', background: '#f8fafc', borderLeft: '3px solid #ff6b00', fontSize: '11px', color: '#334155', fontStyle: 'italic', whiteSpace: 'pre-line', lineHeight: '1.5', marginTop: '8px' }}>
+                "{pdfFeedbackText}"
+              </div>
+            </div>
+          )}
+
+          {/* Pie de página */}
+          <div style={{ position: 'fixed', bottom: '15px', left: 0, right: 0, borderTop: '1px solid #e2e8f0', paddingTop: '8px', display: 'flex', justifyContent: 'space-between', fontSize: '8px', color: '#64748b' }}>
+            <span>Generado automáticamente por EvolutionLab 3.0</span>
+            <span>© {new Date().getFullYear()} {profile?.marca?.nombre_display || profile?.nombre}</span>
+          </div>
+        </div>
+      )}
+
+      {/* Estilos especiales para impresión y visualización de PDF */}
+      <style>{`
+        #evolutionlab-pdf-report {
+          display: none;
+        }
+        @media print {
+          body, html {
+            background: white !important;
+            color: black !important;
+          }
+          #root, .top-bar, .container, #fab1RMBtn, .modal-overlay, #modal-1rm {
+            display: none !important;
+          }
+          #evolutionlab-pdf-report {
+            display: block !important;
+            color: black !important;
+            background: white !important;
+          }
+        }
+      `}</style>
 
       {/* Alerts Hub Modal */}
       <TrainerAlertsHub visible={showAlertsHub} onClose={() => setShowAlertsHub(false)} />

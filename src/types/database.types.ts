@@ -17,6 +17,7 @@ export interface Profile {
   suscripcion_estado?: 'activo' | 'expirado' | 'cancelado';
   suscripcion_expira_at?: string | null;
   insignias_custom?: any[] | null;
+  modalidad?: 'remoto' | 'presencial';
 }
 
 export interface FilosofiaPilar {
