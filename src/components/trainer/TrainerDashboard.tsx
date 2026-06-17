@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { createClient } from '@supabase/supabase-js';
 import { useSupabase } from '../../context/SupabaseContext';
@@ -12,6 +12,8 @@ import { analizarSobrecargaProgresiva, Session, type Notification } from '../../
 import { DEFAULT_RULES } from '../../lib/rules';
 import { resolveOverloadRules, resolveOverloadConfig } from '../../lib/sessions';
 import { isRealEmailDomain } from '../../lib/validations';
+import jsPDF from 'jspdf';
+import html2canvas from 'html2canvas';
 
 const ALERT_COLORS: Record<string, { bg: string; border: string; text: string; icon: string }> = {
   error: { bg: 'rgba(239, 68, 68, 0.1)', border: 'rgba(239, 68, 68, 0.25)', text: '#f87171', icon: '🔴' },
@@ -1213,7 +1215,10 @@ export const TrainerDashboard: React.FC = () => {
     }
   };
 
-  const handlePrintPDFReport = () => {
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState<boolean>(false);
+  const pdfReportRef = useRef<HTMLDivElement>(null);
+
+  const handlePrintPDFReport = async () => {
     if (!selectedAthleteForEvolution) return;
 
     const plan = trainerSubscription?.plan || 'free';
@@ -1222,9 +1227,94 @@ export const TrainerDashboard: React.FC = () => {
       return;
     }
 
-    setTimeout(() => {
-      window.print();
-    }, 150);
+    const reportEl = pdfReportRef.current;
+    if (!reportEl) {
+      showToast('Error interno: no se encontró el contenido del reporte.', 'error');
+      return;
+    }
+
+    try {
+      setIsGeneratingPdf(true);
+
+      // Temporalmente hacer visible el div para que html2canvas lo capture
+      reportEl.style.position = 'absolute';
+      reportEl.style.left = '0';
+      reportEl.style.top = '0';
+      reportEl.style.opacity = '1';
+      reportEl.style.pointerEvents = 'auto';
+      reportEl.style.zIndex = '-9999';
+
+      // Esperar un frame para que el navegador renderice
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+      const canvas = await html2canvas(reportEl, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+      });
+
+      // Restaurar el div a su estado oculto
+      reportEl.style.position = 'absolute';
+      reportEl.style.left = '-9999px';
+      reportEl.style.top = '0';
+      reportEl.style.opacity = '0';
+      reportEl.style.pointerEvents = 'none';
+      reportEl.style.zIndex = '-1';
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 10; // mm
+      const imgWidth = pageWidth - (margin * 2);
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      const pageContentHeight = pageHeight - (margin * 2);
+
+      // Si cabe en una sola página
+      if (imgHeight <= pageContentHeight) {
+        pdf.addImage(imgData, 'PNG', margin, margin, imgWidth, imgHeight);
+      } else {
+        // Multi-página: recortar el canvas en secciones y añadir cada una como página
+        const totalPages = Math.ceil(imgHeight / pageContentHeight);
+        const scaleFactor = canvas.width / imgWidth;
+
+        for (let page = 0; page < totalPages; page++) {
+          if (page > 0) pdf.addPage();
+
+          const sourceY = page * pageContentHeight * scaleFactor;
+          const sourceH = Math.min(pageContentHeight * scaleFactor, canvas.height - sourceY);
+          const destH = sourceH / scaleFactor;
+
+          // Crear un canvas temporal para cada slice
+          const sliceCanvas = document.createElement('canvas');
+          sliceCanvas.width = canvas.width;
+          sliceCanvas.height = sourceH;
+          const sliceCtx = sliceCanvas.getContext('2d');
+          if (sliceCtx) {
+            sliceCtx.fillStyle = '#ffffff';
+            sliceCtx.fillRect(0, 0, sliceCanvas.width, sliceCanvas.height);
+            sliceCtx.drawImage(canvas, 0, sourceY, canvas.width, sourceH, 0, 0, canvas.width, sourceH);
+          }
+
+          const sliceData = sliceCanvas.toDataURL('image/png');
+          pdf.addImage(sliceData, 'PNG', margin, margin, imgWidth, destH);
+        }
+      }
+
+      // Generar nombre descriptivo del archivo
+      const athleteName = selectedAthleteForEvolution.nombre?.replace(/\s+/g, '_') || 'Atleta';
+      const dateStr = new Date().toISOString().split('T')[0];
+      const fileName = `Reporte_${athleteName}_${dateStr}.pdf`;
+
+      pdf.save(fileName);
+      showToast(`✅ Reporte PDF descargado: ${fileName}`, 'success');
+    } catch (err: any) {
+      console.error('Error al generar PDF:', err);
+      showToast('Error al generar el PDF: ' + (err.message || 'Intenta de nuevo'), 'error');
+    } finally {
+      setIsGeneratingPdf(false);
+    }
   };
 
 
@@ -3715,6 +3805,7 @@ export const TrainerDashboard: React.FC = () => {
                       <button
                         type="button"
                         onClick={handlePrintPDFReport}
+                        disabled={isGeneratingPdf}
                         style={{
                           width: '100%',
                           background: trainerSubscription?.plan === 'free' ? 'rgba(255,255,255,0.03)' : 'var(--theme-btn-gradient)',
@@ -3733,7 +3824,7 @@ export const TrainerDashboard: React.FC = () => {
                           gap: '6px'
                         }}
                       >
-                        {trainerSubscription?.plan === 'free' ? '🔒 Descargar Reporte PDF' : '📄 Generar e Imprimir Reporte PDF'}
+                        {isGeneratingPdf ? '⏳ Generando PDF...' : trainerSubscription?.plan === 'free' ? '🔒 Descargar Reporte PDF' : '📄 Descargar Reporte PDF'}
                       </button>
                     </div>
 
@@ -3746,9 +3837,27 @@ export const TrainerDashboard: React.FC = () => {
         </div>
       )}
 
-      {/* CONTENIDO DEL REPORTE IMPRIMIBLE (SOLO SE MUESTRA AL IMPRIMIR) */}
+      {/* CONTENIDO DEL REPORTE PDF (oculto off-screen, capturado por html2canvas) */}
       {selectedAthleteForEvolution && (
-        <div id="evolutionlab-pdf-report">
+        <div
+          id="evolutionlab-pdf-report"
+          ref={pdfReportRef}
+          style={{
+            position: 'absolute',
+            left: '-9999px',
+            top: '0',
+            width: '794px',
+            opacity: 0,
+            pointerEvents: 'none',
+            zIndex: -1,
+            background: '#ffffff',
+            color: '#000000',
+            padding: '30px',
+            fontFamily: "'Inter', 'Segoe UI', Arial, sans-serif",
+            fontSize: '12px',
+            lineHeight: '1.5',
+          }}
+        >
           {/* Cabecera del Reporte */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #ff6b00', paddingBottom: '15px', marginBottom: '20px' }}>
             <div>
@@ -3838,33 +3947,14 @@ export const TrainerDashboard: React.FC = () => {
           )}
 
           {/* Pie de página */}
-          <div style={{ position: 'fixed', bottom: '15px', left: 0, right: 0, borderTop: '1px solid #e2e8f0', paddingTop: '8px', display: 'flex', justifyContent: 'space-between', fontSize: '8px', color: '#64748b' }}>
-            <span>Generado automáticamente por EvolutionLab 3.0</span>
+          <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '12px', marginTop: '30px', display: 'flex', justifyContent: 'space-between', fontSize: '8px', color: '#64748b' }}>
+            <span>Generado automáticamente por Evolution Lab</span>
             <span>© {new Date().getFullYear()} {profile?.marca?.nombre_display || profile?.nombre}</span>
           </div>
         </div>
       )}
 
-      {/* Estilos especiales para impresión y visualización de PDF */}
-      <style>{`
-        #evolutionlab-pdf-report {
-          display: none;
-        }
-        @media print {
-          body, html {
-            background: white !important;
-            color: black !important;
-          }
-          #root, .top-bar, .container, #fab1RMBtn, .modal-overlay, #modal-1rm {
-            display: none !important;
-          }
-          #evolutionlab-pdf-report {
-            display: block !important;
-            color: black !important;
-            background: white !important;
-          }
-        }
-      `}</style>
+      {/* Los estilos del reporte PDF se manejan inline en el div #evolutionlab-pdf-report */}
 
       {/* Alerts Hub Modal */}
       <TrainerAlertsHub visible={showAlertsHub} onClose={() => setShowAlertsHub(false)} />
