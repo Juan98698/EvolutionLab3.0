@@ -38,7 +38,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     switch (plan) {
       case 'premium':
-        amount = 1000;
+        amount = 19900;
         planName = 'Solo Lifter Pro';
         planDescription = 'Sugerencias de Smart Coach y reglas avanzadas para atletas autónomos.';
         break;
