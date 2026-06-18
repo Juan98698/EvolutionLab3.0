@@ -113,7 +113,7 @@ export const PlanPlanner: React.FC = () => {
       try {
         const { data, error } = await supabase
           .from('ejercicios_globales')
-          .select('nombre, imagen_url, descripcion')
+          .select('nombre, grupo_muscular, imagen_url, descripcion')
           .order('nombre');
         if (!error && data) {
           setGlobalCatalog(data as EjercicioGlobal[]);
@@ -435,22 +435,25 @@ export const PlanPlanner: React.FC = () => {
                           const videoVal = ex.video_url || ex.videoUrl || '';
                           const descVal = ex.description || '';
                           const origVal = ex.nombre_original || '';
+                          const gmVal = ex.grupo_muscular || '';
 
-                          if (nameClean && (imageVal || gifVal || videoVal || descVal || origVal)) {
+                          if (nameClean && (imageVal || gifVal || videoVal || descVal || origVal || gmVal)) {
                             if (
                               !library[nameClean] ||
                               (imageVal && library[nameClean].imageData !== imageVal) ||
                               (gifVal && library[nameClean].gifData !== gifVal) ||
                               (videoVal && library[nameClean].videoUrl !== videoVal) ||
                               (descVal && library[nameClean].description !== descVal) ||
-                              (origVal && library[nameClean].nombreOriginal !== origVal)
+                              (origVal && library[nameClean].nombreOriginal !== origVal) ||
+                              (gmVal && library[nameClean].grupoMuscular !== gmVal)
                             ) {
                               library[nameClean] = {
                                 imageData: imageVal || library[nameClean]?.imageData || '',
                                 gifData: gifVal || library[nameClean]?.gifData || '',
                                 videoUrl: videoVal || library[nameClean]?.videoUrl || '',
                                 description: descVal || library[nameClean]?.description || '',
-                                nombreOriginal: origVal || library[nameClean]?.nombreOriginal || ''
+                                nombreOriginal: origVal || library[nameClean]?.nombreOriginal || '',
+                                grupoMuscular: gmVal || library[nameClean]?.grupoMuscular || ''
                               };
                               updated = true;
                             }
@@ -698,6 +701,7 @@ export const PlanPlanner: React.FC = () => {
                     let nextVideoUrl = ex.video_url || '';
                     let nextDescription = (ex as any).description || '';
                     let nextNombreOriginal = ex.nombre_original || '';
+                    let nextGrupoMuscular = ex.grupo_muscular || '';
 
                     const isCustomUpload = ex.image_url && ex.image_url.includes(`/${trainerId}/`);
 
@@ -708,6 +712,7 @@ export const PlanPlanner: React.FC = () => {
                       nextVideoUrl = (foundLocal?.videoUrl) || '';
                       nextDescription = (foundLocal?.description) || (foundGlobal?.descripcion) || '';
                       nextNombreOriginal = (foundGlobal?.nombre) || (foundLocal?.nombreOriginal) || '';
+                      nextGrupoMuscular = (foundGlobal?.grupo_muscular) || (foundLocal?.grupoMuscular) || '';
                       
                       if (foundLocal && foundGlobal) {
                         showToast(`✨ ¡Auto-rellenado (historial + catálogo global) para "${val}"!`, 'info');
@@ -734,6 +739,7 @@ export const PlanPlanner: React.FC = () => {
                           nextGifUrl = ex.gif_url || (linkedLocal?.gifData) || '';
                           nextVideoUrl = ex.video_url || (linkedLocal?.videoUrl) || '';
                           nextDescription = (ex as any).description || (linkedLocal?.description) || (linkedGlobal?.descripcion) || '';
+                          nextGrupoMuscular = ex.grupo_muscular || (linkedGlobal?.grupo_muscular) || (linkedLocal?.grupoMuscular) || '';
                         }
                       } else {
                         // Si la imagen actual NO es un upload personalizado, la limpiamos para no arrastrar la imagen del ejercicio anterior
@@ -742,6 +748,7 @@ export const PlanPlanner: React.FC = () => {
                           nextGifUrl = '';
                           nextVideoUrl = '';
                           nextDescription = '';
+                          nextGrupoMuscular = '';
                         }
                       }
                       if (val.trim() === '') {
@@ -750,6 +757,7 @@ export const PlanPlanner: React.FC = () => {
                         nextGifUrl = '';
                         nextVideoUrl = '';
                         nextDescription = '';
+                        nextGrupoMuscular = '';
                       }
                     }
 
@@ -760,7 +768,8 @@ export const PlanPlanner: React.FC = () => {
                       image_url: nextImageUrl,
                       gif_url: nextGifUrl,
                       video_url: nextVideoUrl,
-                      description: nextDescription
+                      description: nextDescription,
+                      grupo_muscular: nextGrupoMuscular
                     };
                   } catch (e) {
                     console.error('Error al auto-rellenar ejercicio:', e);
@@ -868,7 +877,7 @@ export const PlanPlanner: React.FC = () => {
           // Recargar catálogo global en el estado
           const { data: updatedCatalog } = await supabase
             .from('ejercicios_globales')
-            .select('nombre, imagen_url, descripcion')
+            .select('nombre, grupo_muscular, imagen_url, descripcion')
             .order('nombre');
           if (updatedCatalog) {
             setGlobalCatalog(updatedCatalog as EjercicioGlobal[]);
@@ -1232,21 +1241,24 @@ export const PlanPlanner: React.FC = () => {
         for (const day of trainingDays) {
           for (const ex of day.exercises) {
             const nameClean = ex.nombre.trim().toLowerCase();
-            if (nameClean && (ex.image_url || ex.gif_url || ex.video_url || (ex as any).description || ex.nombre_original)) {
+            const gmVal = ex.grupo_muscular || '';
+            if (nameClean && (ex.image_url || ex.gif_url || ex.video_url || (ex as any).description || ex.nombre_original || gmVal)) {
               if (
                 !library[nameClean] ||
                 (ex.image_url && library[nameClean].imageData !== ex.image_url) ||
                 (ex.gif_url && library[nameClean].gifData !== ex.gif_url) ||
                 (ex.video_url && library[nameClean].videoUrl !== ex.video_url) ||
                 ((ex as any).description && library[nameClean].description !== (ex as any).description) ||
-                (ex.nombre_original && library[nameClean].nombreOriginal !== ex.nombre_original)
+                (ex.nombre_original && library[nameClean].nombreOriginal !== ex.nombre_original) ||
+                (gmVal && library[nameClean].grupoMuscular !== gmVal)
               ) {
                 library[nameClean] = {
                   imageData: ex.image_url || library[nameClean]?.imageData || '',
                   gifData: ex.gif_url || library[nameClean]?.gifData || '',
                   videoUrl: ex.video_url || library[nameClean]?.videoUrl || '',
                   description: (ex as any).description || library[nameClean]?.description || '',
-                  nombreOriginal: ex.nombre_original || library[nameClean]?.nombreOriginal || ''
+                  nombreOriginal: ex.nombre_original || library[nameClean]?.nombreOriginal || '',
+                  grupoMuscular: gmVal || library[nameClean]?.grupoMuscular || ''
                 };
                 updated = true;
               }
