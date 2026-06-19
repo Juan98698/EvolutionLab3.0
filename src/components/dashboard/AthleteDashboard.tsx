@@ -563,7 +563,11 @@ export const AthleteDashboard: React.FC = () => {
     [plan, overloadSessions, overloadRules, overloadConfig]
   );
 
-  const [dismissedKeys, _setDismissedKeys] = useLocalStorage<string[]>(DISMISSED_NOTIFS_KEY, []);
+  const [dismissedKeys, setDismissedKeys] = useLocalStorage<string[]>(DISMISSED_NOTIFS_KEY, []);
+
+  const handleDismissNotification = (key: string) => {
+    setDismissedKeys((prev) => [...prev, key]);
+  };
 
   const minSesiones = overloadConfig.minSesiones ?? DEFAULT_OVERLOAD_CONFIG.minSesiones;
 
@@ -1352,6 +1356,7 @@ export const AthleteDashboard: React.FC = () => {
               <NotificationCard
                 key={getNotificationKey(n)}
                 notif={n}
+                onDismiss={() => handleDismissNotification(getNotificationKey(n))}
               />
             ))}
             {visibleNotificaciones.length === 0 && notificationsEmptyState && (
