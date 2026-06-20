@@ -87,9 +87,10 @@ export const AddSesion: React.FC<AddSesionProps> = ({
     const norm = g.toLowerCase().trim();
     if (norm.includes('pecho') || norm.includes('chest')) return 'Pecho';
     if (norm.includes('espalda') || norm.includes('back')) return 'Espalda';
-    if (norm.includes('femoral') || norm.includes('isquio') || norm.includes('curl de pierna')) return 'Isquiosurales';
-    if (norm.includes('pierna') || norm.includes('cuad') || norm.includes('sentadilla') || norm.includes('prensa') || norm.includes('extension') || norm.includes('zancada') || norm.includes('bulgara')) return 'Cuádriceps';
-    if (norm.includes('glute') || norm.includes('pantorrilla')) return 'Glúteos';
+    if (norm.includes('femoral') || norm.includes('isquio') || norm.includes('curl de pierna') || norm.includes('isquiosurles') || norm.includes('isquiosurales')) return 'Isquiosurales';
+    if (norm.includes('pierna') || norm.includes('cuad') || norm.includes('sentadilla') || norm.includes('prensa') || norm.includes('extension') || norm.includes('zancada') || norm.includes('bulgara') || norm.includes('cuadriceps') || norm.includes('cuádriceps')) return 'Cuádriceps';
+    if (norm.includes('pantorrilla') || norm.includes('pantorrillas') || norm.includes('gemelo') || norm.includes('gemelos')) return 'Pantorrillas';
+    if (norm.includes('glute') || norm.includes('gluteo') || norm.includes('glúteo') || norm.includes('glúteos') || norm.includes('gluteos')) return 'Glúteos';
     if (norm.includes('hombro') || norm.includes('shoulder')) return 'Hombros';
     if (norm.includes('brazo') || norm.includes('biceps') || norm.includes('triceps') || norm.includes('antebrazo')) return 'Brazos';
     if (norm.includes('core') || norm.includes('abdomen') || norm.includes('abs')) return 'Core';
@@ -659,7 +660,7 @@ export const AddSesion: React.FC<AddSesionProps> = ({
                         cursor: 'pointer'
                       }}
                     >
-                      {['Pecho', 'Espalda', 'Cuádriceps', 'Isquiosurales', 'Hombros', 'Brazos', 'Glúteos', 'Core'].map(g => (
+                      {['Pecho', 'Espalda', 'Cuádriceps', 'Isquiosurales', 'Hombros', 'Brazos', 'Glúteos', 'Pantorrillas', 'Core'].map(g => (
                         <option key={g} value={g} style={{ background: '#0b0f19', color: 'white' }}>{g}</option>
                       ))}
                     </select>

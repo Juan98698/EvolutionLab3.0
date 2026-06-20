@@ -10,7 +10,7 @@ import { PlanData, TrainingDay, Exercise, GlobalVariable, EjercicioGlobal } from
 const genDayId = () => 'day_' + Math.random().toString(36).substring(2, 9);
 const genExId = () => 'ex_' + Math.random().toString(36).substring(2, 9);
 
-const MUSCLE_GROUPS = ['Pecho', 'Espalda', 'Cuádriceps', 'Isquiosurales', 'Hombros', 'Bíceps', 'Tríceps', 'Glúteos', 'Abdomen'] as const;
+const MUSCLE_GROUPS = ['Pecho', 'Espalda', 'Cuádriceps', 'Isquiosurales', 'Hombros', 'Bíceps', 'Tríceps', 'Glúteos', 'Pantorrillas', 'Abdomen'] as const;
 
 interface LocalExercise {
   id: string;
@@ -224,7 +224,23 @@ export const QuickStartPlanner: React.FC = () => {
           .order('grupo_muscular');
 
         if (error) throw error;
-        setEjerciciosGlobales(data || []);
+        const normalizedData = (data || []).map((e: any) => {
+          const g = e.grupo_muscular || '';
+          const norm = g.toLowerCase().trim();
+          let normalized = g;
+          if (norm.includes('pecho') || norm.includes('chest')) normalized = 'Pecho';
+          else if (norm.includes('espalda') || norm.includes('back')) normalized = 'Espalda';
+          else if (norm.includes('femoral') || norm.includes('isquio') || norm.includes('isquiotibiales') || norm.includes('isquiosurles') || norm.includes('isquiosurales')) normalized = 'Isquiosurales';
+          else if (norm.includes('cuad') || norm.includes('cuádriceps') || norm.includes('cuadriceps')) normalized = 'Cuádriceps';
+          else if (norm.includes('glute') || norm.includes('glúteo') || norm.includes('gluteo') || norm.includes('glúteos') || norm.includes('gluteos')) normalized = 'Glúteos';
+          else if (norm.includes('hombro') || norm.includes('shoulder')) normalized = 'Hombros';
+          else if (norm.includes('biceps') || norm.includes('bíceps')) normalized = 'Bíceps';
+          else if (norm.includes('triceps') || norm.includes('tríceps')) normalized = 'Tríceps';
+          else if (norm.includes('pantorrilla') || norm.includes('pantorrillas') || norm.includes('gemelo') || norm.includes('gemelos')) normalized = 'Pantorrillas';
+          else if (norm.includes('core') || norm.includes('abdomen') || norm.includes('abs') || norm.includes('abdominales')) normalized = 'Core';
+          return { ...e, grupo_muscular: normalized };
+        });
+        setEjerciciosGlobales(normalizedData);
       } catch (err) {
         console.error('Error al cargar ejercicios globales:', err);
         showToast('Error al cargar el catálogo de ejercicios', 'error');

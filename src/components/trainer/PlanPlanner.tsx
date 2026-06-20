@@ -103,6 +103,26 @@ export const PlanPlanner: React.FC = () => {
       .join(' ');
   };
 
+  // Normalizar grupos musculares provenientes de Supabase para alinearlos con el planificador
+  const normalizeMuscleGroup = (g: string | undefined | null): string => {
+    if (!g) return '';
+    const norm = g.toLowerCase().trim();
+    if (norm.includes('pecho') || norm.includes('chest')) return 'Pecho';
+    if (norm.includes('espalda') || norm.includes('back')) return 'Espalda';
+    if (norm.includes('femoral') || norm.includes('isquio') || norm.includes('isquiotibiales') || norm.includes('isquiosurles') || norm.includes('isquiosurales')) return 'Isquiosurales';
+    if (norm.includes('cuad') || norm.includes('cuádriceps') || norm.includes('cuadriceps')) return 'Cuádriceps';
+    if (norm.includes('glute') || norm.includes('glúteo') || norm.includes('gluteo') || norm.includes('glúteos') || norm.includes('gluteos')) return 'Glúteos';
+    if (norm.includes('hombro') || norm.includes('shoulder')) return 'Hombros';
+    if (norm.includes('biceps') || norm.includes('bíceps')) return 'Bíceps';
+    if (norm.includes('triceps') || norm.includes('tríceps')) return 'Tríceps';
+    if (norm.includes('pantorrilla') || norm.includes('pantorrillas') || norm.includes('gemelo') || norm.includes('gemelos')) return 'Pantorrillas';
+    if (norm.includes('core') || norm.includes('abdomen') || norm.includes('abs') || norm.includes('abdominales')) return 'Core';
+    if (norm.includes('cardio') || norm.includes('aeróbico') || norm.includes('aerobico')) return 'Cardio';
+    
+    // Fallback: capitalizar primera letra
+    return g.charAt(0).toUpperCase() + g.slice(1).toLowerCase();
+  };
+
   // Estado: catalogo global de ejercicios (Supabase)
   const [globalCatalog, setGlobalCatalog] = useState<EjercicioGlobal[]>([]);
   const [globalCatalogNames, setGlobalCatalogNames] = useState<string[]>([]);
@@ -116,8 +136,12 @@ export const PlanPlanner: React.FC = () => {
           .select('nombre, grupo_muscular, imagen_url, descripcion')
           .order('nombre');
         if (!error && data) {
-          setGlobalCatalog(data as EjercicioGlobal[]);
-          setGlobalCatalogNames(data.map((e: any) => capitalizarEspanol(e.nombre)));
+          const normalized = (data as any[]).map((e: any) => ({
+            ...e,
+            grupo_muscular: normalizeMuscleGroup(e.grupo_muscular)
+          }));
+          setGlobalCatalog(normalized as EjercicioGlobal[]);
+          setGlobalCatalogNames(normalized.map((e: any) => capitalizarEspanol(e.nombre)));
         }
       } catch (e) {
         console.warn('No se pudo cargar el catalogo global de ejercicios:', e);
@@ -198,6 +222,7 @@ export const PlanPlanner: React.FC = () => {
       'Tríceps': 0,
       'Core': 0,
       'Glúteos': 0,
+      'Pantorrillas': 0,
       'Cardio': 0
     };
 
@@ -205,7 +230,7 @@ export const PlanPlanner: React.FC = () => {
     const day = trainingDays[safeIdx];
     if (day && Array.isArray(day.exercises)) {
       day.exercises.forEach(ex => {
-        const gm = (ex as any).grupo_muscular;
+        const gm = normalizeMuscleGroup((ex as any).grupo_muscular);
         if (gm && volumeMap[gm] !== undefined) {
           const seriesStr = ex.variables['series de trabajo'] || ex.variables['series'] || '';
           volumeMap[gm] += parseSeries(seriesStr);
@@ -435,7 +460,7 @@ export const PlanPlanner: React.FC = () => {
                           const videoVal = ex.video_url || ex.videoUrl || '';
                           const descVal = ex.description || '';
                           const origVal = ex.nombre_original || '';
-                          const gmVal = ex.grupo_muscular || '';
+                          const gmVal = normalizeMuscleGroup(ex.grupo_muscular || '');
 
                           if (nameClean && (imageVal || gifVal || videoVal || descVal || origVal || gmVal)) {
                             if (
@@ -505,7 +530,7 @@ export const PlanPlanner: React.FC = () => {
                 image_url: ex.image_url !== undefined ? ex.image_url : (ex.imageData !== undefined ? ex.imageData : ''),
                 gif_url: ex.gif_url !== undefined ? ex.gif_url : (ex.gifData !== undefined ? ex.gifData : ''),
                 description: ex.description || '',
-                grupo_muscular: ex.grupo_muscular || '',
+                grupo_muscular: normalizeMuscleGroup(ex.grupo_muscular || ''),
                 progression_notes: ex.progression_notes || '',
                 progression_type: ex.progression_type,
                 progression_params: ex.progression_params
@@ -1241,7 +1266,7 @@ export const PlanPlanner: React.FC = () => {
         for (const day of trainingDays) {
           for (const ex of day.exercises) {
             const nameClean = ex.nombre.trim().toLowerCase();
-            const gmVal = ex.grupo_muscular || '';
+            const gmVal = normalizeMuscleGroup(ex.grupo_muscular || '');
             if (nameClean && (ex.image_url || ex.gif_url || ex.video_url || (ex as any).description || ex.nombre_original || gmVal)) {
               if (
                 !library[nameClean] ||
@@ -2036,7 +2061,7 @@ export const PlanPlanner: React.FC = () => {
                               }}
                             >
                               <option value="" style={{ background: '#0b0f19' }}>Sin asignar</option>
-                              {['Pecho', 'Espalda', 'Cuádriceps', 'Isquiosurales', 'Hombros', 'Bíceps', 'Tríceps', 'Core', 'Glúteos', 'Cardio'].map(g => (
+                              {['Pecho', 'Espalda', 'Cuádriceps', 'Isquiosurales', 'Hombros', 'Bíceps', 'Tríceps', 'Core', 'Glúteos', 'Pantorrillas', 'Cardio'].map(g => (
                                 <option key={g} value={g} style={{ background: '#0b0f19' }}>{g}</option>
                               ))}
                             </select>
