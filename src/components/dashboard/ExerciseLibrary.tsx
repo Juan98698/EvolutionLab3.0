@@ -132,6 +132,29 @@ export const ExerciseLibrary: React.FC = () => {
         muscleGroup.includes('abdominal')
       );
     }
+    if (filterText === 'gluteos') {
+      return matchesSearch && (
+        muscleGroup.includes('gluteo')
+      );
+    }
+    if (filterText === 'cuadriceps') {
+      return matchesSearch && (
+        muscleGroup.includes('cuadriceps') || 
+        muscleGroup.includes('cudriceps')
+      );
+    }
+    if (filterText === 'isquiosurales') {
+      return matchesSearch && (
+        muscleGroup.includes('femoral') || 
+        muscleGroup.includes('isquio')
+      );
+    }
+    if (filterText === 'pantorrillas') {
+      return matchesSearch && (
+        muscleGroup.includes('pantorrilla') || 
+        muscleGroup.includes('pantorilla')
+      );
+    }
     if (filterText === 'piernas') {
       return matchesSearch && (
         muscleGroup.includes('pierna') || 
