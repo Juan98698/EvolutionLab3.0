@@ -126,6 +126,8 @@ export const PlanPlanner: React.FC = () => {
   // Estado: catalogo global de ejercicios (Supabase)
   const [globalCatalog, setGlobalCatalog] = useState<EjercicioGlobal[]>([]);
   const [globalCatalogNames, setGlobalCatalogNames] = useState<string[]>([]);
+  const [activeInput, setActiveInput] = useState<{ dayId: string; exId: string } | null>(null);
+  const [filteredSuggestions, setFilteredSuggestions] = useState<EjercicioGlobal[]>([]);
 
   // Cargar catalogo global de ejercicios una sola vez
   useEffect(() => {
@@ -1939,18 +1941,117 @@ export const PlanPlanner: React.FC = () => {
                           <div className="exercise-header">
                             <div className="exercise-checkbox client-only-checkbox" data-ex-id={ex.id} data-day-id={day.id}></div>
                             
-                            <div className="exercise-name" style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <div className="exercise-name" style={{ display: 'flex', flexDirection: 'column', gap: '4px', position: 'relative' }}>
                               <input
                                 id={`ex-name-${day.id}-${ex.id}`}
                                 aria-label={`Nombre del ejercicio ${exIndex + 1}`}
                                 type="text"
                                 className="exercise-name-input"
-                                list="evolution-exercise-list"
                                 value={ex.nombre}
-                                onChange={(e) => handleExerciseChange(day.id, ex.id, 'nombre', e.target.value)}
+                                onChange={(e) => {
+                                  handleExerciseChange(day.id, ex.id, 'nombre', e.target.value);
+                                  const query = e.target.value.trim().toLowerCase();
+                                  if (!query) {
+                                    setFilteredSuggestions(globalCatalog.slice(0, 8));
+                                  } else {
+                                    const matches = globalCatalog.filter(g => g.nombre.toLowerCase().includes(query)).slice(0, 8);
+                                    setFilteredSuggestions(matches);
+                                  }
+                                }}
+                                onFocus={() => {
+                                  setActiveInput({ dayId: day.id, exId: ex.id });
+                                  const query = (ex.nombre || '').trim().toLowerCase();
+                                  if (!query) {
+                                    setFilteredSuggestions(globalCatalog.slice(0, 8));
+                                  } else {
+                                    const matches = globalCatalog.filter(g => g.nombre.toLowerCase().includes(query)).slice(0, 8);
+                                    setFilteredSuggestions(matches);
+                                  }
+                                }}
+                                onBlur={() => {
+                                  setTimeout(() => {
+                                    setActiveInput(null);
+                                  }, 250);
+                                }}
                                 placeholder={`Ejercicio ${exIndex + 1}`}
                                 style={{ width: '100%' }}
+                                autoComplete="off"
                               />
+
+                              {/* Dropdown de Sugerencias Visuales */}
+                              {activeInput && activeInput.dayId === day.id && activeInput.exId === ex.id && filteredSuggestions.length > 0 && (
+                                <div style={{
+                                  position: 'absolute',
+                                  top: '100%',
+                                  left: 0,
+                                  width: '100%',
+                                  maxHeight: '260px',
+                                  overflowY: 'auto',
+                                  background: '#0c0f17',
+                                  border: '1px solid rgba(255, 255, 255, 0.12)',
+                                  borderRadius: '12px',
+                                  boxShadow: '0 12px 30px rgba(0,0,0,0.6)',
+                                  zIndex: 9999,
+                                  marginTop: '4px',
+                                  padding: '4px',
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  gap: '2px'
+                                }}>
+                                  {filteredSuggestions.map((sug) => (
+                                    <div
+                                      key={sug.id}
+                                      onMouseDown={(e) => {
+                                        e.preventDefault();
+                                        handleExerciseChange(day.id, ex.id, 'nombre', sug.nombre);
+                                        setActiveInput(null);
+                                        setFilteredSuggestions([]);
+                                      }}
+                                      style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '10px',
+                                        padding: '8px 12px',
+                                        borderRadius: '8px',
+                                        cursor: 'pointer',
+                                        transition: 'background 0.2s ease',
+                                        color: 'white',
+                                        fontSize: '12px'
+                                      }}
+                                      onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.06)'}
+                                      onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                                    >
+                                      {/* Miniatura de la Imagen */}
+                                      <div style={{
+                                        width: '36px',
+                                        height: '36px',
+                                        borderRadius: '6px',
+                                        overflow: 'hidden',
+                                        background: '#04070e',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'center',
+                                        flexShrink: 0,
+                                        border: '1px solid rgba(255, 255, 255, 0.08)'
+                                      }}>
+                                        {sug.imagen_url ? (
+                                          <img src={sug.imagen_url} alt={sug.nombre} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                                        ) : (
+                                          <span style={{ fontSize: '14px' }}>💪</span>
+                                        )}
+                                      </div>
+
+                                      {/* Nombre y Grupo Muscular */}
+                                      <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', flexGrow: 1, textAlign: 'left' }}>
+                                        <span style={{ fontWeight: 'bold' }}>{sug.nombre}</span>
+                                        <span style={{ fontSize: '9px', color: 'var(--theme-primary, #00d4ff)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                          {sug.grupo_muscular}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
                               {ex.nombre_original && (
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px', flexWrap: 'wrap' }}>
                                   <span style={{ fontSize: '9px', color: 'var(--theme-primary)', background: 'rgba(249, 115, 22, 0.1)', border: '1px solid rgba(249, 115, 22, 0.3)', padding: '2px 8px', borderRadius: '4px', fontFamily: "'Orbitron', sans-serif", textTransform: 'uppercase', letterSpacing: '0.5px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>

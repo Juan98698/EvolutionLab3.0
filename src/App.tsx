@@ -15,6 +15,7 @@ const AdminDashboard = React.lazy(() => import('./components/admin/AdminDashboar
 const TrainerBranding = React.lazy(() => import('./components/trainer/TrainerBranding'));
 const QuickStartPlanner = React.lazy(() => import('./components/dashboard/QuickStartPlanner'));
 const SoloConfigRules = React.lazy(() => import('./components/dashboard/SoloConfigRules'));
+const ExerciseLibrary = React.lazy(() => import('./components/dashboard/ExerciseLibrary'));
 
 const LoadingFallback = () => (
   <div style={{
@@ -92,6 +93,14 @@ export const App: React.FC = () => {
             element={
               <ProtectedRoute allowedRoles={['cliente', 'entrenador']}>
                 <Analytics />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/biblioteca"
+            element={
+              <ProtectedRoute allowedRoles={['cliente', 'entrenador']}>
+                <ExerciseLibrary />
               </ProtectedRoute>
             }
           />

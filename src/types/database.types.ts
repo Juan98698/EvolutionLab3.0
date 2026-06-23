@@ -201,6 +201,7 @@ export interface EjercicioGlobal {
   grupo_muscular: string;
   imagen_url?: string | null;
   descripcion?: string | null;
+  video_url?: string | null;
   created_at?: string;
 }
 
