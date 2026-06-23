@@ -20,6 +20,12 @@ export const ExerciseLibrary: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMuscle, setSelectedMuscle] = useState<string | null>(null);
   const [trainerProfile, setTrainerProfile] = useState<Profile | null>(null);
+  const [visibleCount, setVisibleCount] = useState(12);
+
+  // Resetear paginación al cambiar filtros o búsquedas
+  useEffect(() => {
+    setVisibleCount(12);
+  }, [searchQuery, selectedMuscle]);
 
   // Determinar si es cliente autónomo free
   const isAutonomousClient = profile?.rol === 'cliente' && !profile?.entrenador_id;
@@ -422,12 +428,13 @@ export const ExerciseLibrary: React.FC = () => {
                       No se encontraron ejercicios con los filtros seleccionados.
                     </div>
                   ) : (
-                    <div style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-                      gap: '20px'
-                    }}>
-                      {filteredExercises.map((exercise) => (
+                    <>
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+                        gap: '20px'
+                      }}>
+                        {filteredExercises.slice(0, visibleCount).map((exercise) => (
                         <div
                           key={exercise.id}
                           style={{
@@ -465,6 +472,7 @@ export const ExerciseLibrary: React.FC = () => {
                               <img
                                 src={exercise.imagen_url}
                                 alt={exercise.nombre}
+                                loading="lazy"
                                 style={{
                                   width: '100%',
                                   height: '100%',
@@ -553,6 +561,37 @@ export const ExerciseLibrary: React.FC = () => {
                         </div>
                       ))}
                     </div>
+                    {filteredExercises.length > visibleCount && (
+                      <div style={{ display: 'flex', justifyContent: 'center', marginTop: '30px' }}>
+                        <button
+                          onClick={() => setVisibleCount((prev) => prev + 12)}
+                          style={{
+                            fontFamily: themeFontFamily,
+                            background: 'rgba(255, 255, 255, 0.03)',
+                            border: '1px solid rgba(255, 255, 255, 0.1)',
+                            borderRadius: '12px',
+                            color: 'white',
+                            padding: '12px 24px',
+                            fontSize: '12px',
+                            fontWeight: 800,
+                            cursor: 'pointer',
+                            letterSpacing: '1px',
+                            transition: 'all 0.2s ease',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.08)';
+                            e.currentTarget.style.borderColor = themePrimaryColor;
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.background = 'rgba(255, 255, 255, 0.03)';
+                            e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.1)';
+                          }}
+                        >
+                          MOSTRAR MÁS EJERCICIOS 👇
+                        </button>
+                      </div>
+                    )}
+                    </>
                   )}
                 </div>
               </div>
