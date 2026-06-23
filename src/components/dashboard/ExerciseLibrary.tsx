@@ -103,37 +103,19 @@ export const ExerciseLibrary: React.FC = () => {
       );
     }
     if (filterText === 'pecho') {
-      const isChestExerciseByName = 
-        normName.includes('pecho') || 
-        normName.includes('pectoral') || 
-        normName.includes('apertura') || 
-        normName.includes('pullover') || 
-        (normName.includes('press') && (
-          normName.includes('banca') || 
-          normName.includes('banco') || 
-          normName.includes('plano') || 
-          normName.includes('inclinado') || 
-          normName.includes('declinado') || 
-          normName.includes('maquina hammer')
-        )) || 
-        (normName.includes('fondos') && normName.includes('paralelas'));
-
       return matchesSearch && (
         muscleGroup.includes('pecho') || 
-        muscleGroup.includes('pectoral') ||
-        isChestExerciseByName
+        muscleGroup.includes('pectoral')
       );
     }
     if (filterText === 'biceps') {
       return matchesSearch && (
-        muscleGroup.includes('biceps') || 
-        muscleGroup.includes('brazo')
+        muscleGroup.includes('biceps')
       );
     }
     if (filterText === 'triceps') {
       return matchesSearch && (
-        muscleGroup.includes('triceps') || 
-        muscleGroup.includes('brazo')
+        muscleGroup.includes('triceps')
       );
     }
     if (filterText === 'hombros') {
