@@ -5,6 +5,14 @@ import { EjercicioGlobal, Profile } from '../../types/database.types';
 import BodyMuscleMap from '../common/BodyMuscleMap';
 import AthleteNavbar from '../common/AthleteNavbar';
 
+const normalizeText = (str: string) => {
+  return str
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim();
+};
+
 export const ExerciseLibrary: React.FC = () => {
   const { profile } = useSupabase();
   const [exercises, setExercises] = useState<EjercicioGlobal[]>([]);
@@ -67,28 +75,90 @@ export const ExerciseLibrary: React.FC = () => {
 
   // Filtrado de ejercicios por texto y músculo
   const filteredExercises = exercises.filter((ex) => {
-    const matchesSearch = ex.nombre.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          (ex.descripcion?.toLowerCase() || '').includes(searchQuery.toLowerCase());
+    const normName = normalizeText(ex.nombre);
+    const normDesc = normalizeText(ex.descripcion || '');
+    const normQuery = normalizeText(searchQuery);
+
+    const matchesSearch = normName.includes(normQuery) || normDesc.includes(normQuery);
     
     if (!selectedMuscle) return matchesSearch;
 
-    const muscleGroup = ex.grupo_muscular.toLowerCase();
-    const filterText = selectedMuscle.toLowerCase();
+    const muscleGroup = normalizeText(ex.grupo_muscular);
+    const filterText = normalizeText(selectedMuscle);
 
     // Mapeo flexible de filtros musculares del mapa a grupos musculares de ejercicios
     if (filterText === 'espalda') {
-      return matchesSearch && (muscleGroup.includes('espalda') || muscleGroup.includes('dorsal') || muscleGroup.includes('lumbar'));
+      return matchesSearch && (
+        muscleGroup.includes('espalda') || 
+        muscleGroup.includes('dorsal') || 
+        muscleGroup.includes('lumbar') ||
+        muscleGroup.includes('trapecio') ||
+        muscleGroup.includes('romboides')
+      );
     }
     if (filterText === 'pecho') {
-      return matchesSearch && (muscleGroup.includes('pecho') || muscleGroup.includes('pectoral'));
+      const isChestExerciseByName = 
+        normName.includes('pecho') || 
+        normName.includes('pectoral') || 
+        normName.includes('apertura') || 
+        normName.includes('pullover') || 
+        (normName.includes('press') && (
+          normName.includes('banca') || 
+          normName.includes('banco') || 
+          normName.includes('plano') || 
+          normName.includes('inclinado') || 
+          normName.includes('declinado') || 
+          normName.includes('maquina hammer')
+        )) || 
+        (normName.includes('fondos') && normName.includes('paralelas'));
+
+      return matchesSearch && (
+        muscleGroup.includes('pecho') || 
+        muscleGroup.includes('pectoral') ||
+        isChestExerciseByName
+      );
     }
-    if (filterText === 'biceps' || filterText === 'triceps') {
-      return matchesSearch && (muscleGroup.includes(filterText) || muscleGroup.includes('brazo'));
+    if (filterText === 'biceps') {
+      return matchesSearch && (
+        muscleGroup.includes('biceps') || 
+        muscleGroup.includes('brazo')
+      );
+    }
+    if (filterText === 'triceps') {
+      return matchesSearch && (
+        muscleGroup.includes('triceps') || 
+        muscleGroup.includes('brazo')
+      );
+    }
+    if (filterText === 'hombros') {
+      return matchesSearch && (
+        muscleGroup.includes('hombro') || 
+        muscleGroup.includes('deltoide')
+      );
+    }
+    if (filterText === 'abdomen') {
+      return matchesSearch && (
+        muscleGroup.includes('abdomen') || 
+        muscleGroup.includes('core') || 
+        muscleGroup.includes('oblicuo') || 
+        muscleGroup.includes('abdominal')
+      );
     }
     if (filterText === 'piernas') {
-      return matchesSearch && (muscleGroup.includes('pierna') || muscleGroup.includes('cuadriceps') || muscleGroup.includes('femoral') || muscleGroup.includes('isquios') || muscleGroup.includes('gluteo') || muscleGroup.includes('pantorrilla'));
+      return matchesSearch && (
+        muscleGroup.includes('pierna') || 
+        muscleGroup.includes('cuadriceps') || 
+        muscleGroup.includes('cudriceps') || 
+        muscleGroup.includes('femoral') || 
+        muscleGroup.includes('isquio') || 
+        muscleGroup.includes('gluteo') || 
+        muscleGroup.includes('pantorrilla') || 
+        muscleGroup.includes('pantorilla') ||
+        muscleGroup.includes('aductor') ||
+        muscleGroup.includes('abductor')
+      );
     }
-    return matchesSearch && muscleGroup.includes(filterText);
+    return matchesSearch && (muscleGroup.includes(filterText) || filterText.includes(muscleGroup));
   });
 
   const handleUpgradeClick = () => {
@@ -398,7 +468,7 @@ export const ExerciseLibrary: React.FC = () => {
                                 style={{
                                   width: '100%',
                                   height: '100%',
-                                  objectFit: 'cover'
+                                  objectFit: 'contain'
                                 }}
                               />
                             ) : (
