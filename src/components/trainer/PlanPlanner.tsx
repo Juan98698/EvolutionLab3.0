@@ -1797,17 +1797,53 @@ export const PlanPlanner: React.FC = () => {
               </div>
             </div>
 
-            <p style={{ margin: '0 0 20px 0', fontSize: '11px', color: 'rgba(255,255,255,0.4)', lineHeight: '1.4' }}>
+            <p style={{ margin: '0 0 16px 0', fontSize: '11px', color: 'rgba(255,255,255,0.4)', lineHeight: '1.4' }}>
               Al activar este módulo, el plan del atleta calculará automáticamente las series y las intensidades recomendadas (pesos) basándose en su rendimiento. El atleta registrará su RIR y recuperación real al final de cada ejercicio para actualizar el volumen para la siguiente semana.
             </p>
+
+            {/* Guía visual inline para el entrenador */}
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(0, 212, 255, 0.04), rgba(0, 100, 200, 0.04))',
+              border: '1px solid rgba(0, 212, 255, 0.1)',
+              borderRadius: '12px',
+              padding: '16px',
+              marginBottom: '20px'
+            }}>
+              <div style={{ fontSize: '10px', fontWeight: 800, color: 'var(--theme-primary)', fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.5px', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                ¿CÓMO FUNCIONA? — FLUJO COMPLETO
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: '10px' }}>
+                {[
+                  { step: '1', title: 'Tú configuras', desc: 'Activas la periodización, defines semanas y objetivo del bloque.' },
+                  { step: '2', title: 'Atleta evalúa', desc: 'Completa un diagnóstico inicial con su 1RM, edad y puntos débiles.' },
+                  { step: '3', title: 'Entrena con guía', desc: 'Ve cargas sugeridas y RIR objetivo. Registra su sesión normal.' },
+                  { step: '4', title: 'Responde feedback', desc: '2 preguntas: estímulo muscular y estado de recuperación.' },
+                  { step: '5', title: 'Algoritmo ajusta', desc: 'Series y peso se actualizan automáticamente para la próxima semana.' },
+                  { step: '6', title: 'Deload automático', desc: 'Al terminar el bloque: 50% volumen + RIR 4. Reinicia ciclo.' }
+                ].map(item => (
+                  <div key={item.step} style={{
+                    background: 'rgba(0,0,0,0.25)',
+                    borderRadius: '8px',
+                    padding: '10px',
+                    textAlign: 'center'
+                  }}>
+                    <div style={{ fontSize: '16px', fontWeight: 900, color: 'var(--theme-primary)', fontFamily: "'Orbitron', sans-serif", marginBottom: '4px' }}>{item.step}</div>
+                    <div style={{ fontSize: '9px', fontWeight: 700, color: 'white', marginBottom: '4px', textTransform: 'uppercase' }}>{item.title}</div>
+                    <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.45)', lineHeight: '1.3' }}>{item.desc}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
 
             {periodizationConfig.enabled && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '20px' }}>
                 
                 {/* Ajustes del Bloque */}
                 <div>
-                  <h4 style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '11px', color: 'var(--theme-primary)', letterSpacing: '0.5px', marginBottom: '12px', marginTop: 0, textTransform: 'uppercase' }}>
+                  <h4 style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '11px', color: 'var(--theme-primary)', letterSpacing: '0.5px', marginBottom: '12px', marginTop: 0, textTransform: 'uppercase', display: 'flex', alignItems: 'center' }}>
                     Ajustes del Bloque de Entrenamiento
+                    <InfoTooltip title="Bloque de Entrenamiento (Mesociclo)" body="Un bloque o mesociclo es un período de entrenamiento de varias semanas (típicamente 4-6). El volumen empieza bajo y sube gradualmente cada semana hasta llegar a una descarga automática al final. Así evitas el sobreentrenamiento y maximizas las ganancias." />
                   </h4>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px' }}>
                     <div>
@@ -1863,8 +1899,9 @@ export const PlanPlanner: React.FC = () => {
 
                 {/* Diagnóstico Inicial */}
                 <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '20px' }}>
-                  <h4 style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '11px', color: 'var(--theme-primary)', letterSpacing: '0.5px', marginBottom: '12px', marginTop: 0, textTransform: 'uppercase' }}>
+                  <h4 style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '11px', color: 'var(--theme-primary)', letterSpacing: '0.5px', marginBottom: '12px', marginTop: 0, textTransform: 'uppercase', display: 'flex', alignItems: 'center' }}>
                     Diagnóstico Inicial del Atleta (Trainer Overrides)
+                    <InfoTooltip title="Sobreescritura del Entrenador" body="Estos valores los puede completar el atleta en su evaluación inicial, PERO si tú los editas aquí, tus valores prevalecen. Usa esta sección para pre-configurar atletas que ya conoces bien, o para corregir datos incorrectos sin que el atleta tenga que repetir el diagnóstico." />
                   </h4>
                   <p style={{ margin: '0 0 16px 0', fontSize: '11px', color: 'rgba(255,255,255,0.4)', lineHeight: '1.4' }}>
                     Puedes preconfigurar o anular estos valores subjetivos y marcas de fuerza estimadas. El atleta los completará o los verá actualizados según su progreso.
@@ -1905,7 +1942,10 @@ export const PlanPlanner: React.FC = () => {
 
                   {/* Marcas de Fuerza 1RM */}
                   <div style={{ marginBottom: '16px' }}>
-                    <label style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '8px', textTransform: 'uppercase' }}>Fuerza Máxima Estimada (1RM)</label>
+                    <label style={{ display: 'flex', alignItems: 'center', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '8px', textTransform: 'uppercase' }}>
+                      Fuerza Máxima Estimada (1RM)
+                      <InfoTooltip title="1RM — Repetición Máxima" body="Es el peso máximo que el atleta puede levantar una sola vez con buena técnica. Se calcula automáticamente usando las fórmulas Epley+Brzycki a partir del peso, reps y RIR que el atleta ingrese. Este valor se usa para sugerir las cargas de entrenamiento: ej. si tu 1RM de sentadilla es 120kg y el plan dice 'RIR 2 x 8 reps', la app sugiere ~82.5kg." />
+                    </label>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '12px' }}>
                       {(['sentadilla', 'press de banca', 'peso muerto'] as const).map(lift => {
                         const current1RM = periodizationConfig.marcas_1rm?.[lift] || 0;
@@ -1935,7 +1975,10 @@ export const PlanPlanner: React.FC = () => {
 
                   {/* Puntos Débiles */}
                   <div>
-                    <label style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '8px', textTransform: 'uppercase' }}>Puntos Débiles Mecánicos</label>
+                    <label style={{ display: 'flex', alignItems: 'center', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '8px', textTransform: 'uppercase' }}>
+                      Puntos Débiles Mecánicos
+                      <InfoTooltip title="Puntos Débiles (Sticking Points)" body="Indica en qué parte del movimiento el atleta tiende a fallar cuando está cerca de su límite. El sistema usará esta información para sugerir ejercicios accesorios correctivos específicos (ej: Pause Squats si falla en la fase profunda de la sentadilla, o Close Grip Bench si falla en el bloqueo del press)." />
+                    </label>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px' }}>
                       
                       {/* Sentadilla */}
