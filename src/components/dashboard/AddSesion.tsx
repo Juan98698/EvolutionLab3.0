@@ -507,12 +507,16 @@ export const AddSesion: React.FC<AddSesionProps> = ({
           const targetRIRStr = matchingPlanEx?.variables?.['rir'] || '2';
           const targetRIR = parseInt(targetRIRStr, 10) || 2;
           
-          // Suggested Load
+          // Suggested Load — works for ANY exercise with a 1RM entry
           const marcas_1rm = plan?.periodizationConfig?.marcas_1rm || {};
-          const liftKey = ej.nombre.toLowerCase().includes('sentadilla') ? 'sentadilla' :
-                          (ej.nombre.toLowerCase().includes('banca') || ej.nombre.toLowerCase().includes('pecho')) ? 'press de banca' :
-                          (ej.nombre.toLowerCase().includes('peso muerto') || ej.nombre.toLowerCase().includes('deadlift')) ? 'peso muerto' : null;
-          const lift1RM = liftKey ? marcas_1rm[liftKey] || 0 : 0;
+          const normNombre = ej.nombre.toLowerCase().trim();
+          
+          // 1. Direct lookup by exercise name (works for any exercise)
+          // 2. Fallback: powerlift alias mapping (sentadilla trasera → sentadilla)
+          const aliasKey = normNombre.includes('sentadilla') ? 'sentadilla' :
+                          (normNombre.includes('banca') || normNombre.includes('pecho')) ? 'press de banca' :
+                          (normNombre.includes('peso muerto') || normNombre.includes('deadlift')) ? 'peso muerto' : null;
+          const lift1RM = marcas_1rm[normNombre] || (aliasKey ? marcas_1rm[aliasKey] || 0 : 0);
           
           const targetRepsStr = matchingPlanEx?.variables?.['repeticiones'] || '10';
           const repsMatch = targetRepsStr.match(/(\d+)$/);

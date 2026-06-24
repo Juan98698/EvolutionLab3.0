@@ -345,15 +345,23 @@ export const autoRegulatePlanForNextWeek = (
     }
 
     // ── 1RM tracking (always runs, even during deload) ───────────────────────
+    // Tracks 1RM for ANY exercise by its normalized name, not just the 3 powerlifts.
     const actualRIR = logged.rir;
     const maxReps = Math.max(...(logged.repsArray || []), 0);
 
     if (maxReps > 0 && logged.peso > 0) {
       const currentEstimated1RM = calculate1RM(logged.peso, maxReps, actualRIR);
-      const liftKey = mapExerciseToLiftKey(normName);
 
-      if (liftKey && currentEstimated1RM > 0) {
-        updateMarca1RM(marcas, liftKey, currentEstimated1RM);
+      if (currentEstimated1RM > 0) {
+        // Primary: Store by the exercise's exact normalized name
+        updateMarca1RM(marcas, normName, currentEstimated1RM);
+
+        // Secondary: Also update the powerlift alias key for backward compatibility
+        // (so 'sentadilla trasera' also updates the 'sentadilla' entry)
+        const aliasKey = mapExerciseToLiftKey(normName);
+        if (aliasKey && aliasKey !== normName) {
+          updateMarca1RM(marcas, aliasKey, currentEstimated1RM);
+        }
       }
     }
   });

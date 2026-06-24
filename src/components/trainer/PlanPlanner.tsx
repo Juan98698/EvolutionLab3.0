@@ -1946,31 +1946,64 @@ export const PlanPlanner: React.FC = () => {
                       Fuerza Máxima Estimada (1RM)
                       <InfoTooltip title="1RM — Repetición Máxima" body="Es el peso máximo que el atleta puede levantar una sola vez con buena técnica. Se calcula automáticamente usando las fórmulas Epley+Brzycki a partir del peso, reps y RIR que el atleta ingrese. Este valor se usa para sugerir las cargas de entrenamiento: ej. si tu 1RM de sentadilla es 120kg y el plan dice 'RIR 2 x 8 reps', la app sugiere ~82.5kg." />
                     </label>
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '12px' }}>
-                      {(['sentadilla', 'press de banca', 'peso muerto'] as const).map(lift => {
-                        const current1RM = periodizationConfig.marcas_1rm?.[lift] || 0;
-                        return (
-                          <div key={lift} style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '10px', padding: '10px' }}>
-                            <label htmlFor={`1rm-${lift}`} style={{ display: 'block', fontSize: '9px', fontWeight: 700, color: 'var(--theme-primary)', marginBottom: '4px', textTransform: 'uppercase', fontFamily: "'Orbitron', sans-serif" }}>{lift}</label>
-                            <input
-                              id={`1rm-${lift}`}
-                              type="number"
-                              placeholder="0 kg"
-                              value={current1RM || ''}
-                              onChange={(e) => {
-                                const val = parseFloat(e.target.value) || 0;
-                                setPeriodizationConfig(prev => {
-                                  if (!prev) return prev;
-                                  const updatedMarcas = { ...prev.marcas_1rm, [lift]: val };
-                                  return { ...prev, marcas_1rm: updatedMarcas };
-                                });
-                              }}
-                              style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.1)', color: 'white', padding: '4px 0', fontSize: '12px', outline: 'none' }}
-                            />
+                    {/* Dynamic 1RM entries: 3 base powerlifts + all exercises from the plan + existing marcas */}
+                    {(() => {
+                      // Collect all unique exercise names: base 3 + plan exercises + existing marcas
+                      const baseLifts = ['sentadilla', 'press de banca', 'peso muerto'];
+                      const planExerciseNames = trainingDays
+                        .flatMap(d => d.exercises)
+                        .map(ex => ex.nombre.trim().toLowerCase())
+                        .filter(n => n.length > 0);
+                      const existingMarcaKeys = Object.keys(periodizationConfig.marcas_1rm || {});
+                      
+                      // Merge all sources into a unique, ordered list
+                      const allKeys = [...new Set([...baseLifts, ...planExerciseNames, ...existingMarcaKeys])];
+                      
+                      return (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '12px' }}>
+                            {allKeys.map(lift => {
+                              const current1RM = periodizationConfig.marcas_1rm?.[lift] || 0;
+                              const isBaseLift = baseLifts.includes(lift);
+                              return (
+                                <div key={lift} style={{
+                                  background: 'rgba(0,0,0,0.2)',
+                                  border: '1px solid ' + (isBaseLift ? 'rgba(0, 212, 255, 0.1)' : 'rgba(255,255,255,0.04)'),
+                                  borderRadius: '10px',
+                                  padding: '10px',
+                                  position: 'relative'
+                                }}>
+                                  {isBaseLift && (
+                                    <span style={{ position: 'absolute', top: '4px', right: '6px', fontSize: '7px', color: 'var(--theme-primary)', fontFamily: "'Orbitron', sans-serif", opacity: 0.5 }}>BASE</span>
+                                  )}
+                                  <label htmlFor={`1rm-${lift}`} style={{ display: 'block', fontSize: '9px', fontWeight: 700, color: isBaseLift ? 'var(--theme-primary)' : 'rgba(255,255,255,0.6)', marginBottom: '4px', textTransform: 'uppercase', fontFamily: "'Orbitron', sans-serif", whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{lift}</label>
+                                  <input
+                                    id={`1rm-${lift}`}
+                                    type="number"
+                                    placeholder="0 kg"
+                                    value={current1RM || ''}
+                                    onChange={(e) => {
+                                      const val = parseFloat(e.target.value) || 0;
+                                      setPeriodizationConfig(prev => {
+                                        if (!prev) return prev;
+                                        const updatedMarcas = { ...prev.marcas_1rm, [lift]: val };
+                                        // Remove entries with 0 to keep the dictionary clean
+                                        if (val === 0) delete updatedMarcas[lift];
+                                        return { ...prev, marcas_1rm: updatedMarcas };
+                                      });
+                                    }}
+                                    style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.1)', color: 'white', padding: '4px 0', fontSize: '12px', outline: 'none' }}
+                                  />
+                                </div>
+                              );
+                            })}
                           </div>
-                        );
-                      })}
-                    </div>
+                          <p style={{ margin: '4px 0 0 0', fontSize: '9px', color: 'rgba(255,255,255,0.3)', lineHeight: '1.3' }}>
+                            Se muestran los 3 levantamientos base + todos los ejercicios del plan. Solo los ejercicios con 1RM registrado recibirán cargas sugeridas. El atleta también actualizará estas marcas automáticamente al registrar sus sesiones.
+                          </p>
+                        </div>
+                      );
+                    })()}
                   </div>
 
                   {/* Puntos Débiles */}

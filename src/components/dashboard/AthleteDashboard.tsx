@@ -2035,6 +2035,7 @@ export const AthleteDashboard: React.FC = () => {
           overflowY: 'auto'
         }}>
           <InitialPeriodizationEvaluation
+            plan={plan}
             onSave={async (config) => {
               if (!plan || !user) return;
               const updatedPlan = {
