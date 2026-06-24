@@ -2,7 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import { useSupabase } from '../../context/SupabaseContext';
-import { Profile, PlanData, TrainingDay, Exercise, GlobalVariable, EjercicioGlobal } from '../../types/database.types';
+import { Profile, PlanData, TrainingDay, Exercise, GlobalVariable, EjercicioGlobal, PeriodizationConfig } from '../../types/database.types';
 import Toast from '../common/Toast';
 import { InfoTooltip } from '../common/InfoTooltip';
 import {
@@ -61,6 +61,7 @@ export const PlanPlanner: React.FC = () => {
   const [trainingDays, setTrainingDays] = useState<TrainingDay[]>([]);
   const [trackerConfig, setTrackerConfig] = useState<any>({});
   const [trackerRules, setTrackerRules] = useState<any[]>([]);
+  const [periodizationConfig, setPeriodizationConfig] = useState<PeriodizationConfig | undefined>(undefined);
 
   // Estado para el menú de automatización de progresión (Smart Block Builder)
   const [autoProgExId, setAutoProgExId] = useState<string | null>(null);
@@ -403,6 +404,19 @@ export const PlanPlanner: React.FC = () => {
       semanasEstancamiento: 3
     });
     setTrackerRules([]);
+    setPeriodizationConfig({
+      enabled: false,
+      objetivo: 'hipertrofia',
+      semana_actual: 1,
+      total_semanas: 4,
+      mrv_limite_alcanzado: false,
+      marcas_1rm: {},
+      puntos_debiles: {
+        sentadilla: 'abajo',
+        banca: 'pecho',
+        peso_muerto: 'despegue'
+      }
+    });
 
     if (profileData) {
       setPortada({
@@ -570,6 +584,23 @@ export const PlanPlanner: React.FC = () => {
           if (p.trackerConfig) setTrackerConfig(p.trackerConfig);
           if (p.trackerRules) setTrackerRules(p.trackerRules || []);
           if (p.portada) setPortada(p.portada);
+          if (p.periodizationConfig) {
+            setPeriodizationConfig(p.periodizationConfig);
+          } else {
+            setPeriodizationConfig({
+              enabled: false,
+              objetivo: 'hipertrofia',
+              semana_actual: 1,
+              total_semanas: 4,
+              mrv_limite_alcanzado: false,
+              marcas_1rm: {},
+              puntos_debiles: {
+                sentadilla: 'abajo',
+                banca: 'pecho',
+                peso_muerto: 'despegue'
+              }
+            });
+          }
           showToast('¡Plan activo cargado correctamente!', 'success');
         } else {
           resetToDefaultPlan(profData as Profile);
@@ -1204,7 +1235,8 @@ export const PlanPlanner: React.FC = () => {
       trainingDays: compatibleTrainingDays,
       weekdayMapping,
       trackerConfig,
-      trackerRules
+      trackerRules,
+      periodizationConfig
     };
 
     try {
@@ -1721,6 +1753,266 @@ export const PlanPlanner: React.FC = () => {
             </div>
           )}
         </div>
+
+        {/* SECCIÓN 3.5: CONFIGURACIÓN DE PERIODIZACIÓN CIENTÍFICA (RIR) */}
+        {periodizationConfig && (
+          <div style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '16px', padding: '20px', marginBottom: '24px', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', boxShadow: '0 8px 32px 0 var(--theme-glow)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+              <h3 style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '13px', color: 'var(--theme-primary)', letterSpacing: '0.5px', margin: 0, display: 'flex', alignItems: 'center' }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px' }}><polygon points="6 2 18 2 18 6 6 6 6 2"/><rect x="3" y="6" width="18" height="16" rx="2"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
+                PERIODIZACIÓN CIENTÍFICA Y AUTORREGULACIÓN RIR
+                <InfoTooltip title="Periodización Científica RIR" body="Activa la autorregulación automatizada de volumen y cargas (fórmulas RP e intensidad basada en 1RM) para optimizar el progreso del atleta y ahorrar tiempo de planificación." />
+              </h3>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', fontFamily: "'Orbitron', sans-serif", userSelect: 'none' }}>
+                  {periodizationConfig.enabled ? 'ACTIVO' : 'DESACTIVADO'}
+                </span>
+                <div
+                  onClick={() => {
+                    setPeriodizationConfig(prev => prev ? { ...prev, enabled: !prev.enabled } : undefined);
+                  }}
+                  style={{
+                    width: '42px',
+                    height: '22px',
+                    background: periodizationConfig.enabled ? 'var(--theme-primary)' : 'rgba(255, 255, 255, 0.12)',
+                    borderRadius: '11px',
+                    padding: '2px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    boxSizing: 'border-box',
+                    border: '1px solid rgba(255,255,255,0.1)'
+                  }}
+                >
+                  <div style={{
+                    width: '16px',
+                    height: '16px',
+                    background: periodizationConfig.enabled ? '#000' : '#fff',
+                    borderRadius: '50%',
+                    transform: periodizationConfig.enabled ? 'translateX(20px)' : 'translateX(0px)',
+                    transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
+                  }} />
+                </div>
+              </div>
+            </div>
+
+            <p style={{ margin: '0 0 20px 0', fontSize: '11px', color: 'rgba(255,255,255,0.4)', lineHeight: '1.4' }}>
+              Al activar este módulo, el plan del atleta calculará automáticamente las series y las intensidades recomendadas (pesos) basándose en su rendimiento. El atleta registrará su RIR y recuperación real al final de cada ejercicio para actualizar el volumen para la siguiente semana.
+            </p>
+
+            {periodizationConfig.enabled && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '20px' }}>
+                
+                {/* Ajustes del Bloque */}
+                <div>
+                  <h4 style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '11px', color: 'var(--theme-primary)', letterSpacing: '0.5px', marginBottom: '12px', marginTop: 0, textTransform: 'uppercase' }}>
+                    Ajustes del Bloque de Entrenamiento
+                  </h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px' }}>
+                    <div>
+                      <label htmlFor="period-objetivo" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>OBJETIVO DEL BLOQUE</label>
+                      <select
+                        id="period-objetivo"
+                        value={periodizationConfig.objetivo || 'hipertrofia'}
+                        onChange={(e) => {
+                          const val = e.target.value as 'fuerza' | 'hipertrofia' | 'mantenimiento';
+                          setPeriodizationConfig(prev => prev ? { ...prev, objetivo: val } : undefined);
+                        }}
+                        style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '12px', height: '38px', boxSizing: 'border-box' }}
+                      >
+                        <option value="hipertrofia" style={{ background: '#0b0f19' }}>Hipertrofia (Acumulación)</option>
+                        <option value="fuerza" style={{ background: '#0b0f19' }}>Fuerza (Intensificación)</option>
+                        <option value="mantenimiento" style={{ background: '#0b0f19' }}>Mantenimiento / Calórico</option>
+                      </select>
+                    </div>
+
+                    <div>
+                      <label htmlFor="period-semanas" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>SEMANAS TOTALES DEL BLOQUE</label>
+                      <input
+                        id="period-semanas"
+                        type="number"
+                        min={3}
+                        max={12}
+                        value={periodizationConfig.total_semanas || 4}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value, 10) || 4;
+                          setPeriodizationConfig(prev => prev ? { ...prev, total_semanas: val } : undefined);
+                        }}
+                        style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '12px', height: '38px', boxSizing: 'border-box' }}
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="period-semana-actual" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>SEMANA ACTUAL (MICROCICLO)</label>
+                      <input
+                        id="period-semana-actual"
+                        type="number"
+                        min={1}
+                        max={periodizationConfig.total_semanas || 12}
+                        value={periodizationConfig.semana_actual || 1}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value, 10) || 1;
+                          setPeriodizationConfig(prev => prev ? { ...prev, semana_actual: val } : undefined);
+                        }}
+                        style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '12px', height: '38px', boxSizing: 'border-box' }}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Diagnóstico Inicial */}
+                <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '20px' }}>
+                  <h4 style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '11px', color: 'var(--theme-primary)', letterSpacing: '0.5px', marginBottom: '12px', marginTop: 0, textTransform: 'uppercase' }}>
+                    Diagnóstico Inicial del Atleta (Trainer Overrides)
+                  </h4>
+                  <p style={{ margin: '0 0 16px 0', fontSize: '11px', color: 'rgba(255,255,255,0.4)', lineHeight: '1.4' }}>
+                    Puedes preconfigurar o anular estos valores subjetivos y marcas de fuerza estimadas. El atleta los completará o los verá actualizados según su progreso.
+                  </p>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px', flexWrap: 'wrap' }}>
+                    <div>
+                      <label htmlFor="period-edad" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>EDAD DEL ATLETA</label>
+                      <input
+                        id="period-edad"
+                        type="number"
+                        value={periodizationConfig.edad || 25}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value, 10) || 25;
+                          setPeriodizationConfig(prev => prev ? { ...prev, edad: val } : undefined);
+                        }}
+                        style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '12px', height: '38px', boxSizing: 'border-box' }}
+                      />
+                    </div>
+
+                    <div>
+                      <label htmlFor="period-recup" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>CAPACIDAD DE RECUPERACIÓN</label>
+                      <select
+                        id="period-recup"
+                        value={periodizationConfig.capacidad_recuperacion || 'media'}
+                        onChange={(e) => {
+                          const val = e.target.value as 'alta' | 'media' | 'baja';
+                          setPeriodizationConfig(prev => prev ? { ...prev, capacidad_recuperacion: val } : undefined);
+                        }}
+                        style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '12px', height: '38px', boxSizing: 'border-box' }}
+                      >
+                        <option value="alta" style={{ background: '#0b0f19' }}>Alta (Sueño profundo, bajo estrés)</option>
+                        <option value="media" style={{ background: '#0b0f19' }}>Media (Recuperación estándar)</option>
+                        <option value="baja" style={{ background: '#0b0f19' }}>Baja (Alto estrés o insomnio)</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Marcas de Fuerza 1RM */}
+                  <div style={{ marginBottom: '16px' }}>
+                    <label style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '8px', textTransform: 'uppercase' }}>Fuerza Máxima Estimada (1RM)</label>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '12px' }}>
+                      {(['sentadilla', 'press de banca', 'peso muerto'] as const).map(lift => {
+                        const current1RM = periodizationConfig.marcas_1rm?.[lift] || 0;
+                        return (
+                          <div key={lift} style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '10px', padding: '10px' }}>
+                            <label htmlFor={`1rm-${lift}`} style={{ display: 'block', fontSize: '9px', fontWeight: 700, color: 'var(--theme-primary)', marginBottom: '4px', textTransform: 'uppercase', fontFamily: "'Orbitron', sans-serif" }}>{lift}</label>
+                            <input
+                              id={`1rm-${lift}`}
+                              type="number"
+                              placeholder="0 kg"
+                              value={current1RM || ''}
+                              onChange={(e) => {
+                                const val = parseFloat(e.target.value) || 0;
+                                setPeriodizationConfig(prev => {
+                                  if (!prev) return prev;
+                                  const updatedMarcas = { ...prev.marcas_1rm, [lift]: val };
+                                  return { ...prev, marcas_1rm: updatedMarcas };
+                                });
+                              }}
+                              style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.1)', color: 'white', padding: '4px 0', fontSize: '12px', outline: 'none' }}
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  {/* Puntos Débiles */}
+                  <div>
+                    <label style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '8px', textTransform: 'uppercase' }}>Puntos Débiles Mecánicos</label>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px' }}>
+                      
+                      {/* Sentadilla */}
+                      <div style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '10px', padding: '10px' }}>
+                        <label htmlFor="weak-squat" style={{ display: 'block', fontSize: '9px', fontWeight: 700, color: 'var(--theme-primary)', marginBottom: '4px', textTransform: 'uppercase', fontFamily: "'Orbitron', sans-serif" }}>Sentadilla</label>
+                        <select
+                          id="weak-squat"
+                          value={periodizationConfig.puntos_debiles?.sentadilla || 'abajo'}
+                          onChange={(e) => {
+                            const val = e.target.value as 'abajo' | 'mitad' | 'arriba';
+                            setPeriodizationConfig(prev => {
+                              if (!prev) return prev;
+                              const updatedPoints = { ...prev.puntos_debiles, sentadilla: val };
+                              return { ...prev, puntos_debiles: updatedPoints };
+                            });
+                          }}
+                          style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.1)', color: 'white', padding: '4px 0', fontSize: '11px', outline: 'none', cursor: 'pointer' }}
+                        >
+                          <option value="abajo" style={{ background: '#0b0f19' }}>Fase Profunda (Salida)</option>
+                          <option value="mitad" style={{ background: '#0b0f19' }}>Punto Medio</option>
+                          <option value="arriba" style={{ background: '#0b0f19' }}>Bloqueo Arriba</option>
+                        </select>
+                      </div>
+
+                      {/* Press de Banca */}
+                      <div style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '10px', padding: '10px' }}>
+                        <label htmlFor="weak-bench" style={{ display: 'block', fontSize: '9px', fontWeight: 700, color: 'var(--theme-primary)', marginBottom: '4px', textTransform: 'uppercase', fontFamily: "'Orbitron', sans-serif" }}>Press de Banca</label>
+                        <select
+                          id="weak-bench"
+                          value={periodizationConfig.puntos_debiles?.banca || 'pecho'}
+                          onChange={(e) => {
+                            const val = e.target.value as 'pecho' | 'mitad' | 'bloqueo';
+                            setPeriodizationConfig(prev => {
+                              if (!prev) return prev;
+                              const updatedPoints = { ...prev.puntos_debiles, banca: val };
+                              return { ...prev, puntos_debiles: updatedPoints };
+                            });
+                          }}
+                          style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.1)', color: 'white', padding: '4px 0', fontSize: '11px', outline: 'none', cursor: 'pointer' }}
+                        >
+                          <option value="pecho" style={{ background: '#0b0f19' }}>Del Pecho (Salida)</option>
+                          <option value="mitad" style={{ background: '#0b0f19' }}>Mitad de Camino</option>
+                          <option value="bloqueo" style={{ background: '#0b0f19' }}>Bloqueo Final</option>
+                        </select>
+                      </div>
+
+                      {/* Peso Muerto */}
+                      <div style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '10px', padding: '10px' }}>
+                        <label htmlFor="weak-deadlift" style={{ display: 'block', fontSize: '9px', fontWeight: 700, color: 'var(--theme-primary)', marginBottom: '4px', textTransform: 'uppercase', fontFamily: "'Orbitron', sans-serif" }}>Peso Muerto</label>
+                        <select
+                          id="weak-deadlift"
+                          value={periodizationConfig.puntos_debiles?.peso_muerto || 'despegue'}
+                          onChange={(e) => {
+                            const val = e.target.value as 'despegue' | 'rodillas' | 'bloqueo';
+                            setPeriodizationConfig(prev => {
+                              if (!prev) return prev;
+                              const updatedPoints = { ...prev.puntos_debiles, peso_muerto: val };
+                              return { ...prev, puntos_debiles: updatedPoints };
+                            });
+                          }}
+                          style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.1)', color: 'white', padding: '4px 0', fontSize: '11px', outline: 'none', cursor: 'pointer' }}
+                        >
+                          <option value="despegue" style={{ background: '#0b0f19' }}>Despegue Suelo</option>
+                          <option value="rodillas" style={{ background: '#0b0f19' }}>Bajo Rodillas</option>
+                          <option value="bloqueo" style={{ background: '#0b0f19' }}>Bloqueo Arriba</option>
+                        </select>
+                      </div>
+
+                    </div>
+                  </div>
+
+                </div>
+
+              </div>
+            )}
+          </div>
+        )}
 
         {/* SECCIÓN 4: DÍAS DE RUTINA Y EJERCICIOS */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>

@@ -33,6 +33,7 @@ import PreWorkoutPrompt from './PreWorkoutPrompt';
 import GamificacionPanel from './GamificacionPanel';
 import { OnboardingModal } from '../common/OnboardingModal';
 import { ShareableProgressCard } from './ShareableProgressCard';
+import { InitialPeriodizationEvaluation } from './InitialPeriodizationEvaluation';
 import { subscribirNotificacionesPush, verificarSuscripcionPushActiva } from '../../lib/pushNotifications';
 
 export const AthleteDashboard: React.FC = () => {
@@ -612,6 +613,15 @@ export const AthleteDashboard: React.FC = () => {
 
     return { expired, message };
   }, [profile, plan]);
+
+  // Verificar si el diagnóstico de periodización está pendiente
+  const isEvaluationPending = useMemo(() => {
+    if (!plan?.periodizationConfig?.enabled) return false;
+    const config = plan.periodizationConfig;
+    const has1RM = config.marcas_1rm && Object.keys(config.marcas_1rm).length > 0;
+    const hasFecha = !!config.fecha_evaluacion;
+    return !has1RM || !hasFecha;
+  }, [plan]);
 
   // Verificar si la cuenta del entrenador ha expirado
   const isCoachExpired = useMemo(() => {
@@ -2004,6 +2014,58 @@ export const AthleteDashboard: React.FC = () => {
           rol={isSoloClient ? 'cliente_autonomo' : 'cliente_guiado'}
           suscripcionPlan={profile?.suscripcion_plan || 'free'}
         />
+      )}
+
+      {/* INITIAL PERIODIZATION EVALUATION MODAL OVERLAY */}
+      {isEvaluationPending && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          background: 'rgba(0,0,0,0.85)',
+          backdropFilter: 'blur(10px)',
+          zIndex: 999999,
+          padding: '20px',
+          boxSizing: 'border-box',
+          overflowY: 'auto'
+        }}>
+          <InitialPeriodizationEvaluation
+            onSave={async (config) => {
+              if (!plan || !user) return;
+              const updatedPlan = {
+                ...plan,
+                periodizationConfig: config
+              };
+              
+              try {
+                // Save to Supabase
+                const { error } = await supabase
+                  .from('planes')
+                  .update({ datos_plan: updatedPlan })
+                  .eq('cliente_id', user.id)
+                  .eq('activo', true);
+
+                if (error) throw error;
+
+                // Update local state and cache
+                setPlan(updatedPlan);
+                localStorage.setItem('pwa_client_plan', JSON.stringify(updatedPlan));
+                showToast('¡Diagnóstico inicial guardado y calibrado con éxito! 💪', 'success');
+              } catch (err: any) {
+                console.error('Error saving periodization diagnostic:', err);
+                showToast('Error al guardar el diagnóstico: ' + err.message, 'error');
+              }
+            }}
+            onCancel={() => {
+              navigate('/');
+            }}
+          />
+        </div>
       )}
 
       {/* Global Toast Alert */}

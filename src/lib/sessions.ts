@@ -19,7 +19,9 @@ const SESIONES_SELECT = `
     rpe_rir,
     descanso,
     volumen,
-    rm_estimado
+    rm_estimado,
+    feedback_estimulo,
+    feedback_recuperacion
   )
 `;
 
@@ -33,6 +35,8 @@ type RawEjercicioRow = {
   descanso: number;
   volumen: number;
   rm_estimado: number;
+  feedback_estimulo: string | null;
+  feedback_recuperacion: string | null;
 };
 
 type RawSesionRow = {

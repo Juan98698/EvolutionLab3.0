@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { writeSessionsToCache } from '../../lib/sessions';
 import { PlanData } from '../../types/database.types';
+import { autoRegulatePlanForNextWeek } from '../../lib/periodizationEngine';
 
 interface AddSesionProps {
   plan: PlanData | null;
@@ -18,6 +19,8 @@ interface TempExercise {
   rpe: string;
   descanso: string;
   notas_ej: string;
+  feedback_estimulo?: 'none' | 'good' | 'extreme';
+  feedback_recuperacion?: 'recovered' | 'just_in_time' | 'sore';
 }
 
 export const AddSesion: React.FC<AddSesionProps> = ({
@@ -47,7 +50,7 @@ export const AddSesion: React.FC<AddSesionProps> = ({
 
   // Inicializar con un ejercicio vacío
   const [tempExercises, setTempExercises] = useState<TempExercise[]>([
-    { nombre: '', grupo: 'Pecho', peso: '', repsArray: [10, 10, 10], rpe: '', descanso: '90', notas_ej: '' }
+    { nombre: '', grupo: 'Pecho', peso: '', repsArray: [10, 10, 10], rpe: '', descanso: '90', notas_ej: '', feedback_estimulo: 'good', feedback_recuperacion: 'recovered' }
   ]);
 
   const [activeSuggestIdx, setActiveSuggestIdx] = useState<number | null>(null);
@@ -158,7 +161,7 @@ export const AddSesion: React.FC<AddSesionProps> = ({
   const handleAddTempExercise = () => {
     setTempExercises(prev => [
       ...prev,
-      { nombre: '', grupo: 'Pecho', peso: '', repsArray: [10, 10, 10], rpe: '', descanso: '90', notas_ej: '' }
+      { nombre: '', grupo: 'Pecho', peso: '', repsArray: [10, 10, 10], rpe: '', descanso: '90', notas_ej: '', feedback_estimulo: 'good', feedback_recuperacion: 'recovered' }
     ]);
   };
 
@@ -275,7 +278,9 @@ export const AddSesion: React.FC<AddSesionProps> = ({
           repsArray: ej.repsArray,
           rpe: Number(ej.rpe),
           descanso: Number(ej.descanso),
-          notas_ej: ej.notas_ej || ''
+          notas_ej: ej.notas_ej || '',
+          feedback_estimulo: ej.feedback_estimulo || 'good',
+          feedback_recuperacion: ej.feedback_recuperacion || 'recovered'
         };
       });
 
@@ -328,7 +333,9 @@ export const AddSesion: React.FC<AddSesionProps> = ({
             rpe_rir: ej.rpe,
             descanso: ej.descanso,
             volumen: vol,
-            rm_estimado: rmEst
+            rm_estimado: rmEst,
+            feedback_estimulo: ej.feedback_estimulo || null,
+            feedback_recuperacion: ej.feedback_recuperacion || null
           };
         });
 
@@ -359,10 +366,61 @@ export const AddSesion: React.FC<AddSesionProps> = ({
         showToast('Guardado en el historial local (Offline) 🔌. Pendiente de sincronizar.', 'info');
       }
 
+      // BUG-01 fix: Auto-regulación SIEMPRE se ejecuta (online u offline).
+      // El plan actualizado se guarda localmente siempre, y se sincroniza a Supabase solo si hay conexión.
+      if (plan?.periodizationConfig?.enabled) {
+        try {
+          const updatedPlan = autoRegulatePlanForNextWeek(plan, ejerciciosGuardar.map(e => ({
+            nombre: e.nombre,
+            repsArray: e.repsArray,
+            peso: e.peso,
+            rir: e.rpe,
+            feedback_estimulo: e.feedback_estimulo,
+            feedback_recuperacion: e.feedback_recuperacion
+          })));
+
+          if (updatedPlan) {
+            // Siempre actualizar cache local para que el atleta vea los cambios inmediatamente
+            localStorage.setItem('pwa_client_plan', JSON.stringify(updatedPlan));
+
+            // Sincronizar a Supabase solo si hay conexión
+            if (navigator.onLine) {
+              try {
+                const { data: activePlan } = await supabase
+                  .from('planes')
+                  .select('id')
+                  .eq('cliente_id', currentUser.id)
+                  .eq('activo', true)
+                  .maybeSingle();
+
+                if (activePlan) {
+                  const { error: updatePlanError } = await supabase
+                    .from('planes')
+                    .update({ datos_plan: updatedPlan })
+                    .eq('id', activePlan.id);
+
+                  if (updatePlanError) {
+                    console.error('Error al sincronizar plan periodizado en Supabase:', updatePlanError);
+                  } else {
+                    console.log('✅ Plan periodizado auto-regulado y sincronizado con éxito.');
+                  }
+                }
+              } catch (syncErr) {
+                console.warn('⚠️ Plan auto-regulado guardado localmente, pendiente de sincronizar:', syncErr);
+              }
+            } else {
+              console.log('📱 Plan periodizado auto-regulado y guardado localmente (offline).');
+            }
+          }
+        } catch (ePeriod) {
+          console.error('Error durante la auto-regulación del plan:', ePeriod);
+        }
+      }
+
       // Reiniciar formulario e ir a Historial
       setFecha(getTodayISO());
       setNotasSesion('');
-      setTempExercises([{ nombre: '', grupo: 'Pecho', peso: '', repsArray: [10, 10, 10], rpe: '', descanso: '90', notas_ej: '' }]);
+      setTempExercises([{ nombre: '', grupo: 'Pecho', peso: '', repsArray: [10, 10, 10], rpe: '', descanso: '90', notas_ej: '', feedback_estimulo: 'good', feedback_recuperacion: 'recovered' }]);
       onCancel(); // Vuelve a Dashboard
     } catch (err: any) {
       console.error('Error al guardar sesión:', err);
@@ -439,338 +497,454 @@ export const AddSesion: React.FC<AddSesionProps> = ({
 
       {/* Listado de ejercicios en la sesión */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', marginBottom: '28px' }}>
-        {tempExercises.map((ej, idx) => (
-          <div
-            key={idx}
-            className="ejercicio-group"
-            style={{
-              position: 'relative',
-              background: 'var(--theme-card-bg)',
-              border: '1px solid var(--theme-border)',
-              borderRadius: '16px',
-              padding: '24px',
-              boxShadow: '0 4px 30px rgba(0, 0, 0, 0.2)',
-              backdropFilter: 'blur(20px)',
-              WebkitBackdropFilter: 'blur(20px)',
-              transition: 'all 0.3s ease'
-            }}
-          >
-            {/* 1. Cabecera numerada del ejercicio con botón de eliminar mejor integrado */}
-            <div style={{
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '20px',
-              borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
-              paddingBottom: '12px'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <span style={{
-                  background: 'var(--theme-btn-gradient)',
-                  color: 'white',
-                  width: '28px',
-                  height: '28px',
-                  borderRadius: '50%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '12px',
-                  fontWeight: 'bold',
-                  fontFamily: "'Orbitron', sans-serif",
-                  boxShadow: '0 0 10px var(--theme-btn-glow)'
-                }}>{idx + 1}</span>
-                <h3 style={{
-                  margin: 0,
-                  fontSize: '13px',
-                  fontFamily: "'Orbitron', sans-serif",
-                  color: 'white',
-                  textTransform: 'uppercase',
-                  letterSpacing: '1px'
-                }}>Ejercicio {idx + 1}</h3>
-              </div>
-              {tempExercises.length > 1 && (
-                <button
-                  type="button"
-                  onClick={() => handleRemoveTempExercise(idx)}
-                  style={{
-                    background: 'rgba(239, 68, 68, 0.08)',
-                    border: '1px solid rgba(239, 68, 68, 0.18)',
-                    borderRadius: '8px',
-                    color: '#fca5a5',
-                    fontSize: '11px',
-                    fontWeight: 600,
-                    cursor: 'pointer',
-                    padding: '6px 12px',
+        {tempExercises.map((ej, idx) => {
+          const matchingPlanEx = plan?.trainingDays?.flatMap(d => d.exercises).find(
+            e => e.nombre && e.nombre.toLowerCase().trim() === ej.nombre.toLowerCase().trim()
+          );
+          const isPeriodizationActive = plan?.periodizationConfig?.enabled || false;
+          
+          // Target RIR
+          const targetRIRStr = matchingPlanEx?.variables?.['rir'] || '2';
+          const targetRIR = parseInt(targetRIRStr, 10) || 2;
+          
+          // Suggested Load
+          const marcas_1rm = plan?.periodizationConfig?.marcas_1rm || {};
+          const liftKey = ej.nombre.toLowerCase().includes('sentadilla') ? 'sentadilla' :
+                          (ej.nombre.toLowerCase().includes('banca') || ej.nombre.toLowerCase().includes('pecho')) ? 'press de banca' :
+                          (ej.nombre.toLowerCase().includes('peso muerto') || ej.nombre.toLowerCase().includes('deadlift')) ? 'peso muerto' : null;
+          const lift1RM = liftKey ? marcas_1rm[liftKey] || 0 : 0;
+          
+          const targetRepsStr = matchingPlanEx?.variables?.['repeticiones'] || '10';
+          const repsMatch = targetRepsStr.match(/(\d+)$/);
+          const targetReps = repsMatch ? parseInt(repsMatch[1], 10) : 10;
+          const pct = 30 / (30 + targetReps + targetRIR);
+          const suggestedWeight = lift1RM > 0 ? Math.round((lift1RM * pct) / 2.5) * 2.5 : 0;
+
+          return (
+            <div
+              key={idx}
+              className="ejercicio-group"
+              style={{
+                position: 'relative',
+                background: 'var(--theme-card-bg)',
+                border: '1px solid var(--theme-border)',
+                borderRadius: '16px',
+                padding: '24px',
+                boxShadow: '0 4px 30px rgba(0, 0, 0, 0.2)',
+                backdropFilter: 'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)',
+                transition: 'all 0.3s ease'
+              }}
+            >
+              {/* 1. Cabecera numerada del ejercicio con botón de eliminar mejor integrado */}
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: '20px',
+                borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
+                paddingBottom: '12px'
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span style={{
+                    background: 'var(--theme-btn-gradient)',
+                    color: 'white',
+                    width: '28px',
+                    height: '28px',
+                    borderRadius: '50%',
                     display: 'flex',
                     alignItems: 'center',
-                    gap: '6px',
-                    transition: 'all 0.2s ease',
-                    fontFamily: 'inherit'
-                  }}
-                  title="Eliminar ejercicio"
-                >
-                  ✕ Eliminar
-                </button>
-              )}
-            </div>
+                    justifyContent: 'center',
+                    fontSize: '12px',
+                    fontWeight: 'bold',
+                    fontFamily: "'Orbitron', sans-serif",
+                    boxShadow: '0 0 10px var(--theme-btn-glow)'
+                  }}>{idx + 1}</span>
+                  <h3 style={{
+                    margin: 0,
+                    fontSize: '13px',
+                    fontFamily: "'Orbitron', sans-serif",
+                    color: 'white',
+                    textTransform: 'uppercase',
+                    letterSpacing: '1px'
+                  }}>Ejercicio {idx + 1}</h3>
+                </div>
+                {tempExercises.length > 1 && (
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveTempExercise(idx)}
+                    style={{
+                      background: 'rgba(239, 68, 68, 0.08)',
+                      border: '1px solid rgba(239, 68, 68, 0.18)',
+                      borderRadius: '8px',
+                      color: '#fca5a5',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      padding: '6px 12px',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      transition: 'all 0.2s ease',
+                      fontFamily: 'inherit'
+                    }}
+                    title="Eliminar ejercicio"
+                  >
+                    ✕ Eliminar
+                  </button>
+                )}
+              </div>
 
-            {/* 2. Grid Responsivo de Dos Columnas (Panel de Configuración vs Panel de Series) */}
-            <div style={{
-              display: 'flex',
-              flexDirection: 'row',
-              gap: '24px',
-              flexWrap: 'wrap',
-              alignItems: 'stretch'
-            }}>
-              
-              {/* Panel Izquierdo: Configuración General (60% en Desktop, 100% en Móvil) */}
+              {/* 2. Grid Responsivo de Dos Columnas (Panel de Configuración vs Panel de Series) */}
               <div style={{
-                flex: '2 1 450px',
                 display: 'flex',
-                flexDirection: 'column',
-                gap: '16px'
+                flexDirection: 'row',
+                gap: '24px',
+                flexWrap: 'wrap',
+                alignItems: 'stretch'
               }}>
                 
-                {/* Fila 1: Nombre de Ejercicio (2/3) y Grupo Muscular (1/3) */}
+                {/* Panel Izquierdo: Configuración General (60% en Desktop, 100% en Móvil) */}
                 <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: '2fr 1fr',
-                  gap: '16px',
-                  alignItems: 'end'
+                  flex: '2 1 450px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '16px'
                 }}>
-                  <div className="form-group" style={{ margin: 0, position: 'relative' }}>
-                    <label htmlFor={`ej-nombre-${idx}`} style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, marginBottom: '6px', letterSpacing: '0.5px' }}>EJERCICIO</label>
-                    <input
-                      id={`ej-nombre-${idx}`}
-                      type="text"
-                      placeholder="Ej. Press banca, Sentadillas"
-                      value={ej.nombre}
-                      onChange={(e) => {
-                        handleFieldChange(idx, 'nombre', e.target.value);
-                        // If the typed exercise matches one in global list, auto fill group
-                        const match = catalogExercises.find(x => x.nombre.toLowerCase().trim() === e.target.value.toLowerCase().trim());
-                        if (match) {
-                          handleFieldChange(idx, 'grupo', mapMuscleGroup(match.grupo_muscular));
-                        }
-                      }}
-                      onFocus={() => setActiveSuggestIdx(idx)}
-                      onBlur={() => {
-                        setTimeout(() => {
-                          setActiveSuggestIdx(curr => curr === idx ? null : curr);
-                        }, 250);
-                      }}
-                      style={{
-                        width: '100%',
-                        background: 'rgba(255,255,255,0.03)',
-                        border: '1px solid var(--theme-border)',
-                        borderRadius: '10px',
-                        color: 'white',
-                        padding: '12px',
-                        fontSize: '13px',
-                        transition: 'all 0.2s',
-                        height: '44px',
-                        boxSizing: 'border-box'
-                      }}
-                    />
-                    {activeSuggestIdx === idx && (() => {
-                      const filtered = getFilteredSuggestions(ej.nombre);
-                      if (filtered.length === 0) return null;
-                      return (
-                        <div style={{
-                          position: 'absolute',
-                          top: '66px',
-                          left: 0,
+                  
+                  {/* Fila 1: Nombre de Ejercicio (2/3) y Grupo Muscular (1/3) */}
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: '2fr 1fr',
+                    gap: '16px',
+                    alignItems: 'end'
+                  }}>
+                    <div className="form-group" style={{ margin: 0, position: 'relative' }}>
+                      <label htmlFor={`ej-nombre-${idx}`} style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, marginBottom: '6px', letterSpacing: '0.5px' }}>EJERCICIO</label>
+                      <input
+                        id={`ej-nombre-${idx}`}
+                        type="text"
+                        placeholder="Ej. Press banca, Sentadillas"
+                        value={ej.nombre}
+                        onChange={(e) => {
+                          handleFieldChange(idx, 'nombre', e.target.value);
+                          // If the typed exercise matches one in global list, auto fill group
+                          const match = catalogExercises.find(x => x.nombre.toLowerCase().trim() === e.target.value.toLowerCase().trim());
+                          if (match) {
+                            handleFieldChange(idx, 'grupo', mapMuscleGroup(match.grupo_muscular));
+                          }
+                        }}
+                        onFocus={() => setActiveSuggestIdx(idx)}
+                        onBlur={() => {
+                          setTimeout(() => {
+                            setActiveSuggestIdx(curr => curr === idx ? null : curr);
+                          }, 250);
+                        }}
+                        style={{
                           width: '100%',
-                          maxHeight: '220px',
-                          overflowY: 'auto',
-                          background: 'var(--theme-card-bg)',
-                          backdropFilter: 'blur(20px)',
-                          WebkitBackdropFilter: 'blur(20px)',
+                          background: 'rgba(255,255,255,0.03)',
                           border: '1px solid var(--theme-border)',
                           borderRadius: '10px',
-                          zIndex: 9999,
-                          boxShadow: '0 8px 30px rgba(0, 0, 0, 0.65)',
-                          padding: '4px'
-                        }}>
-                          {filtered.map((sug, sIdx) => (
-                            <div
-                              key={sIdx}
-                              onMouseDown={() => handleSelectSuggestion(idx, sug.nombre, sug.grupo)}
-                              style={{
-                                padding: '10px 12px',
-                                borderRadius: '6px',
-                                cursor: 'pointer',
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                                fontSize: '12px',
-                                color: 'white',
-                                background: 'transparent',
-                                transition: 'all 0.15s'
-                              }}
-                              onMouseEnter={(e) => {
-                                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
-                              }}
-                              onMouseLeave={(e) => {
-                                e.currentTarget.style.background = 'transparent';
-                              }}
-                            >
-                              <span style={{ fontWeight: 600 }}>{sug.nombre}</span>
-                              {sug.isPlan ? (
-                                <span style={{
-                                  fontSize: '8px',
-                                  fontFamily: "'Orbitron', sans-serif",
-                                  fontWeight: 700,
-                                  background: 'var(--theme-badge-bg)',
-                                  border: '1px solid var(--theme-border)',
-                                  color: 'var(--theme-primary)',
-                                  padding: '2px 6px',
-                                  borderRadius: '10px'
-                                }}>
-                                  PLAN
-                                </span>
-                              ) : (
-                                <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)' }}>
-                                  {sug.grupo}
-                                </span>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      );
-                    })()}
+                          color: 'white',
+                          padding: '12px',
+                          fontSize: '13px',
+                          transition: 'all 0.2s',
+                          height: '44px',
+                          boxSizing: 'border-box'
+                        }}
+                      />
+                      {activeSuggestIdx === idx && (() => {
+                        const filtered = getFilteredSuggestions(ej.nombre);
+                        if (filtered.length === 0) return null;
+                        return (
+                          <div style={{
+                            position: 'absolute',
+                            top: '66px',
+                            left: 0,
+                            width: '100%',
+                            maxHeight: '220px',
+                            overflowY: 'auto',
+                            background: 'var(--theme-card-bg)',
+                            backdropFilter: 'blur(20px)',
+                            WebkitBackdropFilter: 'blur(20px)',
+                            border: '1px solid var(--theme-border)',
+                            borderRadius: '10px',
+                            zIndex: 9999,
+                            boxShadow: '0 8px 30px rgba(0, 0, 0, 0.65)',
+                            padding: '4px'
+                          }}>
+                            {filtered.map((sug, sIdx) => (
+                              <div
+                                key={sIdx}
+                                onMouseDown={() => handleSelectSuggestion(idx, sug.nombre, sug.grupo)}
+                                style={{
+                                  padding: '10px 12px',
+                                  borderRadius: '6px',
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  alignItems: 'center',
+                                  fontSize: '12px',
+                                  color: 'white',
+                                  background: 'transparent',
+                                  transition: 'all 0.15s'
+                                }}
+                                onMouseEnter={(e) => {
+                                  e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)';
+                                }}
+                                onMouseLeave={(e) => {
+                                  e.currentTarget.style.background = 'transparent';
+                                }}
+                              >
+                                <span style={{ fontWeight: 600 }}>{sug.nombre}</span>
+                                {sug.isPlan ? (
+                                  <span style={{
+                                    fontSize: '8px',
+                                    fontFamily: "'Orbitron', sans-serif",
+                                    fontWeight: 700,
+                                    background: 'var(--theme-badge-bg)',
+                                    border: '1px solid var(--theme-border)',
+                                    color: 'var(--theme-primary)',
+                                    padding: '2px 6px',
+                                    borderRadius: '10px'
+                                  }}>
+                                    PLAN
+                                  </span>
+                                ) : (
+                                  <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)' }}>
+                                    {sug.grupo}
+                                  </span>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        );
+                      })()}
+                    </div>
+
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label htmlFor={`ej-grupo-${idx}`} style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, marginBottom: '6px', letterSpacing: '0.5px' }}>GRUPO MUSCULAR</label>
+                      <select
+                        id={`ej-grupo-${idx}`}
+                        value={ej.grupo}
+                        onChange={(e) => handleFieldChange(idx, 'grupo', e.target.value)}
+                        style={{
+                          width: '100%',
+                          background: 'rgba(255,255,255,0.03)',
+                          border: '1px solid var(--theme-border)',
+                          borderRadius: '10px',
+                          color: 'white',
+                          padding: '10px 12px',
+                          fontSize: '13px',
+                          height: '44px',
+                          boxSizing: 'border-box',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {['Pecho', 'Espalda', 'Cuádriceps', 'Isquiosurales', 'Hombros', 'Brazos', 'Glúteos', 'Pantorrillas', 'Core'].map(g => (
+                          <option key={g} value={g} style={{ background: '#0b0f19', color: 'white' }}>{g}</option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
 
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label htmlFor={`ej-grupo-${idx}`} style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, marginBottom: '6px', letterSpacing: '0.5px' }}>GRUPO MUSCULAR</label>
-                    <select
-                      id={`ej-grupo-${idx}`}
-                      value={ej.grupo}
-                      onChange={(e) => handleFieldChange(idx, 'grupo', e.target.value)}
-                      style={{
-                        width: '100%',
-                        background: 'rgba(255,255,255,0.03)',
-                        border: '1px solid var(--theme-border)',
-                        borderRadius: '10px',
-                        color: 'white',
-                        padding: '10px 12px',
-                        fontSize: '13px',
-                        height: '44px',
-                        boxSizing: 'border-box',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      {['Pecho', 'Espalda', 'Cuádriceps', 'Isquiosurales', 'Hombros', 'Brazos', 'Glúteos', 'Pantorrillas', 'Core'].map(g => (
-                        <option key={g} value={g} style={{ background: '#0b0f19', color: 'white' }}>{g}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                {/* Fila 2: Métricas de Carga - Peso (1/3), RIR (1/3), Descanso (1/3) */}
-                <div style={{
-                  display: 'grid',
-                  gridTemplateColumns: 'repeat(3, 1fr)',
-                  gap: '12px'
-                }}>
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label htmlFor={`ej-peso-${idx}`} style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, marginBottom: '6px', letterSpacing: '0.5px' }}>PESO DE TRABAJO (KG)</label>
-                    <input
-                      id={`ej-peso-${idx}`}
-                      type="text"
-                      placeholder="Ej. 50 o Autocarga"
-                      value={ej.peso}
-                      onChange={(e) => handleFieldChange(idx, 'peso', e.target.value)}
-                      style={{
-                        width: '100%',
-                        background: 'rgba(255,255,255,0.03)',
-                        border: '1px solid var(--theme-border)',
-                        borderRadius: '10px',
-                        color: 'white',
-                        padding: '12px',
-                        fontSize: '13px',
-                        height: '44px',
-                        boxSizing: 'border-box'
-                      }}
-                    />
-                  </div>
-
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label htmlFor={`ej-rir-${idx}`} style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, marginBottom: '6px', letterSpacing: '0.5px' }}>RIR (0-10)</label>
-                    <input
-                      id={`ej-rir-${idx}`}
-                      type="number"
-                      inputMode="decimal"
-                      step="0.5"
-                      min="0"
-                      max="10"
-                      placeholder="Ej. 2"
-                      value={ej.rpe}
-                      onChange={(e) => handleFieldChange(idx, 'rpe', e.target.value)}
-                      style={{
-                        width: '100%',
-                        background: 'rgba(255,255,255,0.03)',
-                        border: '1px solid var(--theme-border)',
-                        borderRadius: '10px',
-                        color: 'white',
-                        padding: '12px',
-                        fontSize: '13px',
-                        height: '44px',
-                        boxSizing: 'border-box'
-                      }}
-                    />
-                  </div>
-
-                  <div className="form-group" style={{ margin: 0 }}>
-                    <label htmlFor={`ej-descanso-${idx}`} style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, marginBottom: '6px', letterSpacing: '0.5px' }}>DESCANSO (SEGUNDOS)</label>
-                    <input
-                      id={`ej-descanso-${idx}`}
-                      type="number"
-                      inputMode="numeric"
-                      step="15"
-                      placeholder="Ej. 90"
-                      value={ej.descanso}
-                      onChange={(e) => handleFieldChange(idx, 'descanso', e.target.value)}
-                      style={{
-                        width: '100%',
-                        background: 'rgba(255,255,255,0.03)',
-                        border: '1px solid var(--theme-border)',
-                        borderRadius: '10px',
-                        color: 'white',
-                        padding: '12px',
-                        fontSize: '13px',
-                        height: '44px',
-                        boxSizing: 'border-box'
-                      }}
-                    />
-                  </div>
-                </div>
-
-                {/* Fila 3: Notas del Ejercicio (Completa el espacio restante) */}
-                <div className="form-group form-wide" style={{ margin: 0, display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
-                  <label htmlFor={`ej-notas-${idx}`} style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, marginBottom: '6px', letterSpacing: '0.5px' }}>NOTAS (OPCIONAL)</label>
-                  <textarea
-                    id={`ej-notas-${idx}`}
-                    placeholder="Técnica, sensaciones..."
-                    rows={3}
-                    value={ej.notas_ej}
-                    onChange={(e) => handleFieldChange(idx, 'notas_ej', e.target.value)}
-                    style={{
-                      width: '100%',
-                      background: 'rgba(255,255,255,0.03)',
-                      border: '1px solid var(--theme-border)',
+                  {/* Sugerencias de Carga y RIR si la periodización está activa y se encuentra el ejercicio en el plan */}
+                  {isPeriodizationActive && matchingPlanEx && (
+                    <div style={{
+                      background: 'rgba(0, 212, 255, 0.03)',
+                      border: '1px solid rgba(0, 212, 255, 0.1)',
                       borderRadius: '10px',
-                      color: 'white',
-                      padding: '12px',
-                      fontSize: '13px',
-                      resize: 'none',
-                      flexGrow: 1,
-                      minHeight: '80px',
-                      boxSizing: 'border-box'
-                    }}
-                  />
+                      padding: '12px 14px',
+                      fontSize: '11px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '8px'
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ color: 'rgba(255,255,255,0.5)' }}>RIR Objetivo para hoy:</span>
+                        <span style={{ color: 'var(--theme-primary)', fontWeight: 800, fontFamily: "'Orbitron', sans-serif" }}>
+                          RIR {targetRIR}
+                        </span>
+                      </div>
+                      {suggestedWeight > 0 && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '8px' }}>
+                          <span style={{ color: 'rgba(255,255,255,0.5)' }}>Peso recomendado:</span>
+                          <span style={{ color: 'white', fontWeight: 800 }}>
+                            {suggestedWeight} kg <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.3)', fontWeight: 'normal' }}>(1RM: {lift1RM}kg)</span>
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Fila 2: Métricas de Carga - Peso (1/3), RIR (1/3), Descanso (1/3) */}
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(3, 1fr)',
+                    gap: '12px'
+                  }}>
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label htmlFor={`ej-peso-${idx}`} style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, marginBottom: '6px', letterSpacing: '0.5px' }}>PESO DE TRABAJO (KG)</label>
+                      <input
+                        id={`ej-peso-${idx}`}
+                        type="text"
+                        placeholder="Ej. 50 o Autocarga"
+                        value={ej.peso}
+                        onChange={(e) => handleFieldChange(idx, 'peso', e.target.value)}
+                        style={{
+                          width: '100%',
+                          background: 'rgba(255,255,255,0.03)',
+                          border: '1px solid var(--theme-border)',
+                          borderRadius: '10px',
+                          color: 'white',
+                          padding: '12px',
+                          fontSize: '13px',
+                          height: '44px',
+                          boxSizing: 'border-box'
+                        }}
+                      />
+                    </div>
+
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label htmlFor={`ej-rir-${idx}`} style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, marginBottom: '6px', letterSpacing: '0.5px' }}>RIR LOGRADO</label>
+                      <input
+                        id={`ej-rir-${idx}`}
+                        type="number"
+                        inputMode="decimal"
+                        step="0.5"
+                        min="0"
+                        max="10"
+                        placeholder="Ej. 2"
+                        value={ej.rpe}
+                        onChange={(e) => handleFieldChange(idx, 'rpe', e.target.value)}
+                        style={{
+                          width: '100%',
+                          background: 'rgba(255,255,255,0.03)',
+                          border: '1px solid var(--theme-border)',
+                          borderRadius: '10px',
+                          color: 'white',
+                          padding: '12px',
+                          fontSize: '13px',
+                          height: '44px',
+                          boxSizing: 'border-box'
+                        }}
+                      />
+                    </div>
+
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label htmlFor={`ej-descanso-${idx}`} style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, marginBottom: '6px', letterSpacing: '0.5px' }}>DESCANSO (SEGUNDOS)</label>
+                      <input
+                        id={`ej-descanso-${idx}`}
+                        type="number"
+                        inputMode="numeric"
+                        step="15"
+                        placeholder="Ej. 90"
+                        value={ej.descanso}
+                        onChange={(e) => handleFieldChange(idx, 'descanso', e.target.value)}
+                        style={{
+                          width: '100%',
+                          background: 'rgba(255,255,255,0.03)',
+                          border: '1px solid var(--theme-border)',
+                          borderRadius: '10px',
+                          color: 'white',
+                          padding: '12px',
+                          fontSize: '13px',
+                          height: '44px',
+                          boxSizing: 'border-box'
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Fila 3: Notas del Ejercicio (Completa el espacio restante) */}
+                  <div className="form-group form-wide" style={{ margin: 0, display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
+                    <label htmlFor={`ej-notas-${idx}`} style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, marginBottom: '6px', letterSpacing: '0.5px' }}>NOTAS (OPCIONAL)</label>
+                    <textarea
+                      id={`ej-notas-${idx}`}
+                      placeholder="Técnica, sensaciones..."
+                      rows={3}
+                      value={ej.notas_ej}
+                      onChange={(e) => handleFieldChange(idx, 'notas_ej', e.target.value)}
+                      style={{
+                        width: '100%',
+                        background: 'rgba(255,255,255,0.03)',
+                        border: '1px solid var(--theme-border)',
+                        borderRadius: '10px',
+                        color: 'white',
+                        padding: '12px',
+                        fontSize: '13px',
+                        resize: 'none',
+                        flexGrow: 1,
+                        minHeight: '80px',
+                        boxSizing: 'border-box'
+                      }}
+                    />
+                  </div>
+
+                  {/* Cuestionario de Feedback RIR y Recuperación (Solo si está activa la periodización) */}
+                  {isPeriodizationActive && (
+                    <div style={{
+                      marginTop: '16px',
+                      background: 'rgba(0, 212, 255, 0.02)',
+                      border: '1px solid rgba(0, 212, 255, 0.1)',
+                      borderRadius: '12px',
+                      padding: '16px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '12px'
+                    }}>
+                      <div style={{ fontSize: '10px', fontWeight: 800, fontFamily: "'Orbitron', sans-serif", color: 'var(--theme-primary)', letterSpacing: '1px' }}>
+                        FEEDBACK DEL EJERCICIO
+                      </div>
+                      
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', flexWrap: 'wrap' }}>
+                        {/* Estímulo */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                          <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)' }}>Estímulo / Bombeo:</span>
+                          <select
+                            value={ej.feedback_estimulo || 'good'}
+                            onChange={(e) => handleFieldChange(idx, 'feedback_estimulo', e.target.value)}
+                            style={{
+                              background: 'rgba(0,0,0,0.3)',
+                              border: '1px solid rgba(255,255,255,0.08)',
+                              borderRadius: '8px',
+                              color: 'white',
+                              padding: '8px 10px',
+                              fontSize: '12px',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            <option value="none">Bajo / Ningún bombeo</option>
+                            <option value="good">Óptimo / Buen estímulo</option>
+                            <option value="extreme">Extremo / Gran congestión</option>
+                          </select>
+                        </div>
+
+                        {/* Recuperación */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                          <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)' }}>Recuperación sesión anterior:</span>
+                          <select
+                            value={ej.feedback_recuperacion || 'recovered'}
+                            onChange={(e) => handleFieldChange(idx, 'feedback_recuperacion', e.target.value)}
+                            style={{
+                              background: 'rgba(0,0,0,0.3)',
+                              border: '1px solid rgba(255,255,255,0.08)',
+                              borderRadius: '8px',
+                              color: 'white',
+                              padding: '8px 10px',
+                              fontSize: '12px',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            <option value="recovered">Totalmente recuperado</option>
+                            <option value="just_in_time">Justo a tiempo para hoy</option>
+                            <option value="sore">Aún con dolor / Agujetas</option>
+                          </select>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </div>
 
               {/* Panel Derecho: Series y Repeticiones (40% en Desktop, 100% en Móvil) */}
               <div style={{
@@ -1007,7 +1181,8 @@ export const AddSesion: React.FC<AddSesionProps> = ({
             })()}
 
           </div>
-        ))}
+        );
+      })}
       </div>
 
       {/* Acciones generales con separador estético */}

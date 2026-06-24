@@ -63,6 +63,24 @@ export interface PlanData {
   weekdayMapping?: Record<string, number>;
   trackerConfig?: TrackerConfig;
   trackerRules?: TrackerRule[];
+  periodizationConfig?: PeriodizationConfig;
+}
+
+export interface PeriodizationConfig {
+  enabled: boolean;
+  objetivo?: 'fuerza' | 'hipertrofia' | 'mantenimiento';
+  fecha_evaluacion?: string;
+  edad?: number;
+  capacidad_recuperacion?: 'alta' | 'media' | 'baja';
+  puntos_debiles?: {
+    sentadilla?: 'abajo' | 'mitad' | 'arriba';
+    banca?: 'pecho' | 'mitad' | 'bloqueo';
+    peso_muerto?: 'despegue' | 'rodillas' | 'bloqueo';
+  };
+  marcas_1rm?: Record<string, number>; // ejercicio_id o nombre -> peso
+  semana_actual?: number; // microciclo actual, ej: 1
+  total_semanas?: number; // total microciclos en bloque, ej: 4
+  mrv_limite_alcanzado?: boolean; // si se disparó descarga
 }
 
 export interface GlobalVariable {
