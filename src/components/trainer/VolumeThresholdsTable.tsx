@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   THRESHOLDS_PRINCIPIANTE, 
   THRESHOLDS_INTERMEDIO, 
@@ -31,7 +32,7 @@ export function VolumeThresholdsTable({ onClose }: Props) {
     { name: 'CORE', muscles: ['Core', 'Lumbares'] }
   ];
 
-  return (
+  return createPortal(
     <div style={{
       position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
       zIndex: 9999,
@@ -217,6 +218,7 @@ export function VolumeThresholdsTable({ onClose }: Props) {
           <p style={{ margin: 0 }}>Rangos basados en Renaissance Periodization (Israetel et al.). Son puntos de partida: la respuesta individual varía según genética, nutrición, sueño y estrés acumulado. Ajusta siempre según señales de recuperación del atleta.</p>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

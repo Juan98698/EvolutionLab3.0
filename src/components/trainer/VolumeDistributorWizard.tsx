@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   SplitType, 
   distributeSetsToSessions, 
@@ -82,7 +83,7 @@ export function VolumeDistributorWizard({ onClose, onApply, athleteLevel = 'inte
     setCustomDays([...customDays, { name: `Día ${customDays.length + 1}`, muscles: [] }]);
   };
 
-  return (
+  return createPortal(
     <div style={{
       position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
       zIndex: 9999,
@@ -376,6 +377,8 @@ export function VolumeDistributorWizard({ onClose, onApply, athleteLevel = 'inte
         </div>
 
       </div>
-    </div>
+      </div>
+    </div>,
+    document.body
   );
 }
