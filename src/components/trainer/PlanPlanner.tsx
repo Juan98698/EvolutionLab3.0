@@ -8,6 +8,9 @@ import { InfoTooltip } from '../common/InfoTooltip';
 import { getWeakPointCorrection } from '../../lib/periodizationEngine';
 import { PeriodizationHelpModal } from '../common/PeriodizationHelpModal';
 import { evaluateVolumeStatus, getThresholdsForMuscleGroup } from '../../lib/volumeThresholds';
+import { VolumeThresholdsTable } from './VolumeThresholdsTable';
+import { VolumeDistributorWizard } from './VolumeDistributorWizard';
+import { GeneratedSession } from '../../lib/sessionDistributor';
 import {
   Chart as ChartJS,
   RadialLinearScale,
@@ -91,6 +94,48 @@ export const PlanPlanner: React.FC = () => {
 
   // Periodization help modal state
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
+  const [thresholdsTableOpen, setThresholdsTableOpen] = useState(false);
+  const [distributorWizardOpen, setDistributorWizardOpen] = useState(false);
+
+  // Generar ID aleatorio
+  const generateId = (): string => Math.random().toString(36).substring(2, 11);
+
+  const handleApplyDistribution = (sessions: GeneratedSession[]) => {
+    // Si ya hay ejercicios creados, advertimos
+    const hasExercises = trainingDays.some(day => day.exercises && day.exercises.some(ex => ex.nombre_original !== ''));
+    if (hasExercises) {
+      if (!window.confirm("Aplicar el esqueleto de volumen reemplazará los días y ejercicios actuales. ¿Estás seguro de que quieres continuar?")) {
+        return;
+      }
+    }
+
+    // Reemplazar trainingDays
+    const newDays: TrainingDay[] = sessions.map(session => {
+      return {
+        id: `day_${generateId()}`,
+        name: session.label,
+        exercises: session.muscleTargets.map(target => {
+          const exVariables = { ...Object.fromEntries(globalVariables.map(gv => [gv.id, gv.defaultValue || ''])) };
+          exVariables['series de trabajo'] = String(target.plannedSets);
+
+          return {
+            id: generateId(),
+            nombre: `[ ESPACIO PARA: ${target.muscleGroup.toUpperCase()} ]`,
+            nombre_original: '',
+            grupo_muscular: target.muscleGroup,
+            variables: exVariables,
+            video_url: '',
+            image_url: '',
+            gif_url: ''
+          } as Exercise;
+        })
+      };
+    });
+
+    setTrainingDays(newDays);
+    setDistributorWizardOpen(false);
+    showToast('Esqueleto de distribución generado correctamente. ⚡', 'success');
+  };
 
   // Capitalizar texto respetando acentos en español (ej. "Extensión de rodilla")
   const capitalizarEspanol = (str: string): string => {
@@ -468,9 +513,6 @@ export const PlanPlanner: React.FC = () => {
       setToastState((prev) => ({ ...prev, visible: false }));
     }, 3000);
   };
-
-  // Generar ID aleatorio
-  const generateId = (): string => Math.random().toString(36).substring(2, 11);
 
   // Inicializar plan limpio por defecto
   const resetToDefaultPlan = (profileData?: Profile) => {
@@ -1579,6 +1621,36 @@ export const PlanPlanner: React.FC = () => {
 
       <div className="container stagger-3" style={{ padding: '0 20px', maxWidth: '1200px', margin: '0 auto' }}>
         
+        {/* ACTION BAR: Herramientas de Planificación */}
+        <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', overflowX: 'auto', paddingBottom: '4px' }}>
+          <button 
+            onClick={() => setThresholdsTableOpen(true)} 
+            className="btn" 
+            style={{ background: '#1A1A1A', border: '1px solid #333', color: 'white', display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}
+          >
+            <span style={{ fontSize: '16px' }}>📊</span> Tabla MEV/MAV/MRV
+          </button>
+          <button 
+            onClick={() => setDistributorWizardOpen(true)} 
+            className="btn" 
+            style={{ background: 'var(--theme-primary)', border: 'none', color: '#000', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 'bold', whiteSpace: 'nowrap' }}
+          >
+            <span style={{ fontSize: '16px' }}>⚡</span> Asistente de Distribución
+          </button>
+        </div>
+
+        {thresholdsTableOpen && (
+          <VolumeThresholdsTable onClose={() => setThresholdsTableOpen(false)} />
+        )}
+
+        {distributorWizardOpen && (
+          <VolumeDistributorWizard 
+            onClose={() => setDistributorWizardOpen(false)} 
+            onApply={handleApplyDistribution}
+            athleteLevel={periodizationConfig?.nivel_atleta || 'intermedio'}
+          />
+        )}
+
         {/* SECCIÓN 1: PORTADA / DETALLES DEL PLAN */}
         <div style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '16px', padding: '20px', marginBottom: '24px', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', boxShadow: '0 8px 32px 0 var(--theme-glow)' }}>
           <h3 style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '13px', color: 'var(--theme-primary)', letterSpacing: '0.5px', marginBottom: '16px', marginTop: 0 }}>

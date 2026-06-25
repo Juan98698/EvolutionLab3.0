@@ -20,7 +20,7 @@ export interface VolumeThreshold {
 }
 
 // Tabla de umbrales científicos semanales - INTERMEDIO (Base RP)
-const THRESHOLDS_INTERMEDIO: Record<string, VolumeThreshold> = {
+export const THRESHOLDS_INTERMEDIO: Record<string, VolumeThreshold> = {
   'Pecho': { gm: 'Pecho', mev: 10, mavMin: 12, mavMax: 18, mrv: 26 },
   'Espalda': { gm: 'Espalda', mev: 12, mavMin: 14, mavMax: 20, mrv: 28 },
   'Cuádriceps': { gm: 'Cuádriceps', mev: 10, mavMin: 12, mavMax: 18, mrv: 26 },
@@ -35,7 +35,7 @@ const THRESHOLDS_INTERMEDIO: Record<string, VolumeThreshold> = {
 };
 
 // PRINCIPIANTE: Requieren mucho menos estímulo para crecer y se recuperan de mucho menos.
-const THRESHOLDS_PRINCIPIANTE: Record<string, VolumeThreshold> = {
+export const THRESHOLDS_PRINCIPIANTE: Record<string, VolumeThreshold> = {
   'Pecho': { gm: 'Pecho', mev: 4, mavMin: 6, mavMax: 8, mrv: 10 },
   'Espalda': { gm: 'Espalda', mev: 6, mavMin: 8, mavMax: 10, mrv: 14 },
   'Cuádriceps': { gm: 'Cuádriceps', mev: 4, mavMin: 6, mavMax: 8, mrv: 10 },
@@ -50,7 +50,7 @@ const THRESHOLDS_PRINCIPIANTE: Record<string, VolumeThreshold> = {
 };
 
 // AVANZADO: Requieren alto volumen (MEV alto) para crecer, pero su MRV puede ser similar al intermedio por la carga sistémica.
-const THRESHOLDS_AVANZADO: Record<string, VolumeThreshold> = {
+export const THRESHOLDS_AVANZADO: Record<string, VolumeThreshold> = {
   'Pecho': { gm: 'Pecho', mev: 14, mavMin: 16, mavMax: 22, mrv: 26 },
   'Espalda': { gm: 'Espalda', mev: 16, mavMin: 18, mavMax: 24, mrv: 28 },
   'Cuádriceps': { gm: 'Cuádriceps', mev: 14, mavMin: 16, mavMax: 22, mrv: 26 },
