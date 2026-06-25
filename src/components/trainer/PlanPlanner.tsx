@@ -5,6 +5,8 @@ import { useSupabase } from '../../context/SupabaseContext';
 import { Profile, PlanData, TrainingDay, Exercise, GlobalVariable, EjercicioGlobal, PeriodizationConfig } from '../../types/database.types';
 import Toast from '../common/Toast';
 import { InfoTooltip } from '../common/InfoTooltip';
+import { getWeakPointCorrection } from '../../lib/periodizationEngine';
+import { PeriodizationHelpModal } from '../common/PeriodizationHelpModal';
 import {
   Chart as ChartJS,
   RadialLinearScale,
@@ -86,6 +88,9 @@ export const PlanPlanner: React.FC = () => {
     params: any;
   } | null>(null);
 
+  // Periodization help modal state
+  const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
+
   // Capitalizar texto respetando acentos en español (ej. "Extensión de rodilla")
   const capitalizarEspanol = (str: string): string => {
     if (!str) return '';
@@ -122,6 +127,97 @@ export const PlanPlanner: React.FC = () => {
     
     // Fallback: capitalizar primera letra
     return g.charAt(0).toUpperCase() + g.slice(1).toLowerCase();
+  };
+
+  const formatTempoDetail = (tempo: string) => {
+    if (!tempo || !tempo.includes('-')) return '';
+    const parts = tempo.split('-');
+    if (parts.length !== 4) return `Tempo: ${tempo}`;
+    
+    const ecc = parseInt(parts[0], 10) || 0;
+    const iso = parseInt(parts[1], 10) || 0;
+    const con = parseInt(parts[2], 10) || 0;
+    const pause = parseInt(parts[3], 10) || 0;
+    
+    return `Tempo ${tempo} explicado:
+• Bajar (Fase Excéntrica): ${ecc} segundo${ecc === 1 ? '' : 's'}.
+• Sostener (Pausa abajo/Isometría): ${iso} segundo${iso === 1 ? '' : 's'}.
+• Subir (Fase Concéntrica): ${con} segundo${con === 1 ? '' : 's'} (fase concéntrica/empuje).
+• Pausa arriba: ${pause} segundo${pause === 1 ? '' : 's'} (antes de iniciar la siguiente repetición).`;
+  };
+
+  const handleAddCorrectiveExercise = (liftKey: string, corrective: any) => {
+    let keywords: string[] = [];
+    let defaultGroup = 'General';
+    if (liftKey === 'sentadilla') {
+      keywords = ['sentadilla', 'squat'];
+      defaultGroup = 'Cuádriceps';
+    } else if (liftKey === 'banca') {
+      keywords = ['press de banca', 'press banca', 'bench press'];
+      defaultGroup = 'Pecho';
+    } else if (liftKey === 'peso_muerto') {
+      keywords = ['peso muerto', 'deadlift'];
+      defaultGroup = 'Isquiosurales';
+    }
+
+    let targetDayId = '';
+    let insertIndex = -1;
+    
+    for (let dIdx = 0; dIdx < trainingDays.length; dIdx++) {
+      const day = trainingDays[dIdx];
+      const exIdx = day.exercises.findIndex(ex => 
+        ex.nombre && keywords.some(kw => ex.nombre.toLowerCase().includes(kw))
+      );
+      if (exIdx !== -1) {
+        targetDayId = day.id;
+        insertIndex = exIdx + 1;
+        break;
+      }
+    }
+    
+    if (!targetDayId && trainingDays.length > 0) {
+      targetDayId = trainingDays[0].id;
+      insertIndex = trainingDays[0].exercises.length;
+    }
+    
+    if (!targetDayId) {
+      showToast('No hay días de entrenamiento programados para agregar el correctivo.', 'error');
+      return;
+    }
+    
+    const detailedTempo = formatTempoDetail(corrective.tempo);
+    const notes = `Pauta del Smart Coach [Punto Débil]:\n${corrective.description}\n\n${detailedTempo}`;
+    
+    const newExercise: Exercise = {
+      id: generateId(),
+      nombre: `${corrective.name} (Correctivo)`,
+      nombre_original: corrective.name,
+      variables: {
+        'series de trabajo': '3',
+        'repeticiones': '6 a 8',
+        'rir': '2',
+        'tempo': corrective.tempo
+      },
+      progression_notes: notes,
+      grupo_muscular: defaultGroup
+    };
+    
+    setTrainingDays(prev =>
+      prev.map(d => {
+        if (d.id === targetDayId) {
+          const newExs = [...d.exercises];
+          newExs.splice(insertIndex, 0, newExercise);
+          return {
+            ...d,
+            exercises: newExs
+          };
+        }
+        return d;
+      })
+    );
+    
+    const targetDayName = trainingDays.find(d => d.id === targetDayId)?.name || 'su plan';
+    showToast(`✅ Se agregó "${corrective.name}" al ${targetDayName}`, 'success');
   };
 
   // Estado: catalogo global de ejercicios (Supabase)
@@ -1841,9 +1937,35 @@ export const PlanPlanner: React.FC = () => {
                 
                 {/* Ajustes del Bloque */}
                 <div>
-                  <h4 style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '11px', color: 'var(--theme-primary)', letterSpacing: '0.5px', marginBottom: '12px', marginTop: 0, textTransform: 'uppercase', display: 'flex', alignItems: 'center' }}>
+                  <h4 style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '11px', color: 'var(--theme-primary)', letterSpacing: '0.5px', marginBottom: '12px', marginTop: 0, textTransform: 'uppercase', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
                     Ajustes del Bloque de Entrenamiento
                     <InfoTooltip title="Bloque de Entrenamiento (Mesociclo)" body="Un bloque o mesociclo es un período de entrenamiento de varias semanas (típicamente 4-6). El volumen empieza bajo y sube gradualmente cada semana hasta llegar a una descarga automática al final. Así evitas el sobreentrenamiento y maximizas las ganancias." />
+                    <button
+                      type="button"
+                      onClick={() => setIsHelpModalOpen(true)}
+                      style={{
+                        background: 'rgba(0, 212, 255, 0.08)',
+                        border: '1px solid rgba(0, 212, 255, 0.2)',
+                        borderRadius: '6px',
+                        color: 'var(--theme-primary, #00d4ff)',
+                        fontSize: '9px',
+                        fontWeight: 800,
+                        fontFamily: "'Orbitron', sans-serif",
+                        padding: '4px 8px',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = 'rgba(0, 212, 255, 0.15)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = 'rgba(0, 212, 255, 0.08)';
+                      }}
+                    >
+                      📘 Guía Científica y FAQ
+                    </button>
                   </h4>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px' }}>
                     <div>
@@ -2081,6 +2203,135 @@ export const PlanPlanner: React.FC = () => {
                       </div>
 
                     </div>
+
+                    {/* Smart Coach suggestions box */}
+                    {(() => {
+                      if (!periodizationConfig) return null;
+                      const squatWeak = periodizationConfig.puntos_debiles?.sentadilla || 'abajo';
+                      const bancaWeak = periodizationConfig.puntos_debiles?.banca || 'pecho';
+                      const dlWeak = periodizationConfig.puntos_debiles?.peso_muerto || 'despegue';
+
+                      const findExerciseDayName = (keywords: string[]) => {
+                        for (const day of trainingDays) {
+                          const hasEx = (day.exercises || []).some(ex => 
+                            ex.nombre && keywords.some(kw => ex.nombre.toLowerCase().includes(kw))
+                          );
+                          if (hasEx) return day.name;
+                        }
+                        return null;
+                      };
+
+                      const squatDay = findExerciseDayName(['sentadilla', 'squat']);
+                      const benchDay = findExerciseDayName(['press de banca', 'press banca', 'bench press']);
+                      const dlDay = findExerciseDayName(['peso muerto', 'deadlift']);
+
+                      const correctionsToSuggest: { liftKey: string; liftLabel: string; point: string; dayName: string | null }[] = [];
+                      if (squatDay) correctionsToSuggest.push({ liftKey: 'sentadilla', liftLabel: 'Sentadilla', point: squatWeak, dayName: squatDay });
+                      if (benchDay) correctionsToSuggest.push({ liftKey: 'banca', liftLabel: 'Press de Banca', point: bancaWeak, dayName: benchDay });
+                      if (dlDay) correctionsToSuggest.push({ liftKey: 'peso_muerto', liftLabel: 'Peso Muerto', point: dlWeak, dayName: dlDay });
+
+                      if (correctionsToSuggest.length === 0) return null;
+
+                      return (
+                        <div style={{
+                          marginTop: '20px',
+                          background: 'rgba(0, 212, 255, 0.03)',
+                          border: '1px solid rgba(0, 212, 255, 0.15)',
+                          borderRadius: '12px',
+                          padding: '16px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '12px'
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ fontSize: '16px' }}>💡</span>
+                            <span style={{
+                              fontSize: '11px',
+                              fontWeight: 800,
+                              fontFamily: "'Orbitron', sans-serif",
+                              color: 'var(--theme-primary, #00d4ff)',
+                              letterSpacing: '1px',
+                              textTransform: 'uppercase'
+                            }}>
+                              Sugerencias del Smart Coach
+                            </span>
+                          </div>
+                          
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                            {correctionsToSuggest.map((item) => {
+                              const correction = getWeakPointCorrection(item.liftKey as any, item.point as any);
+                              if (!correction) return null;
+
+                              return (
+                                <div key={item.liftKey} style={{
+                                  background: 'rgba(255, 255, 255, 0.01)',
+                                  border: '1px solid rgba(255, 255, 255, 0.04)',
+                                  borderRadius: '10px',
+                                  padding: '12px',
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  gap: '8px'
+                                }}>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '8px' }}>
+                                    <div>
+                                      <strong style={{ fontSize: '12px', color: 'white' }}>{correction.name}</strong>
+                                      <div style={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.4)', marginTop: '2px' }}>
+                                        Correctivo para {item.liftLabel} (Punto crítico: <span style={{ color: 'var(--theme-primary, #00d4ff)' }}>{item.point}</span>)
+                                      </div>
+                                    </div>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleAddCorrectiveExercise(item.liftKey, correction)}
+                                      style={{
+                                        background: 'rgba(0, 212, 255, 0.1)',
+                                        border: '1px solid rgba(0, 212, 255, 0.25)',
+                                        borderRadius: '6px',
+                                        color: 'var(--theme-primary, #00d4ff)',
+                                        fontSize: '10px',
+                                        fontWeight: 800,
+                                        fontFamily: "'Orbitron', sans-serif",
+                                        padding: '6px 12px',
+                                        cursor: 'pointer',
+                                        transition: 'all 0.2s'
+                                      }}
+                                      onMouseEnter={(e) => {
+                                        e.currentTarget.style.background = 'rgba(0, 212, 255, 0.2)';
+                                        e.currentTarget.style.borderColor = 'var(--theme-primary, #00d4ff)';
+                                      }}
+                                      onMouseLeave={(e) => {
+                                        e.currentTarget.style.background = 'rgba(0, 212, 255, 0.1)';
+                                        e.currentTarget.style.borderColor = 'rgba(0, 212, 255, 0.25)';
+                                      }}
+                                    >
+                                      ➕ Agregar a {item.dayName}
+                                    </button>
+                                  </div>
+                                  
+                                  <p style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.7)', margin: 0, lineHeight: '1.4' }}>
+                                    {correction.description}
+                                  </p>
+
+                                  <div style={{
+                                    background: 'rgba(249, 115, 22, 0.05)',
+                                    border: '1px solid rgba(249, 115, 22, 0.15)',
+                                    borderRadius: '8px',
+                                    padding: '10px',
+                                    fontSize: '11px',
+                                    color: '#ffaa66',
+                                    lineHeight: '1.4'
+                                  }}>
+                                    <strong style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#ff7e2e', display: 'block', marginBottom: '4px' }}>
+                                      ⏱️ Explicación del Tempo ({correction.tempo})
+                                    </strong>
+                                    {formatTempoDetail(correction.tempo).split('\n').slice(1).join('\n')}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })()}
                   </div>
 
                 </div>
@@ -3150,6 +3401,7 @@ export const PlanPlanner: React.FC = () => {
       )}
 
       <Toast message={toastState.message} type={toastState.type} visible={toastState.visible} />
+      <PeriodizationHelpModal isOpen={isHelpModalOpen} onClose={() => setIsHelpModalOpen(false)} />
     </div>
   );
 };

@@ -3,6 +3,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { writeSessionsToCache } from '../../lib/sessions';
 import { PlanData } from '../../types/database.types';
 import { autoRegulatePlanForNextWeek } from '../../lib/periodizationEngine';
+import { PeriodizationHelpModal } from '../common/PeriodizationHelpModal';
 
 interface AddSesionProps {
   plan: PlanData | null;
@@ -38,6 +39,7 @@ export const AddSesion: React.FC<AddSesionProps> = ({
   const [notasSesion, setNotasSesion] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
   const [currentTheme, setCurrentTheme] = useState(() => localStorage.getItem('pwa_login_theme') || 'cyan');
 
   React.useEffect(() => {
@@ -770,6 +772,28 @@ export const AddSesion: React.FC<AddSesionProps> = ({
                           RIR {targetRIR}
                         </span>
                       </div>
+                      {isPeriodizationActive && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '4px', marginTop: '4px' }}>
+                          <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '10px' }}>¿Qué es esto?</span>
+                          <button
+                            type="button"
+                            onClick={() => setIsHelpModalOpen(true)}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              color: 'var(--theme-primary, #00d4ff)',
+                              fontSize: '10px',
+                              fontWeight: 800,
+                              fontFamily: "'Orbitron', sans-serif",
+                              cursor: 'pointer',
+                              padding: 0,
+                              textDecoration: 'underline'
+                            }}
+                          >
+                            Ver Guía Periodización
+                          </button>
+                        </div>
+                      )}
                       {suggestedWeight > 0 && (
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '8px' }}>
                           <span style={{ color: 'rgba(255,255,255,0.5)' }}>Peso recomendado:</span>
@@ -1235,6 +1259,7 @@ export const AddSesion: React.FC<AddSesionProps> = ({
         </button>
       </div>
 
+      <PeriodizationHelpModal isOpen={isHelpModalOpen} onClose={() => setIsHelpModalOpen(false)} />
     </div>
   );
 };
