@@ -31,7 +31,6 @@ export function VolumeDistributorWizard({ onClose, onApply, athleteLevel = 'inte
       return Array.from(all);
     }
     
-    
     // Simplificación: Para los splits predefinidos, la mayoría usan todo el cuerpo.
     // Solo devolvemos todos los MUSCLES si no es estilo libre.
     return MUSCLES;
@@ -45,7 +44,7 @@ export function VolumeDistributorWizard({ onClose, onApply, athleteLevel = 'inte
       initialVolume[muscle] = thresholds.mavMin;
     });
     setMuscleVolume(initialVolume);
-  }, [splitType, athleteLevel, activeMuscles.length]); // se rehace al cambiar split o nivel
+  }, [splitType, athleteLevel, activeMuscles.length]);
 
   const handleVolumeChange = (muscle: string, value: number) => {
     setMuscleVolume(prev => ({ ...prev, [muscle]: value }));
@@ -84,28 +83,59 @@ export function VolumeDistributorWizard({ onClose, onApply, athleteLevel = 'inte
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-      <div className="bg-[#1A1A1A] border border-[#333] rounded-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden shadow-2xl flex flex-col md:flex-row">
+    <div style={{
+      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+      zIndex: 9999,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: 'rgba(0, 0, 0, 0.85)',
+      backdropFilter: 'blur(5px)',
+      padding: '20px',
+      fontFamily: "'Inter', 'Roboto', sans-serif",
+      color: '#fff'
+    }}>
+      <div style={{
+        background: '#1A1A1A',
+        border: '1px solid #333',
+        borderRadius: '16px',
+        width: '100%',
+        maxWidth: '1100px',
+        maxHeight: '90vh',
+        display: 'flex',
+        flexDirection: 'row',
+        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+        overflow: 'hidden'
+      }}>
         
         {/* PANEL IZQUIERDO: Configuración */}
-        <div className="w-full md:w-[45%] flex flex-col border-r border-[#333] bg-[#151515] overflow-y-auto">
-          <div className="p-6 border-b border-[#333] sticky top-0 bg-[#151515] z-10">
-            <h2 className="text-xl font-bold text-white flex items-center gap-2">
-              <span className="text-xl">⚡</span> Asistente de Distribución
+        <div style={{
+          width: '45%', display: 'flex', flexDirection: 'column',
+          borderRight: '1px solid #333', background: '#151515',
+          overflowY: 'auto'
+        }}>
+          <div style={{
+            padding: '24px', borderBottom: '1px solid #333',
+            position: 'sticky', top: 0, background: '#151515', zIndex: 10
+          }}>
+            <h2 style={{ fontSize: '20px', fontWeight: 'bold', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '20px' }}>⚡</span> Asistente de Distribución
             </h2>
-            <p className="text-sm text-gray-400 mt-1">
-              Nivel actual: <strong className="text-indigo-400 uppercase">{athleteLevel}</strong>
+            <p style={{ fontSize: '14px', color: '#9ca3af', margin: '4px 0 0 0' }}>
+              Nivel actual: <strong style={{ color: '#818cf8', textTransform: 'uppercase' }}>{athleteLevel}</strong>
             </p>
           </div>
 
-          <div className="p-6 space-y-6">
+          <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
             {/* Split Selection */}
             <div>
-              <label className="block text-sm font-medium text-gray-300 mb-2">Split preferido</label>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#d1d5db', marginBottom: '8px' }}>Split preferido</label>
               <select 
                 value={splitType}
                 onChange={(e) => setSplitType(e.target.value as SplitType)}
-                className="w-full bg-[#222] border border-[#444] rounded-lg px-4 py-2 text-white outline-none focus:border-indigo-500"
+                style={{
+                  width: '100%', background: '#222', border: '1px solid #444',
+                  borderRadius: '8px', padding: '8px 16px', color: '#fff',
+                  outline: 'none', cursor: 'pointer'
+                }}
               >
                 <option value="upper_lower">Upper / Lower (Torso/Pierna)</option>
                 <option value="push_pull_legs">Push / Pull / Legs (Empuje/Tirón/Pierna)</option>
@@ -119,26 +149,26 @@ export function VolumeDistributorWizard({ onClose, onApply, athleteLevel = 'inte
             {/* Días por semana */}
             {splitType !== 'estilo_libre' && (
               <div>
-                <div className="flex justify-between items-center mb-2">
-                  <label className="text-sm font-medium text-gray-300">Días por semana</label>
-                  <span className="text-white font-bold">{trainingDays} días</span>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <label style={{ fontSize: '14px', fontWeight: '500', color: '#d1d5db' }}>Días por semana</label>
+                  <span style={{ color: '#fff', fontWeight: 'bold' }}>{trainingDays} días</span>
                 </div>
                 <input 
                   type="range" 
                   min={2} max={6} step={1}
                   value={trainingDays}
                   onChange={(e) => setTrainingDays(Number(e.target.value))}
-                  className="w-full accent-indigo-500"
+                  style={{ width: '100%', accentColor: '#6366f1', cursor: 'pointer' }}
                 />
               </div>
             )}
 
             {/* Constructor Estilo Libre */}
             {splitType === 'estilo_libre' && (
-              <div className="space-y-4 border border-[#444] rounded-lg p-4 bg-[#1E1E1E]">
-                <h3 className="text-sm font-bold text-indigo-400 uppercase tracking-wider">Días Personalizados</h3>
+              <div style={{ border: '1px solid #444', borderRadius: '8px', padding: '16px', background: '#1E1E1E', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <h3 style={{ fontSize: '14px', fontWeight: 'bold', color: '#818cf8', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>Días Personalizados</h3>
                 {customDays.map((day, idx) => (
-                  <div key={idx} className="bg-[#222] border border-[#333] rounded p-3">
+                  <div key={idx} style={{ background: '#222', border: '1px solid #333', borderRadius: '4px', padding: '12px' }}>
                     <input 
                       type="text" 
                       value={day.name}
@@ -147,20 +177,21 @@ export function VolumeDistributorWizard({ onClose, onApply, athleteLevel = 'inte
                         newDays[idx].name = e.target.value;
                         setCustomDays(newDays);
                       }}
-                      className="bg-transparent text-white font-bold outline-none mb-2 w-full"
+                      style={{ background: 'transparent', color: '#fff', fontWeight: 'bold', border: 'none', outline: 'none', marginBottom: '8px', width: '100%', fontSize: '14px' }}
                     />
-                    <div className="flex flex-wrap gap-2">
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
                       {MUSCLES.map(m => {
                         const isSelected = day.muscles.includes(m);
                         return (
                           <button
                             key={m}
                             onClick={() => toggleMuscleInCustomDay(idx, m)}
-                            className={`px-2 py-1 text-xs rounded border ${
-                              isSelected 
-                                ? 'bg-indigo-500/20 border-indigo-500 text-indigo-300' 
-                                : 'bg-[#151515] border-[#444] text-gray-500 hover:text-gray-300'
-                            }`}
+                            style={{
+                              padding: '4px 8px', fontSize: '12px', borderRadius: '4px', cursor: 'pointer',
+                              border: isSelected ? '1px solid #6366f1' : '1px solid #444',
+                              background: isSelected ? 'rgba(99,102,241,0.2)' : '#151515',
+                              color: isSelected ? '#a5b4fc' : '#6b7280'
+                            }}
                           >
                             {m}
                           </button>
@@ -171,74 +202,77 @@ export function VolumeDistributorWizard({ onClose, onApply, athleteLevel = 'inte
                 ))}
                 <button 
                   onClick={addCustomDay}
-                  className="w-full py-2 bg-[#2A2A2A] hover:bg-[#333] text-gray-300 rounded text-sm font-medium transition-colors"
+                  style={{
+                    width: '100%', padding: '8px', background: '#2A2A2A', color: '#d1d5db',
+                    border: 'none', borderRadius: '4px', fontSize: '14px', fontWeight: '500',
+                    cursor: 'pointer'
+                  }}
+                  onMouseOver={(e) => e.currentTarget.style.background = '#333'}
+                  onMouseOut={(e) => e.currentTarget.style.background = '#2A2A2A'}
                 >
                   + Añadir Día
                 </button>
               </div>
             )}
 
-            <hr className="border-[#333]" />
+            <hr style={{ borderColor: '#333', borderTop: 'none', margin: '0' }} />
 
-            {/* Sliders de Volumen (Solo mostrar si hay músculos seleccionados en estilo_libre) */}
+            {/* Sliders de Volumen */}
             {(splitType !== 'estilo_libre' || activeMuscles.length > 0) && (
               <div>
-                <h3 className="text-sm font-bold text-gray-300 mb-4 uppercase tracking-wider">Ajuste de Volumen Semanal</h3>
-                <div className="space-y-6">
+                <h3 style={{ fontSize: '14px', fontWeight: 'bold', color: '#d1d5db', margin: '0 0 16px 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Ajuste de Volumen Semanal</h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                   {activeMuscles.map(muscle => {
                     const threshold = getThresholdsForMuscleGroup(muscle, athleteLevel);
                     const val = muscleVolume[muscle] || 0;
                     
-                    // Calcular colores según el valor actual
-                    let statusColor = '#483D8B'; // MEV color
-                    if (val < threshold.mev) statusColor = '#666'; // Sub-óptimo
-                    else if (val >= threshold.mavMin && val <= threshold.mavMax) statusColor = '#006400'; // MAV óptimo
-                    else if (val >= threshold.mrv) statusColor = '#8B0000'; // Peligro
-                    else statusColor = '#B8860B'; // Warning (entre MAV y MRV)
+                    let statusColor = '#483D8B'; // MEV
+                    if (val < threshold.mev) statusColor = '#666'; 
+                    else if (val >= threshold.mavMin && val <= threshold.mavMax) statusColor = '#006400'; 
+                    else if (val >= threshold.mrv) statusColor = '#8B0000'; 
+                    else statusColor = '#B8860B'; 
 
                     return (
-                      <div key={muscle} className="relative">
-                        <div className="flex justify-between items-center mb-1">
-                          <span className="text-sm text-gray-200">{muscle}</span>
-                          <span className="text-sm font-bold" style={{ color: statusColor }}>
+                      <div key={muscle} style={{ position: 'relative' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                          <span style={{ fontSize: '14px', color: '#e5e7eb' }}>{muscle}</span>
+                          <span style={{ fontSize: '14px', fontWeight: 'bold', color: statusColor }}>
                             {val} series
                           </span>
                         </div>
                         
-                        {/* Custom Slider with Markers */}
-                        <div className="relative pt-4 pb-2">
+                        <div style={{ position: 'relative', paddingTop: '16px', paddingBottom: '8px' }}>
                           <input 
                             type="range" 
                             min={0} max={45} step={1}
                             value={val}
                             onChange={(e) => handleVolumeChange(muscle, Number(e.target.value))}
-                            className="w-full absolute top-4 left-0 z-10 opacity-0 cursor-pointer"
-                            style={{ height: '6px' }}
+                            style={{ 
+                              width: '100%', position: 'absolute', top: '16px', left: 0, 
+                              zIndex: 10, opacity: 0, cursor: 'pointer', height: '6px' 
+                            }}
                           />
-                          {/* Custom track */}
-                          <div className="w-full h-1.5 bg-[#333] rounded-full overflow-hidden">
+                          <div style={{ width: '100%', height: '6px', background: '#333', borderRadius: '9999px', overflow: 'hidden' }}>
                             <div 
-                              className="h-full rounded-full transition-all duration-200" 
-                              style={{ width: `${(val / 45) * 100}%`, backgroundColor: statusColor }}
+                              style={{ height: '100%', borderRadius: '9999px', transition: 'all 0.2s', width: `${(val / 45) * 100}%`, backgroundColor: statusColor }}
                             />
                           </div>
                           
-                          {/* Markers */}
-                          <div className="absolute top-0 w-full h-full pointer-events-none">
+                          <div style={{ position: 'absolute', top: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
                             {/* MEV Marker */}
-                            <div className="absolute flex flex-col items-center" style={{ left: `${(threshold.mev / 45) * 100}%`, transform: 'translateX(-50%)' }}>
-                              <span className="text-[9px] font-bold text-[#E6E6FA] mb-0.5">MEV</span>
-                              <div className="w-0.5 h-3 bg-[#E6E6FA]" />
+                            <div style={{ position: 'absolute', display: 'flex', flexDirection: 'column', alignItems: 'center', left: `${(threshold.mev / 45) * 100}%`, transform: 'translateX(-50%)' }}>
+                              <span style={{ fontSize: '9px', fontWeight: 'bold', color: '#E6E6FA', marginBottom: '2px' }}>MEV</span>
+                              <div style={{ width: '2px', height: '12px', background: '#E6E6FA' }} />
                             </div>
                             {/* MAV Min Marker */}
-                            <div className="absolute flex flex-col items-center" style={{ left: `${(threshold.mavMin / 45) * 100}%`, transform: 'translateX(-50%)' }}>
-                              <span className="text-[9px] font-bold text-[#E0FFF0] mb-0.5">MAV</span>
-                              <div className="w-0.5 h-3 bg-[#E0FFF0]" />
+                            <div style={{ position: 'absolute', display: 'flex', flexDirection: 'column', alignItems: 'center', left: `${(threshold.mavMin / 45) * 100}%`, transform: 'translateX(-50%)' }}>
+                              <span style={{ fontSize: '9px', fontWeight: 'bold', color: '#E0FFF0', marginBottom: '2px' }}>MAV</span>
+                              <div style={{ width: '2px', height: '12px', background: '#E0FFF0' }} />
                             </div>
                             {/* MRV Marker */}
-                            <div className="absolute flex flex-col items-center" style={{ left: `${(threshold.mrv / 45) * 100}%`, transform: 'translateX(-50%)' }}>
-                              <span className="text-[9px] font-bold text-[#FFE4E1] mb-0.5">MRV</span>
-                              <div className="w-0.5 h-3 bg-[#FFE4E1]" />
+                            <div style={{ position: 'absolute', display: 'flex', flexDirection: 'column', alignItems: 'center', left: `${(threshold.mrv / 45) * 100}%`, transform: 'translateX(-50%)' }}>
+                              <span style={{ fontSize: '9px', fontWeight: 'bold', color: '#FFE4E1', marginBottom: '2px' }}>MRV</span>
+                              <div style={{ width: '2px', height: '12px', background: '#FFE4E1' }} />
                             </div>
                           </div>
                         </div>
@@ -252,49 +286,61 @@ export function VolumeDistributorWizard({ onClose, onApply, athleteLevel = 'inte
         </div>
 
         {/* PANEL DERECHO: Previsualización */}
-        <div className="w-full md:w-[55%] flex flex-col bg-[#1A1A1A] relative">
-          <div className="p-6 border-b border-[#333] flex justify-between items-center bg-[#1A1A1A] z-10">
+        <div style={{ width: '55%', display: 'flex', flexDirection: 'column', background: '#1A1A1A', position: 'relative' }}>
+          <div style={{
+            padding: '24px', borderBottom: '1px solid #333',
+            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            background: '#1A1A1A', zIndex: 10
+          }}>
             <div>
-              <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider">Distribución Generada</h3>
-              <p className="text-xs text-gray-500 mt-1">{totalSets} series totales en la semana</p>
+              <h3 style={{ fontSize: '14px', fontWeight: 'bold', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>Distribución Generada</h3>
+              <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0 0 0' }}>{totalSets} series totales en la semana</p>
             </div>
             <button 
               onClick={onClose}
-              className="text-gray-400 hover:text-white p-2 rounded-lg hover:bg-[#333] transition-colors"
+              style={{
+                background: 'transparent', border: 'none', color: '#9ca3af',
+                width: '36px', height: '36px', borderRadius: '8px', cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '16px'
+              }}
+              onMouseOver={(e) => { e.currentTarget.style.color = '#fff'; e.currentTarget.style.background = '#333'; }}
+              onMouseOut={(e) => { e.currentTarget.style.color = '#9ca3af'; e.currentTarget.style.background = 'transparent'; }}
             >
               ✕
             </button>
           </div>
 
-          <div className="p-6 overflow-y-auto flex-1 bg-[#1A1A1A]">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div style={{ padding: '24px', overflowY: 'auto', flex: 1, background: '#1A1A1A' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px' }}>
               {generatedSessions.map(session => {
                 const sessionSets = session.muscleTargets.reduce((a, b) => a + b.plannedSets, 0);
                 
                 return (
-                  <div key={session.id} className="bg-[#222] border border-[#333] rounded-xl overflow-hidden shadow-lg">
-                    <div className="bg-[#2A2A2A] px-4 py-3 border-b border-[#333] flex justify-between items-center">
-                      <span className="font-bold text-white text-sm">{session.label}</span>
-                      <span className="text-xs font-medium bg-[#151515] text-gray-400 px-2 py-1 rounded">
+                  <div key={session.id} style={{ background: '#222', border: '1px solid #333', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)' }}>
+                    <div style={{ background: '#2A2A2A', padding: '12px 16px', borderBottom: '1px solid #333', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ fontWeight: 'bold', color: '#fff', fontSize: '14px' }}>{session.label}</span>
+                      <span style={{ fontSize: '12px', fontWeight: '500', background: '#151515', color: '#9ca3af', padding: '4px 8px', borderRadius: '4px' }}>
                         {sessionSets} series
                       </span>
                     </div>
                     
-                    <div className="p-0">
+                    <div style={{ padding: 0 }}>
                       {session.muscleTargets.length === 0 && (
-                        <div className="p-4 text-center text-sm text-gray-500 italic">
+                        <div style={{ padding: '16px', textAlign: 'center', fontSize: '14px', color: '#6b7280', fontStyle: 'italic' }}>
                           Día de descanso o sin volumen asignado.
                         </div>
                       )}
                       {session.muscleTargets.map((target, idx) => (
                         <div 
                           key={target.muscleGroup} 
-                          className={`flex justify-between items-center px-4 py-3 text-sm
-                            ${idx !== session.muscleTargets.length - 1 ? 'border-b border-[#333]/50' : ''}
-                          `}
+                          style={{
+                            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                            padding: '12px 16px', fontSize: '14px',
+                            borderBottom: idx !== session.muscleTargets.length - 1 ? '1px solid rgba(51, 51, 51, 0.5)' : 'none'
+                          }}
                         >
-                          <span className="text-gray-300">{target.muscleGroup}</span>
-                          <span className="font-mono text-indigo-300 bg-indigo-500/10 px-2 py-0.5 rounded font-bold">
+                          <span style={{ color: '#d1d5db' }}>{target.muscleGroup}</span>
+                          <span style={{ fontFamily: 'monospace', color: '#a5b4fc', background: 'rgba(99,102,241,0.1)', padding: '2px 8px', borderRadius: '4px', fontWeight: 'bold' }}>
                             {target.plannedSets} series
                           </span>
                         </div>
@@ -306,17 +352,24 @@ export function VolumeDistributorWizard({ onClose, onApply, athleteLevel = 'inte
             </div>
           </div>
 
-          <div className="p-6 border-t border-[#333] bg-[#1A1A1A] sticky bottom-0">
+          <div style={{ padding: '24px', borderTop: '1px solid #333', background: '#1A1A1A', position: 'sticky', bottom: 0 }}>
             <button 
               onClick={() => onApply(generatedSessions)}
-              className="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-bold py-3.5 px-4 rounded-xl shadow-[0_0_15px_rgba(79,70,229,0.3)] transition-all flex justify-center items-center gap-2"
+              style={{
+                width: '100%', background: '#4f46e5', color: '#fff', fontWeight: 'bold',
+                padding: '14px 16px', borderRadius: '12px', border: 'none', cursor: 'pointer',
+                display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px',
+                boxShadow: '0 0 15px rgba(79,70,229,0.3)', transition: 'all 0.2s', fontSize: '16px'
+              }}
+              onMouseOver={(e) => e.currentTarget.style.background = '#4338ca'}
+              onMouseOut={(e) => e.currentTarget.style.background = '#4f46e5'}
             >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <svg style={{ width: '20px', height: '20px' }} fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
               Aplicar Esqueleto al Plan
             </button>
-            <p className="text-xs text-center text-gray-500 mt-3">
+            <p style={{ fontSize: '12px', textAlign: 'center', color: '#6b7280', margin: '12px 0 0 0' }}>
               Esto creará los días vacíos con las series asignadas listas para que elijas los ejercicios.
             </p>
           </div>

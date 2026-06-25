@@ -32,108 +32,172 @@ export function VolumeThresholdsTable({ onClose }: Props) {
   ];
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4 md:p-8">
-      <div className="bg-[#1A1A1A] border border-[#333] rounded-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden shadow-2xl flex flex-col">
+    <div style={{
+      position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+      zIndex: 9999,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      background: 'rgba(0, 0, 0, 0.85)',
+      backdropFilter: 'blur(5px)',
+      padding: '20px',
+      fontFamily: "'Inter', 'Roboto', sans-serif",
+      color: '#fff'
+    }}>
+      <div style={{
+        background: '#1A1A1A',
+        border: '1px solid #333',
+        borderRadius: '16px',
+        width: '100%',
+        maxWidth: '900px',
+        maxHeight: '90vh',
+        display: 'flex',
+        flexDirection: 'column',
+        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+      }}>
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-[#333]">
+        <div style={{
+          display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+          padding: '24px', borderBottom: '1px solid #333'
+        }}>
           <div>
-            <h2 className="text-2xl font-bold text-white flex items-center gap-2">
-              <span className="text-xl">📊</span> Umbrales de Volumen (MEV / MAV / MRV)
+            <h2 style={{ fontSize: '24px', fontWeight: 'bold', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '20px' }}>📊</span> Umbrales de Volumen (MEV / MAV / MRV)
             </h2>
-            <p className="text-sm text-gray-400 mt-1">
+            <p style={{ fontSize: '14px', color: '#9ca3af', margin: '4px 0 0 0' }}>
               Guía de hipertrofia basada en Renaissance Periodization (Dr. Mike Israetel)
             </p>
           </div>
           <button 
             onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors p-2 bg-[#2A2A2A] rounded-lg hover:bg-[#333]"
+            style={{
+              background: '#2A2A2A', border: 'none', color: '#9ca3af',
+              width: '36px', height: '36px', borderRadius: '8px',
+              cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '16px', transition: 'all 0.2s'
+            }}
+            onMouseOver={(e) => { e.currentTarget.style.color = '#fff'; e.currentTarget.style.background = '#333'; }}
+            onMouseOut={(e) => { e.currentTarget.style.color = '#9ca3af'; e.currentTarget.style.background = '#2A2A2A'; }}
           >
             ✕
           </button>
         </div>
 
         {/* Level Tabs */}
-        <div className="p-6 pb-0">
-          <div className="flex gap-2">
-            {(['principiante', 'intermedio', 'avanzado'] as AthleteLevel[]).map(level => (
-              <button
-                key={level}
-                onClick={() => setActiveLevel(level)}
-                className={`px-5 py-2.5 rounded-t-lg font-medium transition-all text-sm uppercase tracking-wider
-                  ${activeLevel === level 
-                    ? 'bg-[#2A2A2A] text-white border-t-2 border-l border-r border-[#444] border-t-indigo-500 shadow-[0_-4px_10px_-4px_rgba(99,102,241,0.3)]' 
-                    : 'bg-[#151515] text-gray-500 hover:text-gray-300 border border-transparent'
-                  }`}
-              >
-                {level}
-              </button>
-            ))}
+        <div style={{ padding: '24px 24px 0 24px' }}>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            {(['principiante', 'intermedio', 'avanzado'] as AthleteLevel[]).map(level => {
+              const isActive = activeLevel === level;
+              return (
+                <button
+                  key={level}
+                  onClick={() => setActiveLevel(level)}
+                  style={{
+                    padding: '10px 20px',
+                    border: isActive ? '1px solid #444' : '1px solid transparent',
+                    borderBottom: 'none',
+                    borderTop: isActive ? '2px solid #6366f1' : '1px solid transparent',
+                    background: isActive ? '#2A2A2A' : '#151515',
+                    color: isActive ? '#fff' : '#6b7280',
+                    borderRadius: '8px 8px 0 0',
+                    fontWeight: isActive ? 'bold' : '500',
+                    fontSize: '14px',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.05em',
+                    cursor: 'pointer',
+                    boxShadow: isActive ? '0 -4px 10px -4px rgba(99,102,241,0.3)' : 'none',
+                    transition: 'all 0.2s'
+                  }}
+                  onMouseOver={(e) => { if (!isActive) e.currentTarget.style.color = '#d1d5db'; }}
+                  onMouseOut={(e) => { if (!isActive) e.currentTarget.style.color = '#6b7280'; }}
+                >
+                  {level}
+                </button>
+              );
+            })}
           </div>
 
-          <div className="bg-[#2A2A2A] p-4 rounded-b-lg rounded-tr-lg border border-[#444] border-t-0 flex flex-wrap gap-6 items-center text-sm">
-            <div className="flex items-center gap-2">
-              <span className="bg-[#E6E6FA] text-[#483D8B] px-2.5 py-0.5 rounded font-bold text-xs">MEV</span>
-              <span className="text-gray-300">Mínimo efectivo</span>
+          <div style={{
+            background: '#2A2A2A', padding: '16px',
+            border: '1px solid #444', borderTop: 'none',
+            borderRadius: '0 8px 8px 8px',
+            display: 'flex', flexWrap: 'wrap', gap: '24px', alignItems: 'center',
+            fontSize: '14px'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ background: '#E6E6FA', color: '#483D8B', padding: '2px 10px', borderRadius: '4px', fontWeight: 'bold', fontSize: '12px' }}>MEV</span>
+              <span style={{ color: '#d1d5db' }}>Mínimo efectivo</span>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="bg-[#E0FFF0] text-[#006400] px-2.5 py-0.5 rounded font-bold text-xs">MAV</span>
-              <span className="text-gray-300">Máximo adaptativo</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ background: '#E0FFF0', color: '#006400', padding: '2px 10px', borderRadius: '4px', fontWeight: 'bold', fontSize: '12px' }}>MAV</span>
+              <span style={{ color: '#d1d5db' }}>Máximo adaptativo</span>
             </div>
-            <div className="flex items-center gap-2">
-              <span className="bg-[#FFE4E1] text-[#8B0000] px-2.5 py-0.5 rounded font-bold text-xs">MRV</span>
-              <span className="text-gray-300">Máximo recuperable</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ background: '#FFE4E1', color: '#8B0000', padding: '2px 10px', borderRadius: '4px', fontWeight: 'bold', fontSize: '12px' }}>MRV</span>
+              <span style={{ color: '#d1d5db' }}>Máximo recuperable</span>
             </div>
-            <div className="ml-auto text-gray-400 text-xs uppercase tracking-wider">
+            <div style={{ marginLeft: 'auto', color: '#9ca3af', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               Series directas / semana
             </div>
           </div>
         </div>
 
         {/* Table Content */}
-        <div className="flex-1 overflow-y-auto p-6 pt-4">
-          <div className="bg-[#1E1E1E] border border-[#333] rounded-lg overflow-hidden">
+        <div style={{ flex: 1, overflowY: 'auto', padding: '16px 24px 24px 24px' }}>
+          <div style={{ background: '#1E1E1E', border: '1px solid #333', borderRadius: '8px', overflow: 'hidden' }}>
             {/* Table Header */}
-            <div className="grid grid-cols-4 gap-4 p-4 border-b border-[#333] bg-[#222] font-semibold text-gray-400 text-sm">
-              <div className="col-span-1">Grupo muscular</div>
-              <div className="text-center">MEV</div>
-              <div className="text-center">MAV</div>
-              <div className="text-center">MRV</div>
+            <div style={{
+              display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '16px',
+              padding: '16px', borderBottom: '1px solid #333', background: '#222',
+              fontWeight: 'bold', color: '#9ca3af', fontSize: '14px', textAlign: 'center'
+            }}>
+              <div style={{ textAlign: 'left' }}>Grupo muscular</div>
+              <div>MEV</div>
+              <div>MAV</div>
+              <div>MRV</div>
             </div>
 
             {/* Table Body */}
             {muscleCategories.map(category => (
               <div key={category.name}>
                 {/* Category Header */}
-                <div className="bg-[#151515] p-2 text-center text-xs font-bold text-gray-500 tracking-[0.2em]">
+                <div style={{
+                  background: '#151515', padding: '8px', textAlign: 'center',
+                  fontSize: '12px', fontWeight: 'bold', color: '#6b7280', letterSpacing: '0.2em'
+                }}>
                   {category.name}
                 </div>
                 
                 {/* Rows */}
                 {category.muscles.map(muscle => {
-                  // Fallback para músculos que quizás no estén en thresholds exactos
                   const data = thresholds[muscle] || thresholds['General'];
                   if (!data) return null;
 
                   return (
-                    <div key={muscle} className="grid grid-cols-4 gap-4 p-4 border-b border-[#333] hover:bg-[#252525] transition-colors items-center">
-                      <div className="col-span-1 font-semibold text-gray-200">
+                    <div key={muscle} style={{
+                      display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '16px',
+                      padding: '16px', borderBottom: '1px solid #333',
+                      alignItems: 'center', transition: 'background 0.2s'
+                    }}
+                    onMouseOver={(e) => e.currentTarget.style.background = '#252525'}
+                    onMouseOut={(e) => e.currentTarget.style.background = 'transparent'}
+                    >
+                      <div style={{ fontWeight: 'bold', color: '#e5e7eb' }}>
                         {muscle}
                       </div>
                       
-                      <div className="text-center">
-                        <span className="bg-[#E6E6FA] text-[#483D8B] px-3 py-1 rounded-md font-medium text-sm">
+                      <div style={{ textAlign: 'center' }}>
+                        <span style={{ background: '#E6E6FA', color: '#483D8B', padding: '4px 12px', borderRadius: '6px', fontWeight: '500', fontSize: '14px' }}>
                           {data.mev} series
                         </span>
                       </div>
                       
-                      <div className="text-center">
-                        <span className="bg-[#E0FFF0] text-[#006400] px-3 py-1 rounded-md font-medium text-sm">
+                      <div style={{ textAlign: 'center' }}>
+                        <span style={{ background: '#E0FFF0', color: '#006400', padding: '4px 12px', borderRadius: '6px', fontWeight: '500', fontSize: '14px' }}>
                           {data.mavMin}-{data.mavMax} series
                         </span>
                       </div>
                       
-                      <div className="text-center">
-                        <span className="bg-[#FFE4E1] text-[#8B0000] px-3 py-1 rounded-md font-medium text-sm">
+                      <div style={{ textAlign: 'center' }}>
+                        <span style={{ background: '#FFE4E1', color: '#8B0000', padding: '4px 12px', borderRadius: '6px', fontWeight: '500', fontSize: '14px' }}>
                           {data.mrv} series
                         </span>
                       </div>
@@ -146,8 +210,11 @@ export function VolumeThresholdsTable({ onClose }: Props) {
         </div>
 
         {/* Footer */}
-        <div className="p-4 bg-[#151515] border-t border-[#333] text-xs text-gray-500 text-center">
-          <p>Rangos basados en Renaissance Periodization (Israetel et al.). Son puntos de partida: la respuesta individual varía según genética, nutrición, sueño y estrés acumulado. Ajusta siempre según señales de recuperación del atleta.</p>
+        <div style={{
+          padding: '16px', background: '#151515', borderTop: '1px solid #333',
+          fontSize: '12px', color: '#6b7280', textAlign: 'center'
+        }}>
+          <p style={{ margin: 0 }}>Rangos basados en Renaissance Periodization (Israetel et al.). Son puntos de partida: la respuesta individual varía según genética, nutrición, sueño y estrés acumulado. Ajusta siempre según señales de recuperación del atleta.</p>
         </div>
       </div>
     </div>
