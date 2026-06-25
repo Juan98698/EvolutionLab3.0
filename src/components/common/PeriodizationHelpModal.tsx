@@ -56,9 +56,26 @@ export const PeriodizationHelpModal: React.FC<PeriodizationHelpModalProps> = ({ 
       top: 0, left: 0, width: '100vw', height: '100vh',
       display: 'flex', justifyContent: 'center', alignItems: 'center',
       background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)',
-      zIndex: 999999, padding: '20px', boxSizing: 'border-box'
+      zIndex: 999999, padding: '10px', boxSizing: 'border-box'
     }}>
-      <div style={{
+      <style>{`
+        .help-modal-box {
+          width: 100%;
+        }
+        @media (max-width: 768px) {
+          .help-modal-box {
+            height: 95vh;
+            max-height: 95vh !important;
+          }
+          .help-modal-header {
+            padding: 16px !important;
+          }
+          .help-modal-content {
+            padding: 16px !important;
+          }
+        }
+      `}</style>
+      <div className="help-modal-box" style={{
         background: 'rgba(10, 15, 30, 0.96)',
         border: '1px solid rgba(0, 212, 255, 0.15)',
         borderRadius: '20px',
@@ -73,7 +90,7 @@ export const PeriodizationHelpModal: React.FC<PeriodizationHelpModalProps> = ({ 
         overflow: 'hidden'
       }}>
         {/* Header */}
-        <div style={{
+        <div className="help-modal-header" style={{
           padding: '24px 24px 16px 24px',
           borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
           display: 'flex',
@@ -142,10 +159,10 @@ export const PeriodizationHelpModal: React.FC<PeriodizationHelpModalProps> = ({ 
         </div>
 
         {/* Content Area */}
-        <div style={{
-          flex: 1,
-          overflowY: 'auto',
+        <div className="help-modal-content" style={{
           padding: '24px',
+          overflowY: 'auto',
+          flex: 1,
           display: 'flex',
           flexDirection: 'column',
           gap: '20px'

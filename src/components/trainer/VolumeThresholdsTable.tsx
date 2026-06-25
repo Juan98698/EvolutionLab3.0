@@ -38,20 +38,42 @@ export function VolumeThresholdsTable({ onClose }: Props) {
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       background: 'rgba(0, 0, 0, 0.85)',
       backdropFilter: 'blur(5px)',
-      padding: '20px',
+      padding: '10px',
       fontFamily: "'Inter', 'Roboto', sans-serif",
       color: '#fff'
     }}>
-      <div style={{
+      <style>{`
+        .threshold-modal-box {
+          width: 90%;
+        }
+        .threshold-table-wrapper {
+          overflow-x: auto;
+        }
+        .threshold-legend {
+          flex-direction: row;
+        }
+        @media (max-width: 768px) {
+          .threshold-modal-box {
+            width: 100%;
+            height: 95vh;
+            max-height: 95vh !important;
+          }
+          .threshold-legend {
+            flex-direction: column !important;
+            align-items: flex-start !important;
+            gap: 12px !important;
+          }
+        }
+      `}</style>
+      <div className="threshold-modal-box" style={{
         background: '#1A1A1A',
         border: '1px solid #333',
         borderRadius: '16px',
-        width: '100%',
-        maxWidth: '900px',
+        maxWidth: '1000px',
         maxHeight: '90vh',
         display: 'flex',
         flexDirection: 'column',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)'
+        boxShadow: '0 20px 50px rgba(0,0,0,0.5)'
       }}>
         {/* Header */}
         <div style={{
@@ -82,8 +104,8 @@ export function VolumeThresholdsTable({ onClose }: Props) {
         </div>
 
         {/* Level Tabs */}
-        <div style={{ padding: '24px 24px 0 24px' }}>
-          <div style={{ display: 'flex', gap: '8px' }}>
+        <div style={{ padding: '0 24px' }}>
+          <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
             {(['principiante', 'intermedio', 'avanzado'] as AthleteLevel[]).map(level => {
               const isActive = activeLevel === level;
               return (
@@ -115,7 +137,7 @@ export function VolumeThresholdsTable({ onClose }: Props) {
             })}
           </div>
 
-          <div style={{
+          <div className="threshold-legend" style={{
             background: '#2A2A2A', padding: '16px',
             border: '1px solid #444', borderTop: 'none',
             borderRadius: '0 8px 8px 8px',
@@ -141,8 +163,9 @@ export function VolumeThresholdsTable({ onClose }: Props) {
         </div>
 
         {/* Table Content */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '16px 24px 24px 24px' }}>
-          <div style={{ background: '#1E1E1E', border: '1px solid #333', borderRadius: '8px', overflow: 'hidden' }}>
+        <div className="threshold-table-wrapper" style={{ flex: 1, overflowY: 'auto', padding: '16px 24px 24px 24px' }}>
+          <div style={{ background: '#1E1E1E', border: '1px solid #333', borderRadius: '8px', overflowX: 'auto' }}>
+            <div style={{ minWidth: '600px' }}>
             {/* Table Header */}
             <div style={{
               display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '16px',
@@ -206,6 +229,7 @@ export function VolumeThresholdsTable({ onClose }: Props) {
                 })}
               </div>
             ))}
+            </div>
           </div>
         </div>
 

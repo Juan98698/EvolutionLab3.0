@@ -89,11 +89,44 @@ export function VolumeDistributorWizard({ onClose, onApply, athleteLevel = 'inte
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       background: 'rgba(0, 0, 0, 0.85)',
       backdropFilter: 'blur(5px)',
-      padding: '20px',
+      padding: '10px', /* Reduced padding for mobile */
       fontFamily: "'Inter', 'Roboto', sans-serif",
       color: '#fff'
     }}>
-      <div style={{
+      <style>{`
+        .wizard-modal-box {
+          flex-direction: row;
+        }
+        .wizard-left-panel {
+          width: 45%;
+          border-right: 1px solid #333;
+          max-height: 90vh;
+        }
+        .wizard-right-panel {
+          width: 55%;
+          max-height: 90vh;
+        }
+        @media (max-width: 768px) {
+          .wizard-modal-box {
+            flex-direction: column !important;
+            height: 95vh;
+            max-height: 95vh !important;
+          }
+          .wizard-left-panel {
+            width: 100% !important;
+            border-right: none !important;
+            border-bottom: 1px solid #333;
+            max-height: 50vh !important;
+            height: 50vh;
+          }
+          .wizard-right-panel {
+            width: 100% !important;
+            max-height: 45vh !important;
+            height: 45vh;
+          }
+        }
+      `}</style>
+      <div className="wizard-modal-box" style={{
         background: '#1A1A1A',
         border: '1px solid #333',
         borderRadius: '16px',
@@ -101,15 +134,14 @@ export function VolumeDistributorWizard({ onClose, onApply, athleteLevel = 'inte
         maxWidth: '1100px',
         maxHeight: '90vh',
         display: 'flex',
-        flexDirection: 'row',
         boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
         overflow: 'hidden'
       }}>
         
         {/* PANEL IZQUIERDO: Configuración */}
-        <div style={{
-          width: '45%', display: 'flex', flexDirection: 'column',
-          borderRight: '1px solid #333', background: '#151515',
+        <div className="wizard-left-panel" style={{
+          display: 'flex', flexDirection: 'column',
+          background: '#151515',
           overflowY: 'auto'
         }}>
           <div style={{
@@ -285,8 +317,10 @@ export function VolumeDistributorWizard({ onClose, onApply, athleteLevel = 'inte
           </div>
         </div>
 
-        {/* PANEL DERECHO: Previsualización */}
-        <div style={{ width: '55%', display: 'flex', flexDirection: 'column', background: '#1A1A1A', position: 'relative' }}>
+        {/* PANEL DERECHO: Distribución Resultante */}
+        <div className="wizard-right-panel" style={{
+          width: '55%', display: 'flex', flexDirection: 'column', background: '#1A1A1A', position: 'relative'
+        }}>
           <div style={{
             padding: '24px', borderBottom: '1px solid #333',
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
@@ -375,7 +409,6 @@ export function VolumeDistributorWizard({ onClose, onApply, athleteLevel = 'inte
           </div>
         </div>
 
-      </div>
       </div>
     </div>
   );
