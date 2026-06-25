@@ -2969,7 +2969,7 @@ export const PlanPlanner: React.FC = () => {
                           </div>
 
                           {/* Grupo Muscular selector */}
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px', marginBottom: '4px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px', marginBottom: '4px', flexWrap: 'wrap' }}>
                             <label htmlFor={`select-muscle-${day.id}-${ex.id}`} style={{ fontSize: '9px', fontWeight: 700, color: 'rgba(255,255,255,0.4)', fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.3px', whiteSpace: 'nowrap', cursor: 'pointer' }}>GRUPO MUSC.</label>
                             <select
                               id={`select-muscle-${day.id}-${ex.id}`}
@@ -2987,6 +2987,47 @@ export const PlanPlanner: React.FC = () => {
                               ))}
                             </select>
                             <InfoTooltip title="Grupo Muscular" body="Asigna el grupo muscular principal de este ejercicio. Se usa para calcular el gráfico de simetría y distribución de volumen del día de entrenamiento." size={14} />
+                            
+                            {/* Inline Volume Status */}
+                            {((ex as any).grupo_muscular) && (() => {
+                              const gmRaw = (ex as any).grupo_muscular;
+                              const currentTotal = weeklyVolumeData[getThresholdsForMuscleGroup(gmRaw).gm] || 0;
+                              const level = periodizationConfig?.nivel_atleta || 'intermedio';
+                              const thresholds = getThresholdsForMuscleGroup(gmRaw, level as any);
+                              
+                              let indicator = '';
+                              let badgeColor = '';
+                              
+                              if (currentTotal < thresholds.mev) {
+                                indicator = `Faltan ${thresholds.mev - currentTotal} para MEV (${thresholds.mev})`;
+                                badgeColor = '#fbbf24';
+                              } else if (currentTotal >= thresholds.mev && currentTotal < thresholds.mavMin) {
+                                indicator = `Faltan ${thresholds.mavMin - currentTotal} para MAV (${thresholds.mavMin}-${thresholds.mavMax})`;
+                                badgeColor = '#34d399';
+                              } else if (currentTotal >= thresholds.mavMin && currentTotal <= thresholds.mavMax) {
+                                indicator = `Óptimo en MAV (${thresholds.mavMin}-${thresholds.mavMax})`;
+                                badgeColor = '#10b981';
+                              } else if (currentTotal > thresholds.mavMax && currentTotal < thresholds.mrv) {
+                                indicator = `Cerca de MRV (${thresholds.mrv})`;
+                                badgeColor = '#f97316';
+                              } else {
+                                indicator = `¡Peligro! MRV (${thresholds.mrv}) superado.`;
+                                badgeColor = '#ef4444';
+                              }
+
+                              return (
+                                <div style={{
+                                  fontSize: '11px', fontWeight: 600, color: badgeColor,
+                                  background: 'rgba(255,255,255,0.05)', padding: '2px 8px',
+                                  borderRadius: '12px', border: `1px solid ${badgeColor}40`,
+                                  display: 'flex', alignItems: 'center', gap: '4px'
+                                }}>
+                                  <span>Llevas: {currentTotal} series</span>
+                                  <span style={{ color: 'rgba(255,255,255,0.3)' }}>|</span>
+                                  <span>{indicator}</span>
+                                </div>
+                              );
+                            })()}
                           </div>
 
                           <div className="video-link-item">
