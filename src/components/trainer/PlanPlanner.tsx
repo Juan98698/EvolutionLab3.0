@@ -1644,10 +1644,12 @@ export const PlanPlanner: React.FC = () => {
         {/* VOLUME TRACKER UI */}
         {Object.keys(weeklyTargets).length > 0 && (
           <div style={{
+            position: 'sticky', top: '70px', zIndex: 990,
             background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '16px',
-            padding: '20px', marginBottom: '24px', boxShadow: '0 8px 32px 0 var(--theme-glow)'
+            padding: '12px 16px', marginBottom: '24px', boxShadow: '0 8px 32px 0 var(--theme-glow)',
+            backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)'
           }}>
-            <h3 style={{ margin: '0 0 16px 0', fontSize: '14px', color: 'var(--theme-primary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <h3 style={{ margin: '0 0 8px 0', fontSize: '13px', color: 'var(--theme-primary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span>📊</span> Tracker de Volumen (vs Objetivo)
             </h3>
             <div style={{ display: 'flex', gap: '16px', overflowX: 'auto', paddingBottom: '8px' }}>
@@ -1672,19 +1674,19 @@ export const PlanPlanner: React.FC = () => {
                 return (
                   <div key={muscle} style={{
                     background: 'rgba(0,0,0,0.2)', border: `1px solid ${borderColor}`,
-                    borderRadius: '8px', padding: '12px', minWidth: '130px',
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
+                    borderRadius: '8px', padding: '8px 12px', minWidth: '110px',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px',
                     position: 'relative'
                   }}>
-                    <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#9ca3af' }}>{muscle}</span>
-                    <span style={{ fontSize: '20px', fontWeight: '900', color: textColor }}>
-                      {current} <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: 'normal' }}>/ {target}</span>
+                    <span style={{ fontSize: '11px', fontWeight: 'bold', color: '#9ca3af' }}>{muscle}</span>
+                    <span style={{ fontSize: '18px', fontWeight: '900', color: textColor }}>
+                      {current} <span style={{ fontSize: '13px', color: '#6b7280', fontWeight: 'normal' }}>/ {target}</span>
                     </span>
                     {isOver && (
                       <div style={{
-                        position: 'absolute', top: '-8px', right: '-8px',
-                        background: '#ef4444', color: '#fff', fontSize: '10px',
-                        padding: '2px 6px', borderRadius: '12px', fontWeight: 'bold',
+                        position: 'absolute', top: '-6px', right: '-6px',
+                        background: '#ef4444', color: '#fff', fontSize: '9px',
+                        padding: '2px 5px', borderRadius: '12px', fontWeight: 'bold',
                         boxShadow: '0 2px 4px rgba(0,0,0,0.5)'
                       }}>
                         ¡Excedido!
