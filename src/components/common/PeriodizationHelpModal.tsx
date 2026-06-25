@@ -1,6 +1,5 @@
 // src/components/common/PeriodizationHelpModal.tsx
 import React, { useState } from 'react';
-import { createPortal } from 'react-dom';
 
 interface PeriodizationHelpModalProps {
   isOpen: boolean;
@@ -51,7 +50,7 @@ export const PeriodizationHelpModal: React.FC<PeriodizationHelpModalProps> = ({ 
     }
   ];
 
-  return createPortal(
+  return (
     <div style={{
       position: 'fixed',
       top: 0, left: 0, width: '100vw', height: '100vh',
@@ -265,8 +264,7 @@ export const PeriodizationHelpModal: React.FC<PeriodizationHelpModalProps> = ({ 
           </button>
         </div>
       </div>
-    </div>,
-    document.body
+    </div>
   );
 };
 

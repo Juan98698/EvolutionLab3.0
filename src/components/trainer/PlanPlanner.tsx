@@ -1639,18 +1639,6 @@ export const PlanPlanner: React.FC = () => {
           </button>
         </div>
 
-        {thresholdsTableOpen && (
-          <VolumeThresholdsTable onClose={() => setThresholdsTableOpen(false)} />
-        )}
-
-        {distributorWizardOpen && (
-          <VolumeDistributorWizard 
-            onClose={() => setDistributorWizardOpen(false)} 
-            onApply={handleApplyDistribution}
-            athleteLevel={periodizationConfig?.nivel_atleta || 'intermedio'}
-          />
-        )}
-
         {/* SECCIÓN 1: PORTADA / DETALLES DEL PLAN */}
         <div style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '16px', padding: '20px', marginBottom: '24px', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', boxShadow: '0 8px 32px 0 var(--theme-glow)' }}>
           <h3 style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '13px', color: 'var(--theme-primary)', letterSpacing: '0.5px', marginBottom: '16px', marginTop: 0 }}>
@@ -3557,6 +3545,18 @@ export const PlanPlanner: React.FC = () => {
 
       <Toast message={toastState.message} type={toastState.type} visible={toastState.visible} />
       <PeriodizationHelpModal isOpen={isHelpModalOpen} onClose={() => setIsHelpModalOpen(false)} />
+
+      {thresholdsTableOpen && (
+        <VolumeThresholdsTable onClose={() => setThresholdsTableOpen(false)} />
+      )}
+
+      {distributorWizardOpen && (
+        <VolumeDistributorWizard 
+          onClose={() => setDistributorWizardOpen(false)} 
+          onApply={handleApplyDistribution}
+          athleteLevel={periodizationConfig?.nivel_atleta || 'intermedio'}
+        />
+      )}
     </div>
   );
 };
