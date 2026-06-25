@@ -234,7 +234,8 @@ export const AddSesion: React.FC<AddSesionProps> = ({
       }
 
       const pesoRaw = (ej.peso || '').trim().toLowerCase();
-      const peso = (pesoRaw === '' || pesoRaw === 'autocarga') ? 0 : parseFloat(pesoRaw);
+      const cleanPesoStr = pesoRaw.replace(/[^\d.,]/g, '').replace(',', '.');
+      const peso = (pesoRaw === '' || pesoRaw === 'autocarga') ? 0 : parseFloat(cleanPesoStr);
       if (isNaN(peso) || peso < 0) {
         setErrorMsg(`Ejercicio ${num} ("${ej.nombre}"): el peso debe ser mayor o igual a 0 kg o la palabra "Autocarga".`);
         return;

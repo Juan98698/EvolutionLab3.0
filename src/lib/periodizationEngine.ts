@@ -10,6 +10,7 @@
  */
 
 import { PlanData } from '../types/database.types';
+import { getThresholdsForMuscleGroup } from './volumeThresholds';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 const BRZYCKI_MAX_REPS = 36;           // Safe upper limit for Brzycki formula
@@ -312,6 +313,19 @@ export const autoRegulatePlanForNextWeek = (
   // BUG-02 + BUG-04 fix: Determine deload status BEFORE processing exercises
   const isEndOfBlock = currentWeek >= totalWeeks;
 
+  // ── Calculate Initial Weekly Volume per Muscle Group ───────────────────────
+  const weeklyVolumeMap: Record<string, number> = {};
+  if (!isEndOfBlock) {
+    updatedPlan.trainingDays?.forEach(day => {
+      day.exercises?.forEach(ex => {
+        const gm = getThresholdsForMuscleGroup((ex as any).grupo_muscular || '', config.nivel_atleta as any).gm;
+        const setsStr = ex.variables?.['series de trabajo'] || ex.variables?.['series'] || '3';
+        const sets = parseInt(setsStr, 10) || 3;
+        weeklyVolumeMap[gm] = (weeklyVolumeMap[gm] || 0) + sets;
+      });
+    });
+  }
+
   // ── Process each logged exercise ───────────────────────────────────────────
   loggedExercises.forEach(logged => {
     const normName = logged.nombre.toLowerCase().trim();
@@ -332,16 +346,33 @@ export const autoRegulatePlanForNextWeek = (
     // BUG-04 fix: Skip per-exercise volume adjustment when entering deload
     //             to avoid double-reduction (feedback + deload halving).
     if (!isEndOfBlock) {
+      const gm = getThresholdsForMuscleGroup(foundEx.grupo_muscular || '', config.nivel_atleta as any).gm;
       const currentSetsStr = foundEx.variables?.['series de trabajo'] || foundEx.variables?.['series'] || '3';
       const currentSets = parseInt(currentSetsStr, 10) || 3;
 
       const estimulo = logged.feedback_estimulo || 'good';
       const recuperacion = logged.feedback_recuperacion || 'recovered';
 
-      const { nextSets } = calculateNextMicrocycleVolume(currentSets, estimulo, recuperacion);
+      const { nextSets, notes } = calculateNextMicrocycleVolume(currentSets, estimulo, recuperacion);
+
+      let finalSets = nextSets;
+      let finalNotes = notes;
+
+      // Si el algoritmo sugiere aumentar el volumen, verificamos el MRV del grupo muscular
+      if (nextSets > currentSets) {
+        const threshold = getThresholdsForMuscleGroup(gm, config.nivel_atleta as any);
+        if (weeklyVolumeMap[gm] >= threshold.mrv) {
+          finalSets = currentSets; // Bloqueamos el incremento para prevenir sobreentrenamiento
+          finalNotes = `Límite MRV (${threshold.mrv} series) alcanzado para ${gm}. No se incrementan series para evitar sobreentrenamiento.`;
+        } else {
+          // Actualizamos el mapa para contabilizar este incremento en ejercicios posteriores del mismo grupo
+          weeklyVolumeMap[gm] += (nextSets - currentSets);
+        }
+      }
 
       if (!foundEx.variables) foundEx.variables = {};
-      foundEx.variables['series de trabajo'] = String(nextSets);
+      foundEx.variables['series de trabajo'] = String(finalSets);
+      foundEx.progression_notes = finalNotes;
     }
 
     // ── 1RM tracking (always runs, even during deload) ───────────────────────
@@ -387,6 +418,42 @@ export const autoRegulatePlanForNextWeek = (
   } else {
     config.semana_actual = currentWeek + 1;
   }
+
+  config.has_new_updates = true;
+
+  // ── Explicit Weight Mapping ────────────────────────────────────────────────
+  // Recalculate weights for all exercises using the updated 1RM and hardcode it
+  updatedPlan.trainingDays?.forEach(day => {
+    day.exercises?.forEach(ex => {
+      if (!ex.nombre) return;
+      const normName = ex.nombre.toLowerCase().trim();
+      
+      let oneRM = marcas[normName];
+      if (!oneRM) {
+        const alias = mapExerciseToLiftKey(normName);
+        if (alias) oneRM = marcas[alias];
+      }
+
+      if (oneRM && oneRM > 0) {
+        const repsStr = ex.variables?.['repeticiones'] || '';
+        // Extract the first number from string like "8 a 10" or "8"
+        const repsMatch = repsStr.match(/\d+/);
+        const reps = repsMatch ? parseInt(repsMatch[0], 10) : 0;
+        
+        const rirStr = ex.variables?.['rir'] || '0';
+        const rirMatch = rirStr.match(/\d+/);
+        const targetRIR = rirMatch ? parseFloat(rirMatch[0]) : 0;
+
+        if (reps > 0) {
+          const newLoad = getPrescribedLoad(oneRM, reps, targetRIR);
+          if (newLoad > 0) {
+            if (!ex.variables) ex.variables = {};
+            ex.variables['peso'] = `🤖 ${newLoad} kg`;
+          }
+        }
+      }
+    });
+  });
 
   return updatedPlan;
 };

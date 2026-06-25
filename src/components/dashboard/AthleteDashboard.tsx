@@ -246,6 +246,7 @@ export const AthleteDashboard: React.FC = () => {
   const [is1RMModalOpen, setIs1RMModalOpen] = useState<boolean>(false);
   const [showSmartCoach, setShowSmartCoach] = useState<boolean>(false);
   const [showSoloUpgradeModal, setShowSoloUpgradeModal] = useState<boolean>(false);
+  const [showUpdateModal, setShowUpdateModal] = useState<boolean>(false);
 
   // Estados de Toast
   const [toastState, setToastState] = useState<{ visible: boolean; message: string; type: 'success' | 'error' | 'info' }>({
@@ -424,6 +425,14 @@ export const AthleteDashboard: React.FC = () => {
           setPlan(padded);
           localStorage.setItem('pwa_client_plan', JSON.stringify(data.datos_plan));
           success = true;
+          
+          if (padded?.periodizationConfig?.has_new_updates) {
+             setShowUpdateModal(true);
+             const updatedPlan = { ...padded, periodizationConfig: { ...padded.periodizationConfig, has_new_updates: false } };
+             supabase.from('planes').update({ datos_plan: updatedPlan }).eq('id', data.id).then();
+             setPlan(updatedPlan);
+             localStorage.setItem('pwa_client_plan', JSON.stringify(updatedPlan));
+          }
         }
       } catch (err) {
         console.warn('No se pudo descargar el plan de la nube, usando caché local:', err);
@@ -2066,6 +2075,61 @@ export const AthleteDashboard: React.FC = () => {
               navigate('/');
             }}
           />
+        </div>
+      )}
+
+      {/* Plan Update Notification Modal */}
+      {showUpdateModal && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          width: '100vw',
+          height: '100vh',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          background: 'rgba(0,0,0,0.85)',
+          backdropFilter: 'blur(10px)',
+          zIndex: 999999,
+          padding: '20px',
+          boxSizing: 'border-box'
+        }}>
+          <div style={{
+            background: 'var(--theme-card-bg)',
+            border: '1px solid var(--theme-primary)',
+            borderRadius: '20px',
+            padding: '24px',
+            maxWidth: '400px',
+            width: '100%',
+            textAlign: 'center',
+            boxShadow: '0 0 30px rgba(var(--theme-primary-rgb), 0.3)'
+          }}>
+            <div style={{ fontSize: '40px', marginBottom: '16px' }}>🤖</div>
+            <h3 style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '18px', color: 'white', marginBottom: '12px' }}>
+              ¡Tu Plan se ha Actualizado!
+            </h3>
+            <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.7)', lineHeight: '1.5', marginBottom: '24px' }}>
+              El sistema analizó tus registros recientes y ha calibrado automáticamente tus pesos y series sugeridas para esta semana. 
+              Busca el icono 🤖 en tu plan para ver tus nuevas cargas adaptadas a tu nivel.
+            </p>
+            <button
+              onClick={() => setShowUpdateModal(false)}
+              style={{
+                width: '100%',
+                background: 'var(--theme-primary)',
+                color: 'black',
+                border: 'none',
+                padding: '12px',
+                borderRadius: '12px',
+                fontSize: '14px',
+                fontWeight: 700,
+                cursor: 'pointer'
+              }}
+            >
+              ¡Entendido! 💪
+            </button>
+          </div>
         </div>
       )}
 

@@ -38,7 +38,15 @@ export const PeriodizationHelpModal: React.FC<PeriodizationHelpModalProps> = ({ 
     },
     {
       q: '¿Cómo y dónde se actualiza mi peso si supero mis marcas?',
-      a: 'Ocurre automáticamente al guardar tu sesión. Si realizas más repeticiones de las estimadas con un RIR bajo, el motor calcula tu nuevo 1RM de sesión. Si es un récord personal (PR), se actualiza de inmediato en Supabase. Si rindes por debajo, se aplica un decaimiento muy suave (fórmula EMA) para no castigar tu peso sugerido por un solo mal día.'
+      a: 'Ocurre automáticamente al guardar tu sesión. El motor recalcula tu 1RM basándose en tus repeticiones y RIR reportados. Luego, recorre toda tu rutina de la próxima semana y **escribe físicamente el peso sugerido exacto** (basado en el RIR objetivo) en la casilla de peso de cada ejercicio. Podrás identificar estas cargas autoreguladas porque vienen acompañadas del icono 🤖.'
+    },
+    {
+      q: '¿Por qué el algoritmo no sube las series aunque reporte buena recuperación?',
+      a: 'El sistema integra una protección de Volumen Máximo Recuperable (MRV) que se ajusta a tu **Nivel de Atleta** (Principiante, Intermedio o Avanzado). Si tu plan ya alcanzó el límite científico de series semanales tolerables para un músculo según tu experiencia, el algoritmo bloqueará futuros incrementos para prevenir el sobreentrenamiento y posibles lesiones.'
+    },
+    {
+      q: '¿Qué pasa con mis cargas 🤖 durante la Semana de Descarga (Deload)?',
+      a: 'La autoregulación es biomecánicamente sinérgica. Al entrar en la semana de descarga planificada (final del bloque), el sistema corta las series a la mitad y sube tu RIR a un margen muy conservador (ej. RIR 4). Al detectar este nuevo RIR en tu plan, la fórmula inyectará automáticamente un peso 🤖 mucho más ligero, asegurando que logres una recuperación profunda del sistema nervioso central.'
     }
   ];
 
@@ -162,7 +170,7 @@ export const PeriodizationHelpModal: React.FC<PeriodizationHelpModalProps> = ({ 
                 <ol style={{ margin: 0, paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   <li><strong>Entrenamiento Inteligente:</strong> El sistema lee tus 1RMs y prescribe la carga recomendada exacta para el RIR objetivo de la semana.</li>
                   <li><strong>Cuestionario de Biofeedback:</strong> Al final del ejercicio, reportas tu RIR real y calificas tu bombeo muscular (Estímulo) y dolor residual (Recuperación).</li>
-                  <li><strong>Modulación en Background:</strong> Si te recuperas de forma óptima, el sistema suma +1 serie para acercarte a tu potencial de crecimiento. Si presentas dolor o fatiga residual crónica, reduce las series para evitar el sobreentrenamiento.</li>
+                  <li><strong>Modulación en Background:</strong> Si te recuperas de forma óptima, el sistema suma +1 serie para acercarte a tu potencial de crecimiento (siempre respetando el límite MRV científico de cada músculo). Si presentas dolor o fatiga residual crónica, reduce las series para evitar el sobreentrenamiento.</li>
                   <li><strong>Descarga Automática:</strong> Al terminar el bloque programado por tu coach, el sistema reduce el volumen un 50% para supercompensar y sanar tendones.</li>
                 </ol>
               </div>

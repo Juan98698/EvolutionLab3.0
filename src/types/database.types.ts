@@ -69,6 +69,7 @@ export interface PlanData {
 export interface PeriodizationConfig {
   enabled: boolean;
   objetivo?: 'fuerza' | 'hipertrofia' | 'mantenimiento';
+  nivel_atleta?: 'principiante' | 'intermedio' | 'avanzado';
   fecha_evaluacion?: string;
   edad?: number;
   capacidad_recuperacion?: 'alta' | 'media' | 'baja';
@@ -81,6 +82,7 @@ export interface PeriodizationConfig {
   semana_actual?: number; // microciclo actual, ej: 1
   total_semanas?: number; // total microciclos en bloque, ej: 4
   mrv_limite_alcanzado?: boolean; // si se disparó descarga
+  has_new_updates?: boolean; // indicador de actualización para el UI
 }
 
 export interface GlobalVariable {

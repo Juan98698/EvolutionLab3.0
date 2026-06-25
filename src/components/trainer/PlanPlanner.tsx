@@ -7,6 +7,7 @@ import Toast from '../common/Toast';
 import { InfoTooltip } from '../common/InfoTooltip';
 import { getWeakPointCorrection } from '../../lib/periodizationEngine';
 import { PeriodizationHelpModal } from '../common/PeriodizationHelpModal';
+import { evaluateVolumeStatus, getThresholdsForMuscleGroup } from '../../lib/volumeThresholds';
 import {
   Chart as ChartJS,
   RadialLinearScale,
@@ -344,6 +345,24 @@ export const PlanPlanner: React.FC = () => {
   const totalActiveDayVolume = useMemo(() => {
     return Object.values(activeDayVolumeData).reduce((sum, val) => sum + val, 0);
   }, [activeDayVolumeData]);
+
+  // Sumar volumen total de TODA la semana por grupo muscular (Auditoría MRV)
+  const weeklyVolumeData = useMemo(() => {
+    const volumeMap: Record<string, number> = {};
+    if (trainingDays && Array.isArray(trainingDays)) {
+      trainingDays.forEach(day => {
+        if (day && Array.isArray(day.exercises)) {
+          day.exercises.forEach(ex => {
+            const gm = getThresholdsForMuscleGroup((ex as any).grupo_muscular || '').gm;
+            const seriesStr = ex.variables?.['series de trabajo'] || ex.variables?.['series'] || '';
+            const series = parseSeries(seriesStr);
+            volumeMap[gm] = (volumeMap[gm] || 0) + series;
+          });
+        }
+      });
+    }
+    return volumeMap;
+  }, [trainingDays]);
 
   // Generar datos detallados y porcentaje para las barras de progreso
   const volumeSummaryStats = useMemo(() => {
@@ -2029,7 +2048,23 @@ export const PlanPlanner: React.FC = () => {
                     Puedes preconfigurar o anular estos valores subjetivos y marcas de fuerza estimadas. El atleta los completará o los verá actualizados según su progreso.
                   </p>
 
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px', flexWrap: 'wrap' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px', marginBottom: '16px', flexWrap: 'wrap' }}>
+                    <div>
+                      <label htmlFor="period-nivel" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>NIVEL DEL ATLETA</label>
+                      <select
+                        id="period-nivel"
+                        value={periodizationConfig.nivel_atleta || 'intermedio'}
+                        onChange={(e) => {
+                          const val = e.target.value as 'principiante' | 'intermedio' | 'avanzado';
+                          setPeriodizationConfig(prev => prev ? { ...prev, nivel_atleta: val } : undefined);
+                        }}
+                        style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '12px', height: '38px', boxSizing: 'border-box' }}
+                      >
+                        <option value="principiante" style={{ background: '#0b0f19' }}>Principiante (Bajo Volumen)</option>
+                        <option value="intermedio" style={{ background: '#0b0f19' }}>Intermedio (Estándar RP)</option>
+                        <option value="avanzado" style={{ background: '#0b0f19' }}>Avanzado (Alto Volumen)</option>
+                      </select>
+                    </div>
                     <div>
                       <label htmlFor="period-edad" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>EDAD DEL ATLETA</label>
                       <input
@@ -2334,6 +2369,54 @@ export const PlanPlanner: React.FC = () => {
                     })()}
                   </div>
 
+                </div>
+
+                {/* PANEL DE AUDITORÍA DE VOLUMEN MRV */}
+                <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '20px', marginTop: '10px' }}>
+                  <h4 style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '11px', color: 'var(--theme-primary)', letterSpacing: '0.5px', marginBottom: '12px', marginTop: 0, textTransform: 'uppercase', display: 'flex', alignItems: 'center' }}>
+                    Auditoría de Volumen Semanal (Periodización RP)
+                    <InfoTooltip title="Auditoría MRV" body="Muestra la sumatoria de todas las series de trabajo programadas en la semana por grupo muscular. Si superas el MRV (Volumen Máximo Recuperable), el algoritmo bloqueará incrementos adicionales para prevenir el sobreentrenamiento." />
+                  </h4>
+                  <p style={{ margin: '0 0 16px 0', fontSize: '11px', color: 'rgba(255,255,255,0.4)', lineHeight: '1.4' }}>
+                    Vigila que no hayas programado exceso de series. Si el medidor está en rojo, reduce el volumen inicial para que el atleta pueda progresar hacia el MRV durante el mesociclo.
+                  </p>
+                  
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '12px' }}>
+                    {Object.entries(weeklyVolumeData)
+                      .filter(([gm, volume]) => volume > 0 && gm !== 'General' && gm !== 'Cardio')
+                      .sort((a, b) => b[1] - a[1])
+                      .map(([gm, volume]) => {
+                        const { status, message } = evaluateVolumeStatus(gm, volume, periodizationConfig.nivel_atleta);
+                        const isDanger = status === 'danger';
+                        const isOptimal = status === 'optimal';
+                        const color = isDanger ? '#ef4444' : isOptimal ? '#22c55e' : '#eab308';
+                        
+                        return (
+                          <div key={gm} style={{
+                            background: 'rgba(0,0,0,0.2)',
+                            border: `1px solid ${isDanger ? 'rgba(239,68,68,0.3)' : 'rgba(255,255,255,0.04)'}`,
+                            borderRadius: '10px',
+                            padding: '12px',
+                            position: 'relative',
+                            overflow: 'hidden'
+                          }}>
+                            {isDanger && (
+                              <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: color }} />
+                            )}
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                              <strong style={{ fontSize: '11px', color: 'white', fontFamily: "'Orbitron', sans-serif" }}>{gm}</strong>
+                              <span style={{ fontSize: '12px', fontWeight: 800, color }}>{volume} series</span>
+                            </div>
+                            <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)' }}>
+                              Estado: <span style={{ color, fontWeight: 700 }}>{message}</span>
+                            </div>
+                          </div>
+                        );
+                    })}
+                    {Object.values(weeklyVolumeData).reduce((a,b)=>a+b, 0) === 0 && (
+                      <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)' }}>No hay series programadas aún.</div>
+                    )}
+                  </div>
                 </div>
 
               </div>
