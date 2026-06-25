@@ -9,7 +9,7 @@ import { getThresholdsForMuscleGroup, AthleteLevel } from '../../lib/volumeThres
 
 interface Props {
   onClose: () => void;
-  onApply: (sessions: GeneratedSession[]) => void;
+  onApply: (sessions: GeneratedSession[], targets: Record<string, number>) => void;
   athleteLevel?: AthleteLevel;
 }
 
@@ -388,7 +388,7 @@ export function VolumeDistributorWizard({ onClose, onApply, athleteLevel = 'inte
 
           <div style={{ padding: '24px', borderTop: '1px solid #333', background: '#1A1A1A', position: 'sticky', bottom: 0 }}>
             <button 
-              onClick={() => onApply(generatedSessions)}
+              onClick={() => onApply(generatedSessions, muscleVolume)}
               style={{
                 width: '100%', background: '#4f46e5', color: '#fff', fontWeight: 'bold',
                 padding: '14px 16px', borderRadius: '12px', border: 'none', cursor: 'pointer',

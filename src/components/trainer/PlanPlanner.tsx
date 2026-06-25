@@ -68,6 +68,7 @@ export const PlanPlanner: React.FC = () => {
   const [trackerConfig, setTrackerConfig] = useState<any>({});
   const [trackerRules, setTrackerRules] = useState<any[]>([]);
   const [periodizationConfig, setPeriodizationConfig] = useState<PeriodizationConfig | undefined>(undefined);
+  const [weeklyTargets, setWeeklyTargets] = useState<Record<string, number>>({});
 
   // Estado para el menú de automatización de progresión (Smart Block Builder)
   const [autoProgExId, setAutoProgExId] = useState<string | null>(null);
@@ -100,7 +101,7 @@ export const PlanPlanner: React.FC = () => {
   // Generar ID aleatorio
   const generateId = (): string => Math.random().toString(36).substring(2, 11);
 
-  const handleApplyDistribution = (sessions: GeneratedSession[]) => {
+  const handleApplyDistribution = (sessions: GeneratedSession[], targets: Record<string, number>) => {
     // Si ya hay ejercicios creados, advertimos
     const hasExercises = trainingDays.some(day => day.exercises && day.exercises.some(ex => ex.nombre_original !== ''));
     if (hasExercises) {
@@ -133,6 +134,7 @@ export const PlanPlanner: React.FC = () => {
     });
 
     setTrainingDays(newDays);
+    setWeeklyTargets(targets);
     setDistributorWizardOpen(false);
     showToast('Esqueleto de distribución generado correctamente. ⚡', 'success');
   };
@@ -1638,6 +1640,62 @@ export const PlanPlanner: React.FC = () => {
             <span style={{ fontSize: '16px' }}>⚡</span> Asistente de Distribución
           </button>
         </div>
+
+        {/* VOLUME TRACKER UI */}
+        {Object.keys(weeklyTargets).length > 0 && (
+          <div style={{
+            background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '16px',
+            padding: '20px', marginBottom: '24px', boxShadow: '0 8px 32px 0 var(--theme-glow)'
+          }}>
+            <h3 style={{ margin: '0 0 16px 0', fontSize: '14px', color: 'var(--theme-primary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>📊</span> Tracker de Volumen (vs Objetivo)
+            </h3>
+            <div style={{ display: 'flex', gap: '16px', overflowX: 'auto', paddingBottom: '8px' }}>
+              {Object.entries(weeklyTargets).map(([muscle, target]) => {
+                const current = weeklyVolumeData[muscle] || 0;
+                const isOver = current > target;
+                const isExact = current === target;
+                
+                let borderColor = 'rgba(255, 255, 255, 0.1)';
+                let textColor = '#d1d5db';
+                if (isOver) {
+                  borderColor = '#ef4444'; // Red
+                  textColor = '#ef4444';
+                } else if (isExact) {
+                  borderColor = '#10b981'; // Green
+                  textColor = '#10b981';
+                } else if (current > 0) {
+                  borderColor = '#fbbf24'; // Yellow
+                  textColor = '#fbbf24';
+                }
+
+                return (
+                  <div key={muscle} style={{
+                    background: 'rgba(0,0,0,0.2)', border: `1px solid ${borderColor}`,
+                    borderRadius: '8px', padding: '12px', minWidth: '130px',
+                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
+                    position: 'relative'
+                  }}>
+                    <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#9ca3af' }}>{muscle}</span>
+                    <span style={{ fontSize: '20px', fontWeight: '900', color: textColor }}>
+                      {current} <span style={{ fontSize: '14px', color: '#6b7280', fontWeight: 'normal' }}>/ {target}</span>
+                    </span>
+                    {isOver && (
+                      <div style={{
+                        position: 'absolute', top: '-8px', right: '-8px',
+                        background: '#ef4444', color: '#fff', fontSize: '10px',
+                        padding: '2px 6px', borderRadius: '12px', fontWeight: 'bold',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.5)'
+                      }}>
+                        ¡Excedido!
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
 
         {/* SECCIÓN 1: PORTADA / DETALLES DEL PLAN */}
         <div style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '16px', padding: '20px', marginBottom: '24px', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', boxShadow: '0 8px 32px 0 var(--theme-glow)' }}>
