@@ -116,9 +116,24 @@ export const getThresholdsForMuscleGroup = (gm: string, level: AthleteLevel = 'i
   return adjusted;
 };
 
-export const evaluateVolumeStatus = (gm: string, currentWeeklySets: number, level: AthleteLevel = 'intermedio', objetivo: BlockObjective = 'hipertrofia') => {
+export const evaluateVolumeStatus = (gm: string, currentWeeklySets: number, level: AthleteLevel = 'intermedio', objetivo: BlockObjective = 'hipertrofia', customTarget?: number) => {
   const threshold = getThresholdsForMuscleGroup(gm, level, objetivo);
   
+  if (customTarget && customTarget > 0) {
+    if (currentWeeklySets < customTarget) {
+      return { status: 'low', message: `Faltan ${customTarget - currentWeeklySets} para el objetivo (${customTarget})` };
+    } else if (currentWeeklySets === customTarget) {
+      return { status: 'optimal', message: `¡Objetivo alcanzado! (${customTarget} series)` };
+    } else if (currentWeeklySets > customTarget && currentWeeklySets < threshold.mrv) {
+      return { status: 'warning', message: `Objetivo superado. Cerca de MRV (${threshold.mrv})` };
+    } else if (currentWeeklySets >= threshold.mrv) {
+      return { 
+        status: 'danger', 
+        message: `¡Peligro! MRV superado (${threshold.mrv}). Reduce el volumen.` 
+      };
+    }
+  }
+
   if (currentWeeklySets < threshold.mev) {
     return { status: 'low', message: `Bajo (MEV es ${threshold.mev})` };
   } else if (currentWeeklySets >= threshold.mavMin && currentWeeklySets <= threshold.mavMax) {

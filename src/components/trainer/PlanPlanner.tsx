@@ -2545,7 +2545,7 @@ export const PlanPlanner: React.FC = () => {
                       .filter(([gm, volume]) => volume > 0 && gm !== 'General' && gm !== 'Cardio')
                       .sort((a, b) => b[1] - a[1])
                       .map(([gm, volume]) => {
-                        const { status, message } = evaluateVolumeStatus(gm, volume, periodizationConfig.nivel_atleta, periodizationConfig.objetivo as any);
+                        const { status, message } = evaluateVolumeStatus(gm, volume, periodizationConfig.nivel_atleta, periodizationConfig.objetivo as any, weeklyTargets[gm]);
                         const isDanger = status === 'danger';
                         const isOptimal = status === 'optimal';
                         const color = isDanger ? '#ef4444' : isOptimal ? '#22c55e' : '#eab308';
