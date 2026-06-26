@@ -291,13 +291,61 @@ export const PROTOCOL_LIBRARY: ProtocolTemplate[] = [
     ]
   },
 
+  {
+    id: 'str-adv-conj-4',
+    name: 'Sistema Conjugado (4 Días)',
+    objective: 'fuerza',
+    level: 'avanzado',
+    daysPerWeek: 4,
+    description: 'Protocolo élite de fuerza alternando Días de Esfuerzo Máximo (ME) y Esfuerzo Dinámico (DE).',
+    scienceGuide: 'Un atleta avanzado tiene un sistema nervioso altamente adaptado. No puede ir pesado todo el tiempo. El sistema Conjugado rota los levantamientos principales semanalmente en los días Max Effort (para engañar al SNC y evitar estancamiento) e incluye días Dynamic Effort al 50-60% de la 1RM con bandas o cadenas para desarrollar la máxima tasa de producción de fuerza (RFD).',
+    recommendedSchedule: [0, -1, 1, -1, 2, 3, -1],
+    days: [
+      {
+        label: 'Día 1: Max Effort Torso',
+        exercises: [
+          { name: 'Press de Banca Pesado (Variación)', muscle: 'Pecho', sets: '1', reps: '1-3', rir: '0', rest: '300' },
+          { name: 'Press Inclinado con Mancuernas', muscle: 'Pecho', sets: '3', reps: '8-10', rir: '1-2', rest: '120' },
+          { name: 'Remo Pesado', muscle: 'Espalda', sets: '4', reps: '6-8', rir: '1-2', rest: '120' },
+          { name: 'Extensión Tríceps Pesada', muscle: 'Tríceps', sets: '4', reps: '8-10', rir: '1', rest: '90' }
+        ]
+      },
+      {
+        label: 'Día 2: Max Effort Pierna',
+        exercises: [
+          { name: 'Sentadilla o Peso Muerto Pesado', muscle: 'Cuádriceps', sets: '1', reps: '1-3', rir: '0', rest: '300' },
+          { name: 'Sentadilla Búlgara', muscle: 'Cuádriceps', sets: '3', reps: '8-10', rir: '1-2', rest: '120' },
+          { name: 'Peso Muerto Rumano', muscle: 'Isquiosurales', sets: '4', reps: '6-8', rir: '1-2', rest: '120' },
+          { name: 'Ab Wheel / Plancha', muscle: 'Core', sets: '4', reps: '10-15', rir: '1-2', rest: '90' }
+        ]
+      },
+      {
+        label: 'Día 3: Dynamic Effort Torso',
+        exercises: [
+          { name: 'Press de Banca Explosivo', muscle: 'Pecho', sets: '9', reps: '3', rir: '4-5', rest: '60' }, // 50-60% 1RM
+          { name: 'Press Militar con Mancuernas', muscle: 'Hombros', sets: '3', reps: '10-12', rir: '1-2', rest: '120' },
+          { name: 'Dominadas Rápidas', muscle: 'Espalda', sets: '4', reps: '6-8', rir: '2', rest: '90' },
+          { name: 'Facepull', muscle: 'Hombros', sets: '3', reps: '15', rir: '1', rest: '90' }
+        ]
+      },
+      {
+        label: 'Día 4: Dynamic Effort Pierna',
+        exercises: [
+          { name: 'Sentadilla Explosiva', muscle: 'Cuádriceps', sets: '10', reps: '2', rir: '4-5', rest: '60' }, // 50-60% 1RM
+          { name: 'Peso Muerto Explosivo', muscle: 'Isquiosurales', sets: '6', reps: '2', rir: '4-5', rest: '60' },
+          { name: 'Prensa Ligera', muscle: 'Cuádriceps', sets: '3', reps: '12-15', rir: '2', rest: '90' },
+          { name: 'Elevación Talones', muscle: 'Pantorrillas', sets: '4', reps: '15-20', rir: '1', rest: '90' }
+        ]
+      }
+    ]
+  },
   // ============================================
   // MANTENIMIENTO / FAT LOSS
   // ============================================
   {
     id: 'mnt-all-heavy-3',
-    name: 'Heavy/Light Mantenimiento (3 Días)',
-    objective: 'mantenimiento',
+    name: 'Fat Loss / Retención Muscular (3 Días)',
+    objective: 'mantenimiento', // Sirve para Fat Loss
     level: 'intermedio', // works for all mostly
     daysPerWeek: 3,
     description: 'Protocolo de déficit calórico: Bajo volumen, altísima intensidad para retener músculo.',
