@@ -3032,28 +3032,46 @@ export const PlanPlanner: React.FC = () => {
                             {/* Inline Volume Status */}
                             {((ex as any).grupo_muscular) && (() => {
                               const gmRaw = (ex as any).grupo_muscular;
-                              const currentTotal = weeklyVolumeData[getThresholdsForMuscleGroup(gmRaw, periodizationConfig?.nivel_atleta, periodizationConfig?.objetivo as any).gm] || 0;
+                              const gmNormalized = getThresholdsForMuscleGroup(gmRaw, periodizationConfig?.nivel_atleta, periodizationConfig?.objetivo as any).gm;
+                              const currentTotal = weeklyVolumeData[gmNormalized] || 0;
                               const level = periodizationConfig?.nivel_atleta || 'intermedio';
                               const thresholds = getThresholdsForMuscleGroup(gmRaw, level as any, periodizationConfig?.objetivo as any);
+                              const customTarget = weeklyTargets[gmNormalized];
                               
                               let indicator = '';
                               let badgeColor = '';
                               
-                              if (currentTotal < thresholds.mev) {
-                                indicator = `Faltan ${thresholds.mev - currentTotal} para MEV (${thresholds.mev})`;
-                                badgeColor = '#fbbf24';
-                              } else if (currentTotal >= thresholds.mev && currentTotal < thresholds.mavMin) {
-                                indicator = `Faltan ${thresholds.mavMin - currentTotal} para MAV (${thresholds.mavMin}-${thresholds.mavMax})`;
-                                badgeColor = '#34d399';
-                              } else if (currentTotal >= thresholds.mavMin && currentTotal <= thresholds.mavMax) {
-                                indicator = `Óptimo en MAV (${thresholds.mavMin}-${thresholds.mavMax})`;
-                                badgeColor = '#10b981';
-                              } else if (currentTotal > thresholds.mavMax && currentTotal < thresholds.mrv) {
-                                indicator = `Cerca de MRV (${thresholds.mrv})`;
-                                badgeColor = '#f97316';
+                              if (customTarget && customTarget > 0) {
+                                if (currentTotal < customTarget) {
+                                  indicator = `Faltan ${customTarget - currentTotal} para Objetivo (${customTarget})`;
+                                  badgeColor = '#fbbf24';
+                                } else if (currentTotal === customTarget) {
+                                  indicator = `Objetivo Alcanzado (${customTarget})`;
+                                  badgeColor = '#10b981';
+                                } else if (currentTotal > customTarget && currentTotal < thresholds.mrv) {
+                                  indicator = `Superó Objetivo, cerca de MRV (${thresholds.mrv})`;
+                                  badgeColor = '#f97316';
+                                } else {
+                                  indicator = `Límite MRV superado (${thresholds.mrv})`;
+                                  badgeColor = '#ef4444';
+                                }
                               } else {
-                                indicator = `¡Peligro! MRV (${thresholds.mrv}) superado.`;
-                                badgeColor = '#ef4444';
+                                if (currentTotal < thresholds.mev) {
+                                  indicator = `Faltan ${thresholds.mev - currentTotal} para MEV (${thresholds.mev})`;
+                                  badgeColor = '#fbbf24';
+                                } else if (currentTotal >= thresholds.mev && currentTotal < thresholds.mavMin) {
+                                  indicator = `Faltan ${thresholds.mavMin - currentTotal} para MAV (${thresholds.mavMin}-${thresholds.mavMax})`;
+                                  badgeColor = '#34d399';
+                                } else if (currentTotal >= thresholds.mavMin && currentTotal <= thresholds.mavMax) {
+                                  indicator = `Óptimo en MAV (${thresholds.mavMin}-${thresholds.mavMax})`;
+                                  badgeColor = '#10b981';
+                                } else if (currentTotal > thresholds.mavMax && currentTotal < thresholds.mrv) {
+                                  indicator = `Cerca de MRV (${thresholds.mrv})`;
+                                  badgeColor = '#f97316';
+                                } else {
+                                  indicator = `¡Peligro! MRV (${thresholds.mrv}) superado.`;
+                                  badgeColor = '#ef4444';
+                                }
                               }
 
                               return (
