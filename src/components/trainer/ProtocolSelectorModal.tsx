@@ -8,7 +8,7 @@ interface Props {
   onClose: () => void;
   objective: BlockObjective;
   level: AthleteLevel;
-  onApplyProtocol: (days: TrainingDay[]) => void;
+  onApplyProtocol: (days: TrainingDay[], recommendedSchedule?: number[]) => void;
 }
 
 export function ProtocolSelectorModal({ isOpen, onClose, objective, level, onApplyProtocol }: Props) {
@@ -39,7 +39,7 @@ export function ProtocolSelectorModal({ isOpen, onClose, objective, level, onApp
       }))
     }));
 
-    onApplyProtocol(trainingDays);
+    onApplyProtocol(trainingDays, selectedProtocol.recommendedSchedule);
     onClose();
   };
 

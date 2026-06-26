@@ -1664,7 +1664,7 @@ export const PlanPlanner: React.FC = () => {
         </div>
 
         {/* VOLUME TRACKER UI */}
-        {Object.keys(weeklyTargets).length > 0 && (
+        {(Object.keys(weeklyVolumeData).length > 0 || Object.keys(weeklyTargets).length > 0) && (
           <div style={{
             position: 'sticky', top: '70px', zIndex: 990,
             background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '16px',
@@ -1675,10 +1675,15 @@ export const PlanPlanner: React.FC = () => {
               <span>📊</span> Tracker de Volumen (vs Objetivo)
             </h3>
             <div style={{ display: 'flex', gap: '16px', overflowX: 'auto', paddingBottom: '8px' }}>
-              {Object.entries(weeklyTargets).map(([muscle, target]) => {
-                const current = weeklyVolumeData[muscle] || 0;
-                const isOver = current > target;
-                const isExact = current === target;
+              {(() => {
+                const ALL_MUSCLES = ['Pecho', 'Espalda', 'Cuádriceps', 'Isquiosurales', 'Hombros', 'Bíceps', 'Tríceps', 'Glúteos', 'Pantorrillas', 'Core'];
+                const activeMuscles = ALL_MUSCLES.filter(m => (weeklyVolumeData[m] || 0) > 0 || (weeklyTargets[m] || 0) > 0);
+                return activeMuscles.map(muscle => {
+                  const current = weeklyVolumeData[muscle] || 0;
+                  const thresholds = getThresholdsForMuscleGroup(muscle, periodizationConfig?.nivel_atleta || 'intermedio', (periodizationConfig?.objetivo as any) || 'hipertrofia');
+                  const target = thresholds.mrv;
+                  const isOver = current > target;
+                  const isExact = current >= thresholds.mavMin && current <= thresholds.mavMax;
                 
                 let borderColor = 'rgba(255, 255, 255, 0.1)';
                 let textColor = '#d1d5db';
@@ -1716,7 +1721,8 @@ export const PlanPlanner: React.FC = () => {
                     )}
                   </div>
                 );
-              })}
+              })
+            })()}
             </div>
           </div>
         )}
@@ -2224,10 +2230,10 @@ export const PlanPlanner: React.FC = () => {
                       <input
                         id="period-edad"
                         type="number"
-                        value={periodizationConfig.edad || 25}
+                        value={periodizationConfig.edad ?? 25}
                         onChange={(e) => {
-                          const val = parseInt(e.target.value, 10) || 25;
-                          setPeriodizationConfig(prev => prev ? { ...prev, edad: val } : undefined);
+                          const val = e.target.value;
+                          setPeriodizationConfig(prev => prev ? { ...prev, edad: val === '' ? '' : parseInt(val, 10) } as any : undefined);
                         }}
                         style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '12px', height: '38px', boxSizing: 'border-box' }}
                       />
@@ -3700,9 +3706,46 @@ export const PlanPlanner: React.FC = () => {
           onClose={() => setProtocolModalOpen(false)}
           objective={periodizationConfig.objetivo as any || 'hipertrofia'}
           level={periodizationConfig.nivel_atleta as any || 'intermedio'}
-          onApplyProtocol={(newDays) => {
-            setTrainingDays(newDays);
-            showToast('✅ Protocolo científico cargado y adaptado.', 'success');
+          onApplyProtocol={(newDays, recommendedSchedule) => {
+            const trainerId = profile?.id || 'default';
+            const libraryKey = `evolution_exercise_library_${trainerId}`;
+            const localLibrary = JSON.parse(localStorage.getItem(libraryKey) || '{}');
+            
+            const enrichedDays = newDays.map(day => ({
+              ...day,
+              exercises: day.exercises.map(ex => {
+                const key = (ex.nombre || '').trim().toLowerCase();
+                const foundLocal = localLibrary[key];
+                const foundGlobal = globalCatalog.find(g => g.nombre.trim().toLowerCase() === key);
+                
+                const meta = foundLocal || foundGlobal;
+                if (meta) {
+                  return {
+                    ...ex,
+                    image_url: meta.image_url || meta.imageData || ex.image_url,
+                    gif_url: meta.gif_url || meta.gifData || ex.gif_url,
+                    video_url: meta.video_url || meta.videoUrl || ex.video_url,
+                    description: meta.description || ex.description,
+                    nombre_original: meta.nombre_original || ex.nombre_original,
+                    grupo_muscular: meta.grupo_muscular || ex.grupo_muscular
+                  };
+                }
+                return ex;
+              })
+            }));
+            
+            setTrainingDays(enrichedDays);
+            
+            if (recommendedSchedule && recommendedSchedule.length === 7) {
+              const newMapping: Record<string, number> = {};
+              recommendedSchedule.forEach((val, idx) => {
+                newMapping[String(idx)] = val;
+              });
+              setWeekdayMapping(newMapping);
+              showToast('✅ Protocolo cargado con distribución de descanso sugerida según la evidencia.', 'success');
+            } else {
+              showToast('✅ Protocolo científico cargado y adaptado.', 'success');
+            }
           }}
         />
       )}

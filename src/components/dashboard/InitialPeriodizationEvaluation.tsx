@@ -16,7 +16,7 @@ export const InitialPeriodizationEvaluation: React.FC<InitialPeriodizationEvalua
   const [step, setStep] = useState<number>(1);
 
   // Step 1: Datos Fisiológicos
-  const [edad, setEdad] = useState<number>(25);
+  const [edad, setEdad] = useState<number | string>(25);
   const [recuperacion, setRecuperacion] = useState<'alta' | 'media' | 'baja'>('media');
   const [objetivo, setObjetivo] = useState<'fuerza' | 'hipertrofia' | 'mantenimiento'>('hipertrofia');
 
@@ -106,7 +106,7 @@ export const InitialPeriodizationEvaluation: React.FC<InitialPeriodizationEvalua
       enabled: true,
       objetivo,
       fecha_evaluacion: new Date().toISOString().split('T')[0],
-      edad,
+      edad: Math.max(12, Math.min(90, typeof edad === 'number' ? edad : (parseInt(edad) || 25))),
       capacidad_recuperacion: recuperacion,
       puntos_debiles: {
         sentadilla: sentadillaWeak,
@@ -232,7 +232,7 @@ export const InitialPeriodizationEvaluation: React.FC<InitialPeriodizationEvalua
             <input
               type="number"
               value={edad}
-              onChange={(e) => setEdad(Math.max(12, Math.min(90, parseInt(e.target.value) || 25)))}
+              onChange={(e) => setEdad(e.target.value)}
               style={{
                 background: 'rgba(255, 255, 255, 0.03)',
                 border: '1px solid rgba(255, 255, 255, 0.08)',

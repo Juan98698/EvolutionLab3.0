@@ -23,6 +23,7 @@ export interface ProtocolTemplate {
   daysPerWeek: number;
   description: string;
   scienceGuide: string; // Explains the "why"
+  recommendedSchedule?: number[];
   days: ProtocolDay[];
 }
 
@@ -41,6 +42,7 @@ export const PROTOCOL_LIBRARY: ProtocolTemplate[] = [
     daysPerWeek: 3,
     description: 'Rutina de cuerpo completo para principiantes con volumen bajo y alta frecuencia.',
     scienceGuide: 'Para un principiante buscando hipertrofia, la síntesis proteica cae rápidamente después del entrenamiento (aprox 24-36h). Entrenar cuerpo completo 3 veces por semana asegura que los músculos estén creciendo constantemente sin acumular fatiga excesiva (ya que su MRV es bajo).',
+    recommendedSchedule: [0, -1, 1, -1, 2, -1, -1],
     days: [
       {
         label: 'Día 1: Full Body A',
@@ -82,6 +84,7 @@ export const PROTOCOL_LIBRARY: ProtocolTemplate[] = [
     daysPerWeek: 4,
     description: 'División Torso/Pierna (Frecuencia 2) ideal para el grueso de los atletas intermedios.',
     scienceGuide: 'El estándar de oro para hipertrofia en intermedios. Permite acumular el volumen necesario (MAV) por sesión sin llegar al volumen basura (junk volume). Al dividir el cuerpo en dos, podemos concentrar mayor estrés metabólico por sesión y tener 3 días de descanso completo.',
+    recommendedSchedule: [0, 1, -1, 2, 3, -1, -1],
     days: [
       {
         label: 'Día 1: Torso (Fuerza/Hip)',
@@ -133,6 +136,7 @@ export const PROTOCOL_LIBRARY: ProtocolTemplate[] = [
     daysPerWeek: 6,
     description: 'Esquema de alto volumen (Frecuencia 2) para romper resistencia anabólica.',
     scienceGuide: 'Los atletas avanzados necesitan alcanzar un MEV mucho mayor para siquiera desencadenar hipertrofia. Este esquema distribuye ese altísimo volumen (20+ series semanales por músculo) a lo largo de 6 días para evitar fatiga periférica excesiva en una sola sesión.',
+    recommendedSchedule: [0, 1, 2, 3, 4, 5, -1],
     days: [
       {
         label: 'Día 1: Push (Pesado)',
@@ -207,6 +211,7 @@ export const PROTOCOL_LIBRARY: ProtocolTemplate[] = [
     daysPerWeek: 3,
     description: 'Ganancia rápida de fuerza base mediante adaptación neurológica en los 3 básicos.',
     scienceGuide: 'Los principiantes no necesitan esquemas complejos (DUP, etc) para ganar fuerza. Al repetir el mismo estímulo (5 series de 5 reps pesadas) 3 veces por semana, el sistema nervioso "aprende" a reclutar las unidades motoras rápidamente, logrando récords en cada sesión sin sobreentrenar.',
+    recommendedSchedule: [0, -1, 1, -1, 2, -1, -1],
     days: [
       {
         label: 'Día 1: Workout A',
@@ -245,6 +250,7 @@ export const PROTOCOL_LIBRARY: ProtocolTemplate[] = [
     daysPerWeek: 4,
     description: 'Alternancia de intensidades (Hipertrofia, Potencia, Fuerza Máxima) intresemanal.',
     scienceGuide: 'Un intermedio ya no puede subir peso linealmente cada sesión. El DUP (Daily Undulating Periodization) engaña a la homeostasis cambiando el estímulo en cada sesión: un día haces volumen (series de 8), otro potencia (series de 3), y otro fuerza pesada (series de 5), maximizando adaptaciones sin estallar el SNC.',
+    recommendedSchedule: [0, -1, 1, 2, -1, 3, -1],
     days: [
       {
         label: 'Día 1: Torso (Volumen)',
