@@ -17,7 +17,15 @@ export const AthleteNavbar: React.FC = () => {
 
   const [themeOpen, setThemeOpen] = useState(false);
   const [showPlanInfoModal, setShowPlanInfoModal] = useState(false);
-  const [trainerProfile, setTrainerProfile] = useState<any>(null);
+  const [trainerProfile, setTrainerProfile] = useState<any>(() => {
+      if (profile?.entrenador_id) {
+        try {
+          const cached = localStorage.getItem('pwa_trainer_profile_' + profile.entrenador_id);
+          if (cached) return JSON.parse(cached);
+        } catch(e) {}
+      }
+      return null;
+    });
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -51,6 +59,9 @@ export const AthleteNavbar: React.FC = () => {
             .single();
           if (!error && data) {
             setTrainerProfile(data);
+              try {
+                localStorage.setItem('pwa_trainer_profile_' + profile.entrenador_id, JSON.stringify(data));
+              } catch(e) {}
           }
         } catch (e) {
           console.error('Error al cargar perfil del coach:', e);
