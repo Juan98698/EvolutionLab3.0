@@ -145,6 +145,10 @@ create policy "Permitir entrenador actualizar todos los perfiles"
   );
 
 -- === Políticas de Planes ===
+
+create policy "Atletas pueden actualizar sus propios planes"
+  on public.planes for update using (cliente_id = auth.uid());
+
 create policy "Atletas pueden ver sus propios planes"
   on public.planes for select using (cliente_id = auth.uid());
 

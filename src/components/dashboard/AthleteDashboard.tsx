@@ -51,6 +51,7 @@ export const AthleteDashboard: React.FC = () => {
   const [showPushPrompt, setShowPushPrompt] = useState<boolean>(false);
   const [showOnboarding, setShowOnboarding] = useState<boolean>(false);
   const [showShareCard, setShowShareCard] = useState<boolean>(false);
+    const [hideEvaluation, setHideEvaluation] = useState<boolean>(false);
 
   // Manejar redirección exitosa o cancelada de MercadoPago
   useEffect(() => {
@@ -2094,7 +2095,7 @@ export const AthleteDashboard: React.FC = () => {
       )}
 
       {/* INITIAL PERIODIZATION EVALUATION MODAL OVERLAY */}
-      {isEvaluationPending && (
+      {isEvaluationPending && !hideEvaluation && (
         <div style={{
           position: 'fixed',
           top: 0,
@@ -2139,9 +2140,7 @@ export const AthleteDashboard: React.FC = () => {
                 showToast('Error al guardar el diagnóstico: ' + err.message, 'error');
               }
             }}
-            onCancel={() => {
-              navigate('/');
-            }}
+            onCancel={() => { setHideEvaluation(true); }}
           />
         </div>
       )}

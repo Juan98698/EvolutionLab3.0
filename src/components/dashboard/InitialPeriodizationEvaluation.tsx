@@ -282,11 +282,25 @@ export const InitialPeriodizationEvaluation: React.FC<InitialPeriodizationEvalua
 
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '20px' }}>
             <button
-              onClick={onCancel}
-              style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: '13px' }}
-            >
-              Cancelar
-            </button>
+                onClick={() => {
+                  const currentConfig = {
+                    enabled: true,
+                    objetivo,
+                    edad: Math.max(12, Math.min(90, typeof edad === 'number' ? edad : (parseInt(edad) || 25))),
+                    capacidad_recuperacion: recuperacion,
+                    puntos_debiles: {
+                      sentadilla: sentadillaWeak,
+                      banca: bancaWeak,
+                      peso_muerto: pesoMuertoWeak
+                    }
+                  };
+                  onSave(currentConfig as any);
+                  onCancel(); 
+                }}
+                style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: '13px', textDecoration: 'underline' }}
+              >
+                Responder luego
+              </button>
             <button
               onClick={() => setStep(2)}
               style={{
@@ -454,7 +468,7 @@ export const InitialPeriodizationEvaluation: React.FC<InitialPeriodizationEvalua
             <div style={{ fontSize: '11px', fontWeight: 800, fontFamily: "'Orbitron', sans-serif", color: themeColor, marginBottom: '10px', letterSpacing: '0.5px' }}>
               SENTADILLA
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr', gap: '8px', alignItems: 'center' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(90px, 1fr))', gap: '8px', alignItems: 'center' }}>
               <input
                 type="number"
                 placeholder="Peso (KG)"
@@ -493,7 +507,7 @@ export const InitialPeriodizationEvaluation: React.FC<InitialPeriodizationEvalua
             <div style={{ fontSize: '11px', fontWeight: 800, fontFamily: "'Orbitron', sans-serif", color: themeColor, marginBottom: '10px', letterSpacing: '0.5px' }}>
               PRESS DE BANCA
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr', gap: '8px', alignItems: 'center' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(90px, 1fr))', gap: '8px', alignItems: 'center' }}>
               <input
                 type="number"
                 placeholder="Peso (KG)"
@@ -532,7 +546,7 @@ export const InitialPeriodizationEvaluation: React.FC<InitialPeriodizationEvalua
             <div style={{ fontSize: '11px', fontWeight: 800, fontFamily: "'Orbitron', sans-serif", color: themeColor, marginBottom: '10px', letterSpacing: '0.5px' }}>
               PESO MUERTO
             </div>
-            <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr', gap: '8px', alignItems: 'center' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(90px, 1fr))', gap: '8px', alignItems: 'center' }}>
               <input
                 type="number"
                 placeholder="Peso (KG)"
@@ -627,7 +641,7 @@ export const InitialPeriodizationEvaluation: React.FC<InitialPeriodizationEvalua
                           }}
                         />
                       </div>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr', gap: '8px', alignItems: 'center' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(90px, 1fr))', gap: '8px', alignItems: 'center' }}>
                         <input
                           type="number"
                           placeholder="Peso (KG)"
