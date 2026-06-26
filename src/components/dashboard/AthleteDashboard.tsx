@@ -1051,6 +1051,41 @@ export const AthleteDashboard: React.FC = () => {
       <div style={{ background: 'transparent', minHeight: '100vh', color: 'white', paddingBottom: '50px' }}>
         <AthleteNavbar />
         <div className="container stagger-3" style={{ padding: '0 20px', maxWidth: '1200px', margin: '0 auto' }}>
+          {isEvaluationPending && hideEvaluation && (
+            <div style={{
+              background: 'rgba(255, 170, 0, 0.1)',
+              border: '1px solid rgba(255, 170, 0, 0.3)',
+              borderRadius: '12px',
+              padding: '12px 16px',
+              marginBottom: '20px',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginTop: '10px'
+            }}>
+              <div>
+                <h4 style={{ margin: '0 0 4px 0', fontSize: '13px', color: '#ffb703', fontFamily: "\'Orbitron\', sans-serif" }}>Evaluación Pendiente</h4>
+                <p style={{ margin: 0, fontSize: '11px', color: 'rgba(255,255,255,0.7)' }}>Aún no has completado tu diagnóstico inicial de fuerza.</p>
+              </div>
+              <button 
+                onClick={() => setHideEvaluation(false)}
+                style={{
+                  background: '#ffb703',
+                  color: '#000',
+                  border: 'none',
+                  padding: '8px 16px',
+                  borderRadius: '8px',
+                  fontSize: '11px',
+                  fontWeight: 800,
+                  fontFamily: "\'Orbitron\', sans-serif",
+                  cursor: 'pointer'
+                }}
+              >
+                Completar
+              </button>
+            </div>
+          )}
+
           <AddSesion plan={plan} expired={planExpiration.expired} showToast={showToast} onCancel={() => navigate('/dashboard')} />
         </div>
         <Toast message={toastState.message} type={toastState.type} visible={toastState.visible} />
