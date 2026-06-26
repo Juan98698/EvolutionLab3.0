@@ -15,7 +15,7 @@ interface Props {
   initialTargets?: Record<string, number>;
 }
 
-export function VolumeDistributorWizard({ onClose, onApply, athleteLevel = 'intermedio', blockObjective = 'hipertrofia' }: Props) {
+export function VolumeDistributorWizard({ onClose, onApply, athleteLevel = 'intermedio', blockObjective = 'hipertrofia', initialTargets = {} }: Props) {
   const [splitType, setSplitType] = useState<SplitType>('upper_lower');
   const [trainingDays, setTrainingDays] = useState(4);
   const [muscleVolume, setMuscleVolume] = useState<Record<string, number>>({});
