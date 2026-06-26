@@ -64,6 +64,7 @@ export interface PlanData {
   trackerConfig?: TrackerConfig;
   trackerRules?: TrackerRule[];
   periodizationConfig?: PeriodizationConfig;
+  weeklyTargets?: Record<string, number>;
 }
 
 export interface PeriodizationConfig {

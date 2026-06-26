@@ -689,6 +689,7 @@ export const PlanPlanner: React.FC = () => {
           setExistingPlanId(planData.id);
           const p = planData.datos_plan as PlanData;
           if (p.globalVariables) setGlobalVariables(p.globalVariables);
+          if (p.weeklyTargets) setWeeklyTargets(p.weeklyTargets);
           setVariableDefinitions({
             ...DEFAULT_VARIABLE_DEFINITIONS,
             ...(p.variableDefinitions || {})
@@ -1395,7 +1396,8 @@ export const PlanPlanner: React.FC = () => {
       weekdayMapping,
       trackerConfig,
       trackerRules,
-      periodizationConfig
+      periodizationConfig,
+      weeklyTargets
     };
 
     try {
