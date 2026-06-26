@@ -2229,12 +2229,11 @@ export const PlanPlanner: React.FC = () => {
                       <label htmlFor="period-edad" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>EDAD DEL ATLETA</label>
                       <input
                         id="period-edad"
-                        type="number"
-                        value={periodizationConfig.edad ?? 25}
+                        type="text" inputMode="numeric" pattern="[0-9]*" value={periodizationConfig.edad ?? 25}
                         onChange={(e) => {
-                          const val = e.target.value;
-                          setPeriodizationConfig(prev => prev ? { ...prev, edad: val === '' ? '' : parseInt(val, 10) } as any : undefined);
-                        }}
+                            const val = e.target.value;
+                            setPeriodizationConfig(prev => prev ? { ...prev, edad: val } as any : undefined);
+                          }}
                         style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '12px', height: '38px', boxSizing: 'border-box' }}
                       />
                     </div>

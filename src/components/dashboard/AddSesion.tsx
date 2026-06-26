@@ -622,7 +622,7 @@ export const AddSesion: React.FC<AddSesionProps> = ({
                   {/* Fila 1: Nombre de Ejercicio (2/3) y Grupo Muscular (1/3) */}
                   <div style={{
                     display: 'grid',
-                    gridTemplateColumns: '2fr 1fr',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
                     gap: '16px',
                     alignItems: 'end'
                   }}>
@@ -926,7 +926,7 @@ export const AddSesion: React.FC<AddSesionProps> = ({
                         FEEDBACK DEL EJERCICIO
                       </div>
                       
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', flexWrap: 'wrap' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '16px', flexWrap: 'wrap' }}>
                         {/* Estímulo */}
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                           <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)' }}>Estímulo / Bombeo:</span>
