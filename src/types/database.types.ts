@@ -60,11 +60,18 @@ export interface PlanData {
   globalVariables?: GlobalVariable[];
   variableDefinitions?: Record<string, string>;
   trainingDays?: TrainingDay[];
+  microcycles?: Microcycle[];
   weekdayMapping?: Record<string, number>;
   trackerConfig?: TrackerConfig;
   trackerRules?: TrackerRule[];
   periodizationConfig?: PeriodizationConfig;
   weeklyTargets?: Record<string, number>;
+}
+
+export interface Microcycle {
+  weekNumber: number;
+  isCompleted: boolean;
+  trainingDays: TrainingDay[];
 }
 
 export interface PeriodizationConfig {

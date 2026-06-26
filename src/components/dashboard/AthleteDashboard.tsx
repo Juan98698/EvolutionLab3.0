@@ -239,6 +239,17 @@ export const AthleteDashboard: React.FC = () => {
 
   const [localSesiones, setLocalSesiones] = useState<LocalSesion[]>(() => readSessionsFromCache());
   const [activeTab, setActiveTab] = useState<number>(0);
+  
+  // Extraemos la semana actual configurada y el historial de microciclos
+  const currentWeekNum = plan?.periodizationConfig?.semana_actual || 1;
+  const [activeWeekNum, setActiveWeekNum] = useState<number>(currentWeekNum);
+  
+  // Actualizar la semana activa si el plan se recarga (ej. guardado remoto)
+  useEffect(() => {
+    if (plan?.periodizationConfig?.semana_actual) {
+      setActiveWeekNum(plan.periodizationConfig.semana_actual);
+    }
+  }, [plan?.periodizationConfig?.semana_actual]);
 
   // Estados de modales
   const [philosophyOpen, setPhilosophyOpen] = useState<boolean>(false);
@@ -1058,7 +1069,13 @@ export const AthleteDashboard: React.FC = () => {
     "descanso": "El tiempo que esperas entre una serie y otra para recuperar energía. Ejemplo: Cronometrar 2 minutos sentado antes de empezar la siguiente serie.",
     "peso": "Representa la resistencia externa que se opone a la contracción muscular para generar estímulo de adaptación en el organismo."
   };
-  const trainingDays: TrainingDay[] = plan?.trainingDays || [];
+  
+  // Si tenemos historial de microciclos, buscamos el que coincida con activeWeekNum
+  const selectedMicrocycle = plan?.microcycles?.find(m => m.weekNumber === activeWeekNum);
+  const trainingDays: TrainingDay[] = selectedMicrocycle 
+    ? selectedMicrocycle.trainingDays 
+    : (plan?.trainingDays || []);
+    
   const weekdayMapping: Record<string, number> = plan?.weekdayMapping || { '0': -1, '1': -1, '2': -1, '3': -1, '4': -1, '5': -1, '6': -1 };
 
   return (
@@ -1628,6 +1645,57 @@ export const AthleteDashboard: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* WEEK TABS BAR (CALENDAR VIEW) */}
+        {plan?.periodizationConfig?.enabled && (
+          <div className="week-tabs-bar" style={{ display: 'flex', gap: '8px', marginBottom: '16px', overflowX: 'auto', paddingBottom: '4px' }}>
+            {Array.from({ length: plan.periodizationConfig.total_semanas || 4 }).map((_, i) => {
+              const weekNum = i + 1;
+              const isPast = weekNum < currentWeekNum;
+              const isFuture = weekNum > currentWeekNum;
+              
+              let bgColor = 'var(--theme-card-bg)';
+              let textColor = 'rgba(255,255,255,0.7)';
+              let border = '1px solid var(--theme-border)';
+              
+              if (activeWeekNum === weekNum) {
+                bgColor = 'rgba(14, 165, 233, 0.15)';
+                textColor = '#0ea5e9';
+                border = '1px solid #0ea5e9';
+              }
+              
+              return (
+                <button
+                  key={`week-${weekNum}`}
+                  onClick={() => {
+                    if (!isFuture) setActiveWeekNum(weekNum);
+                  }}
+                  title={isFuture ? "Esta semana será generada cuando termines la anterior." : ""}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '8px 16px',
+                    borderRadius: '8px',
+                    background: bgColor,
+                    color: textColor,
+                    border: border,
+                    fontSize: '12px',
+                    fontWeight: 700,
+                    cursor: isFuture ? 'not-allowed' : 'pointer',
+                    opacity: isFuture ? 0.5 : 1,
+                    whiteSpace: 'nowrap',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  {isPast && <span style={{ color: '#10b981' }}>✅</span>}
+                  {isFuture && <span>🔒</span>}
+                  Semana {weekNum}
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {/* DAY TABS BAR */}
         {trainingDays.length > 1 && (

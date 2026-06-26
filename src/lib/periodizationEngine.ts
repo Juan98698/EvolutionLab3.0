@@ -455,5 +455,32 @@ export const autoRegulatePlanForNextWeek = (
     });
   });
 
+  // Agregar la nueva semana calculada al historial de microciclos
+  if (!updatedPlan.microcycles) {
+    updatedPlan.microcycles = [];
+  }
+  
+  // Actualizamos el flag isCompleted de la semana que acaba de pasar
+  const prevWeek = currentWeek;
+  const prevMicro = updatedPlan.microcycles.find(m => m.weekNumber === prevWeek);
+  if (prevMicro) {
+    prevMicro.isCompleted = true;
+  }
+
+  // La nueva semana activa es currentWeek + 1, o si se reinició el bloque, semana 1
+  const newWeekNumber = updatedPlan.periodizationConfig.semana_actual || currentWeek;
+  
+  const existingNewMicro = updatedPlan.microcycles.find(m => m.weekNumber === newWeekNumber);
+  if (existingNewMicro) {
+    existingNewMicro.trainingDays = updatedPlan.trainingDays || [];
+    existingNewMicro.isCompleted = false;
+  } else {
+    updatedPlan.microcycles.push({
+      weekNumber: newWeekNumber,
+      isCompleted: false,
+      trainingDays: updatedPlan.trainingDays || []
+    });
+  }
+
   return updatedPlan;
 };

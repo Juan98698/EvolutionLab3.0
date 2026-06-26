@@ -66,6 +66,7 @@ export const PlanPlanner: React.FC = () => {
   const [variableDefinitions, setVariableDefinitions] = useState<Record<string, string>>({});
   const [weekdayMapping, setWeekdayMapping] = useState<Record<string, number>>({});
   const [trainingDays, setTrainingDays] = useState<TrainingDay[]>([]);
+  const [microcycles, setMicrocycles] = useState<any[]>([]);
   const [trackerConfig, setTrackerConfig] = useState<any>({});
   const [trackerRules, setTrackerRules] = useState<any[]>([]);
   const [periodizationConfig, setPeriodizationConfig] = useState<PeriodizationConfig | undefined>(undefined);
@@ -744,6 +745,7 @@ export const PlanPlanner: React.FC = () => {
           }
           
           if (p.weekdayMapping) setWeekdayMapping(p.weekdayMapping);
+          if (p.microcycles) setMicrocycles(p.microcycles);
           if (p.trackerConfig) setTrackerConfig(p.trackerConfig);
           if (p.trackerRules) setTrackerRules(p.trackerRules || []);
           if (p.portada) setPortada(p.portada);
@@ -1391,11 +1393,26 @@ export const PlanPlanner: React.FC = () => {
       trainerEslogan: profile?.marca?.eslogan || 'NO NECESITAS ENTRENAR MÁS.\nNECESITAS ENTRENAR MEJOR.'
     };
 
+    // Sincronizar trainingDays con la semana actual en microcycles
+    const currentWeek = periodizationConfig?.semana_actual || 1;
+    let updatedMicrocycles = [...microcycles];
+    const existingIndex = updatedMicrocycles.findIndex(m => m.weekNumber === currentWeek);
+    if (existingIndex >= 0) {
+      updatedMicrocycles[existingIndex].trainingDays = compatibleTrainingDays;
+    } else {
+      updatedMicrocycles.push({
+        weekNumber: currentWeek,
+        isCompleted: false,
+        trainingDays: compatibleTrainingDays
+      });
+    }
+
     const planDataPayload: PlanData = {
       portada: compatiblePortada,
       globalVariables,
       variableDefinitions,
       trainingDays: compatibleTrainingDays,
+      microcycles: updatedMicrocycles,
       weekdayMapping,
       trackerConfig,
       trackerRules,
