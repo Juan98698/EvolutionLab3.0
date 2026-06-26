@@ -12,6 +12,7 @@ interface Props {
   onApply: (sessions: GeneratedSession[], targets: Record<string, number>) => void;
   athleteLevel?: AthleteLevel;
   blockObjective?: 'hipertrofia' | 'fuerza' | 'mantenimiento';
+  initialTargets?: Record<string, number>;
 }
 
 export function VolumeDistributorWizard({ onClose, onApply, athleteLevel = 'intermedio', blockObjective = 'hipertrofia' }: Props) {

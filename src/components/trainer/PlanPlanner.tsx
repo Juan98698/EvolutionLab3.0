@@ -1681,9 +1681,9 @@ export const PlanPlanner: React.FC = () => {
                 return activeMuscles.map(muscle => {
                   const current = weeklyVolumeData[muscle] || 0;
                   const thresholds = getThresholdsForMuscleGroup(muscle, periodizationConfig?.nivel_atleta || 'intermedio', (periodizationConfig?.objetivo as any) || 'hipertrofia');
-                  const target = thresholds.mrv;
+                  const target = (weeklyTargets[muscle] && weeklyTargets[muscle] > 0) ? weeklyTargets[muscle] : thresholds.mrv;
                   const isOver = current > target;
-                  const isExact = current >= thresholds.mavMin && current <= thresholds.mavMax;
+                  const isExact = (weeklyTargets[muscle] && weeklyTargets[muscle] > 0) ? current === target : current >= thresholds.mavMin && current <= thresholds.mavMax;
                 
                 let borderColor = 'rgba(255, 255, 255, 0.1)';
                 let textColor = '#d1d5db';
