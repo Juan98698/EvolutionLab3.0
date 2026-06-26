@@ -3714,6 +3714,7 @@ export const PlanPlanner: React.FC = () => {
           onApply={handleApplyDistribution}
           athleteLevel={periodizationConfig?.nivel_atleta || 'intermedio'}
           blockObjective={periodizationConfig?.objetivo as any || 'hipertrofia'}
+            initialTargets={weeklyTargets}
         />
       )}
 
