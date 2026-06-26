@@ -780,7 +780,7 @@ export const PlanPlanner: React.FC = () => {
     };
 
     loadData();
-  }, [clienteId, profile]);
+    }, [clienteId, profile?.id, profile?.nombre]);
 
   // Manejar cambios en portada
   const handlePortadaChange = (field: string, val: string) => {
