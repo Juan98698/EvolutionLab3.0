@@ -10,6 +10,7 @@ import { PeriodizationHelpModal } from '../common/PeriodizationHelpModal';
 import { evaluateVolumeStatus, getThresholdsForMuscleGroup } from '../../lib/volumeThresholds';
 import { VolumeThresholdsTable } from './VolumeThresholdsTable';
 import { VolumeDistributorWizard } from './VolumeDistributorWizard';
+import { ProtocolSelectorModal } from './ProtocolSelectorModal';
 import { GeneratedSession } from '../../lib/sessionDistributor';
 import {
   Chart as ChartJS,
@@ -271,6 +272,8 @@ export const PlanPlanner: React.FC = () => {
   // Estado: catalogo global de ejercicios (Supabase)
   const [globalCatalog, setGlobalCatalog] = useState<EjercicioGlobal[]>([]);
   const [globalCatalogNames, setGlobalCatalogNames] = useState<string[]>([]);
+  
+  const [protocolModalOpen, setProtocolModalOpen] = useState(false);
   const [activeInput, setActiveInput] = useState<{ dayId: string; exId: string } | null>(null);
   const [filteredSuggestions, setFilteredSuggestions] = useState<EjercicioGlobal[]>([]);
 
@@ -400,7 +403,7 @@ export const PlanPlanner: React.FC = () => {
       trainingDays.forEach(day => {
         if (day && Array.isArray(day.exercises)) {
           day.exercises.forEach(ex => {
-            const gm = getThresholdsForMuscleGroup((ex as any).grupo_muscular || '').gm;
+            const gm = getThresholdsForMuscleGroup((ex as any).grupo_muscular || '', periodizationConfig?.nivel_atleta, periodizationConfig?.objetivo as any).gm;
             const seriesStr = ex.variables?.['series de trabajo'] || ex.variables?.['series'] || '';
             const series = parseSeries(seriesStr);
             volumeMap[gm] = (volumeMap[gm] || 0) + series;
@@ -2110,7 +2113,19 @@ export const PlanPlanner: React.FC = () => {
                   </h4>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px' }}>
                     <div>
-                      <label htmlFor="period-objetivo" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>OBJETIVO DEL BLOQUE</label>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                        <label htmlFor="period-objetivo" style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700 }}>OBJETIVO DEL BLOQUE</label>
+                        <button 
+                          onClick={() => setProtocolModalOpen(true)}
+                          style={{
+                            background: '#0ea5e9', border: 'none', borderRadius: '4px', color: 'white',
+                            fontSize: '10px', fontWeight: 'bold', padding: '2px 8px', cursor: 'pointer',
+                            display: 'flex', alignItems: 'center', gap: '4px'
+                          }}
+                        >
+                          📚 Protocolos
+                        </button>
+                      </div>
                       <select
                         id="period-objetivo"
                         value={periodizationConfig.objetivo || 'hipertrofia'}
@@ -2508,7 +2523,7 @@ export const PlanPlanner: React.FC = () => {
                       .filter(([gm, volume]) => volume > 0 && gm !== 'General' && gm !== 'Cardio')
                       .sort((a, b) => b[1] - a[1])
                       .map(([gm, volume]) => {
-                        const { status, message } = evaluateVolumeStatus(gm, volume, periodizationConfig.nivel_atleta);
+                        const { status, message } = evaluateVolumeStatus(gm, volume, periodizationConfig.nivel_atleta, periodizationConfig.objetivo as any);
                         const isDanger = status === 'danger';
                         const isOptimal = status === 'optimal';
                         const color = isDanger ? '#ef4444' : isOptimal ? '#22c55e' : '#eab308';
@@ -2995,9 +3010,9 @@ export const PlanPlanner: React.FC = () => {
                             {/* Inline Volume Status */}
                             {((ex as any).grupo_muscular) && (() => {
                               const gmRaw = (ex as any).grupo_muscular;
-                              const currentTotal = weeklyVolumeData[getThresholdsForMuscleGroup(gmRaw).gm] || 0;
+                              const currentTotal = weeklyVolumeData[getThresholdsForMuscleGroup(gmRaw, periodizationConfig?.nivel_atleta, periodizationConfig?.objetivo as any).gm] || 0;
                               const level = periodizationConfig?.nivel_atleta || 'intermedio';
-                              const thresholds = getThresholdsForMuscleGroup(gmRaw, level as any);
+                              const thresholds = getThresholdsForMuscleGroup(gmRaw, level as any, periodizationConfig?.objetivo as any);
                               
                               let indicator = '';
                               let badgeColor = '';
@@ -3658,6 +3673,20 @@ export const PlanPlanner: React.FC = () => {
           onClose={() => setDistributorWizardOpen(false)} 
           onApply={handleApplyDistribution}
           athleteLevel={periodizationConfig?.nivel_atleta || 'intermedio'}
+          blockObjective={periodizationConfig?.objetivo as any || 'hipertrofia'}
+        />
+      )}
+
+      {protocolModalOpen && periodizationConfig && (
+        <ProtocolSelectorModal
+          isOpen={protocolModalOpen}
+          onClose={() => setProtocolModalOpen(false)}
+          objective={periodizationConfig.objetivo as any || 'hipertrofia'}
+          level={periodizationConfig.nivel_atleta as any || 'intermedio'}
+          onApplyProtocol={(newDays) => {
+            setTrainingDays(newDays);
+            showToast('✅ Protocolo científico cargado y adaptado.', 'success');
+          }}
         />
       )}
     </div>

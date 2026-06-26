@@ -318,7 +318,7 @@ export const autoRegulatePlanForNextWeek = (
   if (!isEndOfBlock) {
     updatedPlan.trainingDays?.forEach(day => {
       day.exercises?.forEach(ex => {
-        const gm = getThresholdsForMuscleGroup((ex as any).grupo_muscular || '', config.nivel_atleta as any).gm;
+        const gm = getThresholdsForMuscleGroup((ex as any).grupo_muscular || '', config.nivel_atleta as any, config.objetivo as any).gm;
         const setsStr = ex.variables?.['series de trabajo'] || ex.variables?.['series'] || '3';
         const sets = parseInt(setsStr, 10) || 3;
         weeklyVolumeMap[gm] = (weeklyVolumeMap[gm] || 0) + sets;
@@ -346,7 +346,7 @@ export const autoRegulatePlanForNextWeek = (
     // BUG-04 fix: Skip per-exercise volume adjustment when entering deload
     //             to avoid double-reduction (feedback + deload halving).
     if (!isEndOfBlock) {
-      const gm = getThresholdsForMuscleGroup(foundEx.grupo_muscular || '', config.nivel_atleta as any).gm;
+      const gm = getThresholdsForMuscleGroup(foundEx.grupo_muscular || '', config.nivel_atleta as any, config.objetivo as any).gm;
       const currentSetsStr = foundEx.variables?.['series de trabajo'] || foundEx.variables?.['series'] || '3';
       const currentSets = parseInt(currentSetsStr, 10) || 3;
 
@@ -360,7 +360,7 @@ export const autoRegulatePlanForNextWeek = (
 
       // Si el algoritmo sugiere aumentar el volumen, verificamos el MRV del grupo muscular
       if (nextSets > currentSets) {
-        const threshold = getThresholdsForMuscleGroup(gm, config.nivel_atleta as any);
+        const threshold = getThresholdsForMuscleGroup(gm, config.nivel_atleta as any, config.objetivo as any);
         if (weeklyVolumeMap[gm] >= threshold.mrv) {
           finalSets = currentSets; // Bloqueamos el incremento para prevenir sobreentrenamiento
           finalNotes = `Límite MRV (${threshold.mrv} series) alcanzado para ${gm}. No se incrementan series para evitar sobreentrenamiento.`;

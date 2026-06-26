@@ -64,7 +64,9 @@ export const THRESHOLDS_AVANZADO: Record<string, VolumeThreshold> = {
   'General': { gm: 'General', mev: 12, mavMin: 14, mavMax: 20, mrv: 24 }
 };
 
-export const getThresholdsForMuscleGroup = (gm: string, level: AthleteLevel = 'intermedio'): VolumeThreshold => {
+export type BlockObjective = 'hipertrofia' | 'fuerza' | 'mantenimiento';
+
+export const getThresholdsForMuscleGroup = (gm: string, level: AthleteLevel = 'intermedio', objetivo: BlockObjective = 'hipertrofia'): VolumeThreshold => {
   const normalizedKeys: Record<string, string> = {
     'pecho': 'Pecho',
     'espalda': 'Espalda',
@@ -89,16 +91,33 @@ export const getThresholdsForMuscleGroup = (gm: string, level: AthleteLevel = 'i
 
   const key = gm ? (normalizedKeys[gm.toLowerCase().trim()] || 'General') : 'General';
   
+  let baseThreshold: VolumeThreshold;
   switch(level) {
-    case 'principiante': return THRESHOLDS_PRINCIPIANTE[key];
-    case 'avanzado': return THRESHOLDS_AVANZADO[key];
+    case 'principiante': baseThreshold = THRESHOLDS_PRINCIPIANTE[key]; break;
+    case 'avanzado': baseThreshold = THRESHOLDS_AVANZADO[key]; break;
     case 'intermedio':
-    default: return THRESHOLDS_INTERMEDIO[key];
+    default: baseThreshold = THRESHOLDS_INTERMEDIO[key]; break;
   }
+
+  // Adjust mathematically based on the objective
+  const adjusted = { ...baseThreshold };
+  if (objetivo === 'fuerza') {
+    // Strength: Heavy loads tax CNS more. Lower MRV by 20% to prevent overtraining.
+    adjusted.mrv = Math.max(Math.round(adjusted.mrv * 0.8), adjusted.mavMax);
+    adjusted.mavMax = Math.max(Math.round(adjusted.mavMax * 0.85), adjusted.mavMin);
+  } else if (objetivo === 'mantenimiento') {
+    // Maintenance: You need very little volume to maintain. MEV/MAV drops drastically.
+    adjusted.mev = Math.max(Math.round(adjusted.mev * 0.4), 2);
+    adjusted.mavMin = Math.max(Math.round(adjusted.mavMin * 0.5), adjusted.mev + 1);
+    adjusted.mavMax = Math.max(Math.round(adjusted.mavMax * 0.6), adjusted.mavMin + 1);
+    adjusted.mrv = Math.max(Math.round(adjusted.mrv * 0.7), adjusted.mavMax + 2);
+  }
+
+  return adjusted;
 };
 
-export const evaluateVolumeStatus = (gm: string, currentWeeklySets: number, level: AthleteLevel = 'intermedio') => {
-  const threshold = getThresholdsForMuscleGroup(gm, level);
+export const evaluateVolumeStatus = (gm: string, currentWeeklySets: number, level: AthleteLevel = 'intermedio', objetivo: BlockObjective = 'hipertrofia') => {
+  const threshold = getThresholdsForMuscleGroup(gm, level, objetivo);
   
   if (currentWeeklySets < threshold.mev) {
     return { status: 'low', message: `Bajo (MEV es ${threshold.mev})` };
@@ -107,7 +126,7 @@ export const evaluateVolumeStatus = (gm: string, currentWeeklySets: number, leve
   } else if (currentWeeklySets >= threshold.mrv) {
     return { 
       status: 'danger', 
-      message: `⚠️ Alerta de Volumen Excesivo: Has programado ${currentWeeklySets} series semanales de ${threshold.gm}. El límite de volumen seguro (MRV) para un atleta ${level} es de ${threshold.mrv} series semanales. Considera reducir ejercicios o series para evitar sobreentrenamiento o lesiones.` 
+      message: `⚠️ Alerta de Volumen Excesivo: Has programado ${currentWeeklySets} series semanales de ${threshold.gm}. El límite de volumen seguro (MRV) para un atleta ${level} enfocado en ${objetivo.toUpperCase()} es de ${threshold.mrv} series semanales. Considera reducir ejercicios o series para evitar sobreentrenamiento o lesiones.` 
     };
   } else {
     return { status: 'warning', message: `Moderado/Alto (Cerca del MRV de ${threshold.mrv})` };

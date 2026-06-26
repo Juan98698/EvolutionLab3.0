@@ -11,9 +11,10 @@ interface Props {
   onClose: () => void;
   onApply: (sessions: GeneratedSession[], targets: Record<string, number>) => void;
   athleteLevel?: AthleteLevel;
+  blockObjective?: 'hipertrofia' | 'fuerza' | 'mantenimiento';
 }
 
-export function VolumeDistributorWizard({ onClose, onApply, athleteLevel = 'intermedio' }: Props) {
+export function VolumeDistributorWizard({ onClose, onApply, athleteLevel = 'intermedio', blockObjective = 'hipertrofia' }: Props) {
   const [splitType, setSplitType] = useState<SplitType>('upper_lower');
   const [trainingDays, setTrainingDays] = useState(4);
   const [muscleVolume, setMuscleVolume] = useState<Record<string, number>>({});
@@ -40,7 +41,7 @@ export function VolumeDistributorWizard({ onClose, onApply, athleteLevel = 'inte
   useEffect(() => {
     const initialVolume: Record<string, number> = {};
     activeMuscles.forEach(muscle => {
-      const thresholds = getThresholdsForMuscleGroup(muscle, athleteLevel);
+      const thresholds = getThresholdsForMuscleGroup(muscle, athleteLevel, blockObjective);
       initialVolume[muscle] = thresholds.mavMin;
     });
     setMuscleVolume(initialVolume);
@@ -255,7 +256,7 @@ export function VolumeDistributorWizard({ onClose, onApply, athleteLevel = 'inte
                 <h3 style={{ fontSize: '14px', fontWeight: 'bold', color: '#d1d5db', margin: '0 0 16px 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Ajuste de Volumen Semanal</h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
                   {activeMuscles.map(muscle => {
-                    const threshold = getThresholdsForMuscleGroup(muscle, athleteLevel);
+                    const threshold = getThresholdsForMuscleGroup(muscle, athleteLevel, blockObjective);
                     const val = muscleVolume[muscle] || 0;
                     
                     let statusColor = '#483D8B'; // MEV
