@@ -182,7 +182,7 @@ export const ExerciseLibrary: React.FC = () => {
   const brandName = trainerProfile?.marca?.nombre_display || 'EVOLUTION LAB';
 
   return (
-    <div style={{ background: '#070a13', minHeight: '100vh', color: 'white', paddingBottom: '50px' }}>
+    <div style={{ background: 'transparent', minHeight: '100vh', color: 'white', paddingBottom: '50px' }}>
       <AthleteNavbar />
 
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
