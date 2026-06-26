@@ -43,10 +43,10 @@ export function VolumeDistributorWizard({ onClose, onApply, athleteLevel = 'inte
     const initialVolume: Record<string, number> = {};
     activeMuscles.forEach(muscle => {
       const thresholds = getThresholdsForMuscleGroup(muscle, athleteLevel, blockObjective);
-      initialVolume[muscle] = thresholds.mavMin;
+      initialVolume[muscle] = (initialTargets && initialTargets[muscle] !== undefined) ? initialTargets[muscle] : thresholds.mavMin;
     });
     setMuscleVolume(initialVolume);
-  }, [splitType, athleteLevel, activeMuscles.length]);
+  }, [splitType, athleteLevel, activeMuscles.length, initialTargets]);
 
   const handleVolumeChange = (muscle: string, value: number) => {
     setMuscleVolume(prev => ({ ...prev, [muscle]: value }));
