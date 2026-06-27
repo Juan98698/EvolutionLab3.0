@@ -104,6 +104,13 @@ export const PlanPlanner: React.FC = () => {
   const generateId = (): string => Math.random().toString(36).substring(2, 11);
 
   const handleApplyDistribution = (sessions: GeneratedSession[], targets: Record<string, number>) => {
+    // Si se pasa un arreglo vacío (como en el modo Fuerza), solo actualizamos targets
+    if (sessions.length === 0) {
+      setWeeklyTargets(targets);
+      setDistributorWizardOpen(false);
+      return;
+    }
+
     // Si ya hay ejercicios creados, advertimos
     const hasExercises = trainingDays.some(day => day.exercises && day.exercises.some(ex => ex.nombre_original !== ''));
     if (hasExercises) {
