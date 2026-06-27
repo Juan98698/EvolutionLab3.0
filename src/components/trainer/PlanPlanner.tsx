@@ -3838,16 +3838,19 @@ export const PlanPlanner: React.FC = () => {
                 const foundLocal = localLibrary[key];
                 const foundGlobal = globalCatalog.find(g => g.nombre.trim().toLowerCase() === key);
                 
-                const meta = foundLocal || foundGlobal;
+                // Priorizar el catálogo global oficial sobre el caché local del entrenador
+                // para evitar arrastrar descripciones o imágenes desactualizadas/rotas de planes antiguos.
+                const meta = foundGlobal || foundLocal;
                 if (meta) {
+                  const isGlobal = !!foundGlobal;
                   return {
                     ...ex,
-                    image_url: meta.image_url || meta.imageData || ex.image_url,
-                    gif_url: meta.gif_url || meta.gifData || ex.gif_url,
-                    video_url: meta.video_url || meta.videoUrl || ex.video_url,
-                    description: meta.description || ex.description,
-                    nombre_original: meta.nombre_original || ex.nombre_original,
-                    grupo_muscular: meta.grupo_muscular || ex.grupo_muscular
+                    image_url: isGlobal ? (foundGlobal.imagen_url || ex.image_url) : (foundLocal.image_url || foundLocal.imageData || ex.image_url),
+                    gif_url: isGlobal ? ex.gif_url : (foundLocal.gif_url || foundLocal.gifData || ex.gif_url),
+                    video_url: isGlobal ? (foundGlobal.video_url || ex.video_url) : (foundLocal.video_url || foundLocal.videoUrl || ex.video_url),
+                    description: isGlobal ? (foundGlobal.descripcion || ex.description) : (foundLocal.description || ex.description),
+                    nombre_original: isGlobal ? foundGlobal.nombre : (foundLocal.nombre_original || ex.nombre_original),
+                    grupo_muscular: isGlobal ? foundGlobal.grupo_muscular : (foundLocal.grupo_muscular || ex.grupo_muscular)
                   };
                 }
                 return ex;
