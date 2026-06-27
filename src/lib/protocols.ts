@@ -260,31 +260,31 @@ export const PROTOCOL_LIBRARY: ProtocolTemplate[] = [
           { name: 'Press de Banca', muscle: 'Pecho', sets: '4', reps: '8', rir: '2', rest: '180', pattern: 'push_horizontal' },
           { name: 'Remo con Barra', muscle: 'Espalda', sets: '4', reps: '8', rir: '2', rest: '120', pattern: 'pull_horizontal' },
           { name: 'Press Militar', muscle: 'Hombros', sets: '3', reps: '10', rir: '2', rest: '120', pattern: 'push_vertical' },
-          { name: 'Tríceps Polea', muscle: 'Tríceps', sets: '3', reps: '12', rir: '1-2', rest: '90' }
+          { name: 'Tríceps Polea', muscle: 'Tríceps', sets: '3', reps: '12', rir: '1-2', rest: '90' }  // Auxiliar — sin patrón
         ]
       },
       {
         label: 'Día 2: Pierna (Potencia)',
         exercises: [
-          { name: 'Sentadilla', muscle: 'Cuádriceps', sets: '5', reps: '3', rir: '3', rest: '180', pattern: 'squat' }, // Explosivo
-          { name: 'Peso Muerto', muscle: 'Isquiosurales', sets: '3', reps: '3', rir: '3', rest: '180', pattern: 'hinge' }, // Explosivo
+          { name: 'Sentadilla', muscle: 'Cuádriceps', sets: '5', reps: '3', rir: '3', rest: '180', pattern: 'squat' },
+          { name: 'Peso Muerto', muscle: 'Isquiosurales', sets: '3', reps: '3', rir: '3', rest: '180', pattern: 'hinge' },
           { name: 'Prensa', muscle: 'Cuádriceps', sets: '3', reps: '10', rir: '2', rest: '120', pattern: 'squat' },
-          { name: 'Elevación Talones', muscle: 'Pantorrillas', sets: '4', reps: '15', rir: '2', rest: '90' }
+          { name: 'Elevación Talones', muscle: 'Pantorrillas', sets: '4', reps: '15', rir: '2', rest: '90' }  // Auxiliar — sin patrón
         ]
       },
       {
         label: 'Día 3: Torso (Fuerza)',
         exercises: [
-          { name: 'Press de Banca', muscle: 'Pecho', sets: '5', reps: '4', rir: '1', rest: '240', pattern: 'push_horizontal' }, // Pesado
+          { name: 'Press de Banca', muscle: 'Pecho', sets: '5', reps: '4', rir: '1', rest: '240', pattern: 'push_horizontal' },
           { name: 'Dominadas Lastradas', muscle: 'Espalda', sets: '4', reps: '5', rir: '1-2', rest: '180', pattern: 'pull_vertical' },
           { name: 'Press Inclinado', muscle: 'Pecho', sets: '3', reps: '8', rir: '2', rest: '120', pattern: 'push_horizontal' },
-          { name: 'Curl Bíceps', muscle: 'Bíceps', sets: '3', reps: '10', rir: '2', rest: '90' }
+          { name: 'Curl Bíceps', muscle: 'Bíceps', sets: '3', reps: '10', rir: '2', rest: '90' }  // Auxiliar — sin patrón
         ]
       },
       {
         label: 'Día 4: Pierna (Fuerza)',
         exercises: [
-          { name: 'Sentadilla', muscle: 'Cuádriceps', sets: '5', reps: '4', rir: '1', rest: '240', pattern: 'squat' }, // Pesado
+          { name: 'Sentadilla', muscle: 'Cuádriceps', sets: '5', reps: '4', rir: '1', rest: '240', pattern: 'squat' },
           { name: 'Peso Muerto Rumano', muscle: 'Isquiosurales', sets: '4', reps: '6', rir: '1-2', rest: '180', pattern: 'hinge' },
           { name: 'Zancadas', muscle: 'Cuádriceps', sets: '3', reps: '8', rir: '2', rest: '120', pattern: 'squat' },
           { name: 'Plancha Lastrada', muscle: 'Core', sets: '3', reps: '45s', rir: '2', rest: '90', pattern: 'core_transfer' }
@@ -385,16 +385,27 @@ export const PROTOCOL_LIBRARY: ProtocolTemplate[] = [
 ];
 
 export const getProtocolsForContext = (objective: BlockObjective, level: AthleteLevel): ProtocolTemplate[] => {
-  // First match strictly by objective
-  let matches = PROTOCOL_LIBRARY.filter(p => p.objective === objective);
-  
-  // If it's a specific objective where level matters immensely (like Strength/Hypertrophy)
-  // we could strictly filter by level too, but let's allow nearby levels if none match perfectly.
-  const levelMatches = matches.filter(p => p.level === level);
-  if (levelMatches.length > 0) {
-    return levelMatches;
+  // Filtrar primero por objetivo
+  const byObjective = PROTOCOL_LIBRARY.filter(p => p.objective === objective);
+
+  // Match exacto por nivel — caso ideal
+  const exactMatch = byObjective.filter(p => p.level === level);
+  if (exactMatch.length > 0) return exactMatch;
+
+  // Fallback: niveles adyacentes (nunca devuelve todos — evita mezclar principiante con avanzado)
+  const levelOrder: AthleteLevel[] = ['principiante', 'intermedio', 'avanzado'];
+  const currentIdx = levelOrder.indexOf(level);
+
+  // Busca primero nivel inferior, luego superior
+  const adjacent: ProtocolTemplate[] = [];
+  if (currentIdx > 0) {
+    adjacent.push(...byObjective.filter(p => p.level === levelOrder[currentIdx - 1]));
   }
-  
-  // Fallback: return any protocol matching the objective
-  return matches;
+  if (currentIdx < levelOrder.length - 1) {
+    adjacent.push(...byObjective.filter(p => p.level === levelOrder[currentIdx + 1]));
+  }
+  if (adjacent.length > 0) return adjacent;
+
+  // Último recurso: cualquier protocolo del objetivo
+  return byObjective;
 };
