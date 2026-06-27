@@ -123,11 +123,16 @@ export function VolumeDistributorWizard({ onClose, onApply, athleteLevel = 'inte
   };
 
   /** Unidad de medida según el objetivo. */
-  const unit = isStrength ? 'NL' : 'series';
+  const unit = isStrength ? 'NL★' : 'series';
 
-  /** Máximo del slider según el objetivo. */
+  /**
+   * Máximo del slider según el objetivo.
+   * Para fuerza: dinámico — toma el MRV más alto entre todos los patrones
+   * del nivel actual y añade 10 de margen visual. Así el marcador MRV
+   * nunca queda fuera del slider aunque los umbrales cambien.
+   */
   const sliderMax = isStrength
-    ? Math.max(...ALL_MOVEMENT_PATTERNS.map(p => getStrengthThreshold(p, athleteLevel).mrv)) + 5
+    ? Math.max(...ALL_MOVEMENT_PATTERNS.map(p => getStrengthThreshold(p, athleteLevel).mrv)) + 10
     : 45;
 
   /**
