@@ -26,17 +26,27 @@ export function ProtocolSelectorModal({ isOpen, onClose, objective, level, onApp
       id: crypto.randomUUID(),
       dayNumber: idx + 1,
       name: day.label,
-      exercises: day.exercises.map(ex => ({
-        id: crypto.randomUUID(),
-        nombre: ex.name,
-        grupo_muscular: ex.muscle,
-        variables: {
+      exercises: day.exercises.map(ex => {
+        const variables: Record<string, string> = {
           'series de trabajo': ex.sets,
           'repeticiones': ex.reps,
           'rir': ex.rir,
           'descanso': ex.rest
+        };
+
+        // Para protocolos de fuerza, incluir el patrón de movimiento
+        // para que el sistema de evaluación de strengthThresholds pueda conectar
+        if (ex.pattern) {
+          variables['patron_movimiento'] = ex.pattern;
         }
-      }))
+
+        return {
+          id: crypto.randomUUID(),
+          nombre: ex.name,
+          grupo_muscular: ex.muscle,
+          variables
+        };
+      })
     }));
 
     onApplyProtocol(trainingDays, selectedProtocol.recommendedSchedule);

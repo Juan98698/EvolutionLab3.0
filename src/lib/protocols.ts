@@ -1,5 +1,6 @@
 import { AthleteLevel } from './volumeThresholds';
 import { BlockObjective } from './volumeThresholds';
+import { MovementPattern } from './strengthThresholds';
 
 export interface ProtocolExercise {
   name: string;
@@ -8,6 +9,7 @@ export interface ProtocolExercise {
   reps: string; // e.g. "8-12", "5"
   rir: string;  // e.g. "1-2"
   rest: string; // e.g. "120s"
+  pattern?: MovementPattern; // Solo para protocolos de fuerza — patrón de movimiento
 }
 
 export interface ProtocolDay {
@@ -216,27 +218,27 @@ export const PROTOCOL_LIBRARY: ProtocolTemplate[] = [
       {
         label: 'Día 1: Workout A',
         exercises: [
-          { name: 'Sentadilla', muscle: 'Cuádriceps', sets: '5', reps: '5', rir: '1-2', rest: '180' },
-          { name: 'Press de Banca', muscle: 'Pecho', sets: '5', reps: '5', rir: '1-2', rest: '180' },
-          { name: 'Remo con Barra', muscle: 'Espalda', sets: '5', reps: '5', rir: '1-2', rest: '180' },
-          { name: 'Plancha', muscle: 'Core', sets: '3', reps: '60s', rir: '2', rest: '90' }
+          { name: 'Sentadilla', muscle: 'Cuádriceps', sets: '5', reps: '5', rir: '1-2', rest: '180', pattern: 'squat' },
+          { name: 'Press de Banca', muscle: 'Pecho', sets: '5', reps: '5', rir: '1-2', rest: '180', pattern: 'push_horizontal' },
+          { name: 'Remo con Barra', muscle: 'Espalda', sets: '5', reps: '5', rir: '1-2', rest: '180', pattern: 'pull_horizontal' },
+          { name: 'Plancha', muscle: 'Core', sets: '3', reps: '60s', rir: '2', rest: '90', pattern: 'core_transfer' }
         ]
       },
       {
         label: 'Día 2: Workout B',
         exercises: [
-          { name: 'Sentadilla', muscle: 'Cuádriceps', sets: '5', reps: '5', rir: '1-2', rest: '180' },
-          { name: 'Press Militar', muscle: 'Hombros', sets: '5', reps: '5', rir: '1-2', rest: '180' },
-          { name: 'Peso Muerto', muscle: 'Isquiosurales', sets: '1', reps: '5', rir: '1', rest: '240' }, // Sólo 1 serie pesada de DL en 5x5 clásico
-          { name: 'Dominadas Supinas', muscle: 'Espalda', sets: '3', reps: '8-10', rir: '2', rest: '120' }
+          { name: 'Sentadilla', muscle: 'Cuádriceps', sets: '5', reps: '5', rir: '1-2', rest: '180', pattern: 'squat' },
+          { name: 'Press Militar', muscle: 'Hombros', sets: '5', reps: '5', rir: '1-2', rest: '180', pattern: 'push_vertical' },
+          { name: 'Peso Muerto', muscle: 'Isquiosurales', sets: '1', reps: '5', rir: '1', rest: '240', pattern: 'hinge' }, // Sólo 1 serie pesada de DL en 5x5 clásico
+          { name: 'Dominadas Supinas', muscle: 'Espalda', sets: '3', reps: '8-10', rir: '2', rest: '120', pattern: 'pull_vertical' }
         ]
       },
       {
         label: 'Día 3: Workout A',
         exercises: [
-          { name: 'Sentadilla', muscle: 'Cuádriceps', sets: '5', reps: '5', rir: '1-2', rest: '180' },
-          { name: 'Press de Banca', muscle: 'Pecho', sets: '5', reps: '5', rir: '1-2', rest: '180' },
-          { name: 'Remo con Barra', muscle: 'Espalda', sets: '5', reps: '5', rir: '1-2', rest: '180' },
+          { name: 'Sentadilla', muscle: 'Cuádriceps', sets: '5', reps: '5', rir: '1-2', rest: '180', pattern: 'squat' },
+          { name: 'Press de Banca', muscle: 'Pecho', sets: '5', reps: '5', rir: '1-2', rest: '180', pattern: 'push_horizontal' },
+          { name: 'Remo con Barra', muscle: 'Espalda', sets: '5', reps: '5', rir: '1-2', rest: '180', pattern: 'pull_horizontal' },
           { name: 'Elevación Talones', muscle: 'Pantorrillas', sets: '3', reps: '15', rir: '2', rest: '90' }
         ]
       }
@@ -255,37 +257,37 @@ export const PROTOCOL_LIBRARY: ProtocolTemplate[] = [
       {
         label: 'Día 1: Torso (Volumen)',
         exercises: [
-          { name: 'Press de Banca', muscle: 'Pecho', sets: '4', reps: '8', rir: '2', rest: '180' },
-          { name: 'Remo con Barra', muscle: 'Espalda', sets: '4', reps: '8', rir: '2', rest: '120' },
-          { name: 'Press Militar', muscle: 'Hombros', sets: '3', reps: '10', rir: '2', rest: '120' },
+          { name: 'Press de Banca', muscle: 'Pecho', sets: '4', reps: '8', rir: '2', rest: '180', pattern: 'push_horizontal' },
+          { name: 'Remo con Barra', muscle: 'Espalda', sets: '4', reps: '8', rir: '2', rest: '120', pattern: 'pull_horizontal' },
+          { name: 'Press Militar', muscle: 'Hombros', sets: '3', reps: '10', rir: '2', rest: '120', pattern: 'push_vertical' },
           { name: 'Tríceps Polea', muscle: 'Tríceps', sets: '3', reps: '12', rir: '1-2', rest: '90' }
         ]
       },
       {
         label: 'Día 2: Pierna (Potencia)',
         exercises: [
-          { name: 'Sentadilla', muscle: 'Cuádriceps', sets: '5', reps: '3', rir: '3', rest: '180' }, // Explosivo
-          { name: 'Peso Muerto', muscle: 'Isquiosurales', sets: '3', reps: '3', rir: '3', rest: '180' }, // Explosivo
-          { name: 'Prensa', muscle: 'Cuádriceps', sets: '3', reps: '10', rir: '2', rest: '120' },
+          { name: 'Sentadilla', muscle: 'Cuádriceps', sets: '5', reps: '3', rir: '3', rest: '180', pattern: 'squat' }, // Explosivo
+          { name: 'Peso Muerto', muscle: 'Isquiosurales', sets: '3', reps: '3', rir: '3', rest: '180', pattern: 'hinge' }, // Explosivo
+          { name: 'Prensa', muscle: 'Cuádriceps', sets: '3', reps: '10', rir: '2', rest: '120', pattern: 'squat' },
           { name: 'Elevación Talones', muscle: 'Pantorrillas', sets: '4', reps: '15', rir: '2', rest: '90' }
         ]
       },
       {
         label: 'Día 3: Torso (Fuerza)',
         exercises: [
-          { name: 'Press de Banca', muscle: 'Pecho', sets: '5', reps: '4', rir: '1', rest: '240' }, // Pesado
-          { name: 'Dominadas Lastradas', muscle: 'Espalda', sets: '4', reps: '5', rir: '1-2', rest: '180' },
-          { name: 'Press Inclinado', muscle: 'Pecho', sets: '3', reps: '8', rir: '2', rest: '120' },
+          { name: 'Press de Banca', muscle: 'Pecho', sets: '5', reps: '4', rir: '1', rest: '240', pattern: 'push_horizontal' }, // Pesado
+          { name: 'Dominadas Lastradas', muscle: 'Espalda', sets: '4', reps: '5', rir: '1-2', rest: '180', pattern: 'pull_vertical' },
+          { name: 'Press Inclinado', muscle: 'Pecho', sets: '3', reps: '8', rir: '2', rest: '120', pattern: 'push_horizontal' },
           { name: 'Curl Bíceps', muscle: 'Bíceps', sets: '3', reps: '10', rir: '2', rest: '90' }
         ]
       },
       {
         label: 'Día 4: Pierna (Fuerza)',
         exercises: [
-          { name: 'Sentadilla', muscle: 'Cuádriceps', sets: '5', reps: '4', rir: '1', rest: '240' }, // Pesado
-          { name: 'Peso Muerto Rumano', muscle: 'Isquiosurales', sets: '4', reps: '6', rir: '1-2', rest: '180' },
-          { name: 'Zancadas', muscle: 'Cuádriceps', sets: '3', reps: '8', rir: '2', rest: '120' },
-          { name: 'Plancha Lastrada', muscle: 'Core', sets: '3', reps: '45s', rir: '2', rest: '90' }
+          { name: 'Sentadilla', muscle: 'Cuádriceps', sets: '5', reps: '4', rir: '1', rest: '240', pattern: 'squat' }, // Pesado
+          { name: 'Peso Muerto Rumano', muscle: 'Isquiosurales', sets: '4', reps: '6', rir: '1-2', rest: '180', pattern: 'hinge' },
+          { name: 'Zancadas', muscle: 'Cuádriceps', sets: '3', reps: '8', rir: '2', rest: '120', pattern: 'squat' },
+          { name: 'Plancha Lastrada', muscle: 'Core', sets: '3', reps: '45s', rir: '2', rest: '90', pattern: 'core_transfer' }
         ]
       }
     ]
@@ -304,36 +306,36 @@ export const PROTOCOL_LIBRARY: ProtocolTemplate[] = [
       {
         label: 'Día 1: Max Effort Torso',
         exercises: [
-          { name: 'Press de Banca Pesado (Variación)', muscle: 'Pecho', sets: '1', reps: '1-3', rir: '0', rest: '300' },
-          { name: 'Press Inclinado con Mancuernas', muscle: 'Pecho', sets: '3', reps: '8-10', rir: '1-2', rest: '120' },
-          { name: 'Remo Pesado', muscle: 'Espalda', sets: '4', reps: '6-8', rir: '1-2', rest: '120' },
+          { name: 'Press de Banca Pesado (Variación)', muscle: 'Pecho', sets: '1', reps: '1-3', rir: '0', rest: '300', pattern: 'push_horizontal' },
+          { name: 'Press Inclinado con Mancuernas', muscle: 'Pecho', sets: '3', reps: '8-10', rir: '1-2', rest: '120', pattern: 'push_horizontal' },
+          { name: 'Remo Pesado', muscle: 'Espalda', sets: '4', reps: '6-8', rir: '1-2', rest: '120', pattern: 'pull_horizontal' },
           { name: 'Extensión Tríceps Pesada', muscle: 'Tríceps', sets: '4', reps: '8-10', rir: '1', rest: '90' }
         ]
       },
       {
         label: 'Día 2: Max Effort Pierna',
         exercises: [
-          { name: 'Sentadilla o Peso Muerto Pesado', muscle: 'Cuádriceps', sets: '1', reps: '1-3', rir: '0', rest: '300' },
-          { name: 'Sentadilla Búlgara', muscle: 'Cuádriceps', sets: '3', reps: '8-10', rir: '1-2', rest: '120' },
-          { name: 'Peso Muerto Rumano', muscle: 'Isquiosurales', sets: '4', reps: '6-8', rir: '1-2', rest: '120' },
-          { name: 'Ab Wheel / Plancha', muscle: 'Core', sets: '4', reps: '10-15', rir: '1-2', rest: '90' }
+          { name: 'Sentadilla o Peso Muerto Pesado', muscle: 'Cuádriceps', sets: '1', reps: '1-3', rir: '0', rest: '300', pattern: 'squat' },
+          { name: 'Sentadilla Búlgara', muscle: 'Cuádriceps', sets: '3', reps: '8-10', rir: '1-2', rest: '120', pattern: 'squat' },
+          { name: 'Peso Muerto Rumano', muscle: 'Isquiosurales', sets: '4', reps: '6-8', rir: '1-2', rest: '120', pattern: 'hinge' },
+          { name: 'Ab Wheel / Plancha', muscle: 'Core', sets: '4', reps: '10-15', rir: '1-2', rest: '90', pattern: 'core_transfer' }
         ]
       },
       {
         label: 'Día 3: Dynamic Effort Torso',
         exercises: [
-          { name: 'Press de Banca Explosivo', muscle: 'Pecho', sets: '9', reps: '3', rir: '4-5', rest: '60' }, // 50-60% 1RM
-          { name: 'Press Militar con Mancuernas', muscle: 'Hombros', sets: '3', reps: '10-12', rir: '1-2', rest: '120' },
-          { name: 'Dominadas Rápidas', muscle: 'Espalda', sets: '4', reps: '6-8', rir: '2', rest: '90' },
+          { name: 'Press de Banca Explosivo', muscle: 'Pecho', sets: '9', reps: '3', rir: '4-5', rest: '60', pattern: 'push_horizontal' }, // 50-60% 1RM
+          { name: 'Press Militar con Mancuernas', muscle: 'Hombros', sets: '3', reps: '10-12', rir: '1-2', rest: '120', pattern: 'push_vertical' },
+          { name: 'Dominadas Rápidas', muscle: 'Espalda', sets: '4', reps: '6-8', rir: '2', rest: '90', pattern: 'pull_vertical' },
           { name: 'Facepull', muscle: 'Hombros', sets: '3', reps: '15', rir: '1', rest: '90' }
         ]
       },
       {
         label: 'Día 4: Dynamic Effort Pierna',
         exercises: [
-          { name: 'Sentadilla Explosiva', muscle: 'Cuádriceps', sets: '10', reps: '2', rir: '4-5', rest: '60' }, // 50-60% 1RM
-          { name: 'Peso Muerto Explosivo', muscle: 'Isquiosurales', sets: '6', reps: '2', rir: '4-5', rest: '60' },
-          { name: 'Prensa Ligera', muscle: 'Cuádriceps', sets: '3', reps: '12-15', rir: '2', rest: '90' },
+          { name: 'Sentadilla Explosiva', muscle: 'Cuádriceps', sets: '10', reps: '2', rir: '4-5', rest: '60', pattern: 'squat' }, // 50-60% 1RM
+          { name: 'Peso Muerto Explosivo', muscle: 'Isquiosurales', sets: '6', reps: '2', rir: '4-5', rest: '60', pattern: 'hinge' },
+          { name: 'Prensa Ligera', muscle: 'Cuádriceps', sets: '3', reps: '12-15', rir: '2', rest: '90', pattern: 'squat' },
           { name: 'Elevación Talones', muscle: 'Pantorrillas', sets: '4', reps: '15-20', rir: '1', rest: '90' }
         ]
       }

@@ -1,16 +1,24 @@
 /**
  * EvolutionLab Periodization & RIR Calculations Engine
- * 
+ *
  * Implements scientific algorithms for:
  * 1. 1RM Estimation (Epley + Brzycki integrated with RIR)
  * 2. Load Prescription based on Reps + RIR
  * 3. Weekly Volume Auto-regulation (MEV / MAV / MRV)
+ *    - Hipertrofia/mantenimiento → series/semana por grupo muscular (volumeThresholds.ts)
+ *    - Fuerza general           → NL/semana por patrón de movimiento (strengthThresholds.ts)
  * 4. Biomechanical corrections for lift weak points
  * 5. Full-mesocycle auto-regulation with per-exercise deload
  */
 
 import { PlanData } from '../types/database.types';
 import { getThresholdsForMuscleGroup } from './volumeThresholds';
+import {
+  detectPatternFromExerciseName,
+  evaluateStrengthVolume,
+  getStrengthThreshold,
+  MovementPattern,
+} from './strengthThresholds';
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 const BRZYCKI_MAX_REPS = 36;           // Safe upper limit for Brzycki formula
@@ -313,15 +321,44 @@ export const autoRegulatePlanForNextWeek = (
   // BUG-02 + BUG-04 fix: Determine deload status BEFORE processing exercises
   const isEndOfBlock = currentWeek >= totalWeeks;
 
-  // ── Calculate Initial Weekly Volume per Muscle Group ───────────────────────
-  const weeklyVolumeMap: Record<string, number> = {};
+  const isStrengthBlock = config.objetivo === 'fuerza';
+  const nivel = config.nivel_atleta as any;
+
+  // ── Acumulador de volumen semanal — bifurcado por objetivo ─────────────────
+  //
+  // Hipertrofia/mantenimiento → weeklyVolumeMap
+  //   clave: grupo muscular (string), valor: series totales/semana
+  //
+  // Fuerza general → weeklyNLMap
+  //   clave: MovementPattern (string), valor: NL totales/semana a ≥80% 1RM
+  //   NL = número de levantamientos (reps × series en zona de intensidad)
+  //
+  const weeklyVolumeMap: Record<string, number> = {};  // hipertrofia/mantenimiento
+  const weeklyNLMap: Record<string, number> = {};       // fuerza general
+
   if (!isEndOfBlock) {
     updatedPlan.trainingDays?.forEach(day => {
       day.exercises?.forEach(ex => {
-        const gm = getThresholdsForMuscleGroup((ex as any).grupo_muscular || '', config.nivel_atleta as any, config.objetivo as any).gm;
         const setsStr = ex.variables?.['series de trabajo'] || ex.variables?.['series'] || '3';
         const sets = parseInt(setsStr, 10) || 3;
-        weeklyVolumeMap[gm] = (weeklyVolumeMap[gm] || 0) + sets;
+        const repsStr = ex.variables?.['repeticiones'] || '5';
+        const repsMatch = repsStr.match(/\d+/);
+        const reps = repsMatch ? parseInt(repsMatch[0], 10) : 5;
+
+        if (isStrengthBlock) {
+          // Fuerza: acumulamos NL por patrón de movimiento
+          const pattern = (ex.variables?.['patron_movimiento'] as MovementPattern) || detectPatternFromExerciseName((ex as any).nombre || '');
+          if (pattern) {
+            const nl = sets * reps;
+            weeklyNLMap[pattern] = (weeklyNLMap[pattern] || 0) + nl;
+          }
+        } else {
+          // Hipertrofia/mantenimiento: acumulamos series por grupo muscular
+          const gm = getThresholdsForMuscleGroup(
+            (ex as any).grupo_muscular || '', nivel, config.objetivo as any
+          ).gm;
+          weeklyVolumeMap[gm] = (weeklyVolumeMap[gm] || 0) + sets;
+        }
       });
     });
   }
@@ -346,27 +383,48 @@ export const autoRegulatePlanForNextWeek = (
     // BUG-04 fix: Skip per-exercise volume adjustment when entering deload
     //             to avoid double-reduction (feedback + deload halving).
     if (!isEndOfBlock) {
-      const gm = getThresholdsForMuscleGroup(foundEx.grupo_muscular || '', config.nivel_atleta as any, config.objetivo as any).gm;
       const currentSetsStr = foundEx.variables?.['series de trabajo'] || foundEx.variables?.['series'] || '3';
       const currentSets = parseInt(currentSetsStr, 10) || 3;
-
-      const estimulo = logged.feedback_estimulo || 'good';
+      const estimulo    = logged.feedback_estimulo    || 'good';
       const recuperacion = logged.feedback_recuperacion || 'recovered';
 
       const { nextSets, notes } = calculateNextMicrocycleVolume(currentSets, estimulo, recuperacion);
 
-      let finalSets = nextSets;
+      let finalSets  = nextSets;
       let finalNotes = notes;
 
-      // Si el algoritmo sugiere aumentar el volumen, verificamos el MRV del grupo muscular
       if (nextSets > currentSets) {
-        const threshold = getThresholdsForMuscleGroup(gm, config.nivel_atleta as any, config.objetivo as any);
-        if (weeklyVolumeMap[gm] >= threshold.mrv) {
-          finalSets = currentSets; // Bloqueamos el incremento para prevenir sobreentrenamiento
-          finalNotes = `Límite MRV (${threshold.mrv} series) alcanzado para ${gm}. No se incrementan series para evitar sobreentrenamiento.`;
+        if (isStrengthBlock) {
+          // ── Fuerza: chequeo MRV por patrón de movimiento (NL) ─────────────
+          const pattern = (foundEx.variables?.['patron_movimiento'] as MovementPattern) || detectPatternFromExerciseName(foundEx.nombre || '');
+          if (pattern) {
+            const repsStr   = foundEx.variables?.['repeticiones'] || '5';
+            const repsMatch = repsStr.match(/\d+/);
+            const reps      = repsMatch ? parseInt(repsMatch[0], 10) : 5;
+            const currentNL = weeklyNLMap[pattern] || 0;
+            const addedNL   = (nextSets - currentSets) * reps;
+            const threshold = getStrengthThreshold(pattern, nivel);
+
+            if (currentNL + addedNL > threshold.mrv) {
+              finalSets  = currentSets;
+              finalNotes = `MRV de fuerza alcanzado para ${threshold.label} (${nivel}): `
+                + `${currentNL} NL actuales ≥ ${threshold.mrv} NL/semana. `
+                + `No se incrementan series. Señales a monitorear: ${threshold.mrvSignals[0]}.`;
+            } else {
+              weeklyNLMap[pattern] = currentNL + addedNL;
+            }
+          }
         } else {
-          // Actualizamos el mapa para contabilizar este incremento en ejercicios posteriores del mismo grupo
-          weeklyVolumeMap[gm] += (nextSets - currentSets);
+          // ── Hipertrofia/mantenimiento: chequeo MRV por grupo muscular ──────
+          const gm        = getThresholdsForMuscleGroup(foundEx.grupo_muscular || '', nivel, config.objetivo as any).gm;
+          const threshold = getThresholdsForMuscleGroup(gm, nivel, config.objetivo as any);
+          if (weeklyVolumeMap[gm] >= threshold.mrv) {
+            finalSets  = currentSets;
+            finalNotes = `Límite MRV (${threshold.mrv} series) alcanzado para ${gm}. `
+              + `No se incrementan series para evitar sobreentrenamiento.`;
+          } else {
+            weeklyVolumeMap[gm] += (nextSets - currentSets);
+          }
         }
       }
 
@@ -483,4 +541,48 @@ export const autoRegulatePlanForNextWeek = (
   }
 
   return updatedPlan;
+};
+
+// ─── 6. Strength Volume Diagnostics ──────────────────────────────────────────
+
+/**
+ * Evalúa el estado de volumen de fuerza de un plan completo.
+ * Recorre todos los ejercicios, detecta su patrón de movimiento,
+ * acumula NL semanales y devuelve el diagnóstico por patrón.
+ *
+ * Uso: llamar desde la UI para mostrar alertas en bloques de fuerza,
+ * equivalente a evaluateVolumeStatus() en bloques de hipertrofia.
+ */
+export const evaluateStrengthPlanVolume = (
+  plan: PlanData,
+  nivel: 'principiante' | 'intermedio' | 'avanzado' = 'intermedio'
+): Record<MovementPattern, ReturnType<typeof evaluateStrengthVolume>> => {
+  const nlMap: Record<string, number> = {};
+
+  plan.trainingDays?.forEach(day => {
+    day.exercises?.forEach(ex => {
+      const pattern = (ex.variables?.['patron_movimiento'] as MovementPattern) || detectPatternFromExerciseName((ex as any).nombre || '');
+      if (!pattern) return;
+
+      const setsStr  = ex.variables?.['series de trabajo'] || ex.variables?.['series'] || '3';
+      const repsStr  = ex.variables?.['repeticiones'] || '5';
+      const sets     = parseInt(setsStr, 10) || 3;
+      const repsMatch = repsStr.match(/\d+/);
+      const reps     = repsMatch ? parseInt(repsMatch[0], 10) : 5;
+
+      nlMap[pattern] = (nlMap[pattern] || 0) + (sets * reps);
+    });
+  });
+
+  const result = {} as Record<MovementPattern, ReturnType<typeof evaluateStrengthVolume>>;
+
+  for (const [pattern, nl] of Object.entries(nlMap)) {
+    result[pattern as MovementPattern] = evaluateStrengthVolume(
+      pattern as MovementPattern,
+      nl,
+      nivel
+    );
+  }
+
+  return result;
 };

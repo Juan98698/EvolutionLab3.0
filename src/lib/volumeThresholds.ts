@@ -1,12 +1,15 @@
 /**
- * EvolutionLab Volume Thresholds Engine
- * 
+ * EvolutionLab — Hypertrophy & Maintenance Volume Thresholds Engine
+ *
  * Basado en las guías de hipertrofia de Renaissance Periodization (Dr. Mike Israetel).
  * Los valores representan SERIES EFECTIVAS SEMANALES por grupo muscular.
- * 
- * MEV: Minimum Effective Volume (Volumen Mínimo Efectivo)
- * MAV: Maximum Adaptive Volume (Volumen Adaptativo Máximo - Zona óptima)
- * MRV: Maximum Recoverable Volume (Volumen Máximo Recuperable - Límite superior)
+ *
+ * Cubre objetivos: 'hipertrofia' | 'mantenimiento'
+ * Para bloques de FUERZA GENERAL → ver strengthThresholds.ts
+ *
+ * MEV: Minimum Effective Volume  — mínimo para generar adaptación
+ * MAV: Maximum Adaptive Volume   — zona óptima de estímulo
+ * MRV: Maximum Recoverable Volume — límite superior recuperable
  */
 
 export type AthleteLevel = 'principiante' | 'intermedio' | 'avanzado';
@@ -64,9 +67,17 @@ export const THRESHOLDS_AVANZADO: Record<string, VolumeThreshold> = {
   'General': { gm: 'General', mev: 12, mavMin: 14, mavMax: 20, mrv: 24 }
 };
 
+/**
+ * Objetivos cubiertos por este archivo.
+ * Para 'fuerza' → usar evaluateStrengthVolume() de strengthThresholds.ts
+ */
 export type BlockObjective = 'hipertrofia' | 'fuerza' | 'mantenimiento';
 
-export const getThresholdsForMuscleGroup = (gm: string, level: AthleteLevel = 'intermedio', objetivo: BlockObjective = 'hipertrofia'): VolumeThreshold => {
+export const getThresholdsForMuscleGroup = (
+  gm: string,
+  level: AthleteLevel = 'intermedio',
+  objetivo: BlockObjective = 'hipertrofia'
+): VolumeThreshold => {
   const normalizedKeys: Record<string, string> = {
     'pecho': 'Pecho',
     'espalda': 'Espalda',
@@ -90,27 +101,25 @@ export const getThresholdsForMuscleGroup = (gm: string, level: AthleteLevel = 'i
   };
 
   const key = gm ? (normalizedKeys[gm.toLowerCase().trim()] || 'General') : 'General';
-  
+
   let baseThreshold: VolumeThreshold;
-  switch(level) {
+  switch (level) {
     case 'principiante': baseThreshold = THRESHOLDS_PRINCIPIANTE[key]; break;
-    case 'avanzado': baseThreshold = THRESHOLDS_AVANZADO[key]; break;
+    case 'avanzado':     baseThreshold = THRESHOLDS_AVANZADO[key]; break;
     case 'intermedio':
-    default: baseThreshold = THRESHOLDS_INTERMEDIO[key]; break;
+    default:             baseThreshold = THRESHOLDS_INTERMEDIO[key]; break;
   }
 
-  // Adjust mathematically based on the objective
   const adjusted = { ...baseThreshold };
-  if (objetivo === 'fuerza') {
-    // Strength: Heavy loads tax CNS more. Lower MRV by 20% to prevent overtraining.
-    adjusted.mrv = Math.max(Math.round(adjusted.mrv * 0.8), adjusted.mavMax);
-    adjusted.mavMax = Math.max(Math.round(adjusted.mavMax * 0.85), adjusted.mavMin);
-  } else if (objetivo === 'mantenimiento') {
-    // Maintenance: You need very little volume to maintain. MEV/MAV drops drastically.
-    adjusted.mev = Math.max(Math.round(adjusted.mev * 0.4), 2);
+
+  // 'fuerza' ya no se ajusta aquí — tiene su propio sistema en strengthThresholds.ts
+  // Se devuelven los umbrales de hipertrofia como referencia contextual si alguien
+  // llama a esta función con objetivo='fuerza' por compatibilidad hacia atrás.
+  if (objetivo === 'mantenimiento') {
+    adjusted.mev    = Math.max(Math.round(adjusted.mev    * 0.4), 2);
     adjusted.mavMin = Math.max(Math.round(adjusted.mavMin * 0.5), adjusted.mev + 1);
     adjusted.mavMax = Math.max(Math.round(adjusted.mavMax * 0.6), adjusted.mavMin + 1);
-    adjusted.mrv = Math.max(Math.round(adjusted.mrv * 0.7), adjusted.mavMax + 2);
+    adjusted.mrv    = Math.max(Math.round(adjusted.mrv    * 0.7), adjusted.mavMax + 2);
   }
 
   return adjusted;
