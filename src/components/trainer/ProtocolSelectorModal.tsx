@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { AthleteLevel, BlockObjective } from '../../lib/volumeThresholds';
 import { ProtocolTemplate, getProtocolsForContext } from '../../lib/protocols';
 import { TrainingDay } from '../../types/database.types';
+import { detectPatternFromExerciseName } from '../../lib/strengthThresholds';
 
 interface Props {
   isOpen: boolean;
@@ -16,35 +17,34 @@ export function ProtocolSelectorModal({ isOpen, onClose, objective, level, onApp
 
   if (!isOpen) return null;
 
+  const isStrengthBlock = objective === 'fuerza';
   const protocols = getProtocolsForContext(objective, level);
 
   const handleApply = () => {
     if (!selectedProtocol) return;
 
-    // Convert ProtocolDay[] to TrainingDay[]
     const trainingDays: TrainingDay[] = selectedProtocol.days.map((day, idx) => ({
       id: crypto.randomUUID(),
       dayNumber: idx + 1,
       name: day.label,
       exercises: day.exercises.map(ex => {
-        const variables: Record<string, string> = {
-          'series de trabajo': ex.sets,
-          'repeticiones': ex.reps,
-          'rir': ex.rir,
-          'descanso': ex.rest
-        };
-
-        // Para protocolos de fuerza, incluir el patrón de movimiento
-        // para que el sistema de evaluación de strengthThresholds pueda conectar
-        if (ex.pattern) {
-          variables['patron_movimiento'] = ex.pattern;
-        }
+        // En bloques de fuerza, detectamos el patrón de movimiento automáticamente
+        // y lo guardamos junto al ejercicio para que el motor pueda acumular NL correctamente.
+        const pattern = isStrengthBlock
+          ? (detectPatternFromExerciseName(ex.name) ?? undefined)
+          : undefined;
 
         return {
           id: crypto.randomUUID(),
           nombre: ex.name,
           grupo_muscular: ex.muscle,
-          variables
+          ...(pattern ? { movement_pattern: pattern } : {}),
+          variables: {
+            'series de trabajo': ex.sets,
+            'repeticiones': ex.reps,
+            'rir': ex.rir,
+            'descanso': ex.rest
+          }
         };
       })
     }));
@@ -67,9 +67,14 @@ export function ProtocolSelectorModal({ isOpen, onClose, objective, level, onApp
         {/* Header */}
         <div style={{ padding: '20px 24px', borderBottom: '1px solid #222', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <h2 style={{ margin: 0, fontSize: '20px', color: '#fff' }}>📚 Protocolos Científicos</h2>
+            <h2 style={{ margin: 0, fontSize: '20px', color: '#fff' }}>
+              {isStrengthBlock ? '🏋️ Protocolos de Fuerza General' : '📚 Protocolos Científicos'}
+            </h2>
             <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#888' }}>
-              Mostrando evidencia para: <strong style={{ color: '#0ea5e9', textTransform: 'capitalize' }}>{objective}</strong> • <strong style={{ color: '#0ea5e9', textTransform: 'capitalize' }}>{level}</strong>
+              Mostrando para:{' '}
+              <strong style={{ color: isStrengthBlock ? '#f59e0b' : '#0ea5e9', textTransform: 'capitalize' }}>{objective}</strong>
+              {' • '}
+              <strong style={{ color: isStrengthBlock ? '#f59e0b' : '#0ea5e9', textTransform: 'capitalize' }}>{level}</strong>
             </p>
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '24px' }}>&times;</button>
@@ -121,13 +126,21 @@ export function ProtocolSelectorModal({ isOpen, onClose, objective, level, onApp
                 <div style={{ display: 'grid', gap: '12px' }}>
                   {selectedProtocol.days.map((day, idx) => (
                     <div key={idx} style={{ background: '#1a1a1a', borderRadius: '8px', padding: '12px', border: '1px solid #222' }}>
-                      <div style={{ fontWeight: 'bold', fontSize: '13px', color: '#0ea5e9', marginBottom: '8px' }}>{day.label}</div>
+                      <div style={{ fontWeight: 'bold', fontSize: '13px', color: isStrengthBlock ? '#f59e0b' : '#0ea5e9', marginBottom: '8px' }}>{day.label}</div>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                        {day.exercises.map((ex, eIdx) => (
-                          <span key={eIdx} style={{ fontSize: '11px', background: '#222', padding: '4px 8px', borderRadius: '4px', color: '#aaa' }}>
-                            {ex.name} ({ex.sets}x{ex.reps})
-                          </span>
-                        ))}
+                        {day.exercises.map((ex, eIdx) => {
+                          const pattern = isStrengthBlock ? detectPatternFromExerciseName(ex.name) : null;
+                          return (
+                            <span key={eIdx} style={{ fontSize: '11px', background: '#222', padding: '4px 8px', borderRadius: '4px', color: '#aaa', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                              <span>{ex.name} ({ex.sets}x{ex.reps})</span>
+                              {pattern && (
+                                <span style={{ color: '#f59e0b', fontSize: '10px', opacity: 0.8 }}>
+                                  {pattern.replace('_', ' ')}
+                                </span>
+                              )}
+                            </span>
+                          );
+                        })}
                       </div>
                     </div>
                   ))}
@@ -147,18 +160,20 @@ export function ProtocolSelectorModal({ isOpen, onClose, objective, level, onApp
           <button onClick={onClose} style={{ padding: '8px 16px', borderRadius: '6px', border: '1px solid #333', background: 'transparent', color: '#fff', cursor: 'pointer', fontSize: '14px' }}>
             Cancelar
           </button>
-          <button 
+          <button
             onClick={handleApply}
             disabled={!selectedProtocol}
-            style={{ 
-              padding: '8px 24px', borderRadius: '6px', border: 'none', 
-              background: selectedProtocol ? '#0ea5e9' : '#333', 
-              color: selectedProtocol ? '#fff' : '#888', 
+            style={{
+              padding: '8px 24px', borderRadius: '6px', border: 'none',
+              background: selectedProtocol
+                ? (isStrengthBlock ? '#d97706' : '#0ea5e9')
+                : '#333',
+              color: selectedProtocol ? '#fff' : '#888',
               cursor: selectedProtocol ? 'pointer' : 'not-allowed',
               fontWeight: 'bold', fontSize: '14px', transition: 'background 0.2s'
             }}
           >
-            Aplicar Protocolo al Plan
+            {isStrengthBlock ? 'Aplicar Protocolo de Fuerza' : 'Aplicar Protocolo al Plan'}
           </button>
         </div>
       </div>
