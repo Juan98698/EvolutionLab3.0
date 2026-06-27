@@ -264,22 +264,22 @@ export const calculateNextMicrocycleVolume = (
  * Maps a normalized exercise name to one of the three tracked powerlifts.
  * Returns null for accessory/isolation exercises.
  */
-const mapExerciseToLiftKey = (normName: string): string | null => {
+export const mapExerciseToLiftKey = (normName: string): string | null => {
   // Only map primary compound variants — not accessories like "sentadilla búlgara"
-  if (normName === 'sentadilla' || normName === 'sentadilla trasera' || normName === 'sentadilla con barra' || normName === 'back squat') {
+  if (normName === 'sentadilla' || normName === 'sentadilla trasera' || normName === 'sentadilla con barra' || normName === 'back squat' || normName === 'sentadilla libre con barra') {
     return 'sentadilla';
   }
-  if (normName === 'press de banca' || normName === 'press banca' || normName === 'bench press' || normName === 'press de banca plano') {
+  if (normName === 'press de banca' || normName === 'press banca' || normName === 'bench press' || normName === 'press de banca plano' || normName === 'press banco plano con barra') {
     return 'press de banca';
   }
-  if (normName === 'peso muerto' || normName === 'peso muerto convencional' || normName === 'deadlift' || normName === 'peso muerto sumo') {
+  if (normName === 'peso muerto' || normName === 'peso muerto convencional' || normName === 'deadlift' || normName === 'peso muerto sumo' || normName === 'peso muerto rumano con barra') {
     return 'peso muerto';
   }
   // Fallback: partial matching for flexibility, but only for clear compound names
   if (normName.includes('sentadilla') && !normName.includes('búlgar') && !normName.includes('bulgar')) {
     return 'sentadilla';
   }
-  if ((normName.includes('press') && normName.includes('banca')) || normName.includes('bench')) {
+  if ((normName.includes('press') && (normName.includes('banca') || normName.includes('banco'))) || normName.includes('bench')) {
     return 'press de banca';
   }
   if (normName.includes('peso muerto') || normName.includes('deadlift')) {

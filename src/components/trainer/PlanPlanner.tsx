@@ -5,7 +5,7 @@ import { useSupabase } from '../../context/SupabaseContext';
 import { Profile, PlanData, TrainingDay, Exercise, GlobalVariable, EjercicioGlobal, PeriodizationConfig } from '../../types/database.types';
 import Toast from '../common/Toast';
 import { InfoTooltip } from '../common/InfoTooltip';
-import { getWeakPointCorrection } from '../../lib/periodizationEngine';
+import { getWeakPointCorrection, getPrescribedLoad, mapExerciseToLiftKey } from '../../lib/periodizationEngine';
 import { PeriodizationHelpModal } from '../common/PeriodizationHelpModal';
 import { evaluateVolumeStatus, getThresholdsForMuscleGroup } from '../../lib/volumeThresholds';
 import { VolumeThresholdsTable } from './VolumeThresholdsTable';
@@ -78,6 +78,59 @@ export const PlanPlanner: React.FC = () => {
   const [trackerRules, setTrackerRules] = useState<any[]>([]);
   const [periodizationConfig, setPeriodizationConfig] = useState<PeriodizationConfig | undefined>(undefined);
   const [weeklyTargets, setWeeklyTargets] = useState<Record<string, number>>({});
+
+  // Recalcular pesos sugeridos según marcas 1RM
+  const recalculatePlanWeights = (days: TrainingDay[], marcas: Record<string, number>): TrainingDay[] => {
+    return days.map(day => ({
+      ...day,
+      exercises: day.exercises.map(ex => {
+        if (!ex.nombre) return ex;
+        const normName = ex.nombre.toLowerCase().trim();
+        
+        // Buscar 1RM para este ejercicio
+        let oneRM = marcas[normName];
+        if (!oneRM) {
+          const alias = mapExerciseToLiftKey(normName);
+          if (alias) oneRM = marcas[alias];
+        }
+        
+        // Si hay 1RM, calcular peso sugerido
+        if (oneRM && oneRM > 0) {
+          const repsStr = ex.variables?.['repeticiones'] || '';
+          const repsMatch = repsStr.match(/\d+/);
+          const reps = repsMatch ? parseInt(repsMatch[0], 10) : 0;
+          
+          const rirStr = ex.variables?.['rir'] || '0';
+          const rirMatch = rirStr.match(/\d+/);
+          const targetRIR = rirMatch ? parseFloat(rirMatch[0]) : 0;
+          
+          if (reps > 0) {
+            const newLoad = getPrescribedLoad(oneRM, reps, targetRIR);
+            if (newLoad > 0) {
+              return {
+                ...ex,
+                variables: {
+                  ...ex.variables,
+                  'peso': `🤖 ${newLoad} kg`
+                }
+              };
+            }
+          }
+        } else {
+          // Si no hay 1RM o es 0, y el peso era uno autogenerado anteriormente, lo limpiamos
+          if (ex.variables && ex.variables['peso'] && ex.variables['peso'].startsWith('🤖')) {
+            const updatedVars = { ...ex.variables };
+            delete updatedVars['peso'];
+            return {
+              ...ex,
+              variables: updatedVars
+            };
+          }
+        }
+        return ex;
+      })
+    }));
+  };
 
   // Estado para el menú de automatización de progresión (Smart Block Builder)
   const [autoProgExId, setAutoProgExId] = useState<string | null>(null);
@@ -2298,13 +2351,15 @@ export const PlanPlanner: React.FC = () => {
                                     value={current1RM || ''}
                                     onChange={(e) => {
                                       const val = parseFloat(e.target.value) || 0;
+                                      const updatedMarcas = { ...(periodizationConfig?.marcas_1rm || {}), [lift]: val };
+                                      if (val === 0) delete updatedMarcas[lift];
+                                      
                                       setPeriodizationConfig(prev => {
                                         if (!prev) return prev;
-                                        const updatedMarcas = { ...prev.marcas_1rm, [lift]: val };
-                                        // Remove entries with 0 to keep the dictionary clean
-                                        if (val === 0) delete updatedMarcas[lift];
                                         return { ...prev, marcas_1rm: updatedMarcas };
                                       });
+                                      
+                                      setTrainingDays(prevDays => recalculatePlanWeights(prevDays, updatedMarcas));
                                     }}
                                     style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.1)', color: 'white', padding: '4px 0', fontSize: '12px', outline: 'none' }}
                                   />
@@ -3857,7 +3912,8 @@ export const PlanPlanner: React.FC = () => {
               })
             }));
             
-            setTrainingDays(enrichedDays);
+            const finalDays = recalculatePlanWeights(enrichedDays, periodizationConfig?.marcas_1rm || {});
+            setTrainingDays(finalDays);
             
             if (recommendedSchedule && recommendedSchedule.length === 7) {
               const newMapping: Record<string, number> = {};
