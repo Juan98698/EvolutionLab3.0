@@ -1,12 +1,19 @@
 import React, { useMemo } from 'react';
 import { TrainingDay } from '../../types/database.types';
-import { getThresholdsForMuscleGroup, AthleteLevel } from '../../lib/volumeThresholds';
-import { 
-  ALL_MOVEMENT_PATTERNS, 
-  getStrengthThreshold, 
-  evaluateStrengthVolume, 
-  detectPatternFromExerciseName 
+import {
+  getThresholdsForMuscleGroup,
+  THRESHOLDS_INTERMEDIO,
+  AthleteLevel
+} from '../../lib/volumeThresholds';
+import {
+  ALL_MOVEMENT_PATTERNS,
+  getStrengthThreshold,
+  evaluateStrengthVolume,
+  detectPatternFromExerciseName
 } from '../../lib/strengthThresholds';
+
+// ─── Músculos disponibles derivados de la tabla base (única fuente de verdad) ─
+const ALL_MUSCLES = Object.keys(THRESHOLDS_INTERMEDIO).filter(k => k !== 'General');
 
 interface VolumeTrackerProps {
   trainingDays: TrainingDay[];
@@ -14,6 +21,17 @@ interface VolumeTrackerProps {
   athleteLevel: AthleteLevel;
   blockObjective: 'hipertrofia' | 'fuerza' | 'mantenimiento';
 }
+
+// ─── Mejora 1: función unificada para parsear series y reps ──────────────────
+const parseNumericField = (str: string | undefined): number => {
+  if (!str) return 0;
+  const clean = str.trim();
+  if (!clean) return 0;
+  const range = clean.match(/^(\d+)\s*-\s*(\d+)$/);
+  if (range) return (parseInt(range[1], 10) + parseInt(range[2], 10)) / 2;
+  const single = clean.match(/^(\d+)/);
+  return single ? parseInt(single[1], 10) : 0;
+};
 
 export const VolumeTracker: React.FC<VolumeTrackerProps> = ({
   trainingDays,
@@ -23,175 +41,142 @@ export const VolumeTracker: React.FC<VolumeTrackerProps> = ({
 }) => {
   const isStrength = blockObjective === 'fuerza';
 
-  // Helper to parse volume series
-  const parseSeries = (seriesStr: string | undefined): number => {
-    if (!seriesStr) return 0;
-    const cleanStr = seriesStr.trim();
-    if (!cleanStr) return 0;
-    const rangeMatch = cleanStr.match(/^(\d+)\s*-\s*(\d+)$/);
-    if (rangeMatch) {
-      const min = parseInt(rangeMatch[1], 10);
-      const max = parseInt(rangeMatch[2], 10);
-      return (min + max) / 2;
-    }
-    const singleMatch = cleanStr.match(/^(\d+)/);
-    if (singleMatch) {
-      return parseInt(singleMatch[1], 10);
-    }
-    return 0;
-  };
+  // ─── Serialización estable para detectar cambios profundos ──────────────────
+  // React compara por referencia — si el array es el mismo objeto aunque
+  // cambien las variables anidadas, useMemo no recalcula. El key fuerza el recálculo.
+  const trainingDaysKey = useMemo(() =>
+    JSON.stringify(trainingDays.map(d => d.exercises?.map(ex => ({
+      n: ex.nombre,
+      s: ex.variables?.['series de trabajo'] || ex.variables?.['series'],
+      r: ex.variables?.['repeticiones']       || ex.variables?.['reps'],
+      g: (ex as any).grupo_muscular,
+    }))))
+  , [trainingDays]);
 
-  // Helper to parse volume reps
-  const parseReps = (repsStr: string | undefined): number => {
-    if (!repsStr) return 0;
-    const cleanStr = repsStr.trim();
-    if (!cleanStr) return 0;
-    const rangeMatch = cleanStr.match(/^(\d+)\s*-\s*(\d+)$/);
-    if (rangeMatch) {
-      const min = parseInt(rangeMatch[1], 10);
-      const max = parseInt(rangeMatch[2], 10);
-      return (min + max) / 2;
-    }
-    const singleMatch = cleanStr.match(/^(\d+)/);
-    if (singleMatch) {
-      return parseInt(singleMatch[1], 10);
-    }
-    return 0;
-  };
-
-  // Sumar volumen total de TODA la semana por grupo muscular (Hipertrofia)
+  // ─── Acumulador hipertrofia: series/semana por grupo muscular ────────────────
   const weeklyVolumeData = useMemo(() => {
-    const volumeMap: Record<string, number> = {};
-    if (trainingDays && Array.isArray(trainingDays)) {
-      trainingDays.forEach(day => {
-        if (day && Array.isArray(day.exercises)) {
-          day.exercises.forEach(ex => {
-            const gm = getThresholdsForMuscleGroup(
-              (ex as any).grupo_muscular || '',
-              athleteLevel,
-              blockObjective
-            ).gm;
-            const seriesStr = ex.variables?.['series de trabajo'] || ex.variables?.['series'] || '';
-            const series = parseSeries(seriesStr);
-            volumeMap[gm] = (volumeMap[gm] || 0) + series;
-          });
-        }
+    const map: Record<string, number> = {};
+    trainingDays.forEach(day => {
+      day.exercises?.forEach(ex => {
+        const gm = getThresholdsForMuscleGroup(
+          (ex as any).grupo_muscular || '', athleteLevel, blockObjective
+        ).gm;
+        const series = parseNumericField(
+          ex.variables?.['series de trabajo'] || ex.variables?.['series']
+        );
+        map[gm] = (map[gm] || 0) + series;
       });
-    }
-    return volumeMap;
-  }, [trainingDays, athleteLevel, blockObjective]);
+    });
+    return map;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trainingDaysKey, athleteLevel, blockObjective]);
 
-  // Sumar volumen total de Fuerza de TODA la semana por patrón (NL = series * reps)
+  // ─── Acumulador fuerza: NL/semana por patrón de movimiento ──────────────────
   const weeklyNLData = useMemo(() => {
-    const nlMap: Record<string, number> = {};
-    if (trainingDays && Array.isArray(trainingDays)) {
-      trainingDays.forEach(day => {
-        if (day && Array.isArray(day.exercises)) {
-          day.exercises.forEach(ex => {
-            const pattern = detectPatternFromExerciseName(ex.nombre || '');
-            if (pattern) {
-              const seriesStr = ex.variables?.['series de trabajo'] || ex.variables?.['series'] || '';
-              const repsStr = ex.variables?.['repeticiones'] || ex.variables?.['reps'] || '';
-              const series = parseSeries(seriesStr);
-              const reps = parseReps(repsStr);
-              nlMap[pattern] = (nlMap[pattern] || 0) + (series * reps);
-            }
-          });
-        }
+    const map: Record<string, number> = {};
+    trainingDays.forEach(day => {
+      day.exercises?.forEach(ex => {
+        const pattern = detectPatternFromExerciseName(ex.nombre || '');
+        if (!pattern) return;
+        const series = parseNumericField(
+          ex.variables?.['series de trabajo'] || ex.variables?.['series']
+        );
+        const reps = parseNumericField(
+          ex.variables?.['repeticiones'] || ex.variables?.['reps']
+        );
+        map[pattern] = (map[pattern] || 0) + series * reps;
       });
-    }
-    return nlMap;
-  }, [trainingDays]);
+    });
+    return map;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [trainingDaysKey]);
 
-  // Filtrar ítems activos a mostrar en la barra del tracker
+  // ─── Items del tracker ───────────────────────────────────────────────────────
   const trackerItems = useMemo(() => {
     if (isStrength) {
-      return ALL_MOVEMENT_PATTERNS.filter(pattern => {
-        const current = weeklyNLData[pattern] || 0;
-        const target = weeklyTargets[pattern] || 0;
-        return current > 0 || target > 0;
-      }).map(pattern => {
-        const current = weeklyNLData[pattern] || 0;
-        const threshold = getStrengthThreshold(pattern, athleteLevel);
-        const target = (weeklyTargets[pattern] && weeklyTargets[pattern] > 0)
-          ? weeklyTargets[pattern]
-          : threshold.mrv;
+      return ALL_MOVEMENT_PATTERNS
+        .filter(pattern => (weeklyNLData[pattern] || 0) > 0 || (weeklyTargets[pattern] || 0) > 0)
+        .map(pattern => {
+          const current   = weeklyNLData[pattern] || 0;
+          const threshold = getStrengthThreshold(pattern, athleteLevel);
 
-        const status = evaluateStrengthVolume(pattern, current, athleteLevel).status;
+          // Mejora 2: target por defecto es MAVmax, no MRV
+          // El MRV es el límite de seguridad, no el objetivo.
+          const target = (weeklyTargets[pattern] && weeklyTargets[pattern] > 0)
+            ? weeklyTargets[pattern]
+            : threshold.mavMax;
 
-        let borderColor = 'rgba(255, 255, 255, 0.1)';
-        let textColor = '#d1d5db';
-        let isOver = false;
+          const status = evaluateStrengthVolume(pattern, current, athleteLevel).status;
 
-        if (status === 'danger') {
-          borderColor = '#ef4444'; // Red
-          textColor = '#ef4444';
-          isOver = true;
-        } else if (status === 'optimal') {
-          borderColor = '#10b981'; // Green
-          textColor = '#10b981';
-        } else if (status === 'warning') {
-          borderColor = '#f97316'; // Orange
-          textColor = '#f97316';
-        } else if (current > 0) {
-          borderColor = '#fbbf24'; // Yellow
-          textColor = '#fbbf24';
-        }
+          const colorMap = {
+            danger:  { border: '#ef4444', text: '#ef4444' },
+            optimal: { border: '#10b981', text: '#10b981' },
+            warning: { border: '#f97316', text: '#f97316' },
+            low:     current > 0
+              ? { border: '#fbbf24', text: '#fbbf24' }
+              : { border: 'rgba(255,255,255,0.1)', text: '#d1d5db' },
+          };
+          const colors = colorMap[status] ?? colorMap.low;
 
-        return {
-          key: pattern,
-          label: threshold.label,
-          current,
-          target,
-          borderColor,
-          textColor,
-          isOver,
-          unit: 'NL'
-        };
-      });
+          // Mejora 3: barra de progreso — progreso relativo al target, cap en MRV
+          const progressPct = Math.min((current / threshold.mrv) * 100, 100);
+          const targetPct   = Math.min((target  / threshold.mrv) * 100, 100);
+
+          return {
+            key: pattern,
+            label: threshold.label,
+            current,
+            target,
+            mrv: threshold.mrv,
+            progressPct,
+            targetPct,
+            borderColor: colors.border,
+            textColor:   colors.text,
+            isOver: status === 'danger',
+            unit: 'NL',
+          };
+        });
     } else {
-      const ALL_MUSCLES = ['Pecho', 'Espalda', 'Cuádriceps', 'Isquiosurales', 'Hombros', 'Bíceps', 'Tríceps', 'Glúteos', 'Pantorrillas', 'Core'];
-      return ALL_MUSCLES.filter(muscle => {
-        const current = weeklyVolumeData[muscle] || 0;
-        const target = weeklyTargets[muscle] || 0;
-        return current > 0 || target > 0;
-      }).map(muscle => {
-        const current = weeklyVolumeData[muscle] || 0;
-        const thresholds = getThresholdsForMuscleGroup(muscle, athleteLevel, blockObjective);
-        const target = (weeklyTargets[muscle] && weeklyTargets[muscle] > 0)
-          ? weeklyTargets[muscle]
-          : thresholds.mrv;
+      // Mejora 2 aplicada también a hipertrofia: target por defecto = mavMax
+      return ALL_MUSCLES
+        .filter(muscle => (weeklyVolumeData[muscle] || 0) > 0 || (weeklyTargets[muscle] || 0) > 0)
+        .map(muscle => {
+          const current    = weeklyVolumeData[muscle] || 0;
+          const thresholds = getThresholdsForMuscleGroup(muscle, athleteLevel, blockObjective);
 
-        const isOver = current > target;
-        const isExact = (weeklyTargets[muscle] && weeklyTargets[muscle] > 0)
-          ? current === target
-          : current >= thresholds.mavMin && current <= thresholds.mavMax;
+          const target = (weeklyTargets[muscle] && weeklyTargets[muscle] > 0)
+            ? weeklyTargets[muscle]
+            : thresholds.mavMax;
 
-        let borderColor = 'rgba(255, 255, 255, 0.1)';
-        let textColor = '#d1d5db';
+          const isOver  = current > thresholds.mrv;
+          const isExact = weeklyTargets[muscle] > 0
+            ? current === target
+            : current >= thresholds.mavMin && current <= thresholds.mavMax;
 
-        if (isOver) {
-          borderColor = '#ef4444'; // Red
-          textColor = '#ef4444';
-        } else if (isExact) {
-          borderColor = '#10b981'; // Green
-          textColor = '#10b981';
-        } else if (current > 0) {
-          borderColor = '#fbbf24'; // Yellow
-          textColor = '#fbbf24';
-        }
+          let borderColor = 'rgba(255,255,255,0.1)';
+          let textColor   = '#d1d5db';
+          if (isOver)        { borderColor = '#ef4444'; textColor = '#ef4444'; }
+          else if (isExact)  { borderColor = '#10b981'; textColor = '#10b981'; }
+          else if (current > 0) { borderColor = '#fbbf24'; textColor = '#fbbf24'; }
 
-        return {
-          key: muscle,
-          label: muscle,
-          current,
-          target,
-          borderColor,
-          textColor,
-          isOver,
-          unit: 'series'
-        };
-      });
+          // Mejora 3: barra de progreso
+          const progressPct = Math.min((current / thresholds.mrv) * 100, 100);
+          const targetPct   = Math.min((target  / thresholds.mrv) * 100, 100);
+
+          return {
+            key: muscle,
+            label: muscle,
+            current,
+            target,
+            mrv: thresholds.mrv,
+            progressPct,
+            targetPct,
+            borderColor,
+            textColor,
+            isOver,
+            unit: 'series',
+          };
+        });
     }
   }, [isStrength, weeklyVolumeData, weeklyNLData, weeklyTargets, athleteLevel, blockObjective]);
 
@@ -200,27 +185,79 @@ export const VolumeTracker: React.FC<VolumeTrackerProps> = ({
   return (
     <div style={{
       position: 'sticky', top: '70px', zIndex: 990,
-      background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '16px',
-      padding: '12px 16px', marginBottom: '24px', boxShadow: '0 8px 32px 0 var(--theme-glow)',
+      background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)',
+      borderRadius: '16px', padding: '12px 16px', marginBottom: '24px',
+      boxShadow: '0 8px 32px 0 var(--theme-glow)',
       backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)'
     }}>
-      <h3 style={{ margin: '0 0 8px 0', fontSize: '13px', color: 'var(--theme-primary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <span>📊</span> {isStrength ? 'Tracker de Fuerza (NL por Patrón)' : 'Tracker de Volumen (Series por Músculo)'}
+      <h3 style={{
+        margin: '0 0 10px 0', fontSize: '13px', color: 'var(--theme-primary)',
+        textTransform: 'uppercase', letterSpacing: '0.05em',
+        display: 'flex', alignItems: 'center', gap: '8px'
+      }}>
+        <span>📊</span>
+        {isStrength ? 'Tracker de Fuerza (NL por Patrón)' : 'Tracker de Volumen (Series por Músculo)'}
       </h3>
-      <div style={{ display: 'flex', gap: '16px', overflowX: 'auto', paddingBottom: '8px' }}>
+
+      <div style={{ display: 'flex', gap: '12px', overflowX: 'auto', paddingBottom: '8px' }}>
         {trackerItems.map(item => (
           <div key={item.key} style={{
-            background: 'rgba(0,0,0,0.2)', border: `1px solid ${item.borderColor}`,
-            borderRadius: '8px', padding: '8px 12px', minWidth: '120px',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px',
-            position: 'relative'
+            background: 'rgba(0,0,0,0.2)',
+            border: `1px solid ${item.borderColor}`,
+            borderRadius: '8px', padding: '8px 12px', minWidth: '130px',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
+            position: 'relative', flexShrink: 0
           }}>
-            <span style={{ fontSize: '11px', fontWeight: 'bold', color: '#9ca3af', textAlign: 'center', whiteSpace: 'nowrap' }}>
+            {/* Nombre del patrón / músculo */}
+            <span style={{
+              fontSize: '11px', fontWeight: 'bold', color: '#9ca3af',
+              textAlign: 'center', whiteSpace: 'nowrap'
+            }}>
               {item.label}
             </span>
-            <span style={{ fontSize: '18px', fontWeight: '900', color: item.textColor }}>
-              {item.current} <span style={{ fontSize: '13px', color: '#6b7280', fontWeight: 'normal' }}>/ {item.target} {item.unit}</span>
+
+            {/* Número actual / target */}
+            <span style={{ fontSize: '18px', fontWeight: '900', color: item.textColor, lineHeight: 1 }}>
+              {item.current}
+              <span style={{ fontSize: '12px', color: '#6b7280', fontWeight: 'normal' }}>
+                {' '}/ {item.target} {item.unit}
+              </span>
             </span>
+
+            {/* Mejora 3: barra de progreso ────────────────────────────────── */}
+            <div style={{
+              width: '100%', height: '4px', background: 'rgba(255,255,255,0.08)',
+              borderRadius: '9999px', overflow: 'visible', position: 'relative', marginTop: '2px'
+            }}>
+              {/* Marcador de target */}
+              <div style={{
+                position: 'absolute', top: '-3px',
+                left: `${item.targetPct}%`,
+                transform: 'translateX(-50%)',
+                width: '2px', height: '10px',
+                background: 'rgba(255,255,255,0.3)',
+                borderRadius: '1px'
+              }} />
+              {/* Barra de progreso actual */}
+              <div style={{
+                height: '100%', borderRadius: '9999px',
+                background: item.borderColor,
+                width: `${item.progressPct}%`,
+                transition: 'width 0.3s ease',
+                opacity: 0.85
+              }} />
+            </div>
+
+            {/* Label MRV a la derecha de la barra */}
+            <div style={{
+              width: '100%', display: 'flex', justifyContent: 'flex-end'
+            }}>
+              <span style={{ fontSize: '9px', color: '#4b5563' }}>
+                MRV {item.mrv}
+              </span>
+            </div>
+
+            {/* Badge excedido */}
             {item.isOver && (
               <div style={{
                 position: 'absolute', top: '-6px', right: '-6px',

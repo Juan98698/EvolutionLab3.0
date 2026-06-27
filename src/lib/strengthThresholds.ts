@@ -473,10 +473,13 @@ export const EXERCISE_TO_PATTERN: Record<string, MovementPattern> = {
 
   // Pull horizontal
   'remo barra': 'pull_horizontal',
+  'remo con barra': 'pull_horizontal',
   'remo pendlay': 'pull_horizontal',
   'remo yates': 'pull_horizontal',
   'remo cable': 'pull_horizontal',
+  'remo con cable': 'pull_horizontal',
   'remo mancuerna': 'pull_horizontal',
+  'remo con mancuerna': 'pull_horizontal',
   'remo en t': 'pull_horizontal',
   'chest supported row': 'pull_horizontal',
   'remo unilateral': 'pull_horizontal',
