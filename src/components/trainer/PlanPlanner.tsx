@@ -298,7 +298,7 @@ export const PlanPlanner: React.FC = () => {
       try {
         const { data, error } = await supabase
           .from('ejercicios_globales')
-          .select('nombre, grupo_muscular, imagen_url, descripcion')
+          .select('nombre, grupo_muscular, imagen_url, video_url, descripcion')
           .order('nombre');
         if (!error && data) {
           const normalized = (data as any[]).map((e: any) => ({
@@ -1154,7 +1154,7 @@ export const PlanPlanner: React.FC = () => {
           // Recargar catálogo global en el estado
           const { data: updatedCatalog } = await supabase
             .from('ejercicios_globales')
-            .select('nombre, grupo_muscular, imagen_url, descripcion')
+            .select('nombre, grupo_muscular, imagen_url, video_url, descripcion')
             .order('nombre');
           if (updatedCatalog) {
             setGlobalCatalog(updatedCatalog as EjercicioGlobal[]);
