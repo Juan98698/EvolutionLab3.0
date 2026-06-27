@@ -61,16 +61,16 @@ export interface StrengthThreshold {
 
 /**
  * PRINCIPIANTE
- * El sistema nervioso se adapta muy rápido con poco volumen.
- * Más NL → técnica se deteriora antes de que el SNC se adapte.
- * Prioridad: aprender el patrón con intensidad moderada-alta.
+ * Zona de intensidad 70-85% 1RM → multiplicador ~0.7–1.0.
+ * NL★ base: un set de 3x10 al 75% ≈ peso 0.7 → 21 NL★ brutos × 0.7 = ~15 NL★.
+ * Umbrales conservadores — el SNC principiante se satura rápido.
  */
 export const STRENGTH_THRESHOLDS_PRINCIPIANTE: Record<MovementPattern, StrengthThreshold> = {
   squat: {
     pattern: 'squat',
     label: 'Sentadilla',
     exampleExercises: ['Sentadilla trasera', 'Sentadilla goblet', 'Sentadilla frontal'],
-    mev: 6, mavMin: 9, mavMax: 15, mrv: 20,
+    mev: 5, mavMin: 8, mavMax: 13, mrv: 18,
     intensityZone: '70–85% 1RM',
     mrvSignals: [
       'Técnica se rompe antes de terminar la serie',
@@ -82,7 +82,7 @@ export const STRENGTH_THRESHOLDS_PRINCIPIANTE: Record<MovementPattern, StrengthT
     pattern: 'hinge',
     label: 'Bisagra de cadera',
     exampleExercises: ['Peso muerto convencional', 'RDL', 'Buenos días'],
-    mev: 6, mavMin: 9, mavMax: 12, mrv: 18,
+    mev: 4, mavMin: 6, mavMax: 10, mrv: 14,
     intensityZone: '70–85% 1RM',
     mrvSignals: [
       'Redondeo de espalda baja bajo carga',
@@ -94,7 +94,7 @@ export const STRENGTH_THRESHOLDS_PRINCIPIANTE: Record<MovementPattern, StrengthT
     pattern: 'push_horizontal',
     label: 'Empuje horizontal',
     exampleExercises: ['Press banca', 'Press inclinado barra', 'Fondos lastrados'],
-    mev: 6, mavMin: 9, mavMax: 15, mrv: 20,
+    mev: 5, mavMin: 8, mavMax: 13, mrv: 18,
     intensityZone: '75–85% 1RM',
     mrvSignals: [
       'Pérdida de arco o posición escapular',
@@ -106,7 +106,7 @@ export const STRENGTH_THRESHOLDS_PRINCIPIANTE: Record<MovementPattern, StrengthT
     pattern: 'push_vertical',
     label: 'Empuje vertical',
     exampleExercises: ['Press militar barra', 'Push press', 'Press Arnold mancuerna'],
-    mev: 4, mavMin: 6, mavMax: 10, mrv: 15,
+    mev: 3, mavMin: 5, mavMax: 8, mrv: 12,
     intensityZone: '70–80% 1RM',
     mrvSignals: [
       'Extensión excesiva de lumbar para completar el rep',
@@ -118,7 +118,7 @@ export const STRENGTH_THRESHOLDS_PRINCIPIANTE: Record<MovementPattern, StrengthT
     pattern: 'pull_horizontal',
     label: 'Jalón horizontal',
     exampleExercises: ['Remo barra', 'Remo cable sentado', 'Remo mancuerna'],
-    mev: 6, mavMin: 9, mavMax: 15, mrv: 20,
+    mev: 5, mavMin: 8, mavMax: 13, mrv: 18,
     intensityZone: '75–85% 1RM',
     mrvSignals: [
       'Exceso de momentum del torso para completar el rango',
@@ -130,7 +130,7 @@ export const STRENGTH_THRESHOLDS_PRINCIPIANTE: Record<MovementPattern, StrengthT
     pattern: 'pull_vertical',
     label: 'Jalón vertical',
     exampleExercises: ['Dominadas', 'Jalón al pecho', 'Pull-up lastrado'],
-    mev: 6, mavMin: 9, mavMax: 15, mrv: 20,
+    mev: 5, mavMin: 8, mavMax: 13, mrv: 18,
     intensityZone: '75–85% 1RM o BW+lastre',
     mrvSignals: [
       'Incapacidad de mantener depresión escapular',
@@ -142,7 +142,7 @@ export const STRENGTH_THRESHOLDS_PRINCIPIANTE: Record<MovementPattern, StrengthT
     pattern: 'core_transfer',
     label: 'Core de transferencia',
     exampleExercises: ['Plancha con lastre', 'Pallof press', 'Farmer carry'],
-    mev: 4, mavMin: 6, mavMax: 10, mrv: 15,
+    mev: 3, mavMin: 5, mavMax: 8, mrv: 12,
     intensityZone: 'RPE 7–8 (no aplica % 1RM)',
     mrvSignals: [
       'Pérdida de zona neutra lumbar durante el ejercicio',
@@ -153,16 +153,17 @@ export const STRENGTH_THRESHOLDS_PRINCIPIANTE: Record<MovementPattern, StrengthT
 
 /**
  * INTERMEDIO
- * SNC más eficiente, tolera más NL a alta intensidad.
- * Ya diferencia entre días pesados y días de volumen.
- * Zona MAV más amplia porque maneja mejor la fatiga acumulada.
+ * Zona 80–90% 1RM → multiplicador 1.0–1.5.
+ * Referencia DUP: 2 días de sentadilla (5x3 RIR3 + 5x4 RIR1) ≈ 15 + 30 = 45 NL★.
+ * MAV cubre programas DUP y bloques lineales de fuerza intermedios.
+ * MRV representa el límite neural antes de regresión de rendimiento.
  */
 export const STRENGTH_THRESHOLDS_INTERMEDIO: Record<MovementPattern, StrengthThreshold> = {
   squat: {
     pattern: 'squat',
     label: 'Sentadilla',
     exampleExercises: ['Sentadilla trasera', 'Sentadilla frontal', 'Box squat'],
-    mev: 10, mavMin: 15, mavMax: 24, mrv: 32,
+    mev: 12, mavMin: 20, mavMax: 38, mrv: 52,
     intensityZone: '80–90% 1RM',
     mrvSignals: [
       'Pérdida de velocidad de barra > 20% entre semanas sin deload',
@@ -174,7 +175,7 @@ export const STRENGTH_THRESHOLDS_INTERMEDIO: Record<MovementPattern, StrengthThr
     pattern: 'hinge',
     label: 'Bisagra de cadera',
     exampleExercises: ['Peso muerto convencional', 'Peso muerto sumo', 'RDL rumano'],
-    mev: 8, mavMin: 12, mavMax: 18, mrv: 24,
+    mev: 8, mavMin: 14, mavMax: 26, mrv: 36,
     intensityZone: '80–90% 1RM',
     mrvSignals: [
       'Sensación de "back pumps" crónicos post sesión',
@@ -186,7 +187,7 @@ export const STRENGTH_THRESHOLDS_INTERMEDIO: Record<MovementPattern, StrengthThr
     pattern: 'push_horizontal',
     label: 'Empuje horizontal',
     exampleExercises: ['Press banca', 'Press banca agarre cerrado', 'Dips lastrados'],
-    mev: 10, mavMin: 15, mavMax: 24, mrv: 32,
+    mev: 12, mavMin: 20, mavMax: 38, mrv: 52,
     intensityZone: '80–90% 1RM',
     mrvSignals: [
       'Sticking point aparece antes de lo usual en el rango medio',
@@ -198,7 +199,7 @@ export const STRENGTH_THRESHOLDS_INTERMEDIO: Record<MovementPattern, StrengthThr
     pattern: 'push_vertical',
     label: 'Empuje vertical',
     exampleExercises: ['Press militar', 'Push press', 'Press con pausa'],
-    mev: 6, mavMin: 10, mavMax: 16, mrv: 22,
+    mev: 7, mavMin: 12, mavMax: 22, mrv: 30,
     intensityZone: '78–88% 1RM',
     mrvSignals: [
       'Incapacidad de mantener overhead estable con cargas previas',
@@ -210,7 +211,7 @@ export const STRENGTH_THRESHOLDS_INTERMEDIO: Record<MovementPattern, StrengthThr
     pattern: 'pull_horizontal',
     label: 'Jalón horizontal',
     exampleExercises: ['Remo barra Pendlay', 'Remo cable unilateral', 'Remo en T'],
-    mev: 10, mavMin: 15, mavMax: 24, mrv: 32,
+    mev: 12, mavMin: 20, mavMax: 38, mrv: 52,
     intensityZone: '80–88% 1RM',
     mrvSignals: [
       'Falla de retracción escapular completa bajo cargas submáximas',
@@ -222,7 +223,7 @@ export const STRENGTH_THRESHOLDS_INTERMEDIO: Record<MovementPattern, StrengthThr
     pattern: 'pull_vertical',
     label: 'Jalón vertical',
     exampleExercises: ['Pull-up lastrado', 'Dominadas pronadas', 'Jalón al pecho con pausa'],
-    mev: 10, mavMin: 15, mavMax: 24, mrv: 32,
+    mev: 12, mavMin: 20, mavMax: 38, mrv: 52,
     intensityZone: '80–88% 1RM o BW+lastre',
     mrvSignals: [
       'Pérdida de rango inferior (no llega a barbilla-barra)',
@@ -234,7 +235,7 @@ export const STRENGTH_THRESHOLDS_INTERMEDIO: Record<MovementPattern, StrengthThr
     pattern: 'core_transfer',
     label: 'Core de transferencia',
     exampleExercises: ['Ab wheel de pie', 'Pallof press con resistencia', 'Farmer carry pesado'],
-    mev: 6, mavMin: 9, mavMax: 15, mrv: 20,
+    mev: 6, mavMin: 10, mavMax: 18, mrv: 26,
     intensityZone: 'RPE 7–9',
     mrvSignals: [
       'Pérdida de rigidez durante los levantamientos principales',
@@ -245,16 +246,17 @@ export const STRENGTH_THRESHOLDS_INTERMEDIO: Record<MovementPattern, StrengthThr
 
 /**
  * AVANZADO
- * El MRV no es mucho mayor al intermedio — la fatiga sistémica del SNC
- * crece proporcionalmente con el nivel. El MEV sube más que el MRV.
- * Necesitan más variación de intensidad y ejercicios de competencia.
+ * Zona 82–93% 1RM → multiplicador 1.2–1.5.
+ * MEV sube porque necesitan más estímulo para adaptarse.
+ * MRV no sube proporcionalmente — la fatiga del SNC a estas intensidades
+ * escala más rápido que la capacidad de adaptación.
  */
 export const STRENGTH_THRESHOLDS_AVANZADO: Record<MovementPattern, StrengthThreshold> = {
   squat: {
     pattern: 'squat',
     label: 'Sentadilla',
     exampleExercises: ['Sentadilla trasera', 'Sentadilla de competencia', 'Pausa squat'],
-    mev: 15, mavMin: 20, mavMax: 28, mrv: 35,
+    mev: 20, mavMin: 30, mavMax: 48, mrv: 62,
     intensityZone: '82–93% 1RM',
     mrvSignals: [
       'Velocity loss > 25% en sets de competencia sin cambio de RPE percibido',
@@ -267,7 +269,7 @@ export const STRENGTH_THRESHOLDS_AVANZADO: Record<MovementPattern, StrengthThres
     pattern: 'hinge',
     label: 'Bisagra de cadera',
     exampleExercises: ['Peso muerto convencional', 'Peso muerto sumo', 'Deficit deadlift'],
-    mev: 12, mavMin: 16, mavMax: 22, mrv: 28,
+    mev: 14, mavMin: 22, mavMax: 34, mrv: 44,
     intensityZone: '82–93% 1RM',
     mrvSignals: [
       'Pérdida de bloqueo de cadera limpio en el lockout',
@@ -279,7 +281,7 @@ export const STRENGTH_THRESHOLDS_AVANZADO: Record<MovementPattern, StrengthThres
     pattern: 'push_horizontal',
     label: 'Empuje horizontal',
     exampleExercises: ['Press banca', 'Press banca con bandas', 'Board press'],
-    mev: 15, mavMin: 20, mavMax: 28, mrv: 35,
+    mev: 20, mavMin: 30, mavMax: 48, mrv: 62,
     intensityZone: '82–93% 1RM',
     mrvSignals: [
       'Asimetría de carga derecha/izquierda perceptible al atleta',
@@ -291,7 +293,7 @@ export const STRENGTH_THRESHOLDS_AVANZADO: Record<MovementPattern, StrengthThres
     pattern: 'push_vertical',
     label: 'Empuje vertical',
     exampleExercises: ['Press militar', 'Press con bandas', 'Jerk de posición'],
-    mev: 10, mavMin: 14, mavMax: 20, mrv: 26,
+    mev: 12, mavMin: 18, mavMax: 28, mrv: 38,
     intensityZone: '80–90% 1RM',
     mrvSignals: [
       'Incapacidad de mantener el bar path vertical bajo cargas conocidas',
@@ -303,7 +305,7 @@ export const STRENGTH_THRESHOLDS_AVANZADO: Record<MovementPattern, StrengthThres
     pattern: 'pull_horizontal',
     label: 'Jalón horizontal',
     exampleExercises: ['Remo Pendlay pesado', 'Remo yates', 'Chest supported row'],
-    mev: 15, mavMin: 20, mavMax: 28, mrv: 35,
+    mev: 20, mavMin: 30, mavMax: 48, mrv: 62,
     intensityZone: '82–90% 1RM',
     mrvSignals: [
       'Compensación excesiva de lumbar (más de 30° de oscilación del torso)',
@@ -315,7 +317,7 @@ export const STRENGTH_THRESHOLDS_AVANZADO: Record<MovementPattern, StrengthThres
     pattern: 'pull_vertical',
     label: 'Jalón vertical',
     exampleExercises: ['Pull-up con lastre máximo', 'Dominadas con pausa', 'Archer pull-up'],
-    mev: 15, mavMin: 20, mavMax: 28, mrv: 35,
+    mev: 20, mavMin: 30, mavMax: 48, mrv: 62,
     intensityZone: '82–90% 1RM o BW+lastre',
     mrvSignals: [
       'Falta de depresión escapular activa al inicio del pull',
@@ -327,7 +329,7 @@ export const STRENGTH_THRESHOLDS_AVANZADO: Record<MovementPattern, StrengthThres
     pattern: 'core_transfer',
     label: 'Core de transferencia',
     exampleExercises: ['Ab wheel de pie con lastre', 'Copenhagen plank', 'Suitcase carry'],
-    mev: 9, mavMin: 12, mavMax: 18, mrv: 24,
+    mev: 10, mavMin: 16, mavMax: 26, mrv: 34,
     intensityZone: 'RPE 8–9',
     mrvSignals: [
       'Pérdida de rigidez lumbar durante los levantamientos principales bajo cargas sub-máximas',

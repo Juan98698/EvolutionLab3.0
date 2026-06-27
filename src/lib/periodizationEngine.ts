@@ -20,7 +20,30 @@ import {
   MovementPattern,
 } from './strengthThresholds';
 
-// ─── Constants ───────────────────────────────────────────────────────────────
+// ─── Strength NL weighting (Opción B) ────────────────────────────────────────
+// Pondera NL por intensidad estimada desde RIR, igual que VolumeTracker.
+// Mantiene coherencia entre lo que el tracker muestra y lo que el motor chequea.
+
+const estimateIntensityPct = (reps: number, rir: number): number => {
+  const totalReps = reps + rir;
+  if (totalReps <= 0) return 80;
+  return Math.round(100 / (1 + totalReps * 0.0333));
+};
+
+const getNLWeight = (intensityPct: number): number => {
+  if (intensityPct >= 90) return 1.5;
+  if (intensityPct >= 85) return 1.2;
+  if (intensityPct >= 80) return 1.0;
+  if (intensityPct >= 70) return 0.7;
+  return 0.5;
+};
+
+const calcWeightedNL = (sets: number, reps: number, rir: number | null): number => {
+  if (rir === null || reps === 0) return sets * reps;
+  const intensity = estimateIntensityPct(reps, rir);
+  const weight    = getNLWeight(intensity);
+  return Math.round(sets * reps * weight * 10) / 10;
+};
 const BRZYCKI_MAX_REPS = 36;           // Safe upper limit for Brzycki formula
 const MAX_SETS_PER_EXERCISE = 8;       // MRV ceiling per exercise
 const MIN_SETS_DELOAD = 2;             // Minimum sets during a deload week
@@ -346,11 +369,15 @@ export const autoRegulatePlanForNextWeek = (
         const reps = repsMatch ? parseInt(repsMatch[0], 10) : 5;
 
         if (isStrengthBlock) {
-          // Fuerza: acumulamos NL por patrón de movimiento
-          const pattern = (ex.variables?.['patron_movimiento'] as MovementPattern) || detectPatternFromExerciseName((ex as any).nombre || '');
+          // Fuerza: acumulamos NL ponderados por patrón de movimiento
+          const pattern = detectPatternFromExerciseName((ex as any).nombre || '');
           if (pattern) {
-            const nl = sets * reps;
-            weeklyNLMap[pattern] = (weeklyNLMap[pattern] || 0) + nl;
+            const rirRaw  = ex.variables?.['rir'];
+            const rirVal  = (rirRaw === undefined || rirRaw === '')
+              ? null
+              : (parseInt(rirRaw.match(/\d+/)?.[0] || '2', 10));
+            const weightedNL = calcWeightedNL(sets, reps, rirVal);
+            weeklyNLMap[pattern] = Math.round(((weeklyNLMap[pattern] || 0) + weightedNL) * 10) / 10;
           }
         } else {
           // Hipertrofia/mantenimiento: acumulamos series por grupo muscular
@@ -395,23 +422,27 @@ export const autoRegulatePlanForNextWeek = (
 
       if (nextSets > currentSets) {
         if (isStrengthBlock) {
-          // ── Fuerza: chequeo MRV por patrón de movimiento (NL) ─────────────
-          const pattern = (foundEx.variables?.['patron_movimiento'] as MovementPattern) || detectPatternFromExerciseName(foundEx.nombre || '');
+          // ── Fuerza: chequeo MRV con NL ponderados ────────────────────────
+          const pattern = detectPatternFromExerciseName(foundEx.nombre || '');
           if (pattern) {
             const repsStr   = foundEx.variables?.['repeticiones'] || '5';
             const repsMatch = repsStr.match(/\d+/);
             const reps      = repsMatch ? parseInt(repsMatch[0], 10) : 5;
-            const currentNL = weeklyNLMap[pattern] || 0;
-            const addedNL   = (nextSets - currentSets) * reps;
-            const threshold = getStrengthThreshold(pattern, nivel);
+            const rirRaw    = foundEx.variables?.['rir'];
+            const rirVal    = (rirRaw === undefined || rirRaw === '')
+              ? null
+              : (parseInt(rirRaw.match(/\d+/)?.[0] || '2', 10));
+            const currentNL  = weeklyNLMap[pattern] || 0;
+            const addedNL    = calcWeightedNL(nextSets - currentSets, reps, rirVal);
+            const threshold  = getStrengthThreshold(pattern, nivel);
 
             if (currentNL + addedNL > threshold.mrv) {
               finalSets  = currentSets;
               finalNotes = `MRV de fuerza alcanzado para ${threshold.label} (${nivel}): `
-                + `${currentNL} NL actuales ≥ ${threshold.mrv} NL/semana. `
+                + `${currentNL} NL★ actuales ≥ ${threshold.mrv} NL★/semana. `
                 + `No se incrementan series. Señales a monitorear: ${threshold.mrvSignals[0]}.`;
             } else {
-              weeklyNLMap[pattern] = currentNL + addedNL;
+              weeklyNLMap[pattern] = Math.round((currentNL + addedNL) * 10) / 10;
             }
           }
         } else {
@@ -561,7 +592,7 @@ export const evaluateStrengthPlanVolume = (
 
   plan.trainingDays?.forEach(day => {
     day.exercises?.forEach(ex => {
-      const pattern = (ex.variables?.['patron_movimiento'] as MovementPattern) || detectPatternFromExerciseName((ex as any).nombre || '');
+      const pattern = detectPatternFromExerciseName((ex as any).nombre || '');
       if (!pattern) return;
 
       const setsStr  = ex.variables?.['series de trabajo'] || ex.variables?.['series'] || '3';
