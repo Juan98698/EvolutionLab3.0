@@ -3,6 +3,7 @@ import { AthleteLevel, BlockObjective } from '../../lib/volumeThresholds';
 import { ProtocolTemplate, getProtocolsForContext } from '../../lib/protocols';
 import { TrainingDay } from '../../types/database.types';
 import { detectPatternFromExerciseName } from '../../lib/strengthThresholds';
+import { supabase } from '../../lib/supabaseClient';
 
 interface Props {
   isOpen: boolean;
@@ -14,42 +15,107 @@ interface Props {
 
 export function ProtocolSelectorModal({ isOpen, onClose, objective, level, onApplyProtocol }: Props) {
   const [selectedProtocol, setSelectedProtocol] = useState<ProtocolTemplate | null>(null);
+  const [applying, setApplying] = useState(false);
 
   if (!isOpen) return null;
 
   const isStrengthBlock = objective === 'fuerza';
   const protocols = getProtocolsForContext(objective, level);
 
-  const handleApply = () => {
+  const handleApply = async () => {
     if (!selectedProtocol) return;
+    setApplying(true);
 
+    // ── Paso 1: Resolver alias → nombre real via ejercicios_alias ───────────
+    // Recopila nombres únicos del protocolo y los busca en la tabla de alias.
+    const allNames = selectedProtocol.days
+      .flatMap(d => d.exercises.map(ex => ex.name.trim()));
+    const uniqueNames = [...new Set(allNames)];
+
+    // Mapa alias → nombre_real
+    let aliasMap: Record<string, string> = {};
+    try {
+      const { data: aliasData } = await supabase
+        .from('ejercicios_alias')
+        .select('alias, nombre_real')
+        .in('alias', uniqueNames);
+
+      if (aliasData) {
+        aliasData.forEach((row: any) => {
+          aliasMap[row.alias.trim()] = row.nombre_real.trim();
+        });
+      }
+    } catch (e) {
+      console.warn('No se pudo consultar ejercicios_alias:', e);
+    }
+
+    // ── Paso 2: Buscar ejercicios reales en ejercicios_globales ─────────────
+    // Usa los nombres_real resueltos para traer imagen, video, descripcion
+    // y movement_pattern de una sola query.
+    const nombresReales = Object.values(aliasMap);
+    let globalMap: Record<string, {
+      imagen_url?: string | null;
+      video_url?: string | null;
+      descripcion?: string | null;
+      movement_pattern?: string | null;
+    }> = {};
+
+    if (nombresReales.length > 0) {
+      try {
+        const { data: globalData } = await supabase
+          .from('ejercicios_globales')
+          .select('nombre, imagen_url, video_url, descripcion, movement_pattern')
+          .in('nombre', nombresReales);
+
+        if (globalData) {
+          globalData.forEach((row: any) => {
+            globalMap[row.nombre.trim()] = {
+              imagen_url:       row.imagen_url,
+              video_url:        row.video_url,
+              descripcion:      row.descripcion,
+              movement_pattern: row.movement_pattern,
+            };
+          });
+        }
+      } catch (e) {
+        console.warn('No se pudo enriquecer desde ejercicios_globales:', e);
+      }
+    }
+
+    // ── Paso 3: Construir trainingDays enriquecidos ──────────────────────────
     const trainingDays: TrainingDay[] = selectedProtocol.days.map((day, idx) => ({
       id: crypto.randomUUID(),
       dayNumber: idx + 1,
       name: day.label,
       exercises: day.exercises.map(ex => {
-        // En bloques de fuerza, detectamos el patrón de movimiento automáticamente
-        // y lo guardamos junto al ejercicio para que el motor pueda acumular NL correctamente.
-        const pattern = isStrengthBlock
-          ? (detectPatternFromExerciseName(ex.name) ?? undefined)
-          : undefined;
+        const nombreReal = aliasMap[ex.name.trim()];
+        const global     = nombreReal ? globalMap[nombreReal] : undefined;
+
+        // Patrón: primero desde la BD, luego detección por nombre como fallback
+        const pattern = global?.movement_pattern
+          || (isStrengthBlock ? (detectPatternFromExerciseName(ex.name) ?? undefined) : undefined);
 
         return {
-          id: crypto.randomUUID(),
-          nombre: ex.name,
-          grupo_muscular: ex.muscle,
-          ...(pattern ? { movement_pattern: pattern } : {}),
+          id:              crypto.randomUUID(),
+          nombre:          nombreReal || ex.name,  // nombre real si existe, genérico si no
+          nombre_original: ex.name,                // siempre guardamos el genérico como referencia
+          grupo_muscular:  ex.muscle,
+          ...(pattern             ? { movement_pattern: pattern }        : {}),
+          ...(global?.imagen_url  ? { image_url: global.imagen_url }     : {}),
+          ...(global?.video_url   ? { video_url: global.video_url }      : {}),
+          ...(global?.descripcion ? { description: global.descripcion }  : {}),
           variables: {
             'series de trabajo': ex.sets,
-            'repeticiones': ex.reps,
-            'rir': ex.rir,
-            'descanso': ex.rest
+            'repeticiones':      ex.reps,
+            'rir':               ex.rir,
+            'descanso':          ex.rest,
           }
         };
       })
     }));
 
     onApplyProtocol(trainingDays, selectedProtocol.recommendedSchedule);
+    setApplying(false);
     onClose();
   };
 
@@ -59,6 +125,7 @@ export function ProtocolSelectorModal({ isOpen, onClose, objective, level, onApp
       backgroundColor: 'rgba(0,0,0,0.8)', zIndex: 1000,
       display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px'
     }}>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       <div style={{
         background: '#111', width: '100%', maxWidth: '800px', maxHeight: '90vh',
         borderRadius: '12px', border: '1px solid #333', display: 'flex', flexDirection: 'column',
@@ -162,18 +229,25 @@ export function ProtocolSelectorModal({ isOpen, onClose, objective, level, onApp
           </button>
           <button
             onClick={handleApply}
-            disabled={!selectedProtocol}
+            disabled={!selectedProtocol || applying}
             style={{
               padding: '8px 24px', borderRadius: '6px', border: 'none',
-              background: selectedProtocol
+              background: selectedProtocol && !applying
                 ? (isStrengthBlock ? '#d97706' : '#0ea5e9')
                 : '#333',
-              color: selectedProtocol ? '#fff' : '#888',
-              cursor: selectedProtocol ? 'pointer' : 'not-allowed',
-              fontWeight: 'bold', fontSize: '14px', transition: 'background 0.2s'
+              color: selectedProtocol && !applying ? '#fff' : '#888',
+              cursor: selectedProtocol && !applying ? 'pointer' : 'not-allowed',
+              fontWeight: 'bold', fontSize: '14px', transition: 'background 0.2s',
+              display: 'flex', alignItems: 'center', gap: '8px'
             }}
           >
-            {isStrengthBlock ? 'Aplicar Protocolo de Fuerza' : 'Aplicar Protocolo al Plan'}
+            {applying && (
+              <span style={{ width: '14px', height: '14px', border: '2px solid #888', borderTopColor: '#fff', borderRadius: '50%', display: 'inline-block', animation: 'spin 0.7s linear infinite' }} />
+            )}
+            {applying
+              ? 'Buscando en biblioteca...'
+              : isStrengthBlock ? 'Aplicar Protocolo de Fuerza' : 'Aplicar Protocolo al Plan'
+            }
           </button>
         </div>
       </div>
