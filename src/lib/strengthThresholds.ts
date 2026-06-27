@@ -512,6 +512,7 @@ export const detectPatternFromExerciseName = (
   exerciseName: string
 ): MovementPattern | null => {
   const normalized = exerciseName.toLowerCase().trim();
+  if (!normalized) return null;
 
   // Búsqueda exacta primero
   if (EXERCISE_TO_PATTERN[normalized]) {
@@ -520,7 +521,7 @@ export const detectPatternFromExerciseName = (
 
   // Búsqueda parcial como fallback
   for (const [key, pattern] of Object.entries(EXERCISE_TO_PATTERN)) {
-    if (normalized.includes(key) || key.includes(normalized)) {
+    if (normalized.includes(key) || (normalized.length >= 2 && key.includes(normalized))) {
       return pattern;
     }
   }

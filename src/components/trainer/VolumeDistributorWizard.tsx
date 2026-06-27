@@ -126,7 +126,9 @@ export function VolumeDistributorWizard({ onClose, onApply, athleteLevel = 'inte
   const unit = isStrength ? 'NL' : 'series';
 
   /** Máximo del slider según el objetivo. */
-  const sliderMax = isStrength ? 40 : 45;
+  const sliderMax = isStrength
+    ? Math.max(...ALL_MOVEMENT_PATTERNS.map(p => getStrengthThreshold(p, athleteLevel).mrv)) + 5
+    : 45;
 
   /**
    * Aplica la distribución al plan.
@@ -145,9 +147,10 @@ export function VolumeDistributorWizard({ onClose, onApply, athleteLevel = 'inte
 
   // ── Color de estado por zona de umbral ──
   const getStatusColor = (val: number, mev: number, mavMin: number, mavMax: number, mrv: number): string => {
-    if (val < mev) return '#666';
-    if (val >= mavMin && val <= mavMax) return '#006400';
-    if (val >= mrv) return '#8B0000';
+    if (val === 0)                          return '#444';
+    if (val < mev)                          return '#666';
+    if (val >= mavMin && val <= mavMax)     return '#006400';
+    if (val >= mrv)                         return '#8B0000';
     return '#B8860B';
   };
 
@@ -545,12 +548,11 @@ export function VolumeDistributorWizard({ onClose, onApply, athleteLevel = 'inte
                   const statusColor = getStatusColor(val, threshold.mev, threshold.mavMin, threshold.mavMax, threshold.mrv);
 
                   let statusLabel = 'Bajo MEV';
-                  if (val >= threshold.mavMin && val <= threshold.mavMax) statusLabel = 'Zona Óptima (MAV)';
-                  else if (val >= threshold.mrv) statusLabel = '⚠️ MRV Superado';
+                  if (val === 0)                                            statusLabel = 'No programado';
+                  else if (val >= threshold.mavMin && val <= threshold.mavMax) statusLabel = 'Zona Óptima (MAV)';
+                  else if (val >= threshold.mrv)                           statusLabel = '⚠️ MRV Superado';
                   else if (val >= threshold.mev && val < threshold.mavMin) statusLabel = 'Entre MEV y MAV';
-                  else if (val > threshold.mavMax && val < threshold.mrv) statusLabel = 'Alto (cerca MRV)';
-
-                  if (val === 0) return null;
+                  else if (val > threshold.mavMax && val < threshold.mrv)  statusLabel = 'Alto (cerca MRV)';
 
                   return (
                     <div key={pattern} style={{

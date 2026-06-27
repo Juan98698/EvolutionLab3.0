@@ -11,6 +11,13 @@ import { evaluateVolumeStatus, getThresholdsForMuscleGroup } from '../../lib/vol
 import { VolumeThresholdsTable } from './VolumeThresholdsTable';
 import { VolumeDistributorWizard } from './VolumeDistributorWizard';
 import { ProtocolSelectorModal } from './ProtocolSelectorModal';
+import { VolumeTracker } from './VolumeTracker';
+import { 
+  getStrengthThreshold, 
+  evaluateStrengthVolume, 
+  detectPatternFromExerciseName, 
+  MovementPattern 
+} from '../../lib/strengthThresholds';
 import { GeneratedSession } from '../../lib/sessionDistributor';
 import {
   Chart as ChartJS,
@@ -367,6 +374,46 @@ export const PlanPlanner: React.FC = () => {
     }
     return 0;
   };
+
+  // Helper to parse volume reps
+  const parseReps = (repsStr: string | undefined): number => {
+    if (!repsStr) return 0;
+    const cleanStr = repsStr.trim();
+    if (!cleanStr) return 0;
+    const rangeMatch = cleanStr.match(/^(\d+)\s*-\s*(\d+)$/);
+    if (rangeMatch) {
+      const min = parseInt(rangeMatch[1], 10);
+      const max = parseInt(rangeMatch[2], 10);
+      return (min + max) / 2;
+    }
+    const singleMatch = cleanStr.match(/^(\d+)/);
+    if (singleMatch) {
+      return parseInt(singleMatch[1], 10);
+    }
+    return 0;
+  };
+
+  // Sumar volumen total de Fuerza de TODA la semana por patrón (NL = series * reps)
+  const weeklyNLData = useMemo(() => {
+    const nlMap: Record<string, number> = {};
+    if (trainingDays && Array.isArray(trainingDays)) {
+      trainingDays.forEach(day => {
+        if (day && Array.isArray(day.exercises)) {
+          day.exercises.forEach(ex => {
+            const pattern = detectPatternFromExerciseName(ex.nombre || '');
+            if (pattern) {
+              const seriesStr = ex.variables?.['series de trabajo'] || ex.variables?.['series'] || '';
+              const repsStr = ex.variables?.['repeticiones'] || ex.variables?.['reps'] || '';
+              const series = parseSeries(seriesStr);
+              const reps = parseReps(repsStr);
+              nlMap[pattern] = (nlMap[pattern] || 0) + (series * reps);
+            }
+          });
+        }
+      });
+    }
+    return nlMap;
+  }, [trainingDays]);
 
   // Calcular distribución de volumen (series efectivas) por grupo muscular en el día activo
   const activeDayVolumeData = useMemo(() => {
@@ -1671,68 +1718,12 @@ export const PlanPlanner: React.FC = () => {
         </div>
 
         {/* VOLUME TRACKER UI */}
-        {(Object.keys(weeklyVolumeData).length > 0 || Object.keys(weeklyTargets).length > 0) && (
-          <div style={{
-            position: 'sticky', top: '70px', zIndex: 990,
-            background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '16px',
-            padding: '12px 16px', marginBottom: '24px', boxShadow: '0 8px 32px 0 var(--theme-glow)',
-            backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)'
-          }}>
-            <h3 style={{ margin: '0 0 8px 0', fontSize: '13px', color: 'var(--theme-primary)', textTransform: 'uppercase', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span>📊</span> Tracker de Volumen (vs Objetivo)
-            </h3>
-            <div style={{ display: 'flex', gap: '16px', overflowX: 'auto', paddingBottom: '8px' }}>
-              {(() => {
-                const ALL_MUSCLES = ['Pecho', 'Espalda', 'Cuádriceps', 'Isquiosurales', 'Hombros', 'Bíceps', 'Tríceps', 'Glúteos', 'Pantorrillas', 'Core'];
-                const activeMuscles = ALL_MUSCLES.filter(m => (weeklyVolumeData[m] || 0) > 0 || (weeklyTargets[m] || 0) > 0);
-                return activeMuscles.map(muscle => {
-                  const current = weeklyVolumeData[muscle] || 0;
-                  const thresholds = getThresholdsForMuscleGroup(muscle, periodizationConfig?.nivel_atleta || 'intermedio', (periodizationConfig?.objetivo as any) || 'hipertrofia');
-                  const target = (weeklyTargets[muscle] && weeklyTargets[muscle] > 0) ? weeklyTargets[muscle] : thresholds.mrv;
-                  const isOver = current > target;
-                  const isExact = (weeklyTargets[muscle] && weeklyTargets[muscle] > 0) ? current === target : current >= thresholds.mavMin && current <= thresholds.mavMax;
-                
-                let borderColor = 'rgba(255, 255, 255, 0.1)';
-                let textColor = '#d1d5db';
-                if (isOver) {
-                  borderColor = '#ef4444'; // Red
-                  textColor = '#ef4444';
-                } else if (isExact) {
-                  borderColor = '#10b981'; // Green
-                  textColor = '#10b981';
-                } else if (current > 0) {
-                  borderColor = '#fbbf24'; // Yellow
-                  textColor = '#fbbf24';
-                }
-
-                return (
-                  <div key={muscle} style={{
-                    background: 'rgba(0,0,0,0.2)', border: `1px solid ${borderColor}`,
-                    borderRadius: '8px', padding: '8px 12px', minWidth: '110px',
-                    display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '2px',
-                    position: 'relative'
-                  }}>
-                    <span style={{ fontSize: '11px', fontWeight: 'bold', color: '#9ca3af' }}>{muscle}</span>
-                    <span style={{ fontSize: '18px', fontWeight: '900', color: textColor }}>
-                      {current} <span style={{ fontSize: '13px', color: '#6b7280', fontWeight: 'normal' }}>/ {target}</span>
-                    </span>
-                    {isOver && (
-                      <div style={{
-                        position: 'absolute', top: '-6px', right: '-6px',
-                        background: '#ef4444', color: '#fff', fontSize: '9px',
-                        padding: '2px 5px', borderRadius: '12px', fontWeight: 'bold',
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.5)'
-                      }}>
-                        ¡Excedido!
-                      </div>
-                    )}
-                  </div>
-                );
-              })
-            })()}
-            </div>
-          </div>
-        )}
+        <VolumeTracker
+          trainingDays={trainingDays}
+          weeklyTargets={weeklyTargets}
+          athleteLevel={periodizationConfig?.nivel_atleta || 'intermedio'}
+          blockObjective={periodizationConfig?.objetivo || 'hipertrofia'}
+        />
 
         {/* SECCIÓN 1: PORTADA / DETALLES DEL PLAN */}
         <div style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '16px', padding: '20px', marginBottom: '24px', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', boxShadow: '0 8px 32px 0 var(--theme-glow)' }}>
@@ -2540,47 +2531,91 @@ export const PlanPlanner: React.FC = () => {
                 {/* PANEL DE AUDITORÍA DE VOLUMEN MRV */}
                 <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '20px', marginTop: '10px' }}>
                   <h4 style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '11px', color: 'var(--theme-primary)', letterSpacing: '0.5px', marginBottom: '12px', marginTop: 0, textTransform: 'uppercase', display: 'flex', alignItems: 'center' }}>
-                    Auditoría de Volumen Semanal (Periodización RP)
-                    <InfoTooltip title="Auditoría MRV" body="Muestra la sumatoria de todas las series de trabajo programadas en la semana por grupo muscular. Si superas el MRV (Volumen Máximo Recuperable), el algoritmo bloqueará incrementos adicionales para prevenir el sobreentrenamiento." />
+                    {periodizationConfig?.objetivo === 'fuerza' ? 'Auditoría de Volumen de Fuerza Semanal (Patrones RP)' : 'Auditoría de Volumen Semanal (Periodización RP)'}
+                    <InfoTooltip 
+                      title={periodizationConfig?.objetivo === 'fuerza' ? 'Auditoría de Fuerza' : 'Auditoría MRV'} 
+                      body={periodizationConfig?.objetivo === 'fuerza' 
+                        ? 'Muestra la sumatoria de todos los NL (Número de Levantamientos = series * reps) programados en la semana por patrón de movimiento. Si superas el MRV, el algoritmo bloqueará incrementos adicionales.' 
+                        : 'Muestra la sumatoria de todas las series de trabajo programadas en la semana por grupo muscular. Si superas el MRV (Volumen Máximo Recuperable), el algoritmo bloqueará incrementos adicionales para prevenir el sobreentrenamiento.'} 
+                    />
                   </h4>
                   <p style={{ margin: '0 0 16px 0', fontSize: '11px', color: 'rgba(255,255,255,0.4)', lineHeight: '1.4' }}>
-                    Vigila que no hayas programado exceso de series. Si el medidor está en rojo, reduce el volumen inicial para que el atleta pueda progresar hacia el MRV durante el mesociclo.
+                    {periodizationConfig?.objetivo === 'fuerza' 
+                      ? 'Vigila que no hayas programado exceso de NL. Si el medidor está en rojo, reduce el volumen de levantamientos para evitar sobreentrenamiento neural.' 
+                      : 'Vigila que no hayas programado exceso de series. Si el medidor está en rojo, reduce el volumen inicial para que el atleta pueda progresar hacia el MRV durante el mesociclo.'}
                   </p>
                   
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '12px' }}>
-                    {Object.entries(weeklyVolumeData)
-                      .filter(([gm, volume]) => volume > 0 && gm !== 'General' && gm !== 'Cardio')
-                      .sort((a, b) => b[1] - a[1])
-                      .map(([gm, volume]) => {
-                        const { status, message } = evaluateVolumeStatus(gm, volume, periodizationConfig.nivel_atleta, periodizationConfig.objetivo as any, weeklyTargets[gm]);
-                        const isDanger = status === 'danger';
-                        const isOptimal = status === 'optimal';
-                        const color = isDanger ? '#ef4444' : isOptimal ? '#22c55e' : '#eab308';
-                        
-                        return (
-                          <div key={gm} style={{
-                            background: 'rgba(0,0,0,0.2)',
-                            border: `1px solid ${isDanger ? 'rgba(239,68,68,0.3)' : 'rgba(255,255,255,0.04)'}`,
-                            borderRadius: '10px',
-                            padding: '12px',
-                            position: 'relative',
-                            overflow: 'hidden'
-                          }}>
-                            {isDanger && (
-                              <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: color }} />
-                            )}
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                              <strong style={{ fontSize: '11px', color: 'white', fontFamily: "'Orbitron', sans-serif" }}>{gm}</strong>
-                              <span style={{ fontSize: '12px', fontWeight: 800, color }}>{volume} series</span>
+                    {periodizationConfig?.objetivo === 'fuerza' ? (
+                      Object.entries(weeklyNLData)
+                        .filter(([_, nl]) => nl > 0)
+                        .sort((a, b) => b[1] - a[1])
+                        .map(([pattern, nl]) => {
+                          const threshold = getStrengthThreshold(pattern as MovementPattern, periodizationConfig?.nivel_atleta || 'intermedio');
+                          const { status, message } = evaluateStrengthVolume(pattern as MovementPattern, nl, periodizationConfig?.nivel_atleta || 'intermedio');
+                          const isDanger = status === 'danger';
+                          const isOptimal = status === 'optimal';
+                          const color = isDanger ? '#ef4444' : isOptimal ? '#22c55e' : '#eab308';
+
+                          return (
+                            <div key={pattern} style={{
+                              background: 'rgba(0,0,0,0.2)',
+                              border: `1px solid ${isDanger ? 'rgba(239,68,68,0.3)' : 'rgba(255,255,255,0.04)'}`,
+                              borderRadius: '10px',
+                              padding: '12px',
+                              position: 'relative',
+                              overflow: 'hidden'
+                            }}>
+                              {isDanger && (
+                                <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: color }} />
+                              )}
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                                <strong style={{ fontSize: '11px', color: 'white', fontFamily: "'Orbitron', sans-serif" }}>{threshold.label}</strong>
+                                <span style={{ fontSize: '12px', fontWeight: 800, color }}>{nl} NL</span>
+                              </div>
+                              <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)' }}>
+                                Estado: <span style={{ color, fontWeight: 700 }}>{message}</span>
+                              </div>
                             </div>
-                            <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)' }}>
-                              Estado: <span style={{ color, fontWeight: 700 }}>{message}</span>
+                          );
+                        })
+                    ) : (
+                      Object.entries(weeklyVolumeData)
+                        .filter(([gm, volume]) => volume > 0 && gm !== 'General' && gm !== 'Cardio')
+                        .sort((a, b) => b[1] - a[1])
+                        .map(([gm, volume]) => {
+                          const { status, message } = evaluateVolumeStatus(gm, volume, periodizationConfig.nivel_atleta, periodizationConfig.objetivo as any, weeklyTargets[gm]);
+                          const isDanger = status === 'danger';
+                          const isOptimal = status === 'optimal';
+                          const color = isDanger ? '#ef4444' : isOptimal ? '#22c55e' : '#eab308';
+                          
+                          return (
+                            <div key={gm} style={{
+                              background: 'rgba(0,0,0,0.2)',
+                              border: `1px solid ${isDanger ? 'rgba(239,68,68,0.3)' : 'rgba(255,255,255,0.04)'}`,
+                              borderRadius: '10px',
+                              padding: '12px',
+                              position: 'relative',
+                              overflow: 'hidden'
+                            }}>
+                              {isDanger && (
+                                <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: color }} />
+                              )}
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                                <strong style={{ fontSize: '11px', color: 'white', fontFamily: "'Orbitron', sans-serif" }}>{gm}</strong>
+                                <span style={{ fontSize: '12px', fontWeight: 800, color }}>{volume} series</span>
+                              </div>
+                              <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)' }}>
+                                Estado: <span style={{ color, fontWeight: 700 }}>{message}</span>
+                              </div>
                             </div>
-                          </div>
-                        );
-                    })}
-                    {Object.values(weeklyVolumeData).reduce((a,b)=>a+b, 0) === 0 && (
-                      <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)' }}>No hay series programadas aún.</div>
+                          );
+                        })
+                    )}
+                    {((periodizationConfig?.objetivo === 'fuerza' ? Object.values(weeklyNLData).reduce((a, b) => a + b, 0) : Object.values(weeklyVolumeData).reduce((a, b) => a + b, 0)) === 0) && (
+                      <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)' }}>
+                        {periodizationConfig?.objetivo === 'fuerza' ? 'No hay levantamientos de fuerza programados aún.' : 'No hay series programadas aún.'}
+                      </div>
                     )}
                   </div>
                 </div>
@@ -3037,62 +3072,119 @@ export const PlanPlanner: React.FC = () => {
                             <InfoTooltip title="Grupo Muscular" body="Asigna el grupo muscular principal de este ejercicio. Se usa para calcular el gráfico de simetría y distribución de volumen del día de entrenamiento." size={14} />
                             
                             {/* Inline Volume Status */}
-                            {((ex as any).grupo_muscular) && (() => {
-                              const gmRaw = (ex as any).grupo_muscular;
-                              const gmNormalized = getThresholdsForMuscleGroup(gmRaw, periodizationConfig?.nivel_atleta, periodizationConfig?.objetivo as any).gm;
-                              const currentTotal = weeklyVolumeData[gmNormalized] || 0;
-                              const level = periodizationConfig?.nivel_atleta || 'intermedio';
-                              const thresholds = getThresholdsForMuscleGroup(gmRaw, level as any, periodizationConfig?.objetivo as any);
-                              const customTarget = weeklyTargets[gmNormalized];
-                              
-                              let indicator = '';
-                              let badgeColor = '';
-                              
-                              if (customTarget && customTarget > 0) {
-                                if (currentTotal < customTarget) {
-                                  indicator = `Faltan ${customTarget - currentTotal} para Objetivo (${customTarget})`;
-                                  badgeColor = '#fbbf24';
-                                } else if (currentTotal === customTarget) {
-                                  indicator = `Objetivo Alcanzado (${customTarget})`;
-                                  badgeColor = '#10b981';
-                                } else if (currentTotal > customTarget && currentTotal < thresholds.mrv) {
-                                  indicator = `Superó Objetivo, cerca de MRV (${thresholds.mrv})`;
-                                  badgeColor = '#f97316';
-                                } else {
-                                  indicator = `Límite MRV superado (${thresholds.mrv})`;
-                                  badgeColor = '#ef4444';
+                            {(() => {
+                              const isStrength = periodizationConfig?.objetivo === 'fuerza';
+                              if (isStrength) {
+                                const pattern = detectPatternFromExerciseName(ex.nombre || '');
+                                if (!pattern) {
+                                  return (
+                                    <div style={{
+                                      fontSize: '11px', fontWeight: 600, color: 'rgba(255,255,255,0.4)',
+                                      background: 'rgba(255,255,255,0.05)', padding: '2px 8px',
+                                      borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)',
+                                      display: 'flex', alignItems: 'center', gap: '4px'
+                                    }}>
+                                      <span>Auxiliar (Sin patrón de fuerza)</span>
+                                    </div>
+                                  );
                                 }
-                              } else {
-                                if (currentTotal < thresholds.mev) {
-                                  indicator = `Faltan ${thresholds.mev - currentTotal} para MEV (${thresholds.mev})`;
-                                  badgeColor = '#fbbf24';
-                                } else if (currentTotal >= thresholds.mev && currentTotal < thresholds.mavMin) {
-                                  indicator = `Faltan ${thresholds.mavMin - currentTotal} para MAV (${thresholds.mavMin}-${thresholds.mavMax})`;
-                                  badgeColor = '#34d399';
-                                } else if (currentTotal >= thresholds.mavMin && currentTotal <= thresholds.mavMax) {
-                                  indicator = `Óptimo en MAV (${thresholds.mavMin}-${thresholds.mavMax})`;
-                                  badgeColor = '#10b981';
-                                } else if (currentTotal > thresholds.mavMax && currentTotal < thresholds.mrv) {
-                                  indicator = `Cerca de MRV (${thresholds.mrv})`;
-                                  badgeColor = '#f97316';
-                                } else {
-                                  indicator = `¡Peligro! MRV (${thresholds.mrv}) superado.`;
-                                  badgeColor = '#ef4444';
-                                }
-                              }
+                                
+                                const threshold = getStrengthThreshold(pattern, periodizationConfig?.nivel_atleta || 'intermedio');
+                                const currentTotal = weeklyNLData[pattern] || 0;
+                                const customTarget = weeklyTargets[pattern];
+                                const { status } = evaluateStrengthVolume(pattern, currentTotal, periodizationConfig?.nivel_atleta || 'intermedio');
 
-                              return (
-                                <div style={{
-                                  fontSize: '11px', fontWeight: 600, color: badgeColor,
-                                  background: 'rgba(255,255,255,0.05)', padding: '2px 8px',
-                                  borderRadius: '12px', border: `1px solid ${badgeColor}40`,
-                                  display: 'flex', alignItems: 'center', gap: '4px'
-                                }}>
-                                  <span>Llevas: {currentTotal} series</span>
-                                  <span style={{ color: 'rgba(255,255,255,0.3)' }}>|</span>
-                                  <span>{indicator}</span>
-                                </div>
-                              );
+                                let badgeColor = '';
+                                if (status === 'danger') badgeColor = '#ef4444';
+                                else if (status === 'optimal') badgeColor = '#10b981';
+                                else if (status === 'warning') badgeColor = '#f97316';
+                                else badgeColor = '#fbbf24';
+
+                                let indicator = '';
+                                if (customTarget && customTarget > 0) {
+                                  if (currentTotal < customTarget) indicator = `Faltan ${customTarget - currentTotal} NL para Objetivo (${customTarget})`;
+                                  else if (currentTotal === customTarget) indicator = `Objetivo Alcanzado (${customTarget})`;
+                                  else if (currentTotal > customTarget && currentTotal < threshold.mrv) indicator = `Superó Objetivo (${customTarget}), cerca de MRV (${threshold.mrv})`;
+                                  else indicator = `Límite MRV superado (${threshold.mrv})`;
+                                } else {
+                                  if (currentTotal < threshold.mev) indicator = `Faltan ${threshold.mev - currentTotal} NL para MEV (${threshold.mev})`;
+                                  else if (currentTotal >= threshold.mev && currentTotal < threshold.mavMin) indicator = `Faltan ${threshold.mavMin - currentTotal} NL para MAV (${threshold.mavMin}-${threshold.mavMax})`;
+                                  else if (currentTotal >= threshold.mavMin && currentTotal <= threshold.mavMax) indicator = `Óptimo en MAV (${threshold.mavMin}-${threshold.mavMax})`;
+                                  else if (currentTotal > threshold.mavMax && currentTotal < threshold.mrv) indicator = `Cerca de MRV (${threshold.mrv})`;
+                                  else indicator = `¡Peligro! MRV (${threshold.mrv}) superado.`;
+                                }
+
+                                return (
+                                  <div style={{
+                                    fontSize: '11px', fontWeight: 600, color: badgeColor,
+                                    background: 'rgba(255,255,255,0.05)', padding: '2px 8px',
+                                    borderRadius: '12px', border: `1px solid ${badgeColor}40`,
+                                    display: 'flex', alignItems: 'center', gap: '4px'
+                                  }}>
+                                    <span>Patrón: {threshold.label} ({currentTotal} NL)</span>
+                                    <span style={{ color: 'rgba(255,255,255,0.3)' }}>|</span>
+                                    <span>{indicator}</span>
+                                  </div>
+                                );
+                              } else {
+                                // Modo Hipertrofia (Original)
+                                if (!(ex as any).grupo_muscular) return null;
+                                const gmRaw = (ex as any).grupo_muscular;
+                                const gmNormalized = getThresholdsForMuscleGroup(gmRaw, periodizationConfig?.nivel_atleta, periodizationConfig?.objetivo as any).gm;
+                                const currentTotal = weeklyVolumeData[gmNormalized] || 0;
+                                const level = periodizationConfig?.nivel_atleta || 'intermedio';
+                                const thresholds = getThresholdsForMuscleGroup(gmRaw, level as any, periodizationConfig?.objetivo as any);
+                                const customTarget = weeklyTargets[gmNormalized];
+                                
+                                let indicator = '';
+                                let badgeColor = '';
+                                
+                                if (customTarget && customTarget > 0) {
+                                  if (currentTotal < customTarget) {
+                                    indicator = `Faltan ${customTarget - currentTotal} para Objetivo (${customTarget})`;
+                                    badgeColor = '#fbbf24';
+                                  } else if (currentTotal === customTarget) {
+                                    indicator = `Objetivo Alcanzado (${customTarget})`;
+                                    badgeColor = '#10b981';
+                                  } else if (currentTotal > customTarget && currentTotal < thresholds.mrv) {
+                                    indicator = `Superó Objetivo, cerca de MRV (${thresholds.mrv})`;
+                                    badgeColor = '#f97316';
+                                  } else {
+                                    indicator = `Límite MRV superado (${thresholds.mrv})`;
+                                    badgeColor = '#ef4444';
+                                  }
+                                } else {
+                                  if (currentTotal < thresholds.mev) {
+                                    indicator = `Faltan ${thresholds.mev - currentTotal} para MEV (${thresholds.mev})`;
+                                    badgeColor = '#fbbf24';
+                                  } else if (currentTotal >= thresholds.mev && currentTotal < thresholds.mavMin) {
+                                    indicator = `Faltan ${thresholds.mavMin - currentTotal} para MAV (${thresholds.mavMin}-${thresholds.mavMax})`;
+                                    badgeColor = '#34d399';
+                                  } else if (currentTotal >= thresholds.mavMin && currentTotal <= thresholds.mavMax) {
+                                    indicator = `Óptimo en MAV (${thresholds.mavMin}-${thresholds.mavMax})`;
+                                    badgeColor = '#10b981';
+                                  } else if (currentTotal > thresholds.mavMax && currentTotal < thresholds.mrv) {
+                                    indicator = `Cerca de MRV (${thresholds.mrv})`;
+                                    badgeColor = '#f97316';
+                                  } else {
+                                    indicator = `¡Peligro! MRV (${thresholds.mrv}) superado.`;
+                                    badgeColor = '#ef4444';
+                                  }
+                                }
+
+                                return (
+                                  <div style={{
+                                    fontSize: '11px', fontWeight: 600, color: badgeColor,
+                                    background: 'rgba(255,255,255,0.05)', padding: '2px 8px',
+                                    borderRadius: '12px', border: `1px solid ${badgeColor}40`,
+                                    display: 'flex', alignItems: 'center', gap: '4px'
+                                  }}>
+                                    <span>Llevas: {currentTotal} series</span>
+                                    <span style={{ color: 'rgba(255,255,255,0.3)' }}>|</span>
+                                    <span>{indicator}</span>
+                                  </div>
+                                );
+                              }
                             })()}
                           </div>
 
@@ -3712,7 +3804,10 @@ export const PlanPlanner: React.FC = () => {
       <PeriodizationHelpModal isOpen={isHelpModalOpen} onClose={() => setIsHelpModalOpen(false)} />
 
       {thresholdsTableOpen && (
-        <VolumeThresholdsTable onClose={() => setThresholdsTableOpen(false)} />
+        <VolumeThresholdsTable
+          onClose={() => setThresholdsTableOpen(false)}
+          defaultMode={periodizationConfig?.objetivo === 'fuerza' ? 'fuerza' : 'hipertrofia'}
+        />
       )}
 
       {distributorWizardOpen && (
