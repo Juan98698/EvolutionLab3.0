@@ -370,7 +370,7 @@ export const autoRegulatePlanForNextWeek = (
 
         if (isStrengthBlock) {
           // Fuerza: acumulamos NL ponderados por patrón de movimiento
-          const pattern = detectPatternFromExerciseName((ex as any).nombre || '');
+          const pattern = (ex as any).movement_pattern || detectPatternFromExerciseName((ex as any).nombre || '');
           if (pattern) {
             const rirRaw  = ex.variables?.['rir'];
             const rirVal  = (rirRaw === undefined || rirRaw === '')
@@ -423,7 +423,7 @@ export const autoRegulatePlanForNextWeek = (
       if (nextSets > currentSets) {
         if (isStrengthBlock) {
           // ── Fuerza: chequeo MRV con NL ponderados ────────────────────────
-          const pattern = detectPatternFromExerciseName(foundEx.nombre || '');
+          const pattern = (foundEx as any).movement_pattern || detectPatternFromExerciseName(foundEx.nombre || '');
           if (pattern) {
             const repsStr   = foundEx.variables?.['repeticiones'] || '5';
             const repsMatch = repsStr.match(/\d+/);
@@ -592,7 +592,7 @@ export const evaluateStrengthPlanVolume = (
 
   plan.trainingDays?.forEach(day => {
     day.exercises?.forEach(ex => {
-      const pattern = detectPatternFromExerciseName((ex as any).nombre || '');
+      const pattern = (ex as any).movement_pattern || detectPatternFromExerciseName((ex as any).nombre || '');
       if (!pattern) return;
 
       const setsStr  = ex.variables?.['series de trabajo'] || ex.variables?.['series'] || '3';
