@@ -66,6 +66,10 @@ export interface PlanData {
   trackerRules?: TrackerRule[];
   periodizationConfig?: PeriodizationConfig;
   weeklyTargets?: Record<string, number>;
+  /** Set by OnboardingModal. 'simple' = show only humanized message. 'tecnico' = show both. */
+  language_mode?: 'simple' | 'tecnico';
+  /** Marks plans created during onboarding exploration. */
+  is_sandbox?: boolean;
 }
 
 export interface Microcycle {

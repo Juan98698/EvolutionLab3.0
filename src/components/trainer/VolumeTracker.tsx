@@ -21,6 +21,7 @@ interface VolumeTrackerProps {
   weeklyTargets: Record<string, number>;
   athleteLevel: AthleteLevel;
   blockObjective: 'hipertrofia' | 'fuerza' | 'mantenimiento';
+  languageMode?: 'simple' | 'tecnico';
 }
 
 // ─── Parseo de campos numéricos (rango o valor simple) ───────────────────────
@@ -73,7 +74,8 @@ export const VolumeTracker: React.FC<VolumeTrackerProps> = ({
   trainingDays,
   weeklyTargets,
   athleteLevel,
-  blockObjective
+  blockObjective,
+  languageMode = 'tecnico'
 }) => {
   const isStrength = blockObjective === 'fuerza';
 
@@ -310,7 +312,7 @@ export const VolumeTracker: React.FC<VolumeTrackerProps> = ({
       </div>
 
       {/* Leyenda para modo fuerza (siempre arriba del contenido) */}
-      {isStrength && expandedItemsList.length > 0 && (
+      {isStrength && expandedItemsList.length > 0 && languageMode === 'tecnico' && (
         <div style={{
           fontSize: '10px', color: '#6b7280', marginBottom: '10px',
           display: 'flex', alignItems: 'center', gap: '6px'
@@ -426,10 +428,12 @@ export const VolumeTracker: React.FC<VolumeTrackerProps> = ({
                 }} />
               </div>
 
-              <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', fontSize: '9px', color: 'rgba(255,255,255,0.3)', marginTop: '2px' }}>
-                <span>Obj: {item.target}</span>
-                <span>MRV {item.mrv}</span>
-              </div>
+              {languageMode === 'tecnico' && (
+                <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', fontSize: '9px', color: 'rgba(255,255,255,0.3)', marginTop: '2px' }}>
+                  <span>Obj: {item.target}</span>
+                  <span>MRV {item.mrv}</span>
+                </div>
+              )}
 
               {/* Mensaje humanizado — consecuencia en lenguaje natural */}
               {(item as any).humanizedMessage && (
