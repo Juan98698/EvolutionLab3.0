@@ -3918,3 +3918,199 @@ body::before {
   color: #ffffff;
 }
 
+/* Active Session Exercise Guide Card */
+.active-session-guide-card {
+  margin-top: 20px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.02);
+}
+.active-session-guide-content {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+.active-session-guide-thumbnail-container {
+  position: relative;
+  width: 90px;
+  height: 90px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.active-session-guide-thumbnail {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+.active-session-guide-zoom-badge {
+  position: absolute;
+  bottom: 4px;
+  right: 4px;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+  font-size: 10px;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+.active-session-guide-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.active-session-guide-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.active-session-guide-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.45);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+.active-session-guide-video-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #60a5fa;
+  background: rgba(59, 130, 246, 0.12);
+  border: 1px solid rgba(59, 130, 246, 0.35);
+  padding: 4px 10px;
+  border-radius: 20px;
+  text-decoration: none;
+  font-family: 'Orbitron', sans-serif;
+  text-transform: uppercase;
+  transition: all 0.2s ease;
+}
+.active-session-guide-video-link:hover, .active-session-guide-video-link:active {
+  background: rgba(59, 130, 246, 0.25);
+  border-color: rgba(59, 130, 246, 0.5);
+  color: #93c5fd;
+}
+.active-session-guide-desc {
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.85);
+  margin: 0;
+  max-height: 90px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+.active-session-guide-desc::-webkit-scrollbar {
+  width: 4px;
+}
+.active-session-guide-desc::-webkit-scrollbar-track {
+  background: transparent;
+}
+.active-session-guide-desc::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 99px;
+}
+.active-session-guide-desc-placeholder {
+  font-size: 12px;
+  font-style: italic;
+  color: rgba(255, 255, 255, 0.3);
+  margin: 0;
+}
+
+/* Full Screen Image Modal Overlay */
+.active-session-image-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.active-session-image-modal-content {
+  position: relative;
+  background: linear-gradient(165deg, rgba(15, 12, 28, 0.98), rgba(8, 6, 18, 0.99));
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 20px;
+  padding: 24px;
+  max-width: 450px;
+  width: 100%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+.active-session-image-close {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: white;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.active-session-image-close:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+.active-session-image-large {
+  width: 100%;
+  max-height: 300px;
+  object-fit: contain;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.active-session-image-caption {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 700;
+  color: white;
+  font-family: 'Orbitron', sans-serif;
+  text-align: center;
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 380px) {
+  .active-session-guide-card {
+    padding: 12px;
+    margin-top: 16px;
+  }
+  .active-session-guide-content {
+    gap: 12px;
+  }
+  .active-session-guide-thumbnail-container {
+    width: 75px;
+    height: 75px;
+  }
+  .active-session-guide-title {
+    font-size: 10px;
+  }
+  .active-session-guide-video-link {
+    font-size: 9px;
+    padding: 3px 8px;
+  }
+  .active-session-guide-desc {
+    font-size: 11.5px;
+    max-height: 75px;
+  }
+}
+
+

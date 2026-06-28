@@ -5,6 +5,7 @@ import {
   THRESHOLDS_INTERMEDIO,
   AthleteLevel
 } from '../../lib/volumeThresholds';
+import { humanizeAlertCompact } from '../../lib/alertLanguage';
 import {
   ALL_MOVEMENT_PATTERNS,
   getStrengthThreshold,
@@ -178,6 +179,15 @@ export const VolumeTracker: React.FC<VolumeTrackerProps> = ({
             dotColor:    colors.dot,
             dotChar:     colors.dotChar,
             statusLabel: colors.label,
+            humanizedMessage: humanizeAlertCompact(effectiveStatus as any, {
+              label:   threshold.label,
+              current,
+              mev:     threshold.mev,
+              mavMin:  threshold.mavMin,
+              mavMax:  threshold.mavMax,
+              mrv:     threshold.mrv,
+              unit:    'NL★',
+            }),
             isOver: rawStatus === 'danger',
             unit: 'NL★',
           };
@@ -223,6 +233,15 @@ export const VolumeTracker: React.FC<VolumeTrackerProps> = ({
             dotColor:    colors.dot,
             dotChar:     colors.dotChar,
             statusLabel: colors.label,
+            humanizedMessage: humanizeAlertCompact(effectiveStatus as any, {
+              label:   muscle,
+              current,
+              mev:     thresholds.mev,
+              mavMin:  thresholds.mavMin,
+              mavMax:  thresholds.mavMax,
+              mrv:     thresholds.mrv,
+              unit:    'series',
+            }),
             isOver,
             unit: 'series',
           };
@@ -411,6 +430,17 @@ export const VolumeTracker: React.FC<VolumeTrackerProps> = ({
                 <span>Obj: {item.target}</span>
                 <span>MRV {item.mrv}</span>
               </div>
+
+              {/* Mensaje humanizado — consecuencia en lenguaje natural */}
+              {(item as any).humanizedMessage && (
+                <div style={{
+                  width: '100%', fontSize: '10px', color: 'rgba(255,255,255,0.5)',
+                  lineHeight: 1.4, marginTop: '6px', textAlign: 'left',
+                  borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '6px',
+                }}>
+                  {(item as any).humanizedMessage}
+                </div>
+              )}
 
               {item.isOver && (
                 <div style={{

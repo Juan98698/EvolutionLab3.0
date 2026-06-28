@@ -23,6 +23,10 @@ interface ActiveExercise {
   series: SeriesEntry[];
   feedback_estimulo: 'none' | 'good' | 'extreme';
   feedback_recuperacion: 'recovered' | 'just_in_time' | 'sore';
+  video_url?: string;
+  image_url?: string;
+  gif_url?: string;
+  description?: string;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -80,6 +84,7 @@ const ActiveSession: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [sessionNotes, setSessionNotes] = useState('');
+  const [showFullImage, setShowFullImage] = useState(false);
 
   // ─── Rest timer ──────────────────────────────────────────────────────────
   const [restSecondsLeft, setRestSecondsLeft] = useState<number | null>(null);
@@ -113,7 +118,7 @@ const ActiveSession: React.FC = () => {
 
         return {
           nombre: ex.nombre || 'Ejercicio',
-          grupo: (ex as any).grupo_muscular || '',
+          grupo: (ex as any).grupo_muscular || ex.grupo_muscular || '',
           suggestedPeso: pesoSugerido,
           suggestedReps: numReps,
           targetRIR: vars['rir'] || '',
@@ -121,6 +126,9 @@ const ActiveSession: React.FC = () => {
           series,
           feedback_estimulo: 'good',
           feedback_recuperacion: 'recovered',
+          video_url: ex.video_url || '',
+          image_url: ex.image_url || ex.gif_url || '',
+          description: ex.description || '',
         };
       });
 
@@ -535,6 +543,56 @@ const ActiveSession: React.FC = () => {
             </button>
           </div>
         ))}
+
+        {/* ── Exercise Guide & Info ── */}
+        {(currentExercise.image_url || currentExercise.gif_url || currentExercise.video_url || currentExercise.description) && (
+          <div className="active-session-guide-card">
+            <div className="active-session-guide-content">
+              {/* Left side: Image thumbnail */}
+              {(currentExercise.image_url || currentExercise.gif_url) && (
+                <div className="active-session-guide-thumbnail-container" onClick={() => setShowFullImage(true)}>
+                  <img
+                    src={currentExercise.image_url || currentExercise.gif_url}
+                    alt={currentExercise.nombre}
+                    className="active-session-guide-thumbnail"
+                  />
+                  <span className="active-session-guide-zoom-badge">🔍</span>
+                </div>
+              )}
+              
+              {/* Right side: Description & Video button */}
+              <div className="active-session-guide-details">
+                <div className="active-session-guide-header-row">
+                  <span className="active-session-guide-title">Guía de ejecución</span>
+                  {currentExercise.video_url && (
+                    <a
+                      href={currentExercise.video_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="active-session-guide-video-link"
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px' }}>
+                        <path d="M23 7l-7 5 7 5V7z" />
+                        <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+                      </svg>
+                      Ver Video
+                    </a>
+                  )}
+                </div>
+                
+                {currentExercise.description ? (
+                  <p className="active-session-guide-desc">
+                    {currentExercise.description}
+                  </p>
+                ) : (
+                  <p className="active-session-guide-desc-placeholder">
+                    Sin descripción disponible. ¡Realiza el ejercicio con técnica controlada!
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* ── Rest Timer ── */}
@@ -639,6 +697,21 @@ const ActiveSession: React.FC = () => {
             placeholder="¿Cómo te sentiste hoy? Lesiones, motivación, sueño..."
             rows={2}
           />
+        </div>
+      )}
+
+      {/* ── Full Screen Image Modal ── */}
+      {showFullImage && (currentExercise.image_url || currentExercise.gif_url) && (
+        <div className="active-session-image-overlay" onClick={() => setShowFullImage(false)}>
+          <div className="active-session-image-modal-content" onClick={e => e.stopPropagation()}>
+            <button className="active-session-image-close" onClick={() => setShowFullImage(false)}>✕</button>
+            <img
+              src={currentExercise.image_url || currentExercise.gif_url}
+              alt={currentExercise.nombre}
+              className="active-session-image-large"
+            />
+            <p className="active-session-image-caption">{currentExercise.nombre}</p>
+          </div>
         </div>
       )}
     </div>
