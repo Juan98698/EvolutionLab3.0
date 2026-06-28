@@ -27,31 +27,16 @@ const parseNumericField = (str: string | undefined): number => {
   if (!str) return 0;
   const clean = str.trim();
   if (!clean) return 0;
-  const range = clean.match(/^(\d+)\s*-\s*(\d+)$/);
+  const range = clean.match(/^(\d+)\s*[-–]\s*(\d+)$/);
   if (range) return (parseInt(range[1], 10) + parseInt(range[2], 10)) / 2;
   const single = clean.match(/^(\d+)/);
   return single ? parseInt(single[1], 10) : 0;
 };
 
-// ─── Opción B: NL ponderados por intensidad ───────────────────────────────────
-//
-// Principio: no todos los NL generan el mismo estrés neural.
-// 5x3 al 90% 1RM cuesta más que 5x3 al 80% 1RM aunque el NL bruto sea igual.
-//
-// Estimamos % 1RM desde reps + RIR usando la fórmula de Tuchscherer:
-//   %1RM ≈ 100 / (1 + totalReps * 0.0333)
-//   donde totalReps = reps realizadas + RIR (reps totales en el set)
-//
-// Luego asignamos un multiplicador por zona de intensidad (basado en Prilepin):
-//   ≥ 90%  → 1.5  (muy pesado, alto costo neural)
-//   85-89% → 1.2  (pesado)
-//   80-84% → 1.0  (referencia base)
-//   70-79% → 0.7  (moderado)
-//   < 70%  → 0.5  (ligero, mínimo costo neural)
-
+// ─── Estimador de intensidad para NL ponderados ──────────────────────────────
 const estimateIntensityPct = (reps: number, rir: number): number => {
   const totalReps = reps + rir;
-  if (totalReps <= 0) return 80; // fallback conservador
+  if (totalReps <= 0) return 80;
   return Math.round(100 / (1 + totalReps * 0.0333));
 };
 
@@ -63,22 +48,18 @@ const getNLWeight = (intensityPct: number): number => {
   return 0.5;
 };
 
-/**
- * Calcula NL ponderados para un ejercicio dado.
- * Si no hay RIR disponible, usa NL brutos (peso = 1.0).
- */
 const calcWeightedNL = (
   series: number,
   reps: number,
   rir: number | null
 ): number => {
-  if (rir === null || reps === 0) return series * reps; // sin datos de RIR → bruto
+  if (rir === null || reps === 0) return series * reps;
   const intensity = estimateIntensityPct(reps, rir);
   const weight    = getNLWeight(intensity);
-  return Math.round(series * reps * weight * 10) / 10; // 1 decimal
+  return Math.round(series * reps * weight * 10) / 10;
 };
 
-// ─── Mapa de colores y etiquetas por status (revelación progresiva) ───────────
+// ─── Configuración de estados y colores ──────────────────────────────────────
 const STATUS_CONFIG: Record<string, { dot: string; label: string; dotChar: string }> = {
   danger:   { dot: '#ef4444', label: '⚠️ Excesivo',      dotChar: '●' },
   warning:  { dot: '#f97316', label: '⚡ Volumen Alto',   dotChar: '●' },
@@ -95,9 +76,15 @@ export const VolumeTracker: React.FC<VolumeTrackerProps> = ({
 }) => {
   const isStrength = blockObjective === 'fuerza';
 
-  // ─── Estado de expansión (revelación progresiva) ──────────────────────────
-  const [expanded, setExpanded] = useState(false);
-  const toggleExpanded = useCallback(() => setExpanded(prev => !prev), []);
+  // ─── Estado de expansión individual (revelación progresiva granular) ───────
+  const [expandedItems, setExpandedItems] = useState<Record<string, boolean>>({});
+
+  const toggleItem = useCallback((key: string) => {
+    setExpandedItems(prev => ({
+      ...prev,
+      [key]: !prev[key]
+    }));
+  }, []);
 
   // ─── Key de serialización para detectar cambios profundos ────────────────────
   const trainingDaysKey = useMemo(() =>
@@ -129,8 +116,6 @@ export const VolumeTracker: React.FC<VolumeTrackerProps> = ({
   }, [trainingDaysKey, athleteLevel, blockObjective]);
 
   // ─── Acumulador fuerza: NL PONDERADOS por patrón ────────────────────────────
-  // Usa intensidad estimada desde RIR para ponderar el costo neural real
-  // en lugar de sumar NL brutos.
   const weeklyNLData = useMemo(() => {
     const map: Record<string, number> = {};
     trainingDays.forEach(day => {
@@ -144,8 +129,6 @@ export const VolumeTracker: React.FC<VolumeTrackerProps> = ({
         const reps = parseNumericField(
           ex.variables?.['repeticiones'] || ex.variables?.['reps']
         );
-        // RIR vacío ('') = sin dato → NL brutos (null)
-        // RIR '0' = al fallo → intensidad máxima (válido)
         const rirRaw = ex.variables?.['rir'];
         const rir    = (rirRaw === undefined || rirRaw === '')
           ? null
@@ -174,8 +157,6 @@ export const VolumeTracker: React.FC<VolumeTrackerProps> = ({
           const evalResult = evaluateStrengthVolume(pattern, current, athleteLevel);
           const rawStatus = evalResult.status;
 
-          // Derive 'building' when current is between MEV and MAV_min
-          // (evaluateStrengthVolume returns 'low' for the full range below MAV_min)
           const effectiveStatus =
             rawStatus === 'low' && current >= threshold.mev ? 'building' : rawStatus;
 
@@ -198,7 +179,7 @@ export const VolumeTracker: React.FC<VolumeTrackerProps> = ({
             dotChar:     colors.dotChar,
             statusLabel: colors.label,
             isOver: rawStatus === 'danger',
-            unit: 'NL★', // ★ indica que son NL ponderados, no brutos
+            unit: 'NL★',
           };
         });
     } else {
@@ -249,7 +230,28 @@ export const VolumeTracker: React.FC<VolumeTrackerProps> = ({
     }
   }, [isStrength, weeklyVolumeData, weeklyNLData, weeklyTargets, athleteLevel, blockObjective]);
 
+  // ─── Toggles globales ───────────────────────────────────────────────────────
+  const allExpanded = useMemo(() => {
+    return trackerItems.length > 0 && trackerItems.every(item => expandedItems[item.key]);
+  }, [trackerItems, expandedItems]);
+
+  const toggleAll = useCallback(() => {
+    if (allExpanded) {
+      setExpandedItems({});
+    } else {
+      const next: Record<string, boolean> = {};
+      trackerItems.forEach(item => {
+        next[item.key] = true;
+      });
+      setExpandedItems(next);
+    }
+  }, [allExpanded, trackerItems]);
+
   if (trackerItems.length === 0) return null;
+
+  // Filtrar items compactos vs expandidos para renderizar en dos contenedores
+  const compactItems = trackerItems.filter(item => !expandedItems[item.key]);
+  const expandedItemsList = trackerItems.filter(item => expandedItems[item.key]);
 
   return (
     <div style={{
@@ -259,10 +261,10 @@ export const VolumeTracker: React.FC<VolumeTrackerProps> = ({
       boxShadow: '0 8px 32px 0 var(--theme-glow)',
       backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)'
     }}>
-      {/* ─── Header con toggle ─────────────────────────────────────────────── */}
+      {/* ─── Header ────────────────────────────────────────────────────────── */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        marginBottom: expanded ? '10px' : '8px'
+        marginBottom: '10px'
       }}>
         <h3 style={{
           margin: 0, fontSize: '13px', color: 'var(--theme-primary)',
@@ -273,140 +275,156 @@ export const VolumeTracker: React.FC<VolumeTrackerProps> = ({
           {isStrength ? 'Tracker de Fuerza' : 'Tracker de Volumen'}
         </h3>
         <button
-          onClick={toggleExpanded}
+          onClick={toggleAll}
           style={{
-            background: expanded ? 'rgba(0,212,255,0.08)' : 'rgba(255,255,255,0.05)',
-            border: `1px solid ${expanded ? 'rgba(0,212,255,0.2)' : 'rgba(255,255,255,0.08)'}`,
+            background: 'rgba(255,255,255,0.04)',
+            border: '1px solid rgba(255,255,255,0.08)',
             borderRadius: '8px', padding: '4px 10px',
-            color: expanded ? 'rgba(0,212,255,0.8)' : 'rgba(255,255,255,0.4)',
+            color: 'rgba(255,255,255,0.4)',
             fontSize: '10px', fontWeight: 600, cursor: 'pointer',
-            display: 'flex', alignItems: 'center', gap: '5px',
             transition: 'all 0.2s ease', letterSpacing: '0.03em',
             fontFamily: "inherit"
           }}
-          aria-expanded={expanded}
-          aria-label={expanded ? 'Colapsar análisis' : 'Expandir análisis'}
         >
-          {expanded ? '▲ Colapsar' : '▼ Expandir análisis'}
+          {allExpanded ? '▲ Colapsar Todo' : '▼ Mostrar Todo'}
         </button>
       </div>
 
-      {/* ─── Modo compacto: fila de chips con dot de color (DEFAULT) ─────────── */}
-      {!expanded && (
+      {/* Leyenda para modo fuerza (siempre arriba del contenido) */}
+      {isStrength && expandedItemsList.length > 0 && (
         <div style={{
-          display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center'
+          fontSize: '10px', color: '#6b7280', marginBottom: '10px',
+          display: 'flex', alignItems: 'center', gap: '6px'
         }}>
-          {trackerItems.map(item => (
-            <div
+          <span style={{ color: '#f59e0b' }}>★</span>
+          NL★ = NL ponderados por intensidad estimada (RIR→%1RM).
+          <span style={{ color: '#4b5563', marginLeft: '4px' }}>
+            80%→×1.0 · 85%→×1.2 · 90%+→×1.5
+          </span>
+        </div>
+      )}
+
+      {/* ─── Listado Compacto (Chips individuales clicables) ───────────────── */}
+      {compactItems.length > 0 && (
+        <div style={{
+          display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center',
+          marginBottom: expandedItemsList.length > 0 ? '12px' : '0'
+        }}>
+          {compactItems.map(item => (
+            <button
               key={item.key}
-              title={`${item.label}: ${item.current} / ${item.target} ${item.unit} — ${item.statusLabel}`}
+              onClick={() => toggleItem(item.key)}
+              title={`Clic para expandir detalle científico de ${item.label}`}
               style={{
-                display: 'inline-flex', alignItems: 'center', gap: '5px',
-                padding: '3px 10px',
-                background: `${item.dotColor}0d`,
-                border: `1px solid ${item.dotColor}30`,
+                display: 'inline-flex', alignItems: 'center', gap: '6px',
+                padding: '4px 10px',
+                background: `${item.dotColor}0e`,
+                border: `1px solid ${item.dotColor}35`,
                 borderRadius: '99px',
-                transition: 'all 0.15s ease',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease',
+                outline: 'none',
+                fontFamily: 'inherit'
               }}
             >
-              <span style={{ fontSize: '8px', color: item.dotColor, lineHeight: 1, flexShrink: 0 }}>
+              <span style={{ fontSize: '7px', color: item.dotColor, lineHeight: 1, flexShrink: 0 }}>
                 {item.dotChar}
               </span>
-              <span style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(255,255,255,0.7)', whiteSpace: 'nowrap' }}>
+              <span style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(255,255,255,0.75)', whiteSpace: 'nowrap' }}>
                 {item.label}
               </span>
               <span style={{ fontSize: '10px', fontWeight: 700, color: item.dotColor }}>
                 {item.current}
               </span>
-            </div>
+              <span style={{ fontSize: '8px', color: 'rgba(255,255,255,0.2)', marginLeft: '2px' }}>
+                ▼
+              </span>
+            </button>
           ))}
         </div>
       )}
 
-      {/* ─── Modo expandido: vista científica completa ────────────────────────── */}
-      {expanded && (
-        <>
-          {/* Leyenda para modo fuerza */}
-          {isStrength && (
-            <div style={{
-              fontSize: '11px', color: '#6b7280', marginBottom: '10px',
-              display: 'flex', alignItems: 'center', gap: '6px'
-            }}>
-              <span style={{ color: '#f59e0b' }}>★</span>
-              NL★ = NL ponderados por intensidad estimada (RIR→%1RM→Prilepin).
-              <span style={{ color: '#4b5563', marginLeft: '4px' }}>
-                80%→×1.0 · 85%→×1.2 · 90%+→×1.5
-              </span>
-            </div>
-          )}
-
-          <div style={{ display: 'flex', gap: '12px', overflowX: 'auto', paddingBottom: '8px' }}>
-            {trackerItems.map(item => (
-              <div key={item.key} style={{
-                background: 'rgba(0,0,0,0.2)',
+      {/* ─── Listado Expandido (Cards detalladas individuales) ──────────────── */}
+      {expandedItemsList.length > 0 && (
+        <div style={{
+          display: 'flex', gap: '10px', overflowX: 'auto', paddingBottom: '4px',
+          scrollbarWidth: 'thin'
+        }}>
+          {expandedItemsList.map(item => (
+            <div
+              key={item.key}
+              onClick={() => toggleItem(item.key)}
+              title="Clic para colapsar"
+              style={{
+                background: 'rgba(0,0,0,0.25)',
                 border: `1px solid ${item.borderColor}`,
-                borderRadius: '8px', padding: '8px 12px', minWidth: '130px',
-                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
-                position: 'relative', flexShrink: 0
-              }}>
-                <span style={{ fontSize: '11px', fontWeight: 'bold', color: '#9ca3af', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                borderRadius: '12px', padding: '10px 14px', minWidth: '140px',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px',
+                position: 'relative', flexShrink: 0, cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', width: '100%', justifyContent: 'center' }}>
+                <span style={{ fontSize: '11px', fontWeight: 'bold', color: '#ffffff', textAlign: 'center', whiteSpace: 'nowrap' }}>
                   {item.label}
                 </span>
-
-                {/* Status label human-readable */}
-                <span style={{ fontSize: '9px', color: item.textColor, fontWeight: 600, letterSpacing: '0.02em' }}>
-                  {item.statusLabel}
-                </span>
-
-                <span style={{ fontSize: '18px', fontWeight: '900', color: item.textColor, lineHeight: 1 }}>
-                  {item.current}
-                  <span style={{ fontSize: '12px', color: '#6b7280', fontWeight: 'normal' }}>
-                    {' '}/ {item.target} {item.unit}
-                  </span>
-                </span>
-
-                {/* Barra de progreso */}
-                <div style={{
-                  width: '100%', height: '4px', background: 'rgba(255,255,255,0.08)',
-                  borderRadius: '9999px', overflow: 'visible', position: 'relative', marginTop: '2px'
-                }}>
-                  {/* Marcador de target */}
-                  <div style={{
-                    position: 'absolute', top: '-3px',
-                    left: `${item.targetPct}%`,
-                    transform: 'translateX(-50%)',
-                    width: '2px', height: '10px',
-                    background: 'rgba(255,255,255,0.3)',
-                    borderRadius: '1px'
-                  }} />
-                  {/* Progreso */}
-                  <div style={{
-                    height: '100%', borderRadius: '9999px',
-                    background: item.borderColor,
-                    width: `${item.progressPct}%`,
-                    transition: 'width 0.3s ease',
-                    opacity: 0.85
-                  }} />
-                </div>
-
-                <div style={{ width: '100%', display: 'flex', justifyContent: 'flex-end' }}>
-                  <span style={{ fontSize: '9px', color: '#4b5563' }}>MRV {item.mrv}</span>
-                </div>
-
-                {item.isOver && (
-                  <div style={{
-                    position: 'absolute', top: '-6px', right: '-6px',
-                    background: '#ef4444', color: '#fff', fontSize: '9px',
-                    padding: '2px 5px', borderRadius: '12px', fontWeight: 'bold',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.5)'
-                  }}>
-                    Excedido
-                  </div>
-                )}
+                <span style={{ fontSize: '8px', color: 'rgba(255,255,255,0.3)' }}>▲</span>
               </div>
-            ))}
-          </div>
-        </>
+
+              {/* Status label */}
+              <span style={{ fontSize: '9px', color: item.textColor, fontWeight: 700, letterSpacing: '0.02em' }}>
+                {item.statusLabel}
+              </span>
+
+              <span style={{ fontSize: '18px', fontWeight: '900', color: item.textColor, lineHeight: 1, margin: '2px 0' }}>
+                {item.current}
+                <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', fontWeight: 'normal' }}>
+                  {' '}/ {item.target} {item.unit}
+                </span>
+              </span>
+
+              {/* Barra de progreso */}
+              <div style={{
+                width: '100%', height: '4px', background: 'rgba(255,255,255,0.08)',
+                borderRadius: '9999px', overflow: 'visible', position: 'relative', marginTop: '2px'
+              }}>
+                {/* Marcador de target */}
+                <div style={{
+                  position: 'absolute', top: '-3px',
+                  left: `${item.targetPct}%`,
+                  transform: 'translateX(-50%)',
+                  width: '2px', height: '10px',
+                  background: 'rgba(255,255,255,0.35)',
+                  borderRadius: '1px'
+                }} />
+                {/* Progreso */}
+                <div style={{
+                  height: '100%', borderRadius: '9999px',
+                  background: item.borderColor,
+                  width: `${item.progressPct}%`,
+                  transition: 'width 0.3s ease',
+                  opacity: 0.85
+                }} />
+              </div>
+
+              <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', fontSize: '9px', color: 'rgba(255,255,255,0.3)', marginTop: '2px' }}>
+                <span>Obj: {item.target}</span>
+                <span>MRV {item.mrv}</span>
+              </div>
+
+              {item.isOver && (
+                <div style={{
+                  position: 'absolute', top: '-6px', right: '-6px',
+                  background: '#ef4444', color: '#fff', fontSize: '9px',
+                  padding: '2px 5px', borderRadius: '12px', fontWeight: 'bold',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.5)'
+                }}>
+                  Excedido
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
       )}
     </div>
   );
