@@ -16,8 +16,9 @@ const TrainerBranding = React.lazy(() => import('./components/trainer/TrainerBra
 const QuickStartPlanner = React.lazy(() => import('./components/dashboard/QuickStartPlanner'));
 const SoloConfigRules = React.lazy(() => import('./components/dashboard/SoloConfigRules'));
 const ExerciseLibrary = React.lazy(() => import('./components/dashboard/ExerciseLibrary'));
-const SessionPreview = React.lazy(() => import('./components/dashboard/SessionPreview'));
-const ActiveSession = React.lazy(() => import('./components/dashboard/ActiveSession'));
+const SessionPreview  = React.lazy(() => import('./components/dashboard/SessionPreview'));
+const ActiveSession   = React.lazy(() => import('./components/dashboard/ActiveSession'));
+const SessionComplete = React.lazy(() => import('./components/dashboard/SessionComplete'));
 
 const LoadingFallback = () => (
   <div style={{
@@ -139,6 +140,14 @@ export const App: React.FC = () => {
             element={
               <ProtectedRoute allowedRoles={['cliente', 'entrenador']}>
                 <ActiveSession />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/session/complete"
+            element={
+              <ProtectedRoute allowedRoles={['cliente', 'entrenador']}>
+                <SessionComplete />
               </ProtectedRoute>
             }
           />

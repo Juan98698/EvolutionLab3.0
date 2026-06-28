@@ -355,7 +355,29 @@ const ActiveSession: React.FC = () => {
         }
       }
 
-      navigate('/dashboard');
+      // ── Navigate to summary screen ──
+      navigate('/session/complete', {
+        state: {
+          exercises: exercises
+            .filter(ex => ex.series.some(s => s.done))
+            .map(ex => ({
+              nombre:                ex.nombre,
+              grupo:                 ex.grupo,
+              series:                ex.series
+                                       .filter(s => s.done)
+                                       .map(s => ({
+                                         reps: s.reps,
+                                         // Strip robot emoji from ghost values before passing
+                                         peso: s.peso.replace(/^🤖\s*/, '').trim(),
+                                       })),
+              feedback_estimulo:     ex.feedback_estimulo,
+              feedback_recuperacion: ex.feedback_recuperacion,
+              targetRIR:             ex.targetRIR,
+            })),
+          fecha,
+          savedOnline: navigator.onLine,
+        },
+      });
     } catch (err: any) {
       console.error('Error al guardar sesión:', err);
       alert('Error al guardar: ' + err.message);
