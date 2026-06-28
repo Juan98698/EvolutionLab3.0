@@ -1255,6 +1255,40 @@ export const AthleteDashboard: React.FC = () => {
             }}
           />
         )}
+        {/* ── NUEVO FLUJO DE SESIÓN — CTA principal ── */}
+        {!planExpiration.expired && trainingDays.length > 0 && (
+          <div style={{ marginTop: '12px', marginBottom: '4px' }}>
+            <button
+              id="start-session-btn"
+              onClick={() => navigate('/session/preview')}
+              style={{
+                width: '100%', padding: '18px 20px', borderRadius: '18px', cursor: 'pointer',
+                background: 'linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)',
+                border: 'none',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                transition: 'all 0.25s ease',
+                boxShadow: '0 8px 30px rgba(124,58,237,0.35)',
+                WebkitTapHighlightColor: 'transparent',
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <span style={{ fontSize: '22px' }}>🏋️</span>
+                <div style={{ textAlign: 'left' }}>
+                  <div style={{ fontSize: '13px', fontWeight: 800, color: '#ffffff', fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.3px' }}>
+                    ENTRENAR AHORA
+                  </div>
+                  <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.65)', marginTop: '2px', fontWeight: 500 }}>
+                    Registro rápido · peso, reps y RIR en segundos
+                  </div>
+                </div>
+              </div>
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="9 18 15 12 9 6"/>
+              </svg>
+            </button>
+          </div>
+        )}
+
         {/* SMART COACH - Pre-Workout Suggestions */}
         {!planExpiration.expired && plan && overloadSessions.length > 0 && trainingDays.length > 0 && (
           <div style={{ marginTop: '16px', marginBottom: '4px' }}>
