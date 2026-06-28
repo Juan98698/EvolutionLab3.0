@@ -85,6 +85,7 @@ const ActiveSession: React.FC = () => {
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [sessionNotes, setSessionNotes] = useState('');
   const [showFullImage, setShowFullImage] = useState(false);
+  const [showGuideModal, setShowGuideModal] = useState(false);
 
   // ─── Rest timer ──────────────────────────────────────────────────────────
   const [restSecondsLeft, setRestSecondsLeft] = useState<number | null>(null);
@@ -560,10 +561,11 @@ const ActiveSession: React.FC = () => {
                 </div>
               )}
               
-              {/* Right side: Description & Video button */}
+              {/* Right side: Actions & Video/Guide buttons */}
               <div className="active-session-guide-details">
-                <div className="active-session-guide-header-row">
-                  <span className="active-session-guide-title">Guía de ejecución</span>
+                <span className="active-session-guide-title">Guía de ejecución</span>
+                
+                <div className="active-session-guide-actions">
                   {currentExercise.video_url && (
                     <a
                       href={currentExercise.video_url}
@@ -571,24 +573,27 @@ const ActiveSession: React.FC = () => {
                       rel="noopener noreferrer"
                       className="active-session-guide-video-link"
                     >
-                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px' }}>
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M23 7l-7 5 7 5V7z" />
                         <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
                       </svg>
                       Ver Video
                     </a>
                   )}
+                  
+                  {currentExercise.description && (
+                    <button
+                      className="active-session-guide-btn"
+                      onClick={() => setShowGuideModal(true)}
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                        <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
+                      </svg>
+                      Guía Teórica
+                    </button>
+                  )}
                 </div>
-                
-                {currentExercise.description ? (
-                  <p className="active-session-guide-desc">
-                    {currentExercise.description}
-                  </p>
-                ) : (
-                  <p className="active-session-guide-desc-placeholder">
-                    Sin descripción disponible. ¡Realiza el ejercicio con técnica controlada!
-                  </p>
-                )}
               </div>
             </div>
           </div>
@@ -711,6 +716,36 @@ const ActiveSession: React.FC = () => {
               className="active-session-image-large"
             />
             <p className="active-session-image-caption">{currentExercise.nombre}</p>
+          </div>
+        </div>
+      )}
+
+      {/* ── Execution Guide Modal Overlay ── */}
+      {showGuideModal && currentExercise.description && (
+        <div className="active-session-modal-overlay" onClick={() => setShowGuideModal(false)}>
+          <div className="active-session-guide-modal-box" onClick={e => e.stopPropagation()}>
+            <div className="active-session-guide-modal-header">
+              <h3 className="active-session-guide-modal-title">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '8px', verticalAlign: '-1px' }}>
+                  <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                  <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+                </svg>
+                Guía de Ejecución
+              </h3>
+              <button className="active-session-guide-modal-close" onClick={() => setShowGuideModal(false)}>&times;</button>
+            </div>
+            
+            <h4 className="active-session-guide-modal-exercise-name">{currentExercise.nombre}</h4>
+            
+            <div className="active-session-guide-modal-body">
+              {currentExercise.description}
+            </div>
+            
+            <div className="active-session-guide-modal-footer">
+              <button className="active-session-guide-modal-btn-confirm" onClick={() => setShowGuideModal(false)}>
+                Entendido
+              </button>
+            </div>
           </div>
         </div>
       )}

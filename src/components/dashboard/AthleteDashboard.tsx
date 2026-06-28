@@ -2031,7 +2031,7 @@ export const AthleteDashboard: React.FC = () => {
               <button onClick={() => setGuideModal({ open: false, title: '', content: '' })} style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '20px', cursor: 'pointer' }}>&times;</button>
             </div>
             <h4 style={{ margin: '0 0 10px 0', fontSize: '14px', fontWeight: 700, color: 'white' }}>{guideModal.title}</h4>
-            <div style={{ whiteSpace: 'pre-wrap', textAlign: 'left', maxHeight: '350px', overflowY: 'auto', padding: '12px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', color: '#e2e8f0', fontSize: '0.95rem', lineHeight: '1.6' }}>
+            <div style={{ whiteSpace: 'pre-wrap', textAlign: 'left', maxHeight: '350px', overflowY: 'auto', padding: '12px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', color: '#e2e8f0', fontSize: '0.95rem', lineHeight: '1.6', fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif" }}>
               {guideModal.content}
             </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '15px' }}>
