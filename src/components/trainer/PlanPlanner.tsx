@@ -1091,6 +1091,38 @@ export const PlanPlanner: React.FC = () => {
                       }
                     }
 
+                    const updatedVars = { ...ex.variables };
+                    const normName = (val || '').toLowerCase().trim();
+                    const marcas = periodizationConfig?.marcas_1rm || {};
+                    
+                    let oneRM = marcas[normName];
+                    if (!oneRM) {
+                      const alias = mapExerciseToLiftKey(normName);
+                      if (alias) oneRM = marcas[alias];
+                    }
+                    
+                    if (oneRM && oneRM > 0) {
+                      const repsStr = ex.variables?.['repeticiones'] || '';
+                      const repsMatch = repsStr.match(/\d+/);
+                      const reps = repsMatch ? parseInt(repsMatch[0], 10) : 0;
+                      
+                      const rirStr = ex.variables?.['rir'] || '0';
+                      const rirMatch = rirStr.match(/\d+/);
+                      const targetRIR = rirMatch ? parseFloat(rirMatch[0]) : 0;
+                      
+                      if (reps > 0) {
+                        const newLoad = getPrescribedLoad(oneRM, reps, targetRIR);
+                        if (newLoad > 0) {
+                          updatedVars['peso'] = `🤖 ${newLoad} kg`;
+                        }
+                      }
+                    } else {
+                      // Si el nuevo nombre no tiene 1RM, y el peso actual era autogenerado por robot, lo limpiamos
+                      if (updatedVars['peso'] && updatedVars['peso'].startsWith('🤖')) {
+                        delete updatedVars['peso'];
+                      }
+                    }
+
                     return {
                       ...ex,
                       nombre: val,
@@ -1099,7 +1131,8 @@ export const PlanPlanner: React.FC = () => {
                       gif_url: nextGifUrl,
                       video_url: nextVideoUrl,
                       description: nextDescription,
-                      grupo_muscular: nextGrupoMuscular
+                      grupo_muscular: nextGrupoMuscular,
+                      variables: updatedVars
                     };
                   } catch (e) {
                     console.error('Error al auto-rellenar ejercicio:', e);
@@ -1231,9 +1264,46 @@ export const PlanPlanner: React.FC = () => {
             ...d,
             exercises: d.exercises.map(ex => {
               if (ex.id === exId) {
+                const updatedVariables = { ...ex.variables, [varId]: val };
+                
+                // Si cambiaron repeticiones o rir, recalculamos el peso sugerido si tiene 1RM
+                if (varId === 'repeticiones' || varId === 'rir') {
+                  const normName = (ex.nombre || '').toLowerCase().trim();
+                  const marcas = periodizationConfig?.marcas_1rm || {};
+                  
+                  // Buscar 1RM
+                  let oneRM = marcas[normName];
+                  if (!oneRM) {
+                    const alias = mapExerciseToLiftKey(normName);
+                    if (alias) oneRM = marcas[alias];
+                  }
+                  
+                  if (oneRM && oneRM > 0) {
+                    const repsStr = updatedVariables['repeticiones'] || '';
+                    const repsMatch = repsStr.match(/\d+/);
+                    const reps = repsMatch ? parseInt(repsMatch[0], 10) : 0;
+                    
+                    const rirStr = updatedVariables['rir'] || '0';
+                    const rirMatch = rirStr.match(/\d+/);
+                    const targetRIR = rirMatch ? parseFloat(rirMatch[0]) : 0;
+                    
+                    if (reps > 0) {
+                      const newLoad = getPrescribedLoad(oneRM, reps, targetRIR);
+                      if (newLoad > 0) {
+                        updatedVariables['peso'] = `🤖 ${newLoad} kg`;
+                      }
+                    }
+                  } else {
+                    // Si no hay 1RM y el peso actual era autogenerado por robot, lo limpiamos
+                    if (updatedVariables['peso'] && updatedVariables['peso'].startsWith('🤖')) {
+                      delete updatedVariables['peso'];
+                    }
+                  }
+                }
+                
                 return {
                   ...ex,
-                  variables: { ...ex.variables, [varId]: val }
+                  variables: updatedVariables
                 };
               }
               return ex;
