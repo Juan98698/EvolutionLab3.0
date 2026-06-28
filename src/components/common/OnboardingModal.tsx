@@ -1,283 +1,337 @@
-// src/components/common/OnboardingModal.tsx
+/**
+ * OnboardingModal.tsx — Reescrito con Opción C
+ *
+ * Flujo de 4 pasos para entrenador nuevo:
+ *   1. Diagnóstico de metodología → calibra el lenguaje del resto
+ *   2. Objetivo del bloque        → qué quiere lograr
+ *   3. Estructura del plan        → días y semanas
+ *   4. Confirmación + CTA         → crea plan sandbox bajo el propio perfil
+ *
+ * Opción C: el plan de práctica se crea bajo el id del propio entrenador,
+ * sin migración de DB, sin localStorage volátil, sin usuario falso.
+ *
+ * Para clientes (guiado y autónomo): mantiene el flujo original simplificado.
+ */
+
 import React, { useState } from 'react';
+import { supabase } from '../../lib/supabaseClient';
+import { getProtocolsForContext } from '../../lib/protocols';
+import { TrainingDay } from '../../types/database.types';
+
+// ─── Types ────────────────────────────────────────────────────────────────────
+
+type Metodologia  = 'intuitiva' | 'experiencia' | 'cientifica';
+type SandboxObj   = 'hipertrofia' | 'fuerza' | 'mantenimiento';
+type SandboxLevel = 'principiante' | 'intermedio' | 'avanzado';
 
 interface OnboardingModalProps {
-  onClose: () => void;
-  rol: 'entrenador' | 'cliente_guiado' | 'cliente_autonomo';
+  onClose:          () => void;
+  rol:              'entrenador' | 'cliente_guiado' | 'cliente_autonomo';
   suscripcionPlan?: string;
+  trainerId?:       string; // id del entrenador — necesario para crear el plan sandbox
 }
 
-export const OnboardingModal: React.FC<OnboardingModalProps> = ({ 
-  onClose,
-  rol,
-  suscripcionPlan = 'free'
+const ACCENT = '#c2ff00';
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+
+/** Deriva el nivel recomendado desde la metodología del entrenador */
+const deriveLevel = (m: Metodologia): SandboxLevel => ({
+  intuitiva:   'principiante',
+  experiencia: 'intermedio',
+  cientifica:  'avanzado',
+}[m] as SandboxLevel);
+
+/** Texto adaptado según metodología para los labels de la app */
+const languageMode = (m: Metodologia) => m === 'cientifica' ? 'tecnico' : 'simple';
+
+// ─── Componente ───────────────────────────────────────────────────────────────
+
+export const OnboardingModal: React.FC<OnboardingModalProps> = ({
+  onClose, rol, trainerId
 }) => {
-  const [step, setStep] = useState<number>(1);
+  // ── Estado entrenador ──
+  const [step,        setStep]       = useState(1);
+  const [metodologia, setMetodologia]= useState<Metodologia | null>(null);
+  const [objetivo,    setObjetivo]   = useState<SandboxObj | null>(null);
+  const [dias,        setDias]       = useState(4);
+  const [semanas,     setSemanas]    = useState(6);
+  const [creating,    setCreating]   = useState(false);
 
-  const stepsData = (() => {
-    if (rol === 'entrenador') {
-      return [
-        {
-          title: 'BIENVENIDO A EVOLUTION LAB COACH',
-          emoji: '🧬',
-          description: 'Tu plataforma de gestión y planificación de precisión científica. Diseña rutinas estructuradas, visualiza el progreso y define las reglas de sobrecarga de tus atletas de manera profesional.',
-          accent: '#00d4ff'
-        },
-        {
-          title: '📋 PLANIFICADOR DE RUTINAS EN DETALLE',
-          emoji: '📋',
-          description: 'Al planificar una rutina para un atleta o para ti mismo, puedes estructurar: 1) Días y Ejercicios: Agrega y organiza movimientos específicos por grupo muscular. 2) Series, Repeticiones e Intensidad: Configura el RIR (Repeticiones en Reserva) u objetivo de RPE para controlar el nivel de esfuerzo real y fatiga de cada serie. 3) Regla de Juego: Asocia el plan a un esquema de progresión matemática (lineal, ondulante, descarga) adaptado a cada ejercicio individualmente. 4) Enlaces de Video y Notas: Adjunta guías de ejecución técnica para asegurar una técnica perfecta.',
-          accent: '#7b2ff7'
-        },
-        {
-          title: '⚙️ MOTOR DE SOBRECARGA INDIVIDUAL',
-          emoji: '⚙️',
-          description: 'Personaliza de forma individualizada cómo debe actuar el motor ante estancamientos, progresiones lineales, ondulantes o descargas para cada ejercicio y atleta. Define la cantidad exacta de peso a incrementar, el porcentaje de descarga o las variables de volumen en el panel de configuración de reglas.',
-          accent: '#fda4af'
-        },
-        {
-          title: '🔔 AUDITORÍA Y ALERTAS PUSH',
-          emoji: '🔔',
-          description: 'Mantente al tanto de la fatiga extrema, racha e incrementos de carga de tus atletas. Activa las notificaciones push en tu dispositivo para recibir alertas al instante en cuanto un alumno complete una sesión o requiera asistencia por estancamiento.',
-          accent: '#10b981'
-        },
-        {
-          title: '👥 GESTIÓN Y VINCULACIÓN DE ATLETAS',
-          emoji: '👥',
-          description: 'Controla el volumen de entrenamiento semanal, las marcas históricas, los récords personales (PRs) y las vigencias de tus alumnos de forma ágil desde un panel consolidado de alto rendimiento.',
-          accent: '#eab308'
-        }
+  // ── Cliente — slides estáticos simplificados ──
+  const [clientStep, setClientStep]  = useState(1);
+  const clientSlides = rol === 'cliente_guiado'
+    ? [
+        { emoji: '👋', title: 'Tu plan está listo', text: 'Tu entrenador configuró todo. Solo tienes que entrenar y registrar cada serie.' },
+        { emoji: '📝', title: 'Registra cada serie', text: 'Marca el checkbox al terminar cada serie. Si el peso o las reps fueron diferentes, cámbialos antes de marcar.' },
+        { emoji: '🤖', title: 'Pesos automáticos', text: 'El sistema te sugiere los pesos para la próxima semana basado en lo que registraste. Cuanto más registres, mejor la sugerencia.' },
+      ]
+    : [
+        { emoji: '👋', title: 'Bienvenido', text: 'Crea tu plan, registra tus sesiones y el sistema aprende de tu rendimiento para sugerirte cargas cada semana.' },
+        { emoji: '📝', title: 'Registra cada serie', text: 'Marca el checkbox al terminar. Ajusta peso y reps si difieren del plan. Eso alimenta el motor de sugerencias.' },
+        { emoji: '⚡', title: 'Funciona offline', text: 'Mala señal en el gym, no hay problema. La app guarda todo localmente y sincroniza cuando recuperes conexión.' },
       ];
-    } else if (rol === 'cliente_guiado') {
-      return [
-        {
-          title: 'BIENVENIDO A EVOLUTION LAB',
-          emoji: '🧬',
-          description: 'Tu coach ha preparado tu plan de entrenamiento personalizado. Aquí registrarás tus marcas y cada serie con precisión científica.',
-          accent: '#00d4ff'
-        },
-        {
-          title: '📝 REGISTRO DE SESIÓN: TU PASO MÁS IMPORTANTE',
-          emoji: '📝',
-          description: 'Al entrenar, sigue estos pasos: 1) Marca tus series completadas presionando el checkbox al finalizar cada una. 2) Ajusta Carga/Reps: Si realizaste un esfuerzo diferente al planeado, modifica el peso y repeticiones en tiempo real. 3) Registra tu RIR: Indica tus repeticiones en reserva (qué tan cerca estuviste del fallo). IMPORTANCIA VITAL: Cada registro alimenta el motor del Smart Coach para sugerir pesos precisos la próxima sesión, calcula tu 1RM estimado, actualiza tus estadísticas históricas y te otorga XP para subir de nivel.',
-          accent: '#7b2ff7'
-        },
-        {
-          title: '🧠 SMART COACH',
-          emoji: '🧠',
-          description: 'Obtén sugerencias automáticas de cargas y repeticiones en tiempo real en la pantalla de entrenamiento, basadas en tu rendimiento real previo y en la configuración de sobrecarga definida por tu entrenador.',
-          accent: '#fda4af'
-        },
-        {
-          title: '🏆 TU PROGRESO Y LOGROS',
-          emoji: '🏆',
-          description: 'Gana puntos de experiencia (XP) por cada serie completada y sube de nivel como atleta. Desbloquea insignias de constancia e intensidad y logros personalizados diseñados exclusivamente por tu entrenador.',
-          accent: '#eab308'
-        },
-        {
-          title: '🔌 ENTRENAMIENTO OFFLINE Y PWA',
-          emoji: '⚡',
-          description: '¿Mala señal en el gimnasio? La PWA guarda tus registros de manera local en tu dispositivo y los sincroniza automáticamente en la nube cuando recuperes internet, asegurando que nunca pierdas un entrenamiento.',
-          accent: '#10b981'
-        }
-      ];
-    } else { // cliente_autonomo
-      const isPremium = suscripcionPlan === 'premium';
-      return [
-        {
-          title: isPremium ? 'EVOLUTION LAB SOLO PRO ⚡' : 'EVOLUTION LAB SOLO FREE 🧬',
-          emoji: '🧬',
-          description: isPremium
-            ? 'Tienes acceso ILIMITADO y completo a todas las funciones profesionales de entrenamiento autónomo. ¡Leva tu físico al límite!'
-            : 'Tu cuenta gratuita para entrenar de forma autónoma. Planifica, registra tus rutinas y visualiza tus marcas en cualquier momento.',
-          accent: '#00d4ff'
-        },
-        {
-          title: '📝 REGISTRO DE SESIÓN: TU PASO MÁS IMPORTANTE',
-          emoji: '📝',
-          description: 'Registrar tu entrenamiento es vital: 1) Marca tus series: Pulsa el checkbox de cada serie ejecutada. 2) Ajusta Carga/Reps: Modifica los valores reales levantados para que coincidan con tu esfuerzo real. 3) Indica el RIR: Registra tu nivel de esfuerzo percibido. IMPORTANCIA VITAL: Este registro calcula tu 1RM dinámico, alimenta tus gráficos históricos de volumen y constancia, le da la información necesaria al Smart Coach (Pro) para tus próximas progresiones y te otorga XP para subir de nivel.',
-          accent: '#7b2ff7'
-        },
-        {
-          title: '🧠 SMART COACH',
-          emoji: '🧠',
-          description: isPremium
-            ? '¡Desbloqueado! El Smart Coach analiza tu rendimiento histórico y te da sugerencias en tiempo real de pesos y repeticiones para cada serie al iniciar tu sesión.'
-            : '🔒 Bloqueado en Plan Free. Smart Coach te sugeriría cargas y repeticiones automáticas basadas en tu historial de RIR para evitar estancamientos de manera científica. Adquiere el plan Solo Lifter Pro para desbloquearlo.',
-          accent: '#fda4af'
-        },
-        {
-          title: '⚙️ CONFIGURACIÓN DEL MOTOR',
-          emoji: '⚙️',
-          description: isPremium
-            ? '¡Desbloqueado! Personaliza de forma avanzada tus propias reglas de sobrecarga (lineal, ondulante, descarga) por ejercicio de manera individual y automatiza tu progresión.'
-            : '🔒 Bloqueado en Plan Free. Los usuarios Pro pueden automatizar y personalizar reglas avanzadas de progresión por ejercicio de forma individual. Actualiza a Solo Lifter Pro para activarlo.',
-          accent: '#eab308'
-        },
-        {
-          title: '🏆 RENDIMIENTO Y OFFLINE',
-          emoji: '⚡',
-          description: 'Disfruta de la calculadora 1RM, historial de PRs, sube de nivel acumulando XP y registra tus entrenamientos sin conexión gracias al modo offline de la PWA.',
-          accent: '#10b981'
-        }
-      ];
-    }
-  })();
 
-  const handleNext = () => {
-    if (step < stepsData.length) {
-      setStep(step + 1);
-    } else {
-      if (rol === 'entrenador') {
-        localStorage.setItem('evolution_trainer_onboarded_v1', 'true');
-      } else {
-        localStorage.setItem('evolution_onboarded_v1', 'true');
-      }
-      onClose();
+  // ── Handlers entrenador ──
+
+  const handleCreateSandbox = async () => {
+    if (!objetivo || !metodologia || !trainerId) return;
+    setCreating(true);
+
+    try {
+      const level    = deriveLevel(metodologia);
+      const protocols = getProtocolsForContext(objetivo, level);
+      const best      = protocols.find(p => p.daysPerWeek === dias) || protocols[0];
+
+      const trainingDays: TrainingDay[] = best
+        ? best.days.map((day, idx) => ({
+            id:        `day_${idx + 1}`,
+            dayNumber: idx + 1,
+            name:      day.label,
+            exercises: day.exercises.map(ex => ({
+              id:              crypto.randomUUID(),
+              nombre:          ex.name,
+              nombre_original: ex.name,
+              grupo_muscular:  ex.muscle,
+              variables: {
+                'series de trabajo': ex.sets,
+                'repeticiones':      ex.reps,
+                'rir':               ex.rir,
+                'descanso':          ex.rest,
+              },
+            })),
+          }))
+        : [];
+
+      const planData = {
+        cliente_id: trainerId,
+        nombre:     '🧪 Plan de práctica',
+        notas:      'Plan creado durante el onboarding para explorar la app. Puedes modificarlo o eliminarlo cuando quieras.',
+        data: JSON.stringify({
+          portada: {
+            userName:      'Mi plan de práctica',
+            userGoal:      objetivo,
+            startDate:     new Date().toISOString().split('T')[0],
+            planVigenciaPlan: String(semanas * 7),
+            trainerName:   '',
+            whatsappLink:  '',
+          },
+          trainingDays,
+          globalVariables: {},
+          periodizationConfig: {
+            enabled:       true,
+            objetivo,
+            semana_actual: 1,
+            total_semanas: semanas,
+            marcas_1rm:    {},
+            mrv_limite_alcanzado: false,
+            puntos_debiles: { sentadilla: 'abajo', banca: 'pecho', peso_muerto: 'despegue' },
+          },
+          is_sandbox: true,
+          language_mode: languageMode(metodologia),
+        }),
+      };
+
+      await supabase.from('planes').insert(planData);
+    } catch (e) {
+      console.warn('No se pudo crear el plan sandbox:', e);
     }
+
+    localStorage.setItem('evolution_trainer_onboarded_v1', 'true');
+    setCreating(false);
+    onClose();
   };
 
-  const currentData = stepsData[step - 1];
+  const handleSkipSandbox = () => {
+    localStorage.setItem('evolution_trainer_onboarded_v1', 'true');
+    onClose();
+  };
+
+  // ─── Render cliente ────────────────────────────────────────────────────────
+
+  if (rol !== 'entrenador') {
+    const slide = clientSlides[clientStep - 1];
+    const isLast = clientStep === clientSlides.length;
+
+    return (
+      <div style={{ position: 'fixed', inset: 0, background: 'rgba(5,8,16,0.96)', backdropFilter: 'blur(12px)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+        <div style={{ background: 'rgba(15,23,42,0.9)', border: `1px solid ${ACCENT}22`, borderRadius: '24px', maxWidth: '420px', width: '100%', padding: '36px 28px', textAlign: 'center', boxShadow: `0 20px 50px rgba(0,0,0,0.5)` }}>
+          <div style={{ fontSize: '48px', marginBottom: '20px' }}>{slide.emoji}</div>
+          <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#fff', marginBottom: '12px' }}>{slide.title}</h2>
+          <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, marginBottom: '28px' }}>{slide.text}</p>
+          <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', marginBottom: '20px' }}>
+            {clientSlides.map((_, i) => (
+              <div key={i} style={{ height: '4px', width: i + 1 <= clientStep ? '24px' : '8px', borderRadius: '2px', background: i + 1 <= clientStep ? ACCENT : 'rgba(255,255,255,0.1)', transition: 'all 0.3s' }} />
+            ))}
+          </div>
+          <button
+            onClick={() => {
+              if (!isLast) { setClientStep(s => s + 1); }
+              else { localStorage.setItem('evolution_onboarded_v1', 'true'); onClose(); }
+            }}
+            style={{ width: '100%', padding: '14px', borderRadius: '12px', border: 'none', background: `linear-gradient(135deg, ${ACCENT}, ${ACCENT}cc)`, color: '#000', fontWeight: 800, fontSize: '14px', cursor: 'pointer' }}
+          >
+            {isLast ? 'Empezar →' : 'Siguiente →'}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Render entrenador — 4 pasos ──────────────────────────────────────────
+
+  const totalSteps = 4;
+  const canNext = step === 1 ? metodologia !== null : step === 2 ? objetivo !== null : true;
 
   return (
-    <div style={{
-      position: 'fixed',
-      inset: 0,
-      background: 'rgba(5, 8, 16, 0.95)',
-      backdropFilter: 'blur(12px)',
-      WebkitBackdropFilter: 'blur(12px)',
-      zIndex: 99999,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '20px'
-    }}>
-      <div style={{
-        background: 'rgba(15, 23, 42, 0.85)',
-        border: `1px solid ${currentData.accent}33`,
-        borderRadius: '24px',
-        maxWidth: '500px',
-        width: '100%',
-        padding: '35px 28px',
-        textAlign: 'center',
-        boxShadow: `0 20px 50px ${currentData.accent}12`,
-        position: 'relative',
-        overflow: 'hidden',
-        transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)'
-      }}>
-        {/* Decorative corner brackets */}
-        <div style={{ position: 'absolute', top: '15px', left: '15px', width: '10px', height: '10px', borderTop: `2px solid ${currentData.accent}`, borderLeft: `2px solid ${currentData.accent}`, opacity: 0.5 }}></div>
-        <div style={{ position: 'absolute', top: '15px', right: '15px', width: '10px', height: '10px', borderTop: `2px solid ${currentData.accent}`, borderRight: `2px solid ${currentData.accent}`, opacity: 0.5 }}></div>
-        <div style={{ position: 'absolute', bottom: '15px', left: '15px', width: '10px', height: '10px', borderBottom: `2px solid ${currentData.accent}`, borderLeft: `2px solid ${currentData.accent}`, opacity: 0.5 }}></div>
-        <div style={{ position: 'absolute', bottom: '15px', right: '15px', width: '10px', height: '10px', borderBottom: `2px solid ${currentData.accent}`, borderRight: `2px solid ${currentData.accent}`, opacity: 0.5 }}></div>
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(5,8,16,0.97)', backdropFilter: 'blur(16px)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', fontFamily: "'Inter','Roboto',sans-serif" }}>
+      <div style={{ width: '100%', maxWidth: '520px', background: 'rgba(15,23,42,0.92)', border: `1px solid ${ACCENT}22`, borderRadius: '24px', padding: '36px 32px', position: 'relative', overflow: 'hidden', boxShadow: `0 24px 64px rgba(0,0,0,0.6)` }}>
 
-        {/* Floating background orb */}
-        <div style={{
-          position: 'absolute',
-          top: '-50px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          width: '180px',
-          height: '180px',
-          background: currentData.accent,
-          filter: 'blur(70px)',
-          opacity: 0.12,
-          pointerEvents: 'none',
-          borderRadius: '50%',
-          transition: 'background 0.4s ease'
-        }}></div>
+        {/* Glow */}
+        <div style={{ position: 'absolute', top: '-60px', left: '50%', transform: 'translateX(-50%)', width: '200px', height: '200px', background: ACCENT, filter: 'blur(80px)', opacity: 0.06, pointerEvents: 'none', borderRadius: '50%' }} />
 
-        {/* Steps indicator */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'center',
-          gap: '8px',
-          marginBottom: '28px'
-        }}>
-          {stepsData.map((_, idx) => {
-            const s = idx + 1;
-            return (
-              <div
-                key={s}
-                style={{
-                  width: s === step ? '24px' : '8px',
-                  height: '8px',
-                  borderRadius: '4px',
-                  background: s === step ? currentData.accent : 'rgba(255,255,255,0.1)',
-                  transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
-                }}
-              ></div>
-            );
-          })}
+        {/* Progress */}
+        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginBottom: '28px' }}>
+          {Array.from({ length: totalSteps }, (_, i) => (
+            <div key={i} style={{ height: '4px', borderRadius: '2px', transition: 'all 0.3s', width: i + 1 === step ? '32px' : '12px', background: i + 1 <= step ? ACCENT : 'rgba(255,255,255,0.1)' }} />
+          ))}
         </div>
 
-        {/* Icon container */}
-        <div style={{
-          width: '72px',
-          height: '72px',
-          borderRadius: '20px',
-          background: `${currentData.accent}12`,
-          border: `1px solid ${currentData.accent}25`,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          fontSize: '32px',
-          margin: '0 auto 24px auto',
-          boxShadow: `0 8px 20px ${currentData.accent}10`,
-          transition: 'all 0.3s ease'
-        }}>
-          {currentData.emoji}
-        </div>
+        {/* ── Paso 1 — Metodología ── */}
+        {step === 1 && (
+          <div>
+            <p style={{ fontSize: '11px', color: ACCENT, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '6px' }}>Paso 1 de 4</p>
+            <h2 style={{ fontSize: '21px', fontWeight: 800, color: '#fff', marginBottom: '6px', lineHeight: 1.3 }}>¿Cómo describes tu metodología de entrenamiento?</h2>
+            <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)', marginBottom: '22px' }}>Esto adapta el lenguaje de la app a tu nivel de familiaridad con la ciencia del ejercicio.</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {([
+                { value: 'intuitiva',   emoji: '🎯', label: 'Intuitiva',            hint: 'Ajusto según cómo se ve y siente el atleta' },
+                { value: 'experiencia', emoji: '📚', label: 'Basada en experiencia', hint: 'Tengo métodos probados que funcionan' },
+                { value: 'cientifica',  emoji: '🧬', label: 'Científica',            hint: 'Uso periodización, RPE, control de volumen' },
+              ] as { value: Metodologia; emoji: string; label: string; hint: string }[]).map(opt => (
+                <button key={opt.value} onClick={() => setMetodologia(opt.value)}
+                  style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 16px', borderRadius: '12px', cursor: 'pointer', border: `1px solid ${metodologia === opt.value ? ACCENT : 'rgba(255,255,255,0.1)'}`, background: metodologia === opt.value ? `${ACCENT}12` : 'rgba(255,255,255,0.03)', transition: 'all 0.2s', textAlign: 'left' }}>
+                  <span style={{ fontSize: '22px', flexShrink: 0 }}>{opt.emoji}</span>
+                  <div>
+                    <div style={{ fontSize: '14px', fontWeight: 700, color: metodologia === opt.value ? ACCENT : '#e5e7eb', marginBottom: '2px' }}>{opt.label}</div>
+                    <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.35)' }}>{opt.hint}</div>
+                  </div>
+                  {metodologia === opt.value && <span style={{ marginLeft: 'auto', color: ACCENT }}>✓</span>}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
-        {/* Title */}
-        <h2 style={{
-          fontFamily: "'Orbitron', sans-serif",
-          fontSize: '18px',
-          fontWeight: 800,
-          color: 'white',
-          letterSpacing: '1.5px',
-          marginBottom: '16px',
-          textTransform: 'uppercase'
-        }}>
-          {currentData.title}
-        </h2>
+        {/* ── Paso 2 — Objetivo del plan sandbox ── */}
+        {step === 2 && (
+          <div>
+            <p style={{ fontSize: '11px', color: ACCENT, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '6px' }}>Paso 2 de 4</p>
+            <h2 style={{ fontSize: '21px', fontWeight: 800, color: '#fff', marginBottom: '6px', lineHeight: 1.3 }}>Crea un plan de práctica para explorar la app</h2>
+            <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)', marginBottom: '22px' }}>Se creará bajo tu perfil, puedes modificarlo o eliminarlo cuando quieras. ¿Cuál sería el objetivo?</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {([
+                { value: 'hipertrofia',    emoji: '💪', label: 'Ganar músculo' },
+                { value: 'fuerza',         emoji: '🏋️', label: 'Ganar fuerza' },
+                { value: 'mantenimiento',  emoji: '🔄', label: 'Mantener' },
+              ] as { value: SandboxObj; emoji: string; label: string }[]).map(opt => (
+                <button key={opt.value} onClick={() => setObjetivo(opt.value)}
+                  style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 16px', borderRadius: '12px', cursor: 'pointer', border: `1px solid ${objetivo === opt.value ? ACCENT : 'rgba(255,255,255,0.1)'}`, background: objetivo === opt.value ? `${ACCENT}12` : 'rgba(255,255,255,0.03)', transition: 'all 0.2s' }}>
+                  <span style={{ fontSize: '22px' }}>{opt.emoji}</span>
+                  <span style={{ fontSize: '14px', fontWeight: 700, color: objetivo === opt.value ? ACCENT : '#e5e7eb' }}>{opt.label}</span>
+                  {objetivo === opt.value && <span style={{ marginLeft: 'auto', color: ACCENT }}>✓</span>}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
-        {/* Description */}
-        <p style={{
-          fontSize: '13.5px',
-          color: 'rgba(255,255,255,0.65)',
-          lineHeight: 1.6,
-          marginBottom: '32px',
-          minHeight: '110px',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          textAlign: 'left'
-        }}>
-          {currentData.description}
-        </p>
+        {/* ── Paso 3 — Estructura ── */}
+        {step === 3 && (
+          <div>
+            <p style={{ fontSize: '11px', color: ACCENT, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '6px' }}>Paso 3 de 4</p>
+            <h2 style={{ fontSize: '21px', fontWeight: 800, color: '#fff', marginBottom: '6px', lineHeight: 1.3 }}>¿Cómo estructurarías el plan?</h2>
+            <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)', marginBottom: '22px' }}>Estos valores se pueden cambiar después.</p>
 
-        {/* CTA Button */}
-        <button
-          onClick={handleNext}
-          style={{
-            width: '100%',
-            background: `linear-gradient(135deg, ${currentData.accent}, ${currentData.accent}dd)`,
-            color: 'white',
-            border: 'none',
-            borderRadius: '12px',
-            padding: '14px',
-            fontSize: '12px',
-            fontFamily: "'Orbitron', sans-serif",
-            fontWeight: 700,
-            letterSpacing: '1px',
-            cursor: 'pointer',
-            boxShadow: `0 4px 15px ${currentData.accent}30`,
-            transition: 'all 0.2s'
-          }}
-        >
-          {step === stepsData.length ? 'COMENZAR' : 'SIGUIENTE'}
-        </button>
+            <div style={{ marginBottom: '22px' }}>
+              <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)', fontWeight: 600, marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Días por semana</p>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                {[3, 4, 5, 6].map(d => (
+                  <button key={d} onClick={() => setDias(d)}
+                    style={{ flex: 1, padding: '12px 0', borderRadius: '10px', cursor: 'pointer', border: `1px solid ${dias === d ? ACCENT : 'rgba(255,255,255,0.1)'}`, background: dias === d ? `${ACCENT}12` : 'rgba(255,255,255,0.03)', color: dias === d ? ACCENT : '#9ca3af', fontWeight: 700, fontSize: '16px', transition: 'all 0.2s' }}>
+                    {d}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)', fontWeight: 600, marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Duración del bloque</p>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                {[4, 6, 8, 12].map(w => (
+                  <button key={w} onClick={() => setSemanas(w)}
+                    style={{ flex: 1, padding: '10px 0', borderRadius: '10px', cursor: 'pointer', border: `1px solid ${semanas === w ? ACCENT : 'rgba(255,255,255,0.1)'}`, background: semanas === w ? `${ACCENT}12` : 'rgba(255,255,255,0.03)', color: semanas === w ? ACCENT : '#9ca3af', fontWeight: 700, fontSize: '13px', transition: 'all 0.2s' }}>
+                    {w} sem
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── Paso 4 — Confirmación ── */}
+        {step === 4 && objetivo && metodologia && (
+          <div style={{ textAlign: 'center' }}>
+            <div style={{ fontSize: '48px', marginBottom: '16px' }}>🚀</div>
+            <p style={{ fontSize: '11px', color: ACCENT, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '8px' }}>Paso 4 de 4</p>
+            <h2 style={{ fontSize: '21px', fontWeight: 800, color: '#fff', marginBottom: '12px', lineHeight: 1.3 }}>Todo listo para crear tu plan de práctica</h2>
+
+            <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '16px', marginBottom: '20px', textAlign: 'left' }}>
+              {[
+                { label: 'Metodología', value: { intuitiva: 'Intuitiva', experiencia: 'Experiencia', cientifica: 'Científica' }[metodologia] },
+                { label: 'Objetivo',   value: { hipertrofia: 'Ganar músculo', fuerza: 'Ganar fuerza', mantenimiento: 'Mantener' }[objetivo] },
+                { label: 'Días/sem',   value: `${dias} días` },
+                { label: 'Duración',   value: `${semanas} semanas` },
+              ].map(row => (
+                <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                  <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)' }}>{row.label}</span>
+                  <span style={{ fontSize: '13px', fontWeight: 600, color: '#e5e7eb' }}>{row.value}</span>
+                </div>
+              ))}
+              <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)', marginTop: '8px', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                El plan aparecerá en tu lista bajo el nombre "🧪 Plan de práctica"
+              </div>
+            </div>
+
+            <button
+              onClick={handleCreateSandbox}
+              disabled={creating}
+              style={{ width: '100%', padding: '14px', borderRadius: '12px', border: 'none', background: creating ? 'rgba(255,255,255,0.06)' : `linear-gradient(135deg, ${ACCENT}, ${ACCENT}cc)`, color: creating ? '#4b5563' : '#000', fontWeight: 800, fontSize: '14px', cursor: creating ? 'not-allowed' : 'pointer', boxShadow: creating ? 'none' : `0 4px 20px ${ACCENT}40`, transition: 'all 0.2s', marginBottom: '10px' }}
+            >
+              {creating ? 'Creando plan...' : '🚀 Crear plan y entrar a la app'}
+            </button>
+            <button onClick={handleSkipSandbox} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.25)', fontSize: '12px', cursor: 'pointer', textDecoration: 'underline' }}>
+              Saltar, ya sé lo que hago
+            </button>
+          </div>
+        )}
+
+        {/* Botón siguiente (pasos 1-3) */}
+        {step < 4 && (
+          <button
+            onClick={() => setStep(s => s + 1)}
+            disabled={!canNext}
+            style={{ width: '100%', marginTop: '24px', padding: '14px', borderRadius: '12px', border: 'none', background: canNext ? `linear-gradient(135deg, ${ACCENT}, ${ACCENT}cc)` : 'rgba(255,255,255,0.06)', color: canNext ? '#000' : '#4b5563', fontWeight: 800, fontSize: '14px', cursor: canNext ? 'pointer' : 'not-allowed', transition: 'all 0.2s', boxShadow: canNext ? `0 4px 20px ${ACCENT}30` : 'none' }}
+          >
+            Siguiente →
+          </button>
+        )}
+
+        {step > 1 && step < 4 && (
+          <button onClick={() => setStep(s => s - 1)} style={{ display: 'block', margin: '12px auto 0', background: 'none', border: 'none', color: 'rgba(255,255,255,0.2)', fontSize: '12px', cursor: 'pointer' }}>
+            ← Atrás
+          </button>
+        )}
       </div>
     </div>
   );

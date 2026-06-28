@@ -3961,9 +3961,10 @@ export const TrainerDashboard: React.FC = () => {
 
       {/* Onboarding welcome modal */}
       {showOnboarding && (
-        <OnboardingModal 
-          onClose={() => setShowOnboarding(false)} 
-          rol="entrenador" 
+        <OnboardingModal
+          onClose={() => setShowOnboarding(false)}
+          rol="entrenador"
+          trainerId={profile?.id}
         />
       )}
 

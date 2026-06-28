@@ -11,7 +11,9 @@ import { PeriodizationHelpModal } from '../common/PeriodizationHelpModal';
 import { evaluateVolumeStatus, getThresholdsForMuscleGroup } from '../../lib/volumeThresholds';
 import { VolumeThresholdsTable } from './VolumeThresholdsTable';
 import { VolumeDistributorWizard } from './VolumeDistributorWizard';
+import { GuidedPlanSetup, GuidedPlanParams } from './GuidedPlanSetup';
 import { ProtocolSelectorModal } from './ProtocolSelectorModal';
+import { getProtocolsForContext } from '../../lib/protocols';
 import { VolumeTracker } from './VolumeTracker';
 import { 
   getStrengthThreshold, 
@@ -58,6 +60,12 @@ export const PlanPlanner: React.FC = () => {
 
   // Estados de interfaz y navegación
   const [variablesOpen, setVariablesOpen] = useState<boolean>(false);
+
+  // ── Guided mode — primer plan ──────────────────────────────────────────────
+  const isFirstPlan = !localStorage.getItem('evolution_guided_plan_v1');
+  const [showGuidedSetup, setShowGuidedSetup]   = useState<boolean>(false);
+  const [showTourTip,     setShowTourTip]        = useState<number>(0); // 0=off, 1-3=step
+  const [tourComplete,    setTourComplete]        = useState<boolean>(false);
   const [activeTab, setActiveTab] = useState<number>(0);
 
   // Estados del Plan (editables)
@@ -346,6 +354,58 @@ export const PlanPlanner: React.FC = () => {
   const [protocolModalOpen, setProtocolModalOpen] = useState(false);
   const [activeInput, setActiveInput] = useState<{ dayId: string; exId: string } | null>(null);
   const [filteredSuggestions, setFilteredSuggestions] = useState<EjercicioGlobal[]>([]);
+
+  // ── Handler del guided setup ───────────────────────────────────────────────
+  const handleGuidedComplete = (params: GuidedPlanParams) => {
+    setShowGuidedSetup(false);
+
+    // 1. Configurar periodización con los parámetros elegidos
+    setPeriodizationConfig(prev => ({
+      ...prev,
+      enabled:       true,
+      objetivo:      params.objetivo,
+      total_semanas: params.semanas,
+      semana_actual: 1,
+    }));
+
+    // 2. Buscar el protocolo más adecuado para objetivo + nivel
+    const protocols = getProtocolsForContext(params.objetivo, params.nivel);
+    const best      = protocols.find(p => p.daysPerWeek === params.dias) || protocols[0];
+
+    if (best) {
+      const newDays: TrainingDay[] = best.days.map((day, idx) => ({
+        id:        `day_${idx + 1}`,
+        dayNumber: idx + 1,
+        name:      day.label,
+        exercises: day.exercises.map(ex => ({
+          id:              crypto.randomUUID(),
+          nombre:          ex.name,
+          nombre_original: ex.name,
+          grupo_muscular:  ex.muscle,
+          variables: {
+            'series de trabajo': ex.sets,
+            'repeticiones':      ex.reps,
+            'rir':               ex.rir,
+            'descanso':          ex.rest,
+          },
+        })),
+      }));
+      setTrainingDays(newDays);
+    }
+
+    // 3. Activar tour si el entrenador lo pidió
+    if (params.wantsTour) {
+      setTimeout(() => setShowTourTip(1), 500);
+    }
+  };
+
+  // ── Trigger del guided setup al cargar si es primer plan ──────────────────
+  useEffect(() => {
+    if (isFirstPlan && !loading) {
+      setShowGuidedSetup(true);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading]);
 
   // Cargar catalogo global de ejercicios una sola vez
   useEffect(() => {
@@ -1712,8 +1772,70 @@ export const PlanPlanner: React.FC = () => {
 
   return (
     <div style={{ background: 'transparent', minHeight: '100vh', color: 'white', paddingBottom: '60px' }}>
-      
-      {/* HEADER PLANNER */}
+
+      {/* ── Guided Setup — primer plan ─────────────────────────────────────── */}
+      {showGuidedSetup && (
+        <GuidedPlanSetup
+          onComplete={handleGuidedComplete}
+          onSkip={() => {
+            localStorage.setItem('evolution_guided_plan_v1', 'true');
+            setShowGuidedSetup(false);
+          }}
+        />
+      )}
+
+      {/* ── Tour tips — 3 tooltips contextuales post-guided ───────────────── */}
+      {showTourTip > 0 && !tourComplete && (
+        <div style={{
+          position: 'fixed', bottom: '80px', left: '50%', transform: 'translateX(-50%)',
+          zIndex: 8000, maxWidth: '380px', width: '90%',
+          background: 'rgba(10,14,23,0.97)', border: '1px solid #c2ff0044',
+          borderRadius: '14px', padding: '16px 20px',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px #c2ff0022',
+          backdropFilter: 'blur(12px)',
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
+            <div style={{ flex: 1 }}>
+              <div style={{ fontSize: '10px', color: '#c2ff00', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '6px' }}>
+                Tour rápido — {showTourTip}/3
+              </div>
+              <p style={{ fontSize: '13px', color: '#e5e7eb', lineHeight: 1.5, margin: 0 }}>
+                {showTourTip === 1 && '📊 Los puntos de colores muestran si el volumen de tu atleta está en la zona correcta. Verde = bien, rojo = hay que reducir.'}
+                {showTourTip === 2 && '🤖 Pasa el cursor sobre cualquier peso marcado con el robot para ver exactamente cómo se calculó — fórmula, 1RM base y porcentaje usado.'}
+                {showTourTip === 3 && '📚 El botón "Protocolos" te da acceso a plantillas de entrenamiento basadas en evidencia. Puedes aplicarlas con un clic y ajustar después.'}
+              </p>
+            </div>
+            <button
+              onClick={() => {
+                if (showTourTip < 3) {
+                  setShowTourTip(t => t + 1);
+                } else {
+                  setShowTourTip(0);
+                  setTourComplete(true);
+                }
+              }}
+              style={{
+                flexShrink: 0, padding: '8px 16px', borderRadius: '8px',
+                background: '#c2ff00', border: 'none', color: '#000',
+                fontWeight: 700, fontSize: '12px', cursor: 'pointer',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {showTourTip < 3 ? 'Siguiente →' : '¡Listo!'}
+            </button>
+          </div>
+          {/* Indicador de progreso del tour */}
+          <div style={{ display: 'flex', gap: '4px', marginTop: '12px' }}>
+            {[1, 2, 3].map(i => (
+              <div key={i} style={{
+                height: '3px', flex: 1, borderRadius: '2px',
+                background: i <= showTourTip ? '#c2ff00' : 'rgba(255,255,255,0.1)',
+                transition: 'background 0.3s',
+              }} />
+            ))}
+          </div>
+        </div>
+      )}
       {/* HEADER PLANNER */}
       <div 
         className="top-bar planner-header-container" 
@@ -4063,14 +4185,14 @@ export const PlanPlanner: React.FC = () => {
           onClose={() => setProtocolModalOpen(false)}
           objective={periodizationConfig.objetivo as any || 'hipertrofia'}
           level={periodizationConfig.nivel_atleta as any || 'intermedio'}
-          onApplyProtocol={(newDays, recommendedSchedule) => {
+          onApplyProtocol={(newDays: TrainingDay[], recommendedSchedule?: number[]) => {
             const trainerId = profile?.id || 'default';
             const libraryKey = `evolution_exercise_library_${trainerId}`;
             const localLibrary = JSON.parse(localStorage.getItem(libraryKey) || '{}');
             
-            const enrichedDays = newDays.map(day => ({
+            const enrichedDays = newDays.map((day: TrainingDay) => ({
               ...day,
-              exercises: day.exercises.map(ex => {
+              exercises: day.exercises.map((ex: Exercise) => {
                 const key = (ex.nombre || '').trim().toLowerCase();
                 const foundLocal = localLibrary[key];
                 const foundGlobal = globalCatalog.find(g => g.nombre.trim().toLowerCase() === key);
@@ -4099,7 +4221,7 @@ export const PlanPlanner: React.FC = () => {
             
             if (recommendedSchedule && recommendedSchedule.length === 7) {
               const newMapping: Record<string, number> = {};
-              recommendedSchedule.forEach((val, idx) => {
+              recommendedSchedule.forEach((val: number, idx: number) => {
                 newMapping[String(idx)] = val;
               });
               setWeekdayMapping(newMapping);
