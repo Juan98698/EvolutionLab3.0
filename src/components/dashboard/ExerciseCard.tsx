@@ -74,7 +74,9 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
         const val = rawVal !== undefined && rawVal !== '' ? rawVal : v.defaultValue;
         if (val !== undefined && val !== '') {
           const parsed = parseFloat(String(val));
-          return isNaN(parsed) ? 0 : parsed;
+          if (isNaN(parsed)) return 0;
+          // Si el valor es mayor o igual a 10, asumimos que está en segundos (ej. 90, 120, 180) y lo convertimos a minutos
+          return parsed >= 10 ? parsed / 60 : parsed;
         }
       }
     }
@@ -168,6 +170,21 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
           const icon = iconMap[varId] || iconMap[cleanLabel] || defaultIcon;
           const isDescanso = varId === 'descanso' || cleanLabel.includes('descanso');
 
+          let displayValue = value;
+          if (isDescanso) {
+            const parsed = parseFloat(value);
+            if (!isNaN(parsed)) {
+              if (parsed >= 10) {
+                // Si el valor está en segundos, lo mostramos formateado en minutos
+                const mins = Math.floor(parsed / 60);
+                const secs = parsed % 60;
+                displayValue = secs > 0 ? `${mins}:${secs.toString().padStart(2, '0')}` : `${mins}`;
+              } else {
+                displayValue = `${parsed}`;
+              }
+            }
+          }
+
           const definition = variableDefinitions[varId] || variableDefinitions[cleanLabel] || '';
 
           return (
@@ -197,7 +214,7 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
               >
                 {escapeHtml(v.label)}:
               </span>
-              {' '}{escapeHtml(value)}
+              {' '}{escapeHtml(displayValue)}
               {definition && (
                 <span
                   className="var-tooltip-trigger"
