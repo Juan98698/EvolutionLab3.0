@@ -2587,7 +2587,110 @@ html, body {
     .tooltip-sheet-close:hover, .tooltip-sheet-close:active {
       background: rgba(255, 255, 255, 0.18); color: #ffffff; transform: scale(1.05);
     }
-    /* ===== BADGES COMPACTOS DE VARIABLES (CLIENTE) ===== */
+
+    /* ===== REASONING TOOLTIP — Panel de Razonamiento Científico ===== */
+    .reasoning-tooltip-wrapper {
+      position: relative; display: inline-block; width: 100%;
+    }
+    .reasoning-tooltip-trigger {
+      display: flex; align-items: center; gap: 6px; cursor: pointer;
+      width: 100%; border-radius: 8px;
+      transition: background 0.2s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .reasoning-tooltip-trigger:hover .reasoning-tooltip-icon,
+    .reasoning-tooltip-trigger.active .reasoning-tooltip-icon {
+      opacity: 1; color: #a78bfa; transform: scale(1.1);
+    }
+    .reasoning-tooltip-icon {
+      font-size: 11px; font-weight: 700; color: rgba(167, 139, 250, 0.5);
+      font-family: 'Georgia', serif; flex-shrink: 0; opacity: 0.6;
+      transition: all 0.2s ease; user-select: none;
+    }
+    .reasoning-panel {
+      position: absolute; left: 0; top: calc(100% + 6px); z-index: 1200;
+      background: linear-gradient(165deg, rgba(15, 12, 28, 0.97), rgba(8, 6, 18, 0.99));
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      border: 1px solid rgba(167, 139, 250, 0.25);
+      border-radius: 14px; padding: 14px 16px 12px;
+      box-shadow: 0 12px 40px rgba(0,0,0,0.7), 0 0 0 1px rgba(167,139,250,0.08);
+      min-width: 280px; max-width: 380px;
+      animation: reasoningPanelIn 0.2s cubic-bezier(0.32, 0.94, 0.6, 1) both;
+    }
+    @keyframes reasoningPanelIn {
+      from { opacity: 0; transform: translateY(-4px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .reasoning-panel-header {
+      display: flex; align-items: center; gap: 7px; margin-bottom: 10px;
+      padding-bottom: 8px; border-bottom: 1px solid rgba(167,139,250,0.15);
+    }
+    .reasoning-panel-icon {
+      font-size: 14px; color: #a78bfa; font-family: 'Georgia', serif; flex-shrink: 0;
+    }
+    .reasoning-panel-title {
+      font-size: 11px; font-weight: 700; color: #c4b5fd;
+      text-transform: uppercase; letter-spacing: 0.06em; flex: 1;
+    }
+    .reasoning-confidence {
+      font-size: 9px; font-weight: 600; padding: 2px 7px; border-radius: 99px;
+      letter-spacing: 0.04em;
+    }
+    .reasoning-confidence-high { background: rgba(16,185,129,0.15); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.3); }
+    .reasoning-confidence-medium { background: rgba(245,158,11,0.12); color: #fcd34d; border: 1px solid rgba(245,158,11,0.25); }
+    .reasoning-panel-steps { display: flex; flex-direction: column; gap: 5px; }
+    .reasoning-step {
+      display: grid; grid-template-columns: 1fr auto;
+      align-items: baseline; gap: 8px; padding: 4px 6px; border-radius: 6px;
+      transition: background 0.15s;
+    }
+    .reasoning-step-highlight {
+      background: rgba(167,139,250,0.08);
+      border: 1px solid rgba(167,139,250,0.15);
+    }
+    .reasoning-step-label {
+      font-size: 10px; color: rgba(255,255,255,0.45); font-weight: 500;
+    }
+    .reasoning-step-value {
+      font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.9);
+      font-family: 'Courier New', Courier, monospace; white-space: nowrap;
+    }
+    .reasoning-step-highlight .reasoning-step-label { color: rgba(196,181,253,0.7); }
+    .reasoning-step-highlight .reasoning-step-value { color: #c4b5fd; }
+    .reasoning-step-formula {
+      grid-column: 1 / -1;
+      font-size: 9.5px; color: rgba(167,139,250,0.6);
+      font-family: 'Courier New', Courier, monospace;
+      padding-left: 4px; border-left: 2px solid rgba(167,139,250,0.25);
+      margin-top: 2px; line-height: 1.4;
+    }
+    .reasoning-panel-result {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-top: 8px; padding: 6px 8px;
+      background: rgba(167,139,250,0.12); border-radius: 8px;
+      border: 1px solid rgba(167,139,250,0.2);
+    }
+    .reasoning-result-label {
+      font-size: 9px; font-weight: 700; color: #a78bfa;
+      text-transform: uppercase; letter-spacing: 0.08em;
+    }
+    .reasoning-result-value {
+      font-size: 13px; font-weight: 800; color: #c4b5fd;
+      font-family: 'Courier New', Courier, monospace;
+    }
+    .reasoning-panel-recommendation {
+      margin-top: 8px; font-size: 10px; color: rgba(251,191,36,0.8);
+      line-height: 1.45; padding: 5px 7px;
+      background: rgba(251,191,36,0.06); border-radius: 6px;
+      border-left: 2px solid rgba(251,191,36,0.35);
+    }
+    .reasoning-panel-source {
+      margin-top: 7px; font-size: 9px; color: rgba(255,255,255,0.25);
+      line-height: 1.4; padding-top: 7px;
+      border-top: 1px solid rgba(255,255,255,0.06);
+    }
+
+
     .vars-badges {
       display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0;
     }

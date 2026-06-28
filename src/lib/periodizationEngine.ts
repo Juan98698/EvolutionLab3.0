@@ -64,6 +64,25 @@ export interface VolumeAdjustment {
   notes: string;
 }
 
+/** Available formulas for 1RM estimation and load prescription */
+export type FormulaType = 'epley' | 'brzycki' | 'epley_brzycki_avg';
+
+/** Detailed load prescription result with full reasoning metadata */
+export interface LoadPrescription {
+  weight: number;              // Final rounded weight (e.g., 87.5)
+  exactWeight: number;         // Exact calculated weight before rounding (e.g., 88.95)
+  pct1RM: number;              // Percentage of 1RM used (e.g., 0.75)
+  oneRM: number;               // The 1RM value used (e.g., 118.6)
+  reps: number;                // Target reps (e.g., 8)
+  rir: number;                 // Target RIR (e.g., 2)
+  effectiveReps: number;       // reps + rir (e.g., 10)
+  roundingIncrement: number;   // The rounding increment used (e.g., 2.5)
+  formula: FormulaType;        // Which formula was used
+  formulaLabel: string;        // Human-readable formula name (e.g., "Epley (1985)")
+  formulaExpression: string;   // The math expression (e.g., "30 / (30 + 8 + 2) = 75.0%")
+  source: string;              // Scientific citation
+}
+
 /** Shape of each exercise entry passed by AddSesion to the auto-regulation engine. */
 export interface LoggedExerciseInput {
   nombre: string;
@@ -114,6 +133,95 @@ export const getPrescribedLoad = (oneRM: number, reps: number, targetRIR: number
   // Suggested weight rounded to the nearest 2.5 kg (standard gym increments)
   const exactWeight = oneRM * pct1RM;
   return Math.round(exactWeight / 2.5) * 2.5;
+};
+
+/**
+ * Detailed version of getPrescribedLoad that returns full reasoning metadata.
+ * Supports formula selection: 'epley', 'brzycki', or 'epley_brzycki_avg'.
+ * The rounding increment is configurable (default 2.5 kg).
+ */
+export const getPrescribedLoadDetailed = (
+  oneRM: number,
+  reps: number,
+  targetRIR: number,
+  formula: FormulaType = 'epley',
+  roundingIncrement: number = 2.5
+): LoadPrescription => {
+  if (oneRM <= 0 || reps <= 0) {
+    return {
+      weight: 0, exactWeight: 0, pct1RM: 0, oneRM, reps, rir: targetRIR,
+      effectiveReps: reps + targetRIR, roundingIncrement, formula,
+      formulaLabel: getFormulaLabel(formula),
+      formulaExpression: 'N/A (datos insuficientes)',
+      source: getFormulaSource(formula),
+    };
+  }
+
+  const effectiveReps = reps + targetRIR;
+  let pct1RM: number;
+  let formulaExpression: string;
+
+  switch (formula) {
+    case 'epley': {
+      // Epley inverse: %1RM = 1 / (1 + effectiveReps / 30) = 30 / (30 + effectiveReps)
+      pct1RM = 30 / (30 + effectiveReps);
+      formulaExpression = `30 / (30 + ${reps} + ${targetRIR}) = ${(pct1RM * 100).toFixed(1)}%`;
+      break;
+    }
+    case 'brzycki': {
+      // Brzycki inverse: %1RM = (1.0278 - 0.0278 × effectiveReps)
+      const rawPct = 1.0278 - 0.0278 * effectiveReps;
+      pct1RM = Math.max(rawPct, 0.05); // Floor to prevent negative/zero
+      formulaExpression = `1.0278 - 0.0278 × ${effectiveReps} = ${(pct1RM * 100).toFixed(1)}%`;
+      break;
+    }
+    case 'epley_brzycki_avg':
+    default: {
+      const epleyPct = 30 / (30 + effectiveReps);
+      const brzyckiPct = Math.max(1.0278 - 0.0278 * effectiveReps, 0.05);
+      pct1RM = (epleyPct + brzyckiPct) / 2;
+      formulaExpression = `Promedio(Epley: ${(epleyPct * 100).toFixed(1)}%, Brzycki: ${(brzyckiPct * 100).toFixed(1)}%) = ${(pct1RM * 100).toFixed(1)}%`;
+      break;
+    }
+  }
+
+  const exactWeight = oneRM * pct1RM;
+  const weight = Math.round(exactWeight / roundingIncrement) * roundingIncrement;
+
+  return {
+    weight,
+    exactWeight: Math.round(exactWeight * 100) / 100,
+    pct1RM,
+    oneRM,
+    reps,
+    rir: targetRIR,
+    effectiveReps,
+    roundingIncrement,
+    formula,
+    formulaLabel: getFormulaLabel(formula),
+    formulaExpression,
+    source: getFormulaSource(formula),
+  };
+};
+
+/** Returns human-readable label for a formula type */
+export const getFormulaLabel = (formula: FormulaType): string => {
+  switch (formula) {
+    case 'epley': return 'Epley (1985)';
+    case 'brzycki': return 'Brzycki (1993)';
+    case 'epley_brzycki_avg': return 'Promedio Epley-Brzycki';
+    default: return 'Epley (1985)';
+  }
+};
+
+/** Returns scientific citation for a formula type */
+export const getFormulaSource = (formula: FormulaType): string => {
+  switch (formula) {
+    case 'epley': return 'Epley, B. (1985). Poundage Chart. Boyd Epley Workout. Lincoln, NE.';
+    case 'brzycki': return 'Brzycki, M. (1993). Strength Testing. Journal of Physical Education, Recreation & Dance, 64(1), 88-90.';
+    case 'epley_brzycki_avg': return 'Promedio de Epley (1985) y Brzycki (1993). LeSuer et al. (1997) validaron ambas fórmulas como igualmente precisas dentro de rangos de 1-10 RM.';
+    default: return 'Epley, B. (1985).';
+  }
 };
 
 // ─── 3. Weak Point Corrections ───────────────────────────────────────────────

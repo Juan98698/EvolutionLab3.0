@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import { TrainingDay } from '../../types/database.types';
 import {
   getThresholdsForMuscleGroup,
@@ -78,6 +78,15 @@ const calcWeightedNL = (
   return Math.round(series * reps * weight * 10) / 10; // 1 decimal
 };
 
+// ─── Mapa de colores y etiquetas por status (revelación progresiva) ───────────
+const STATUS_CONFIG: Record<string, { dot: string; label: string; dotChar: string }> = {
+  danger:   { dot: '#ef4444', label: '⚠️ Excesivo',      dotChar: '●' },
+  warning:  { dot: '#f97316', label: '⚡ Volumen Alto',   dotChar: '●' },
+  optimal:  { dot: '#10b981', label: '🚀 Óptimo',        dotChar: '●' },
+  building: { dot: '#facc15', label: '🔨 Construyendo',  dotChar: '◉' },
+  low:      { dot: '#94a3b8', label: '💤 Mantenimiento', dotChar: '○' },
+};
+
 export const VolumeTracker: React.FC<VolumeTrackerProps> = ({
   trainingDays,
   weeklyTargets,
@@ -85,6 +94,10 @@ export const VolumeTracker: React.FC<VolumeTrackerProps> = ({
   blockObjective
 }) => {
   const isStrength = blockObjective === 'fuerza';
+
+  // ─── Estado de expansión (revelación progresiva) ──────────────────────────
+  const [expanded, setExpanded] = useState(false);
+  const toggleExpanded = useCallback(() => setExpanded(prev => !prev), []);
 
   // ─── Key de serialización para detectar cambios profundos ────────────────────
   const trainingDaysKey = useMemo(() =>
@@ -158,16 +171,15 @@ export const VolumeTracker: React.FC<VolumeTrackerProps> = ({
             ? weeklyTargets[pattern]
             : threshold.mavMax;
 
-          const status = evaluateStrengthVolume(pattern, current, athleteLevel).status;
+          const evalResult = evaluateStrengthVolume(pattern, current, athleteLevel);
+          const rawStatus = evalResult.status;
 
-          const colorMap: Record<string, { border: string; text: string }> = {
-            danger:  { border: '#ef4444', text: '#ef4444' },
-            optimal: { border: '#10b981', text: '#10b981' },
-            warning: { border: '#f97316', text: '#f97316' },
-            low:     { border: current > 0 ? '#fbbf24' : 'rgba(255,255,255,0.1)',
-                       text:   current > 0 ? '#fbbf24' : '#d1d5db' },
-          };
-          const colors = colorMap[status] ?? colorMap.low;
+          // Derive 'building' when current is between MEV and MAV_min
+          // (evaluateStrengthVolume returns 'low' for the full range below MAV_min)
+          const effectiveStatus =
+            rawStatus === 'low' && current >= threshold.mev ? 'building' : rawStatus;
+
+          const colors = STATUS_CONFIG[effectiveStatus] ?? STATUS_CONFIG.low;
 
           const progressPct = Math.min((current / threshold.mrv) * 100, 100);
           const targetPct   = Math.min((target  / threshold.mrv) * 100, 100);
@@ -180,9 +192,12 @@ export const VolumeTracker: React.FC<VolumeTrackerProps> = ({
             mrv: threshold.mrv,
             progressPct,
             targetPct,
-            borderColor: colors.border,
-            textColor:   colors.text,
-            isOver: status === 'danger',
+            borderColor: colors.dot,
+            textColor:   colors.dot,
+            dotColor:    colors.dot,
+            dotChar:     colors.dotChar,
+            statusLabel: colors.label,
+            isOver: rawStatus === 'danger',
             unit: 'NL★', // ★ indica que son NL ponderados, no brutos
           };
         });
@@ -197,15 +212,19 @@ export const VolumeTracker: React.FC<VolumeTrackerProps> = ({
             : thresholds.mavMax;
 
           const isOver  = current > thresholds.mrv;
-          const isExact = weeklyTargets[muscle] > 0
+          const isOptimal = weeklyTargets[muscle] > 0
             ? current === target
             : current >= thresholds.mavMin && current <= thresholds.mavMax;
+          const isBuilding = !isOver && !isOptimal && current >= thresholds.mev && current < thresholds.mavMin;
+          const isWarning = !isOver && !isOptimal && !isBuilding && current > thresholds.mavMax;
 
-          let borderColor = 'rgba(255,255,255,0.1)';
-          let textColor   = '#d1d5db';
-          if (isOver)           { borderColor = '#ef4444'; textColor = '#ef4444'; }
-          else if (isExact)     { borderColor = '#10b981'; textColor = '#10b981'; }
-          else if (current > 0) { borderColor = '#fbbf24'; textColor = '#fbbf24'; }
+          let effectiveStatus = 'low';
+          if (isOver)       effectiveStatus = 'danger';
+          else if (isWarning)  effectiveStatus = 'warning';
+          else if (isOptimal)  effectiveStatus = 'optimal';
+          else if (isBuilding) effectiveStatus = 'building';
+
+          const colors = STATUS_CONFIG[effectiveStatus] ?? STATUS_CONFIG.low;
 
           const progressPct = Math.min((current / thresholds.mrv) * 100, 100);
           const targetPct   = Math.min((target  / thresholds.mrv) * 100, 100);
@@ -218,8 +237,11 @@ export const VolumeTracker: React.FC<VolumeTrackerProps> = ({
             mrv: thresholds.mrv,
             progressPct,
             targetPct,
-            borderColor,
-            textColor,
+            borderColor: colors.dot,
+            textColor:   colors.dot,
+            dotColor:    colors.dot,
+            dotChar:     colors.dotChar,
+            statusLabel: colors.label,
             isOver,
             unit: 'series',
           };
@@ -237,95 +259,155 @@ export const VolumeTracker: React.FC<VolumeTrackerProps> = ({
       boxShadow: '0 8px 32px 0 var(--theme-glow)',
       backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)'
     }}>
-      <h3 style={{
-        margin: '0 0 10px 0', fontSize: '13px', color: 'var(--theme-primary)',
-        textTransform: 'uppercase', letterSpacing: '0.05em',
-        display: 'flex', alignItems: 'center', gap: '8px'
+      {/* ─── Header con toggle ─────────────────────────────────────────────── */}
+      <div style={{
+        display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        marginBottom: expanded ? '10px' : '8px'
       }}>
-        <span>📊</span>
-        {isStrength
-          ? 'Tracker de Fuerza (NL ponderados por intensidad)'
-          : 'Tracker de Volumen (Series por Músculo)'}
-      </h3>
-
-      {/* Leyenda para modo fuerza */}
-      {isStrength && (
-        <div style={{
-          fontSize: '11px', color: '#6b7280', marginBottom: '10px',
-          display: 'flex', alignItems: 'center', gap: '6px'
+        <h3 style={{
+          margin: 0, fontSize: '13px', color: 'var(--theme-primary)',
+          textTransform: 'uppercase', letterSpacing: '0.05em',
+          display: 'flex', alignItems: 'center', gap: '8px'
         }}>
-          <span style={{ color: '#f59e0b' }}>★</span>
-          NL★ = NL ponderados por intensidad estimada (RIR→%1RM→Prilepin).
-          <span style={{ color: '#4b5563', marginLeft: '4px' }}>
-            80%→×1.0 · 85%→×1.2 · 90%+→×1.5
-          </span>
+          <span>📊</span>
+          {isStrength ? 'Tracker de Fuerza' : 'Tracker de Volumen'}
+        </h3>
+        <button
+          onClick={toggleExpanded}
+          style={{
+            background: expanded ? 'rgba(0,212,255,0.08)' : 'rgba(255,255,255,0.05)',
+            border: `1px solid ${expanded ? 'rgba(0,212,255,0.2)' : 'rgba(255,255,255,0.08)'}`,
+            borderRadius: '8px', padding: '4px 10px',
+            color: expanded ? 'rgba(0,212,255,0.8)' : 'rgba(255,255,255,0.4)',
+            fontSize: '10px', fontWeight: 600, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', gap: '5px',
+            transition: 'all 0.2s ease', letterSpacing: '0.03em',
+            fontFamily: "inherit"
+          }}
+          aria-expanded={expanded}
+          aria-label={expanded ? 'Colapsar análisis' : 'Expandir análisis'}
+        >
+          {expanded ? '▲ Colapsar' : '▼ Expandir análisis'}
+        </button>
+      </div>
+
+      {/* ─── Modo compacto: fila de chips con dot de color (DEFAULT) ─────────── */}
+      {!expanded && (
+        <div style={{
+          display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center'
+        }}>
+          {trackerItems.map(item => (
+            <div
+              key={item.key}
+              title={`${item.label}: ${item.current} / ${item.target} ${item.unit} — ${item.statusLabel}`}
+              style={{
+                display: 'inline-flex', alignItems: 'center', gap: '5px',
+                padding: '3px 10px',
+                background: `${item.dotColor}0d`,
+                border: `1px solid ${item.dotColor}30`,
+                borderRadius: '99px',
+                transition: 'all 0.15s ease',
+              }}
+            >
+              <span style={{ fontSize: '8px', color: item.dotColor, lineHeight: 1, flexShrink: 0 }}>
+                {item.dotChar}
+              </span>
+              <span style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(255,255,255,0.7)', whiteSpace: 'nowrap' }}>
+                {item.label}
+              </span>
+              <span style={{ fontSize: '10px', fontWeight: 700, color: item.dotColor }}>
+                {item.current}
+              </span>
+            </div>
+          ))}
         </div>
       )}
 
-      <div style={{ display: 'flex', gap: '12px', overflowX: 'auto', paddingBottom: '8px' }}>
-        {trackerItems.map(item => (
-          <div key={item.key} style={{
-            background: 'rgba(0,0,0,0.2)',
-            border: `1px solid ${item.borderColor}`,
-            borderRadius: '8px', padding: '8px 12px', minWidth: '130px',
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
-            position: 'relative', flexShrink: 0
-          }}>
-            <span style={{
-              fontSize: '11px', fontWeight: 'bold', color: '#9ca3af',
-              textAlign: 'center', whiteSpace: 'nowrap'
-            }}>
-              {item.label}
-            </span>
-
-            <span style={{ fontSize: '18px', fontWeight: '900', color: item.textColor, lineHeight: 1 }}>
-              {item.current}
-              <span style={{ fontSize: '12px', color: '#6b7280', fontWeight: 'normal' }}>
-                {' '}/ {item.target} {item.unit}
-              </span>
-            </span>
-
-            {/* Barra de progreso */}
+      {/* ─── Modo expandido: vista científica completa ────────────────────────── */}
+      {expanded && (
+        <>
+          {/* Leyenda para modo fuerza */}
+          {isStrength && (
             <div style={{
-              width: '100%', height: '4px', background: 'rgba(255,255,255,0.08)',
-              borderRadius: '9999px', overflow: 'visible', position: 'relative', marginTop: '2px'
+              fontSize: '11px', color: '#6b7280', marginBottom: '10px',
+              display: 'flex', alignItems: 'center', gap: '6px'
             }}>
-              {/* Marcador de target */}
-              <div style={{
-                position: 'absolute', top: '-3px',
-                left: `${item.targetPct}%`,
-                transform: 'translateX(-50%)',
-                width: '2px', height: '10px',
-                background: 'rgba(255,255,255,0.3)',
-                borderRadius: '1px'
-              }} />
-              {/* Progreso */}
-              <div style={{
-                height: '100%', borderRadius: '9999px',
-                background: item.borderColor,
-                width: `${item.progressPct}%`,
-                transition: 'width 0.3s ease',
-                opacity: 0.85
-              }} />
+              <span style={{ color: '#f59e0b' }}>★</span>
+              NL★ = NL ponderados por intensidad estimada (RIR→%1RM→Prilepin).
+              <span style={{ color: '#4b5563', marginLeft: '4px' }}>
+                80%→×1.0 · 85%→×1.2 · 90%+→×1.5
+              </span>
             </div>
+          )}
 
-            <div style={{ width: '100%', display: 'flex', justifyContent: 'flex-end' }}>
-              <span style={{ fontSize: '9px', color: '#4b5563' }}>MRV {item.mrv}</span>
-            </div>
-
-            {item.isOver && (
-              <div style={{
-                position: 'absolute', top: '-6px', right: '-6px',
-                background: '#ef4444', color: '#fff', fontSize: '9px',
-                padding: '2px 5px', borderRadius: '12px', fontWeight: 'bold',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.5)'
+          <div style={{ display: 'flex', gap: '12px', overflowX: 'auto', paddingBottom: '8px' }}>
+            {trackerItems.map(item => (
+              <div key={item.key} style={{
+                background: 'rgba(0,0,0,0.2)',
+                border: `1px solid ${item.borderColor}`,
+                borderRadius: '8px', padding: '8px 12px', minWidth: '130px',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px',
+                position: 'relative', flexShrink: 0
               }}>
-                Excedido
+                <span style={{ fontSize: '11px', fontWeight: 'bold', color: '#9ca3af', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                  {item.label}
+                </span>
+
+                {/* Status label human-readable */}
+                <span style={{ fontSize: '9px', color: item.textColor, fontWeight: 600, letterSpacing: '0.02em' }}>
+                  {item.statusLabel}
+                </span>
+
+                <span style={{ fontSize: '18px', fontWeight: '900', color: item.textColor, lineHeight: 1 }}>
+                  {item.current}
+                  <span style={{ fontSize: '12px', color: '#6b7280', fontWeight: 'normal' }}>
+                    {' '}/ {item.target} {item.unit}
+                  </span>
+                </span>
+
+                {/* Barra de progreso */}
+                <div style={{
+                  width: '100%', height: '4px', background: 'rgba(255,255,255,0.08)',
+                  borderRadius: '9999px', overflow: 'visible', position: 'relative', marginTop: '2px'
+                }}>
+                  {/* Marcador de target */}
+                  <div style={{
+                    position: 'absolute', top: '-3px',
+                    left: `${item.targetPct}%`,
+                    transform: 'translateX(-50%)',
+                    width: '2px', height: '10px',
+                    background: 'rgba(255,255,255,0.3)',
+                    borderRadius: '1px'
+                  }} />
+                  {/* Progreso */}
+                  <div style={{
+                    height: '100%', borderRadius: '9999px',
+                    background: item.borderColor,
+                    width: `${item.progressPct}%`,
+                    transition: 'width 0.3s ease',
+                    opacity: 0.85
+                  }} />
+                </div>
+
+                <div style={{ width: '100%', display: 'flex', justifyContent: 'flex-end' }}>
+                  <span style={{ fontSize: '9px', color: '#4b5563' }}>MRV {item.mrv}</span>
+                </div>
+
+                {item.isOver && (
+                  <div style={{
+                    position: 'absolute', top: '-6px', right: '-6px',
+                    background: '#ef4444', color: '#fff', fontSize: '9px',
+                    padding: '2px 5px', borderRadius: '12px', fontWeight: 'bold',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.5)'
+                  }}>
+                    Excedido
+                  </div>
+                )}
               </div>
-            )}
+            ))}
           </div>
-        ))}
-      </div>
+        </>
+      )}
     </div>
   );
 };

@@ -366,6 +366,19 @@ export const getStrengthThreshold = (
   return getStrengthTable(level)[pattern];
 };
 
+/** Enriched evaluation result with reasoning metadata for UI explainability */
+export interface StrengthVolumeEvaluation {
+  status: 'low' | 'building' | 'optimal' | 'warning' | 'danger';
+  message: string;
+  humanLabel: string;
+  reasoning: string;
+  thresholds: { mev: number; mavMin: number; mavMax: number; mrv: number };
+  currentNL: number;
+  source: string;
+  recommendation?: string;
+  mrvSignals?: string[];
+}
+
 /**
  * Evalúa el estado de volumen de fuerza de un patrón.
  * Devuelve status + mensaje + señales MRV si corresponde.
@@ -410,6 +423,85 @@ export const evaluateStrengthVolume = (
   return {
     status: 'danger',
     message: `⚠️ MRV superado. ${t.label} (${level}): ${weeklyNL} NL/semana ≥ MRV (${t.mrv} NL). Riesgo de sobreentrenamiento neural. Reduce volumen o programa deload.`,
+    mrvSignals: t.mrvSignals,
+  };
+};
+
+/**
+ * Enhanced version of evaluateStrengthVolume with full reasoning metadata.
+ * Fixes bug: MEV ≤ NL < MAV_min now correctly returns 'building' status
+ * instead of falling through to 'danger'.
+ */
+export const evaluateStrengthVolumeDetailed = (
+  pattern: MovementPattern,
+  weeklyNL: number,
+  level: AthleteLevel = 'intermedio'
+): StrengthVolumeEvaluation => {
+  const t = getStrengthThreshold(pattern, level);
+  const source = 'Israetel, M. & Hoffmann, J. (2023). Scientific Principles of Hypertrophy Training. Renaissance Periodization.';
+
+  if (weeklyNL < t.mev) {
+    return {
+      status: 'low',
+      humanLabel: '💤 Mantenimiento',
+      message: `Volumen insuficiente para generar adaptación de fuerza.`,
+      reasoning: `${weeklyNL} NL★ está por debajo del MEV (${t.mev} NL★) para ${t.label} nivel ${level}. Este volumen mantendrá la fuerza actual pero no estimulará ganancias.`,
+      thresholds: { mev: t.mev, mavMin: t.mavMin, mavMax: t.mavMax, mrv: t.mrv },
+      currentNL: weeklyNL,
+      source,
+      recommendation: `Incrementa al menos a ${t.mev} NL★/semana para alcanzar el volumen mínimo efectivo.`,
+    };
+  }
+
+  // BUG FIX: Handle MEV ≤ NL < MAV_min (was falling through to 'danger')
+  if (weeklyNL >= t.mev && weeklyNL < t.mavMin) {
+    return {
+      status: 'building',
+      humanLabel: '🔨 Construyendo',
+      message: `Volumen por encima del mínimo efectivo, acercándose a la zona óptima.`,
+      reasoning: `${weeklyNL} NL★ supera el MEV (${t.mev}) pero no ha alcanzado la zona óptima MAV (${t.mavMin}-${t.mavMax} NL★). Hay estímulo de fuerza, pero podrías beneficiarte de algo más de volumen.`,
+      thresholds: { mev: t.mev, mavMin: t.mavMin, mavMax: t.mavMax, mrv: t.mrv },
+      currentNL: weeklyNL,
+      source,
+      recommendation: `Considera incrementar progresivamente hacia ${t.mavMin} NL★/semana para entrar en la zona óptima.`,
+    };
+  }
+
+  if (weeklyNL >= t.mavMin && weeklyNL <= t.mavMax) {
+    return {
+      status: 'optimal',
+      humanLabel: '🚀 Óptimo',
+      message: `Zona óptima de fuerza para ${t.label}.`,
+      reasoning: `${weeklyNL} NL★ está dentro del MAV (${t.mavMin}-${t.mavMax} NL★) para ${t.label} nivel ${level}. Volumen perfecto para progresar de forma segura. Intensidad recomendada: ${t.intensityZone}.`,
+      thresholds: { mev: t.mev, mavMin: t.mavMin, mavMax: t.mavMax, mrv: t.mrv },
+      currentNL: weeklyNL,
+      source,
+    };
+  }
+
+  if (weeklyNL > t.mavMax && weeklyNL < t.mrv) {
+    return {
+      status: 'warning',
+      humanLabel: '⚡ Volumen Alto',
+      message: `Volumen alto, monitorea fatiga del SNC.`,
+      reasoning: `${weeklyNL} NL★ supera el MAV máximo (${t.mavMax} NL★) para ${t.label} nivel ${level}. Aún estás por debajo del MRV (${t.mrv}), pero el riesgo de fatiga acumulada aumenta.`,
+      thresholds: { mev: t.mev, mavMin: t.mavMin, mavMax: t.mavMax, mrv: t.mrv },
+      currentNL: weeklyNL,
+      source,
+      recommendation: `Monitorea señales de fatiga del SNC. Considera reducir ${weeklyNL - t.mavMax} NL★ para volver a la zona óptima.`,
+    };
+  }
+
+  // weeklyNL >= t.mrv
+  return {
+    status: 'danger',
+    humanLabel: '⚠️ Excesivo',
+    message: `MRV superado. Riesgo de sobreentrenamiento neural.`,
+    reasoning: `${weeklyNL} NL★ iguala o supera el MRV (${t.mrv} NL★) para ${t.label} nivel ${level}. Tu atleta podría no recuperarse adecuadamente, aumentando el riesgo de lesión y estancamiento.`,
+    thresholds: { mev: t.mev, mavMin: t.mavMin, mavMax: t.mavMax, mrv: t.mrv },
+    currentNL: weeklyNL,
+    source,
+    recommendation: `Reduce volumen urgentemente o programa un deload. Objetivo: volver a ${t.mavMax} NL★ o menos.`,
     mrvSignals: t.mrvSignals,
   };
 };

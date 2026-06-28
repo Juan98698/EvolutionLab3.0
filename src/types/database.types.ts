@@ -91,6 +91,8 @@ export interface PeriodizationConfig {
   total_semanas?: number; // total microciclos en bloque, ej: 4
   mrv_limite_alcanzado?: boolean; // si se disparó descarga
   has_new_updates?: boolean; // indicador de actualización para el UI
+  formula_preferida?: 'epley' | 'brzycki' | 'epley_brzycki_avg'; // Formula for load prescription
+  redondeo_peso?: number; // Rounding increment in kg (default 2.5)
 }
 
 export interface GlobalVariable {

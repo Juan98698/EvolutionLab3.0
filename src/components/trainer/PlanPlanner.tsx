@@ -5,7 +5,8 @@ import { useSupabase } from '../../context/SupabaseContext';
 import { Profile, PlanData, TrainingDay, Exercise, GlobalVariable, EjercicioGlobal, PeriodizationConfig } from '../../types/database.types';
 import Toast from '../common/Toast';
 import { InfoTooltip } from '../common/InfoTooltip';
-import { getWeakPointCorrection, getPrescribedLoad, mapExerciseToLiftKey } from '../../lib/periodizationEngine';
+import ReasoningTooltip, { buildLoadReasoningSteps, buildVolumeReasoningSteps } from '../common/ReasoningTooltip';
+import { getWeakPointCorrection, getPrescribedLoad, getPrescribedLoadDetailed, mapExerciseToLiftKey } from '../../lib/periodizationEngine';
 import { PeriodizationHelpModal } from '../common/PeriodizationHelpModal';
 import { evaluateVolumeStatus, getThresholdsForMuscleGroup } from '../../lib/volumeThresholds';
 import { VolumeThresholdsTable } from './VolumeThresholdsTable';
@@ -14,7 +15,8 @@ import { ProtocolSelectorModal } from './ProtocolSelectorModal';
 import { VolumeTracker } from './VolumeTracker';
 import { 
   getStrengthThreshold, 
-  evaluateStrengthVolume, 
+  evaluateStrengthVolume,
+  evaluateStrengthVolumeDetailed,
   detectPatternFromExerciseName, 
   MovementPattern 
 } from '../../lib/strengthThresholds';
@@ -2377,7 +2379,61 @@ export const PlanPlanner: React.FC = () => {
                     </div>
                   </div>
 
+                  {/* ─── Fórmula de Prescripción + Redondeo ─── */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+                    <div>
+                      <label htmlFor="period-formula" style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>
+                        FÓRMULA DE PRESCRIPCIÓN DE CARGA
+                        <InfoTooltip
+                          title="Fórmula de Prescripción"
+                          body="Elige la fórmula que la app usará para calcular el peso sugerido a partir del 1RM, las repeticiones objetivo y el RIR. Epley (1985) es la más usada en powerlifting. Brzycki (1993) tiende a ser más precisa en rangos de 6-12 reps. El Promedio es la opción más conservadora y equilibrada."
+                          size={14}
+                        />
+                      </label>
+                      <select
+                        id="period-formula"
+                        value={periodizationConfig.formula_preferida || 'epley'}
+                        onChange={(e) => {
+                          const val = e.target.value as 'epley' | 'brzycki' | 'epley_brzycki_avg';
+                          setPeriodizationConfig(prev => prev ? { ...prev, formula_preferida: val } : undefined);
+                        }}
+                        style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(167,139,250,0.2)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '12px', height: '38px', boxSizing: 'border-box' }}
+                      >
+                        <option value="epley" style={{ background: '#0b0f19' }}>Epley (1985) — Estándar powerlifting</option>
+                        <option value="brzycki" style={{ background: '#0b0f19' }}>Brzycki (1993) — Precisa en 6-12 reps</option>
+                        <option value="epley_brzycki_avg" style={{ background: '#0b0f19' }}>Promedio Epley-Brzycki — Conservador</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label htmlFor="period-redondeo" style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>
+                        INCREMENTO DE REDONDEO (KG)
+                        <InfoTooltip
+                          title="Redondeo de Peso"
+                          body="El peso calculado se redondea al múltiplo de este valor. 2.5 kg es el estándar para barras con discos olímpicos. Usa 1.25 kg si tu atleta tiene micro-discos. Usa 2 kg para mancuernas que saltan de 2 en 2."
+                          size={14}
+                        />
+                      </label>
+                      <select
+                        id="period-redondeo"
+                        value={periodizationConfig.redondeo_peso ?? 2.5}
+                        onChange={(e) => {
+                          const val = parseFloat(e.target.value);
+                          setPeriodizationConfig(prev => prev ? { ...prev, redondeo_peso: val } : undefined);
+                        }}
+                        style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(167,139,250,0.2)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '12px', height: '38px', boxSizing: 'border-box' }}
+                      >
+                        <option value={0.5} style={{ background: '#0b0f19' }}>0.5 kg — Máxima precisión</option>
+                        <option value={1} style={{ background: '#0b0f19' }}>1.0 kg — Discos finos</option>
+                        <option value={1.25} style={{ background: '#0b0f19' }}>1.25 kg — Micro-discos olímpicos</option>
+                        <option value={2} style={{ background: '#0b0f19' }}>2.0 kg — Mancuernas estándar</option>
+                        <option value={2.5} style={{ background: '#0b0f19' }}>2.5 kg — Estándar (por defecto)</option>
+                        <option value={5} style={{ background: '#0b0f19' }}>5.0 kg — Gimnasio básico</option>
+                      </select>
+                    </div>
+                  </div>
+
                   {/* Marcas de Fuerza 1RM */}
+
                   <div style={{ marginBottom: '16px' }}>
                     <label style={{ display: 'flex', alignItems: 'center', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '8px', textTransform: 'uppercase' }}>
                       Fuerza Máxima Estimada (1RM)
@@ -3160,17 +3216,64 @@ export const PlanPlanner: React.FC = () => {
                             {globalVariables.map(v => {
                               const val = ex.variables[v.id] ?? '';
                               const uniqueVarInputId = `var-input-${day.id}-${ex.id}-${v.id.trim().replace(/\s+/g, '-')}`;
+
+                              // ─── ReasoningTooltip para el campo Peso ────────
+                              const isPesoField = v.id === 'peso';
+                              const isAutoWeight = isPesoField && typeof val === 'string' && val.startsWith('🤖');
+
+                              let loadPrescriptionSteps = null;
+                              let loadSource = '';
+                              let loadResult = '';
+                              if (isAutoWeight) {
+                                try {
+                                  const normName = (ex.nombre || '').toLowerCase().trim();
+                                  const marcas = periodizationConfig?.marcas_1rm || {};
+                                  let oneRM = marcas[normName];
+                                  if (!oneRM) {
+                                    const alias = mapExerciseToLiftKey(normName);
+                                    if (alias) oneRM = marcas[alias];
+                                  }
+                                  const repsStr = ex.variables?.['repeticiones'] || '';
+                                  const repsMatch = repsStr.match(/\d+/);
+                                  const reps = repsMatch ? parseInt(repsMatch[0], 10) : 0;
+                                  const rirStr = ex.variables?.['rir'] || '0';
+                                  const rirMatch = rirStr.match(/\d+/);
+                                  const targetRIR = rirMatch ? parseFloat(rirMatch[0]) : 0;
+                                  if (oneRM && oneRM > 0 && reps > 0) {
+                                    const formula = periodizationConfig?.formula_preferida || 'epley';
+                                    const rounding = periodizationConfig?.redondeo_peso || 2.5;
+                                    const lp = getPrescribedLoadDetailed(oneRM, reps, targetRIR, formula, rounding);
+                                    loadPrescriptionSteps = buildLoadReasoningSteps(lp);
+                                    loadSource = lp.source;
+                                    loadResult = `${lp.weight} kg`;
+                                  }
+                                } catch (_) { /* silencioso */ }
+                              }
+
+                              const inputEl = (
+                                <input
+                                  id={uniqueVarInputId}
+                                  type="text"
+                                  className="var-input"
+                                  value={val}
+                                  onChange={(e) => handleExerciseVarChange(day.id, ex.id, v.id, e.target.value)}
+                                  placeholder={v.defaultValue}
+                                />
+                              );
+
                               return (
                                 <div key={v.id} className="var-item">
                                   <label htmlFor={uniqueVarInputId}>{v.label}</label>
-                                  <input
-                                    id={uniqueVarInputId}
-                                    type="text"
-                                    className="var-input"
-                                    value={val}
-                                    onChange={(e) => handleExerciseVarChange(day.id, ex.id, v.id, e.target.value)}
-                                    placeholder={v.defaultValue}
-                                  />
+                                  {isAutoWeight && loadPrescriptionSteps ? (
+                                    <ReasoningTooltip
+                                      trigger={inputEl}
+                                      title="Peso Sugerido"
+                                      steps={loadPrescriptionSteps}
+                                      source={loadSource}
+                                      result={loadResult}
+                                      confidence="high"
+                                    />
+                                  ) : inputEl}
                                 </div>
                               );
                             })}
@@ -3217,13 +3320,15 @@ export const PlanPlanner: React.FC = () => {
                                 const threshold = getStrengthThreshold(pattern, periodizationConfig?.nivel_atleta || 'intermedio');
                                 const currentTotal = weeklyNLData[pattern] || 0;
                                 const customTarget = weeklyTargets[pattern];
-                                const { status } = evaluateStrengthVolume(pattern, currentTotal, periodizationConfig?.nivel_atleta || 'intermedio');
+                                const evalDetailed = evaluateStrengthVolumeDetailed(pattern, currentTotal, periodizationConfig?.nivel_atleta || 'intermedio');
+                                const { status } = evalDetailed;
 
                                 let badgeColor = '';
                                 if (status === 'danger') badgeColor = '#ef4444';
                                 else if (status === 'optimal') badgeColor = '#10b981';
                                 else if (status === 'warning') badgeColor = '#f97316';
-                                else badgeColor = '#fbbf24';
+                                else if (status === 'building') badgeColor = '#facc15';
+                                else badgeColor = '#94a3b8';
 
                                 let indicator = '';
                                 if (customTarget && customTarget > 0) {
@@ -3232,24 +3337,31 @@ export const PlanPlanner: React.FC = () => {
                                   else if (currentTotal > customTarget && currentTotal < threshold.mrv) indicator = `Superó Objetivo (${customTarget}), cerca de MRV (${threshold.mrv})`;
                                   else indicator = `Límite MRV superado (${threshold.mrv})`;
                                 } else {
-                                  if (currentTotal < threshold.mev) indicator = `Faltan ${threshold.mev - currentTotal} NL para MEV (${threshold.mev})`;
-                                  else if (currentTotal >= threshold.mev && currentTotal < threshold.mavMin) indicator = `Faltan ${threshold.mavMin - currentTotal} NL para MAV (${threshold.mavMin}-${threshold.mavMax})`;
-                                  else if (currentTotal >= threshold.mavMin && currentTotal <= threshold.mavMax) indicator = `Óptimo en MAV (${threshold.mavMin}-${threshold.mavMax})`;
-                                  else if (currentTotal > threshold.mavMax && currentTotal < threshold.mrv) indicator = `Cerca de MRV (${threshold.mrv})`;
-                                  else indicator = `¡Peligro! MRV (${threshold.mrv}) superado.`;
+                                  indicator = evalDetailed.humanLabel;
                                 }
 
+                                const volSteps = buildVolumeReasoningSteps(evalDetailed);
+
                                 return (
-                                  <div style={{
-                                    fontSize: '11px', fontWeight: 600, color: badgeColor,
-                                    background: 'rgba(255,255,255,0.05)', padding: '2px 8px',
-                                    borderRadius: '12px', border: `1px solid ${badgeColor}40`,
-                                    display: 'flex', alignItems: 'center', gap: '4px'
-                                  }}>
-                                    <span>Patrón: {threshold.label} ({currentTotal} NL)</span>
-                                    <span style={{ color: 'rgba(255,255,255,0.3)' }}>|</span>
-                                    <span>{indicator}</span>
-                                  </div>
+                                  <ReasoningTooltip
+                                    trigger={
+                                      <div style={{
+                                        fontSize: '11px', fontWeight: 600, color: badgeColor,
+                                        background: 'rgba(255,255,255,0.05)', padding: '2px 8px',
+                                        borderRadius: '12px', border: `1px solid ${badgeColor}40`,
+                                        display: 'flex', alignItems: 'center', gap: '4px',
+                                        cursor: 'pointer'
+                                      }}>
+                                        <span>Patrón: {threshold.label} ({currentTotal} NL)</span>
+                                        <span style={{ color: 'rgba(255,255,255,0.3)' }}>|</span>
+                                        <span>{indicator}</span>
+                                      </div>
+                                    }
+                                    title={`Volumen: ${threshold.label}`}
+                                    steps={volSteps}
+                                    source={evalDetailed.source}
+                                    recommendation={evalDetailed.recommendation}
+                                  />
                                 );
                               } else {
                                 // Modo Hipertrofia (Original)
