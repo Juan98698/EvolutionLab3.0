@@ -103,18 +103,19 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
           }))
         : [];
 
-      const planData = {
+      const planPayload = {
         cliente_id: trainerId,
-        nombre:     '🧪 Plan de práctica',
-        notas:      'Plan creado durante el onboarding para explorar la app. Puedes modificarlo o eliminarlo cuando quieras.',
-        data: JSON.stringify({
+        creador_id: trainerId,
+        activo: true,
+        datos_plan: {
           portada: {
-            userName:      'Mi plan de práctica',
-            userGoal:      objetivo,
+            userName:      '🧪 Plan de práctica',
+            userGoal:      objetivo === 'hipertrofia' ? 'Hipertrofia' : objetivo === 'fuerza' ? 'Fuerza' : 'Mantenimiento',
             startDate:     new Date().toISOString().split('T')[0],
             planVigenciaPlan: String(semanas * 7),
             trainerName:   '',
             whatsappLink:  '',
+            globalNote:    'Plan creado durante el onboarding para explorar la app. Puedes modificarlo o eliminarlo cuando quieras.'
           },
           trainingDays,
           globalVariables: {},
@@ -129,10 +130,10 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
           },
           is_sandbox: true,
           language_mode: languageMode(metodologia),
-        }),
+        }
       };
 
-      await supabase.from('planes').insert(planData);
+      await supabase.from('planes').insert(planPayload);
     } catch (e) {
       console.warn('No se pudo crear el plan sandbox:', e);
     }
