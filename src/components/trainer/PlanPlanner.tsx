@@ -1804,6 +1804,7 @@ export const PlanPlanner: React.FC = () => {
           borderRadius: '14px', padding: '16px 20px',
           boxShadow: '0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px #c2ff0022',
           backdropFilter: 'blur(12px)',
+          fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
             <div style={{ flex: 1 }}>
