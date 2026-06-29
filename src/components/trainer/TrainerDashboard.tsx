@@ -183,6 +183,8 @@ export const TrainerDashboard: React.FC = () => {
 
   const [showOnboarding, setShowOnboarding] = useState<boolean>(false);
   const [showPushPrompt, setShowPushPrompt] = useState<boolean>(false);
+  const [showWelcomeGuide, setShowWelcomeGuide] = useState<boolean>(false);
+  const [highlightSandbox, setHighlightSandbox] = useState<boolean>(false);
 
   // Verificar si es la primera vez que inicia sesión para el Onboarding del Entrenador
   useEffect(() => {
@@ -190,6 +192,13 @@ export const TrainerDashboard: React.FC = () => {
       const isOnboarded = localStorage.getItem(`evolution_trainer_onboarded_v1_${profile.id}`);
       if (!isOnboarded) {
         setShowOnboarding(true);
+      } else {
+        // Si ya completó onboarding pero no ha visto la guía del sandbox
+        const hasSeenSandboxGuide = localStorage.getItem(`evolution_sandbox_guide_v1_${profile.id}`);
+        if (!hasSeenSandboxGuide) {
+          setShowWelcomeGuide(true);
+          setHighlightSandbox(true);
+        }
       }
     }
   }, [profile]);
@@ -2207,7 +2216,7 @@ export const TrainerDashboard: React.FC = () => {
         {profile && (
           <div style={{
             background: 'var(--theme-card-bg)',
-            border: '1px solid var(--theme-border)',
+            border: highlightSandbox ? '2px solid #00f2fe' : '1px solid var(--theme-border)',
             borderRadius: '16px',
             padding: '20px',
             marginBottom: '24px',
@@ -2216,10 +2225,18 @@ export const TrainerDashboard: React.FC = () => {
             alignItems: 'center',
             flexWrap: 'wrap',
             gap: '15px',
-            boxShadow: '0 8px 32px 0 var(--theme-glow)',
+            boxShadow: highlightSandbox ? '0 0 25px rgba(0, 242, 254, 0.6)' : '0 8px 32px 0 var(--theme-glow)',
             backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)'
+            WebkitBackdropFilter: 'blur(20px)',
+            transition: 'all 0.5s ease',
+            animation: highlightSandbox ? 'pulseSandboxBorder 1.5s infinite alternate' : 'none',
           }}>
+            <style>{`
+              @keyframes pulseSandboxBorder {
+                0% { border-color: rgba(0, 242, 254, 0.3); box-shadow: 0 0 10px rgba(0, 242, 254, 0.2); }
+                100% { border-color: rgba(0, 242, 254, 1); box-shadow: 0 0 30px rgba(0, 242, 254, 0.8); }
+              }
+            `}</style>
             <div>
               <h3 style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '15px', fontWeight: 800, margin: 0, color: 'var(--theme-primary)', letterSpacing: '0.5px', display: 'flex', alignItems: 'center' }}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px' }}>
@@ -3962,10 +3979,68 @@ export const TrainerDashboard: React.FC = () => {
       {/* Onboarding welcome modal */}
       {showOnboarding && (
         <OnboardingModal
-          onClose={() => setShowOnboarding(false)}
+          onClose={() => {
+            setShowOnboarding(false);
+            setShowWelcomeGuide(true);
+            setHighlightSandbox(true);
+          }}
           rol="entrenador"
           trainerId={profile?.id}
         />
+      )}
+
+      {/* Sandbox Guide Modal */}
+      {showWelcomeGuide && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(5, 8, 16, 0.85)', backdropFilter: 'blur(10px)',
+          zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px',
+          fontFamily: "'Inter', sans-serif"
+        }}>
+          <div style={{
+            background: 'linear-gradient(135deg, #0e172a 0%, #0b0f19 100%)',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.8), 0 0 40px rgba(0, 242, 254, 0.15)',
+            borderRadius: '20px', maxWidth: '460px', width: '100%', padding: '30px',
+            color: 'white', textAlign: 'center', position: 'relative'
+          }}>
+            <div style={{ fontSize: '48px', marginBottom: '16px' }}>🧪</div>
+            <h2 style={{ fontSize: '20px', fontWeight: 800, margin: '0 0 10px 0', background: 'linear-gradient(to right, #00f2fe, #4facfe)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              ¡Tu Plan de Práctica está Listo!
+            </h2>
+            <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)', lineHeight: 1.6, margin: '0 0 20px 0' }}>
+              Hemos configurado un plan sandbox llamado <strong>🧪 Plan de práctica</strong>. En él pre-cargamos marcas científicas de 1RM ficticias para que puedas experimentar la prescripción del robot inteligente 🤖 de inmediato.
+            </p>
+            <div style={{ background: 'rgba(255, 255, 255, 0.03)', border: '1px solid rgba(255, 255, 255, 0.06)', borderRadius: '12px', padding: '14px 16px', marginBottom: '24px', textAlign: 'left' }}>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-start', fontSize: '12px', color: 'rgba(255, 255, 255, 0.8)' }}>
+                <span style={{ fontSize: '14px' }}>👉</span>
+                <span>
+                  Baja a la sección <strong>"MI ENTRENAMIENTO PERSONAL"</strong> abajo en el dashboard y pulsa el botón <strong>"Planificar Mi Rutina"</strong>. La tarjeta estará brillando en azul.
+                </span>
+              </div>
+            </div>
+            <button
+              onClick={() => {
+                setShowWelcomeGuide(false);
+                if (profile?.id) {
+                  localStorage.setItem(`evolution_sandbox_guide_v1_${profile.id}`, 'true');
+                }
+                // Scroll suave a la tarjeta de entrenamiento personal
+                setTimeout(() => {
+                  window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+                }, 100);
+              }}
+              style={{
+                width: '100%', background: 'linear-gradient(135deg, #00f2fe 0%, #4facfe 100%)',
+                color: '#000', border: 'none', borderRadius: '10px', padding: '12px',
+                fontSize: '13px', fontWeight: 800, cursor: 'pointer',
+                boxShadow: '0 4px 15px rgba(0, 242, 254, 0.3)', transition: 'transform 0.2s'
+              }}
+            >
+              Comenzar a explorar 🚀
+            </button>
+          </div>
+        </div>
       )}
 
       <Toast message={toastState.message} type={toastState.type} visible={toastState.visible} />

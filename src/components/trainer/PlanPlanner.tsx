@@ -71,6 +71,8 @@ export const PlanPlanner: React.FC = () => {
 
   // Estados de interfaz y navegación
   const [variablesOpen, setVariablesOpen] = useState<boolean>(false);
+  const [showExitConfirm, setShowExitConfirm] = useState<boolean>(false);
+  const [showTourSaveReminder, setShowTourSaveReminder] = useState<boolean>(false);
 
   /**
    * languageMode — controla qué tan técnico es el lenguaje de las alertas inline.
@@ -946,7 +948,26 @@ export const PlanPlanner: React.FC = () => {
           if (p.trackerRules) setTrackerRules(p.trackerRules || []);
           if (p.portada) setPortada(p.portada);
           if (p.periodizationConfig) {
-            setPeriodizationConfig(p.periodizationConfig);
+            const config = p.periodizationConfig;
+            if (!config.marcas_1rm || Object.keys(config.marcas_1rm).length === 0) {
+              config.marcas_1rm = {
+                'sentadilla': 100,
+                'sentadilla con barra': 100,
+                'press de banca': 80,
+                'press de banca con barra': 80,
+                'peso muerto': 120,
+                'peso muerto con barra': 120,
+                'press militar': 50,
+                'press militar con barra': 50,
+                'prensa': 200,
+                'remo con barra': 70
+              };
+            }
+            // Asegurar redondeo_peso y formula por defecto si faltan
+            if (!config.formula_preferida) config.formula_preferida = 'epley';
+            if (config.redondeo_peso === undefined) config.redondeo_peso = 2.5;
+
+            setPeriodizationConfig(config);
           } else {
             setPeriodizationConfig({
               enabled: false,
@@ -954,12 +975,21 @@ export const PlanPlanner: React.FC = () => {
               semana_actual: 1,
               total_semanas: 4,
               mrv_limite_alcanzado: false,
-              marcas_1rm: {},
-              puntos_debiles: {
-                sentadilla: 'abajo',
-                banca: 'pecho',
-                peso_muerto: 'despegue'
-              }
+              marcas_1rm: {
+                'sentadilla': 100,
+                'sentadilla con barra': 100,
+                'press de banca': 80,
+                'press de banca con barra': 80,
+                'peso muerto': 120,
+                'peso muerto con barra': 120,
+                'press militar': 50,
+                'press militar con barra': 50,
+                'prensa': 200,
+                'remo con barra': 70
+              },
+              puntos_debiles: { sentadilla: 'abajo', banca: 'pecho', peso_muerto: 'despegue' },
+              formula_preferida: 'epley',
+              redondeo_peso: 2.5
             });
           }
           showToast('¡Plan activo cargado correctamente!', 'success');
@@ -1842,6 +1872,7 @@ export const PlanPlanner: React.FC = () => {
                 } else {
                   setShowTourTip(0);
                   setTourComplete(true);
+                  setShowTourSaveReminder(true);
                 }
               }}
               style={{
@@ -1930,7 +1961,7 @@ export const PlanPlanner: React.FC = () => {
           
           <div className="planner-header-left-inner" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <button
-               onClick={() => navigate('/trainer')}
+               onClick={() => setShowExitConfirm(true)}
                className="btn-back-mobile"
                style={{ background: 'none', border: 'none', color: 'var(--theme-primary)', fontSize: '12px', cursor: 'pointer', fontFamily: "'Orbitron', sans-serif", padding: '8px 12px', borderRadius: '8px', borderStyle: 'solid', borderWidth: '1px', borderColor: 'var(--theme-border)' }}
             >
@@ -2578,6 +2609,29 @@ export const PlanPlanner: React.FC = () => {
                         <option value={2.5} style={{ background: '#0b0f19' }}>2.5 kg — Estándar (por defecto)</option>
                         <option value={5} style={{ background: '#0b0f19' }}>5.0 kg — Gimnasio básico</option>
                       </select>
+                    </div>
+                  </div>
+
+                  {/* Banner de Explicabilidad Científica de Fórmulas */}
+                  <div style={{
+                    background: 'rgba(99, 102, 241, 0.08)',
+                    border: '1px solid rgba(99, 102, 241, 0.25)',
+                    borderRadius: '12px',
+                    padding: '16px',
+                    marginBottom: '20px',
+                    display: 'flex',
+                    gap: '12px',
+                    fontFamily: "'Inter', sans-serif"
+                  }}>
+                    <span style={{ fontSize: '20px' }}>🧪</span>
+                    <div style={{ textAlign: 'left' }}>
+                      <strong style={{ fontSize: '12px', color: '#a5b4fc', display: 'block', marginBottom: '4px' }}>
+                        Laboratorio Científico: ¡Prueba cambiar las fórmulas!
+                      </strong>
+                      <p style={{ fontSize: '11.5px', color: 'rgba(255,255,255,0.7)', margin: 0, lineHeight: 1.5 }}>
+                        El robot inteligente 🤖 utiliza la fórmula seleccionada arriba y las marcas de 1RM de abajo para prescribir cargas automáticas. 
+                        <strong> Intenta cambiar la fórmula de Epley a Brzycki</strong>: verás cómo los pesos calculados en las tarjetas de ejercicios de arriba se recalculan en directo. ¡Usa la que mejor se adapte a tu metodología!
+                      </p>
                     </div>
                   </div>
 
@@ -4309,6 +4363,109 @@ export const PlanPlanner: React.FC = () => {
             }
           }}
         />
+      )}
+
+      {/* Exit Confirmation / Save Reminder Modal */}
+      {showExitConfirm && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(5, 8, 16, 0.85)', backdropFilter: 'blur(10px)',
+          zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px',
+          fontFamily: "'Inter', sans-serif"
+        }}>
+          <div style={{
+            background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.8), 0 0 40px rgba(14, 165, 233, 0.15)',
+            borderRadius: '20px', maxWidth: '440px', width: '100%', padding: '24px',
+            color: 'white', textAlign: 'center'
+          }}>
+            <div style={{ fontSize: '40px', marginBottom: '12px' }}>☁️</div>
+            <h3 style={{ fontSize: '18px', fontWeight: 800, margin: '0 0 10px 0', color: '#c2ff00' }}>
+              ¿Guardaste tus cambios en la nube?
+            </h3>
+            <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)', lineHeight: 1.5, margin: '0 0 20px 0' }}>
+              Para que tu atleta (o tú mismo) pueda ver las rutinas actualizadas, las sugerencias del robot inteligente y los gráficos en tiempo real, asegúrate de guardar el plan.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <button
+                onClick={async () => {
+                  setShowExitConfirm(false);
+                  await handleSavePlan();
+                  navigate('/trainer');
+                }}
+                style={{
+                  width: '100%', background: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)',
+                  color: 'white', border: 'none', borderRadius: '8px', padding: '12px',
+                  fontSize: '13px', fontWeight: 800, cursor: 'pointer',
+                  boxShadow: '0 4px 15px rgba(14, 165, 233, 0.3)'
+                }}
+              >
+                ✓ Guardar cambios y Salir
+              </button>
+              <button
+                onClick={() => {
+                  setShowExitConfirm(false);
+                  navigate('/trainer');
+                }}
+                style={{
+                  width: '100%', background: 'rgba(239, 68, 68, 0.1)',
+                  color: '#f87171', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '8px', padding: '12px',
+                  fontSize: '13px', fontWeight: 700, cursor: 'pointer'
+                }}
+              >
+                Salir sin Guardar
+              </button>
+              <button
+                onClick={() => setShowExitConfirm(false)}
+                style={{
+                  width: '100%', background: 'rgba(255,255,255,0.05)',
+                  color: 'rgba(255,255,255,0.6)', border: 'none', borderRadius: '8px', padding: '12px',
+                  fontSize: '13px', fontWeight: 600, cursor: 'pointer'
+                }}
+              >
+                Seguir Editando
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tour Complete / Save Reminder Modal */}
+      {showTourSaveReminder && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(5, 8, 16, 0.85)', backdropFilter: 'blur(10px)',
+          zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px',
+          fontFamily: "'Inter', sans-serif"
+        }}>
+          <div style={{
+            background: 'linear-gradient(135deg, #0f172a 0%, #090d16 100%)',
+            border: '1px solid rgba(194, 255, 0, 0.2)',
+            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.8), 0 0 40px rgba(194, 255, 0, 0.1)',
+            borderRadius: '20px', maxWidth: '440px', width: '100%', padding: '24px',
+            color: 'white', textAlign: 'center'
+          }}>
+            <div style={{ fontSize: '40px', marginBottom: '12px' }}>🎉</div>
+            <h3 style={{ fontSize: '18px', fontWeight: 800, margin: '0 0 10px 0', color: '#c2ff00' }}>
+              ¡Tour Completado con Éxito!
+            </h3>
+            <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)', lineHeight: 1.5, margin: '0 0 20px 0' }}>
+              ¡Listo! Ahora tienes el control científico total de tu plan de práctica. Recuerda que para consolidar y guardar de manera segura todo tu progreso en la base de datos, debes pulsar el botón <strong>"✓ GUARDAR"</strong> arriba a la derecha.
+            </p>
+            <button
+              onClick={() => setShowTourSaveReminder(false)}
+              style={{
+                width: '100%', background: '#c2ff00',
+                color: '#000', border: 'none', borderRadius: '8px', padding: '12px',
+                fontSize: '13px', fontWeight: 800, cursor: 'pointer',
+                boxShadow: '0 4px 15px rgba(194, 255, 0, 0.3)'
+              }}
+            >
+              Comenzar a Planificar 🏋️
+            </button>
+          </div>
+        </div>
       )}
     </div>
   );
