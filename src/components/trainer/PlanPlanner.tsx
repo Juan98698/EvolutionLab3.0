@@ -1812,9 +1812,9 @@ export const PlanPlanner: React.FC = () => {
                 Tour rápido — {showTourTip}/3
               </div>
               <p style={{ fontSize: '13px', color: '#e5e7eb', lineHeight: 1.5, margin: 0 }}>
-                {showTourTip === 1 && '📊 Los puntos de colores muestran si el volumen de tu atleta está en la zona correcta. Verde = bien, rojo = hay que reducir.'}
-                {showTourTip === 2 && '🤖 Pasa el cursor sobre cualquier peso marcado con el robot para ver exactamente cómo se calculó — fórmula, 1RM base y porcentaje usado.'}
-                {showTourTip === 3 && '📚 El botón "Protocolos" te da acceso a plantillas de entrenamiento basadas en evidencia. Puedes aplicarlas con un clic y ajustar después.'}
+                {showTourTip === 1 && '📊 Volumen Semanal: Los puntos muestran si el volumen está en zona segura. Nota: Puedes volver a este plan desde "MI ENTRENAMIENTO PERSONAL" en el Dashboard.'}
+                {showTourTip === 2 && '🤖 Carga Inteligente: Pasa el cursor sobre los pesos con el robot para ver la fórmula y el 1RM estimado en acción.'}
+                {showTourTip === 3 && '📚 Catálogo de Protocolos: Accede a plantillas basadas en evidencia para aplicarlas con un clic y ajustarlas a tu gusto.'}
               </p>
             </div>
             <button

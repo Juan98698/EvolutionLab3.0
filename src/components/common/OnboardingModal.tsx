@@ -83,6 +83,16 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
       const protocols = getProtocolsForContext(objetivo, level);
       const best      = protocols.find(p => p.daysPerWeek === dias) || protocols[0];
 
+      const defaultVars = [
+        { id: "series de aproximacion", label: "SERIES DE APROXIMACION", type: "number", defaultValue: "2" },
+        { id: "series de trabajo", label: "SERIES DE TRABAJO", type: "text", defaultValue: "3" },
+        { id: "repeticiones", label: "REPETICIONES", type: "text", defaultValue: "10-12" },
+        { id: "tempo", label: "TEMPO", type: "text", defaultValue: "2:1:1" },
+        { id: "rir", label: "RIR", type: "number", defaultValue: "2" },
+        { id: "descanso", label: "DESCANSO(MIN)", type: "number", defaultValue: "120" },
+        { id: "peso", label: "PESO(KG)", type: "text", defaultValue: "10" }
+      ];
+
       const trainingDays: TrainingDay[] = best
         ? best.days.map((day, idx) => ({
             id:        `day_${idx + 1}`,
@@ -94,10 +104,13 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
               nombre_original: ex.name,
               grupo_muscular:  ex.muscle,
               variables: {
-                'series de trabajo': ex.sets,
-                'repeticiones':      ex.reps,
-                'rir':               ex.rir,
-                'descanso':          ex.rest,
+                'series de aproximacion': '2',
+                'series de trabajo':      ex.sets,
+                'repeticiones':           ex.reps,
+                'tempo':                  '2:1:1',
+                'rir':                    ex.rir,
+                'descanso':               ex.rest,
+                'peso':                   '🤖 10',
               },
             })),
           }))
@@ -118,7 +131,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
             globalNote:    'Plan creado durante el onboarding para explorar la app. Puedes modificarlo o eliminarlo cuando quieras.'
           },
           trainingDays,
-          globalVariables: {},
+          globalVariables: defaultVars,
           periodizationConfig: {
             enabled:       true,
             objetivo,
