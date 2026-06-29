@@ -78,6 +78,7 @@ export const PlanPlanner: React.FC = () => {
   const [calcReps, setCalcReps] = useState<number>(8);
   const [calcRIR, setCalcRIR] = useState<number>(2);
   const [calcSelectedLift, setCalcSelectedLift] = useState<string>('press de banca');
+  const [calcUnit, setCalcUnit] = useState<'kg' | 'lbs'>('kg');
 
   /**
    * languageMode — controla qué tan técnico es el lenguaje de las alertas inline.
@@ -4707,16 +4708,51 @@ export const PlanPlanner: React.FC = () => {
               </p>
             </div>
 
+            {/* Unit Switcher */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '18px', textAlign: 'left' }}>
+              <label style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(255,255,255,0.5)', fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.5px' }}>UNIDAD DE MEDIDA</label>
+              <div style={{ display: 'flex', gap: '6px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', padding: '4px', maxWidth: '140px' }}>
+                <button
+                  type="button"
+                  onClick={() => { setCalcUnit('kg'); }}
+                  style={{
+                    flex: 1, border: 'none', borderRadius: '6px', padding: '6px 10px', fontSize: '10px',
+                    fontFamily: "'Orbitron', sans-serif", fontWeight: 700, cursor: 'pointer',
+                    background: calcUnit === 'kg' ? 'linear-gradient(135deg, #c2ff00 0%, #a3e635 100%)' : 'transparent',
+                    color: calcUnit === 'kg' ? '#000' : 'rgba(255,255,255,0.6)', transition: 'all 0.2s',
+                    boxShadow: calcUnit === 'kg' ? '0 0 10px rgba(194, 255, 0, 0.2)' : 'none'
+                  }}
+                >
+                  KG
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setCalcUnit('lbs'); }}
+                  style={{
+                    flex: 1, border: 'none', borderRadius: '6px', padding: '6px 10px', fontSize: '10px',
+                    fontFamily: "'Orbitron', sans-serif", fontWeight: 700, cursor: 'pointer',
+                    background: calcUnit === 'lbs' ? 'linear-gradient(135deg, #c2ff00 0%, #a3e635 100%)' : 'transparent',
+                    color: calcUnit === 'lbs' ? '#000' : 'rgba(255,255,255,0.6)', transition: 'all 0.2s',
+                    boxShadow: calcUnit === 'lbs' ? '0 0 10px rgba(194, 255, 0, 0.2)' : 'none'
+                  }}
+                >
+                  LBS
+                </button>
+              </div>
+            </div>
+
             {/* Inputs */}
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '18px' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '9px', fontWeight: 700, color: 'rgba(255,255,255,0.5)', marginBottom: '6px', textTransform: 'uppercase' }}>Peso (kg)</label>
+                <label style={{ display: 'block', fontSize: '9px', fontWeight: 700, color: 'rgba(255,255,255,0.5)', marginBottom: '6px', textTransform: 'uppercase' }}>
+                  Peso ({calcUnit})
+                </label>
                 <input
                   type="number"
                   value={calcWeight || ''}
                   onChange={(e) => setCalcWeight(parseFloat(e.target.value) || 0)}
                   style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '12px', boxSizing: 'border-box' }}
-                  placeholder="80"
+                  placeholder={calcUnit === 'kg' ? '80' : '175'}
                 />
               </div>
               <div>
@@ -4749,6 +4785,9 @@ export const PlanPlanner: React.FC = () => {
               const brzyckiVal = denom > 0.01 ? (calcWeight / denom) : calcWeight;
               const avgVal = Math.round(((epleyVal + brzyckiVal) / 2) * 10) / 10;
 
+              const secondaryUnit = calcUnit === 'kg' ? 'lbs' : 'kg';
+              const secondaryVal = calcUnit === 'kg' ? avgVal * 2.20462 : avgVal / 2.20462;
+
               // Collect exercises for applying
               const baseLifts = ['sentadilla', 'press de banca', 'peso muerto'];
               const planExerciseNames = trainingDays
@@ -4760,18 +4799,80 @@ export const PlanPlanner: React.FC = () => {
 
               return (
                 <div>
-                  <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '12px', marginBottom: '18px', fontSize: '11px', lineHeight: '1.4' }}>
+                  <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '14px', marginBottom: '18px', fontSize: '11px', lineHeight: '1.4' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
                       <span style={{ color: 'rgba(255,255,255,0.5)' }}>Fórmula Epley (1985):</span>
-                      <strong style={{ color: '#fff' }}>{Math.round(epleyVal * 10) / 10} kg</strong>
+                      <strong style={{ color: '#fff' }}>{Math.round(epleyVal * 10) / 10} {calcUnit}</strong>
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
                       <span style={{ color: 'rgba(255,255,255,0.5)' }}>Fórmula Brzycki (1993):</span>
-                      <strong style={{ color: '#fff' }}>{Math.round(brzyckiVal * 10) / 10} kg</strong>
+                      <strong style={{ color: '#fff' }}>{Math.round(brzyckiVal * 10) / 10} {calcUnit}</strong>
                     </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '6px', fontSize: '13px' }}>
-                      <span style={{ color: '#a5b4fc', fontWeight: 600 }}>1RM Promedio Estimado:</span>
-                      <strong style={{ color: '#c2ff00', fontSize: '15px' }}>{avgVal} kg</strong>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '8px', marginTop: '8px', fontSize: '13px', alignItems: 'baseline' }}>
+                      <span style={{ color: '#a5b4fc', fontWeight: 600 }}>1RM Promedio:</span>
+                      <div style={{ textAlign: 'right' }}>
+                        <strong style={{ color: '#c2ff00', fontSize: '16px' }}>{avgVal} {calcUnit}</strong>
+                        <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', fontFamily: "'Orbitron', sans-serif", marginTop: '2px' }}>
+                          ≈ {secondaryVal.toFixed(1)} {secondaryUnit}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Tabla de Equivalencias de Cargas */}
+                  <div style={{ marginTop: '16px', marginBottom: '20px' }}>
+                    <div style={{ fontSize: '9px', fontWeight: 800, color: '#a5b4fc', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.08em', textAlign: 'left', fontFamily: "'Orbitron', sans-serif" }}>
+                      📋 TABLA DE PORCENTAJES DE CARGA
+                    </div>
+                    <div style={{
+                      maxHeight: '170px',
+                      overflowY: 'auto',
+                      background: 'rgba(0,0,0,0.25)',
+                      border: '1px solid rgba(255,255,255,0.06)',
+                      borderRadius: '12px',
+                    }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', textAlign: 'left', fontFamily: "'Inter', sans-serif" }}>
+                        <thead>
+                          <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.4)', fontSize: '8.5px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                            <th style={{ padding: '8px 10px' }}>%</th>
+                            <th style={{ padding: '8px 10px' }}>Carga ({calcUnit})</th>
+                            <th style={{ padding: '8px 10px' }}>Equivalencia</th>
+                            <th style={{ padding: '8px 10px', textAlign: 'right' }}>Reps Sugeridas</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {[
+                            { pct: 100, reps: '1 rep' },
+                            { pct: 95,  reps: '2 reps' },
+                            { pct: 90,  reps: '4 reps' },
+                            { pct: 85,  reps: '6 reps' },
+                            { pct: 80,  reps: '8 reps' },
+                            { pct: 75,  reps: '10 reps' },
+                            { pct: 70,  reps: '12 reps' },
+                            { pct: 65,  reps: '15 reps' },
+                          ].map((row) => {
+                            const mainVal = Math.round((avgVal * (row.pct / 100)) * 10) / 10;
+                            const eqVal = calcUnit === 'kg' ? mainVal * 2.20462 : mainVal / 2.20462;
+                            const isSelected = row.pct === 85;
+                            return (
+                              <tr
+                                key={row.pct}
+                                style={{
+                                  borderBottom: '1px solid rgba(255,255,255,0.04)',
+                                  background: isSelected ? 'rgba(0, 212, 255, 0.05)' : 'transparent',
+                                  color: isSelected ? '#00d4ff' : 'rgba(255,255,255,0.85)',
+                                  fontWeight: isSelected ? 700 : 400
+                                }}
+                              >
+                                <th style={{ padding: '8px 10px', color: isSelected ? '#00d4ff' : 'rgba(0, 212, 255, 0.6)', fontWeight: 'bold' }}>{row.pct}%</th>
+                                <td style={{ padding: '8px 10px', color: '#c2ff00', fontWeight: 'bold' }}>{mainVal.toFixed(1)} {calcUnit}</td>
+                                <td style={{ padding: '8px 10px', color: 'rgba(255,255,255,0.45)' }}>{eqVal.toFixed(1)} {secondaryUnit}</td>
+                                <td style={{ padding: '8px 10px', textAlign: 'right', color: '#fff' }}>{row.reps}</td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
                     </div>
                   </div>
 
@@ -4805,9 +4906,12 @@ export const PlanPlanner: React.FC = () => {
                         return;
                       }
 
+                      // SIEMPRE inyectar en KG al planificador (para mantener consistencia interna del robot)
+                      const finalKgValue = calcUnit === 'kg' ? avgVal : Math.round((avgVal / 2.20462) * 10) / 10;
+
                       const updatedMarcas = {
                         ...(periodizationConfig?.marcas_1rm || {}),
-                        [calcSelectedLift]: avgVal
+                        [calcSelectedLift]: finalKgValue
                       };
 
                       setPeriodizationConfig(prev => {
