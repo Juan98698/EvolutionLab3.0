@@ -224,6 +224,118 @@ export const getFormulaSource = (formula: FormulaType): string => {
   }
 };
 
+// ─── 2b. RIR Target por Semana ───────────────────────────────────────────────
+
+/**
+ * Calcula el RIR target para la semana actual del mesociclo.
+ *
+ * Principiante: baja cada 2 semanas (progresión 'lenta'), floor en 1.
+ *   Nunca llega a RIR 0 — la técnica aún no está consolidada y el riesgo
+ *   de lesión con fallo muscular supera el beneficio potencial.
+ *
+ * Intermedio:   baja cada semana (progresión 'normal'), floor en 0.
+ *   Triple progresión: carga + reps + series. Llega a fallo en la última
+ *   semana del bloque para maximizar el estímulo antes del deload.
+ *
+ * Avanzado:     igual que intermedio pero rir_inicial puede ser 4,
+ *   permitiendo bloques de 5–6 semanas sin llegar a fallo prematuro.
+ *
+ * La fórmula de prescripción de carga usa el RIR resultante:
+ *   peso = 1RM × [30 / (30 + reps + RIR_target)]
+ * → RIR bajo = % 1RM alto = más peso automáticamente.
+ * → Las dos palancas (RIR + 1RM actualizado) se potencian semana a semana.
+ */
+export const calcTargetRIRForWeek = (
+  semanaActual: number,
+  rirInicial: number,
+  nivel: 'principiante' | 'intermedio' | 'avanzado',
+  progresion: 'lenta' | 'normal' | 'agresiva' = 'normal'
+): number => {
+  // Principiantes no llegan a fallo (RIR mínimo 1)
+  const floorRIR = nivel === 'principiante' ? 1 : 0;
+
+  // 'lenta' baja cada 2 semanas; 'normal'/'agresiva' bajan cada semana
+  const decrement = progresion === 'lenta'
+    ? Math.floor((semanaActual - 1) / 2)
+    : semanaActual - 1;
+
+  return Math.max(floorRIR, rirInicial - decrement);
+};
+
+// ─── 2c. Progresión de Reps (Doble Progresión) ───────────────────────────────
+
+/**
+ * Parsea un string de rango de reps ("10-12", "10", "60s") y devuelve
+ * { repsMin, repsMax }. Para strings sin rango, min === max.
+ * Devuelve null si el string no contiene números (ej. "60s" sin número útil).
+ */
+export const parseRepsRange = (repsStr: string): { repsMin: number; repsMax: number } | null => {
+  const nums = repsStr.match(/\d+/g);
+  if (!nums || nums.length === 0) return null;
+  const repsMin = parseInt(nums[0], 10);
+  const repsMax = nums.length > 1 ? parseInt(nums[1], 10) : repsMin;
+  return { repsMin, repsMax };
+};
+
+/** Resultado del chequeo de progresión de reps */
+export interface RepProgressionResult {
+  newWeight: number;   // Nuevo peso prescripto (redondeado al incremento)
+  newReps: number;     // Reps objetivo para la próxima sesión (repsMin del rango)
+  note: string;        // Nota visible al atleta
+}
+
+/**
+ * Detecta si el atleta completó el tope del rango de reps con RIR de sobra
+ * y calcula el nuevo peso para la próxima sesión (doble progresión).
+ *
+ * La doble progresión funciona así:
+ *   1. El atleta empieza en el MÍNIMO del rango (ej. 10 reps) con el peso dado.
+ *   2. Cada sesión intenta llegar a más reps dentro del rango.
+ *   3. Cuando llega al MÁXIMO (ej. 12) con RIR real > RIR_target + 1 (le sobra
+ *      margen), el peso sube y vuelve al mínimo del rango.
+ *
+ * La condición "RIR real > RIR_target + 1" (margen de +1) evita subidas
+ * prematuras: si el atleta hizo 12 reps con RIR 2 y el target era RIR 2,
+ * no hay margen real — el peso no debería subir todavía.
+ *
+ * @param loggedMaxReps   Máximo de reps logrado en cualquier serie de la sesión
+ * @param repsMax         Tope del rango del plan (ej. 12 de "10-12")
+ * @param repsMin         Piso del rango del plan (ej. 10 de "10-12")
+ * @param rirLogrado      RIR real reportado por el atleta
+ * @param rirTarget       RIR objetivo de la semana actual (del plan)
+ * @param oneRM           1RM actualizado del ejercicio
+ * @param roundingIncrement  Incremento de redondeo en kg (default 2.5)
+ * @returns RepProgressionResult si aplica la subida, null si no
+ */
+export const checkRepProgressionTrigger = (
+  loggedMaxReps: number,
+  repsMax: number,
+  repsMin: number,
+  rirLogrado: number,
+  rirTarget: number,
+  oneRM: number,
+  roundingIncrement: number = 2.5
+): RepProgressionResult | null => {
+  // Condición: llegó al tope del rango Y le sobra al menos 1 RIR de margen
+  if (loggedMaxReps < repsMax) return null;
+  if (rirLogrado <= rirTarget + 1) return null;
+  if (oneRM <= 0) return null;
+
+  // Nuevo peso: prescripto para el MÍNIMO del rango con el RIR target actual
+  // Volver al mínimo del rango con más peso = doble progresión clásica
+  const pct1RM   = 30 / (30 + repsMin + rirTarget);
+  const exact    = oneRM * pct1RM;
+  const newWeight = Math.round(exact / roundingIncrement) * roundingIncrement;
+  if (newWeight <= 0) return null;
+
+  const margenExtra = rirLogrado - rirTarget;
+  return {
+    newWeight,
+    newReps: repsMin,
+    note: `🤖 Rango completado (${repsMax} reps con RIR ${rirLogrado}, objetivo RIR ${rirTarget} — ${margenExtra} de margen). Peso ajustado a ${newWeight} kg para retomar desde ${repsMin} reps.`,
+  };
+};
+
 // ─── 3. Weak Point Corrections ───────────────────────────────────────────────
 
 /**
@@ -547,6 +659,8 @@ export const autoRegulatePlanForNextWeek = (
 
   // ── Recalcular pesos con el 1RM actualizado (siempre, cada sesión) ─────────
   // La prescripción de peso mejora con cada sesión aunque las series no cambien.
+  // Si además el atleta completó el tope del rango con RIR de sobra, aplica
+  // doble progresión: sube el peso y resetea a repsMin del rango.
   updatedPlan.trainingDays?.forEach(day => {
     day.exercises?.forEach(ex => {
       if (!ex.nombre) return;
@@ -557,14 +671,48 @@ export const autoRegulatePlanForNextWeek = (
         if (alias) oneRM = marcas[alias];
       }
       if (oneRM && oneRM > 0) {
-        const repsStr   = ex.variables?.['repeticiones'] || '';
-        const repsMatch = repsStr.match(/\d+/);
-        const reps      = repsMatch ? parseInt(repsMatch[0], 10) : 0;
-        const rirStr    = ex.variables?.['rir'] || '0';
-        const rirMatch  = rirStr.match(/\d+/);
-        const targetRIR = rirMatch ? parseFloat(rirMatch[0]) : 0;
-        if (reps > 0) {
-          const newLoad = getPrescribedLoad(oneRM, reps, targetRIR);
+        const repsStr      = ex.variables?.['repeticiones'] || '';
+        const rirStr       = ex.variables?.['rir'] || '0';
+        const rirMatch     = rirStr.match(/\d+/);
+        const targetRIR    = rirMatch ? parseFloat(rirMatch[0]) : 0;
+        const roundingIncrement = config.redondeo_peso ?? 2.5;
+        const parsedRange  = parseRepsRange(repsStr);
+
+        if (!parsedRange) return;
+        const { repsMin, repsMax } = parsedRange;
+
+        // Buscar el ejercicio en la sesión loggeada para chequear doble progresión
+        const loggedEntry = loggedExercises.find(
+          l => l.nombre.toLowerCase().trim() === normName
+        );
+
+        let appliedProgression = false;
+
+        if (loggedEntry && loggedEntry.repsArray.length > 0) {
+          const loggedMaxReps = Math.max(...loggedEntry.repsArray);
+          const rirLogrado    = loggedEntry.rir;
+
+          const progressionResult = checkRepProgressionTrigger(
+            loggedMaxReps,
+            repsMax,
+            repsMin,
+            rirLogrado,
+            targetRIR,
+            oneRM,
+            roundingIncrement
+          );
+
+          if (progressionResult) {
+            if (!ex.variables) ex.variables = {};
+            ex.variables['peso']          = `🤖 ${progressionResult.newWeight} kg`;
+            ex.progression_notes          = progressionResult.note;
+            appliedProgression            = true;
+          }
+        }
+
+        // Si no hubo doble progresión, prescripción estándar desde 1RM
+        if (!appliedProgression && repsMin > 0) {
+          const newLoad = getPrescribedLoad(oneRM, repsMin, targetRIR);
           if (newLoad > 0) {
             if (!ex.variables) ex.variables = {};
             ex.variables['peso'] = `🤖 ${newLoad} kg`;
@@ -736,7 +884,23 @@ export const autoRegulatePlanForNextWeek = (
       });
     });
   } else {
-    config.semana_actual = currentWeek + 1;
+    const newWeek = currentWeek + 1;
+    config.semana_actual = newWeek;
+
+    // ── Progresión RIR por nivel (Plan de Progresión Israetel) ─────────────
+    // Calcula el RIR target para la semana entrante y lo inyecta en todos
+    // los ejercicios. La fórmula de prescripción de carga lo toma en el
+    // Paso 2 de la próxima sesión → peso sube automáticamente al bajar RIR.
+    const rirInicial   = config.rir_inicial   ?? (nivel === 'avanzado' ? 4 : 3);
+    const rirProgresion = config.rir_progresion ?? (nivel === 'principiante' ? 'lenta' : 'normal');
+    const newTargetRIR = calcTargetRIRForWeek(newWeek, rirInicial, nivel, rirProgresion);
+
+    updatedPlan.trainingDays?.forEach(day => {
+      day.exercises?.forEach(ex => {
+        if (!ex.variables) ex.variables = {};
+        ex.variables['rir'] = String(newTargetRIR);
+      });
+    });
   }
 
   // ── PASO 7: Resetear contadores semanales ─────────────────────────────────

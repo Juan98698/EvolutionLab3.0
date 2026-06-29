@@ -392,10 +392,13 @@ export const PlanPlanner: React.FC = () => {
     // 1. Configurar periodización con los parámetros elegidos
     setPeriodizationConfig(prev => ({
       ...prev,
-      enabled:       true,
-      objetivo:      params.objetivo,
-      total_semanas: params.semanas,
-      semana_actual: 1,
+      enabled:        true,
+      objetivo:       params.objetivo,
+      total_semanas:  params.semanas,
+      semana_actual:  1,
+      nivel_atleta:   params.nivel,
+      rir_inicial:    params.nivel === 'avanzado' ? 4 : 3,
+      rir_progresion: params.nivel === 'principiante' ? 'lenta' : 'normal',
     }));
 
     // 2. Buscar el protocolo más adecuado para objetivo + nivel
@@ -2499,6 +2502,129 @@ export const PlanPlanner: React.FC = () => {
                       />
                     </div>
                   </div>
+
+                  {/* ─── RIR Progresión + Indicador en vivo ─── */}
+                  {(() => {
+                    const rirIni    = periodizationConfig.rir_inicial   ?? (periodizationConfig.nivel_atleta === 'avanzado' ? 4 : 3);
+                    const rirProg   = periodizationConfig.rir_progresion ?? (periodizationConfig.nivel_atleta === 'principiante' ? 'lenta' : 'normal');
+                    const nivAtl    = (periodizationConfig.nivel_atleta || 'intermedio') as 'principiante' | 'intermedio' | 'avanzado';
+                    const semActual = periodizationConfig.semana_actual || 1;
+                    const totalSem  = periodizationConfig.total_semanas || 4;
+
+                    // Calcular RIR para cada semana del bloque (inline, sin importar la función del engine)
+                    const floorRIR = nivAtl === 'principiante' ? 1 : 0;
+                    const calcRIR  = (sem: number) => {
+                      const dec = rirProg === 'lenta' ? Math.floor((sem - 1) / 2) : sem - 1;
+                      return Math.max(floorRIR, rirIni - dec);
+                    };
+                    const rirActual = calcRIR(semActual);
+
+                    return (
+                      <div style={{ marginTop: '16px' }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '14px' }}>
+                          <div>
+                            <label style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>RIR INICIAL DEL BLOQUE</label>
+                            <select
+                              value={rirIni}
+                              onChange={(e) => {
+                                const val = parseInt(e.target.value, 10);
+                                setPeriodizationConfig(prev => prev ? { ...prev, rir_inicial: val } : undefined);
+                              }}
+                              style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '12px', height: '38px', boxSizing: 'border-box' }}
+                            >
+                              <option value={2} style={{ background: '#0b0f19' }}>RIR 2 — Bloque corto / alta intensidad</option>
+                              <option value={3} style={{ background: '#0b0f19' }}>RIR 3 — Estándar (Principiante / Intermedio)</option>
+                              <option value={4} style={{ background: '#0b0f19' }}>RIR 4 — Bloque largo / Avanzado</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>VELOCIDAD DE PROGRESIÓN RIR</label>
+                            <select
+                              value={rirProg}
+                              onChange={(e) => {
+                                const val = e.target.value as 'lenta' | 'normal' | 'agresiva';
+                                setPeriodizationConfig(prev => prev ? { ...prev, rir_progresion: val } : undefined);
+                              }}
+                              style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '12px', height: '38px', boxSizing: 'border-box' }}
+                            >
+                              <option value="lenta" style={{ background: '#0b0f19' }}>Lenta — −1 RIR cada 2 semanas (Principiante)</option>
+                              <option value="normal" style={{ background: '#0b0f19' }}>Normal — −1 RIR por semana (Intermedio)</option>
+                              <option value="agresiva" style={{ background: '#0b0f19' }}>Agresiva — −1 RIR/semana desde RIR 4 (Avanzado)</option>
+                            </select>
+                          </div>
+                        </div>
+
+                        {/* Indicador visual: RIR actual + proyección del bloque */}
+                        <div style={{
+                          background: 'linear-gradient(135deg, rgba(0,212,255,0.06), rgba(99,102,241,0.06))',
+                          border: '1px solid rgba(0,212,255,0.15)',
+                          borderRadius: '12px',
+                          padding: '14px 16px',
+                        }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                            <span style={{ fontSize: '10px', fontWeight: 800, color: 'var(--theme-primary)', fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.5px' }}>
+                              📊 RIR SEMANA A SEMANA
+                            </span>
+                            <span style={{
+                              fontSize: '11px',
+                              fontWeight: 800,
+                              color: 'var(--theme-primary)',
+                              fontFamily: "'Orbitron', sans-serif",
+                              background: 'rgba(0,212,255,0.12)',
+                              border: '1px solid rgba(0,212,255,0.3)',
+                              borderRadius: '6px',
+                              padding: '3px 10px',
+                            }}>
+                              AHORA: RIR {rirActual}
+                            </span>
+                          </div>
+                          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                            {Array.from({ length: totalSem }, (_, i) => i + 1).map(sem => {
+                              const r     = calcRIR(sem);
+                              const isNow = sem === semActual;
+                              return (
+                                <div
+                                  key={sem}
+                                  style={{
+                                    flex: '1 1 36px',
+                                    minWidth: '36px',
+                                    background: isNow ? 'rgba(0,212,255,0.18)' : 'rgba(0,0,0,0.25)',
+                                    border: isNow ? '1px solid rgba(0,212,255,0.5)' : '1px solid rgba(255,255,255,0.06)',
+                                    borderRadius: '8px',
+                                    padding: '8px 4px',
+                                    textAlign: 'center',
+                                  }}
+                                >
+                                  <div style={{ fontSize: '8px', color: isNow ? 'var(--theme-primary)' : 'rgba(255,255,255,0.35)', marginBottom: '4px', fontWeight: 700 }}>S{sem}</div>
+                                  <div style={{ fontSize: '14px', fontWeight: 900, color: isNow ? 'var(--theme-primary)' : 'rgba(255,255,255,0.65)', fontFamily: "'Orbitron', sans-serif" }}>{r}</div>
+                                  <div style={{ fontSize: '7px', color: 'rgba(255,255,255,0.25)', marginTop: '2px' }}>RIR</div>
+                                </div>
+                              );
+                            })}
+                            {/* Deload */}
+                            <div style={{
+                              flex: '1 1 36px',
+                              minWidth: '36px',
+                              background: 'rgba(99,102,241,0.08)',
+                              border: '1px solid rgba(99,102,241,0.2)',
+                              borderRadius: '8px',
+                              padding: '8px 4px',
+                              textAlign: 'center',
+                            }}>
+                              <div style={{ fontSize: '8px', color: 'rgba(167,139,250,0.6)', marginBottom: '4px', fontWeight: 700 }}>DL</div>
+                              <div style={{ fontSize: '14px', fontWeight: 900, color: 'rgba(167,139,250,0.8)', fontFamily: "'Orbitron', sans-serif" }}>4</div>
+                              <div style={{ fontSize: '7px', color: 'rgba(167,139,250,0.4)', marginTop: '2px' }}>RIR</div>
+                            </div>
+                          </div>
+                          <p style={{ margin: '10px 0 0 0', fontSize: '10px', color: 'rgba(255,255,255,0.35)', lineHeight: '1.4' }}>
+                            {nivAtl === 'principiante'
+                              ? '⚠️ Principiante: nunca llega a RIR 0 — protege la técnica y previene lesiones.'
+                              : '🤖 El peso sube automáticamente al bajar el RIR. El 1RM actualizado lo potencia aún más.'}
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 {/* Diagnóstico Inicial */}

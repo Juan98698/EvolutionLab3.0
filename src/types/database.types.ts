@@ -128,6 +128,20 @@ export interface PeriodizationConfig {
    * Se incrementa con cada sesión loggeada y se resetea al avanzar semana.
    */
   sessions_completed_this_week?: number;
+  /**
+   * RIR de la semana 1 del bloque.
+   * Defaults: principiante=3, intermedio=3, avanzado=4.
+   * Determina el punto de partida de la progresión de intensidad.
+   * Al hacer deload se resetea a rir_inicial para el siguiente bloque.
+   */
+  rir_inicial?: number;
+  /**
+   * Controla cuánto cae el RIR por semana dentro del mesociclo.
+   * lenta:     cada 2 semanas (principiante default — protege técnica)
+   * normal:    cada semana   (intermedio/avanzado default)
+   * agresiva:  cada semana desde rir_inicial=4 (avanzado alta intensidad)
+   */
+  rir_progresion?: 'lenta' | 'normal' | 'agresiva';
 }
 
 export interface GlobalVariable {
