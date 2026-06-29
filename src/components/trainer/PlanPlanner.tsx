@@ -2186,7 +2186,7 @@ export const PlanPlanner: React.FC = () => {
                     required
                     value={newVarLabel}
                     onChange={(e) => setNewVarLabel(e.target.value)}
-                    placeholder="Ej. RPE, Tempo, Series, etc."
+                    placeholder="Ej. RIR, Tempo, Series, etc."
                     style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '10px' }}
                   />
                 </div>

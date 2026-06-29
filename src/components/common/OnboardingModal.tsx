@@ -219,7 +219,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
               {([
                 { value: 'intuitiva',   emoji: '🎯', label: 'Intuitiva',            hint: 'Ajusto según cómo se ve y siente el atleta' },
                 { value: 'experiencia', emoji: '📚', label: 'Basada en experiencia', hint: 'Tengo métodos probados que funcionan' },
-                { value: 'cientifica',  emoji: '🧬', label: 'Científica',            hint: 'Uso periodización, RPE, control de volumen' },
+                { value: 'cientifica',  emoji: '🧬', label: 'Científica',            hint: 'Uso periodización, RIR, control de volumen' },
               ] as { value: Metodologia; emoji: string; label: string; hint: string }[]).map(opt => (
                 <button key={opt.value} onClick={() => setMetodologia(opt.value)}
                   style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 16px', borderRadius: '12px', cursor: 'pointer', border: `1px solid ${metodologia === opt.value ? ACCENT : 'rgba(255,255,255,0.1)'}`, background: metodologia === opt.value ? `${ACCENT}12` : 'rgba(255,255,255,0.03)', transition: 'all 0.2s', textAlign: 'left' }}>
