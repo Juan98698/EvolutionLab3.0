@@ -186,8 +186,8 @@ export const TrainerDashboard: React.FC = () => {
 
   // Verificar si es la primera vez que inicia sesión para el Onboarding del Entrenador
   useEffect(() => {
-    if (profile) {
-      const isOnboarded = localStorage.getItem('evolution_trainer_onboarded_v1');
+    if (profile?.id) {
+      const isOnboarded = localStorage.getItem(`evolution_trainer_onboarded_v1_${profile.id}`);
       if (!isOnboarded) {
         setShowOnboarding(true);
       }

@@ -162,13 +162,13 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
       console.warn('No se pudo crear el plan sandbox:', e);
     }
 
-    localStorage.setItem('evolution_trainer_onboarded_v1', 'true');
+    localStorage.setItem(`evolution_trainer_onboarded_v1_${trainerId}`, 'true');
     setCreating(false);
     onClose();
   };
 
   const handleSkipSandbox = () => {
-    localStorage.setItem('evolution_trainer_onboarded_v1', 'true');
+    localStorage.setItem(`evolution_trainer_onboarded_v1_${trainerId}`, 'true');
     onClose();
   };
 

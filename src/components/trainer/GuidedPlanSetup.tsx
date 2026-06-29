@@ -77,7 +77,6 @@ export const GuidedPlanSetup: React.FC<Props> = ({ onComplete, onSkip }) => {
 
   const handleComplete = (wantsTour: boolean) => {
     if (!objetivo || !nivel) return;
-    localStorage.setItem('evolution_guided_plan_v1', 'true');
     onComplete({ objetivo, nivel, dias, semanas, wantsTour });
   };
 

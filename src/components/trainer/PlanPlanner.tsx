@@ -63,7 +63,7 @@ export const PlanPlanner: React.FC = () => {
   const [variablesOpen, setVariablesOpen] = useState<boolean>(false);
 
   // ── Guided mode — primer plan ──────────────────────────────────────────────
-  const isFirstPlan = !localStorage.getItem('evolution_guided_plan_v1');
+  const isFirstPlan = profile?.id ? !localStorage.getItem(`evolution_guided_plan_v1_${profile.id}`) : false;
   const [showGuidedSetup, setShowGuidedSetup]   = useState<boolean>(false);
   const [showTourTip,     setShowTourTip]        = useState<number>(0); // 0=off, 1-3=step
   const [tourComplete,    setTourComplete]        = useState<boolean>(false);
@@ -360,6 +360,9 @@ export const PlanPlanner: React.FC = () => {
 
   // ── Handler del guided setup ───────────────────────────────────────────────
   const handleGuidedComplete = (params: GuidedPlanParams) => {
+    if (profile?.id) {
+      localStorage.setItem(`evolution_guided_plan_v1_${profile.id}`, 'true');
+    }
     setShowGuidedSetup(false);
     setLanguageMode('tecnico');
     setIsSandbox(false);
@@ -1789,7 +1792,9 @@ export const PlanPlanner: React.FC = () => {
         <GuidedPlanSetup
           onComplete={handleGuidedComplete}
           onSkip={() => {
-            localStorage.setItem('evolution_guided_plan_v1', 'true');
+            if (profile?.id) {
+              localStorage.setItem(`evolution_guided_plan_v1_${profile.id}`, 'true');
+            }
             setShowGuidedSetup(false);
           }}
         />
