@@ -48,6 +48,16 @@ const DEFAULT_VARIABLE_DEFINITIONS: Record<string, string> = {
   "peso": "Representa la resistencia externa que se opone a la contracción muscular para generar estímulo de adaptación en el organismo."
 };
 
+const DEFAULT_VARS: GlobalVariable[] = [
+  { id: "series de aproximacion", label: "SERIES DE APROXIMACION", type: "number", defaultValue: "2" },
+  { id: "series de trabajo", label: "SERIES DE TRABAJO", type: "text", defaultValue: "3" },
+  { id: "repeticiones", label: "REPETICIONES", type: "text", defaultValue: "10-12" },
+  { id: "tempo", label: "TEMPO", type: "text", defaultValue: "2:1:1" },
+  { id: "rir", label: "RIR", type: "number", defaultValue: "2" },
+  { id: "descanso", label: "DESCANSO(MIN)", type: "number", defaultValue: "120" },
+  { id: "peso", label: "PESO(KG)", type: "text", defaultValue: "10" }
+];
+
 export const PlanPlanner: React.FC = () => {
   const { clienteId } = useParams<{ clienteId: string }>();
   const navigate = useNavigate();
@@ -709,16 +719,6 @@ export const PlanPlanner: React.FC = () => {
 
   // Inicializar plan limpio por defecto
   const resetToDefaultPlan = (profileData?: Profile) => {
-    const defaultVars: GlobalVariable[] = [
-      { id: "series de aproximacion", label: "SERIES DE APROXIMACION", type: "number", defaultValue: "2" },
-      { id: "series de trabajo", label: "SERIES DE TRABAJO", type: "text", defaultValue: "3" },
-      { id: "repeticiones", label: "REPETICIONES", type: "text", defaultValue: "10-12" },
-      { id: "tempo", label: "TEMPO", type: "text", defaultValue: "2:1:1" },
-      { id: "rir", label: "RIR", type: "number", defaultValue: "2" },
-      { id: "descanso", label: "DESCANSO(MIN)", type: "number", defaultValue: "2" },
-      { id: "peso", label: "PESO(KG)", type: "text", defaultValue: "10" }
-    ];
-
     const initialExercises = (count: number): Exercise[] => {
       const arr: Exercise[] = [];
       for (let i = 0; i < count; i++) {
@@ -735,7 +735,7 @@ export const PlanPlanner: React.FC = () => {
       return arr;
     };
 
-    setGlobalVariables(defaultVars);
+    setGlobalVariables(DEFAULT_VARS);
     setVariableDefinitions(DEFAULT_VARIABLE_DEFINITIONS);
     setWeekdayMapping({ '0': -1, '1': -1, '2': -1, '3': -1, '4': -1, '5': -1, '6': -1 });
     setTrainingDays([
@@ -884,7 +884,11 @@ export const PlanPlanner: React.FC = () => {
           if ((p as any).language_mode === 'simple' || (p as any).language_mode === 'tecnico') {
             setLanguageMode((p as any).language_mode);
           }
-          if (p.globalVariables) setGlobalVariables(p.globalVariables);
+          if (p.globalVariables && Array.isArray(p.globalVariables) && p.globalVariables.length > 0) {
+            setGlobalVariables(p.globalVariables);
+          } else {
+            setGlobalVariables(DEFAULT_VARS);
+          }
           if (p.weeklyTargets) setWeeklyTargets(p.weeklyTargets);
           setVariableDefinitions({
             ...DEFAULT_VARIABLE_DEFINITIONS,
@@ -1975,6 +1979,13 @@ export const PlanPlanner: React.FC = () => {
         {/* ACTION BAR: Herramientas de Planificación */}
         <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', overflowX: 'auto', paddingBottom: '4px' }}>
           <button 
+            onClick={() => setProtocolModalOpen(true)} 
+            className="btn" 
+            style={{ background: '#0284c7', border: 'none', color: '#fff', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 'bold', whiteSpace: 'nowrap', boxShadow: '0 4px 12px rgba(2, 132, 199, 0.3)' }}
+          >
+            <span style={{ fontSize: '16px' }}>📚</span> Protocolos de entrenamiento
+          </button>
+          <button 
             onClick={() => setThresholdsTableOpen(true)} 
             className="btn" 
             style={{ background: '#1A1A1A', border: '1px solid #333', color: 'white', display: 'flex', alignItems: 'center', gap: '6px', whiteSpace: 'nowrap' }}
@@ -2409,16 +2420,6 @@ export const PlanPlanner: React.FC = () => {
                     <div>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                         <label htmlFor="period-objetivo" style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700 }}>OBJETIVO DEL BLOQUE</label>
-                        <button 
-                          onClick={() => setProtocolModalOpen(true)}
-                          style={{
-                            background: '#0ea5e9', border: 'none', borderRadius: '4px', color: 'white',
-                            fontSize: '10px', fontWeight: 'bold', padding: '2px 8px', cursor: 'pointer',
-                            display: 'flex', alignItems: 'center', gap: '4px'
-                          }}
-                        >
-                          📚 Protocolos
-                        </button>
                       </div>
                       <select
                         id="period-objetivo"
@@ -4304,7 +4305,7 @@ export const PlanPlanner: React.FC = () => {
               setWeekdayMapping(newMapping);
               showToast('✅ Protocolo cargado con distribución de descanso sugerida según la evidencia.', 'success');
             } else {
-              showToast('✅ Protocolo científico cargado y adaptado.', 'success');
+              showToast('✅ Protocolo de entrenamiento cargado y adaptado.', 'success');
             }
           }}
         />

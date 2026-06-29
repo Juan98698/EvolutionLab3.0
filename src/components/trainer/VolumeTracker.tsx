@@ -293,7 +293,7 @@ export const VolumeTracker: React.FC<VolumeTrackerProps> = ({
           display: 'flex', alignItems: 'center', gap: '8px'
         }}>
           <span>📊</span>
-          {isStrength ? 'Tracker de Fuerza' : 'Tracker de Volumen'}
+          {isStrength ? 'Tracker de Fuerza Semanal' : 'Tracker de Volumen Semanal'}
         </h3>
         <button
           onClick={toggleAll}

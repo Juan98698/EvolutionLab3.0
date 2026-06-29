@@ -23,6 +23,13 @@ export function VolumeDistributorWizard({ onClose, onApply, athleteLevel = 'inte
   const [splitType, setSplitType] = useState<SplitType>('upper_lower');
   const [trainingDays, setTrainingDays] = useState(4);
   const [muscleVolume, setMuscleVolume] = useState<Record<string, number>>({});
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   
   // Para estilo libre
   const [customDays, setCustomDays] = useState<Array<{name: string, muscles: string[]}>>([
@@ -213,17 +220,24 @@ export function VolumeDistributorWizard({ onClose, onApply, athleteLevel = 'inte
         borderRadius: '16px',
         width: '100%',
         maxWidth: '1100px',
-        maxHeight: '90vh',
+        maxHeight: isMobile ? '95vh' : '90vh',
+        height: isMobile ? '95vh' : 'auto',
         display: 'flex',
+        flexDirection: isMobile ? 'column' : 'row',
         boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
         overflow: 'hidden'
       }}>
         
         {/* PANEL IZQUIERDO: Configuración */}
         <div className="wizard-left-panel" style={{
+          width: isMobile ? '100%' : '45%',
+          height: isMobile ? '50vh' : 'auto',
+          maxHeight: isMobile ? '50vh' : '90vh',
           display: 'flex', flexDirection: 'column',
           background: '#151515',
-          overflowY: 'auto'
+          overflowY: 'auto',
+          borderRight: isMobile ? 'none' : '1px solid #333',
+          borderBottom: isMobile ? '1px solid #333' : 'none'
         }}>
           <div style={{
             padding: '24px', borderBottom: '1px solid #333',
@@ -510,7 +524,11 @@ export function VolumeDistributorWizard({ onClose, onApply, athleteLevel = 'inte
             PANEL DERECHO: Distribución Resultante
             ══════════════════════════════════════════════════ */}
         <div className="wizard-right-panel" style={{
-          width: '55%', display: 'flex', flexDirection: 'column', background: '#1A1A1A', position: 'relative'
+          width: isMobile ? '100%' : '55%',
+          height: isMobile ? '45vh' : 'auto',
+          maxHeight: isMobile ? '45vh' : '90vh',
+          display: 'flex', flexDirection: 'column', background: '#1A1A1A', position: 'relative',
+          overflowY: 'auto'
         }}>
           <div style={{
             padding: '24px', borderBottom: '1px solid #333',

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { AthleteLevel, BlockObjective } from '../../lib/volumeThresholds';
 import { ProtocolTemplate, getProtocolsForContext } from '../../lib/protocols';
 import { TrainingDay } from '../../types/database.types';
@@ -16,6 +16,13 @@ interface Props {
 export function ProtocolSelectorModal({ isOpen, onClose, objective, level, onApplyProtocol }: Props) {
   const [selectedProtocol, setSelectedProtocol] = useState<ProtocolTemplate | null>(null);
   const [applying, setApplying] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  useEffect(() => {
+    const handleResize = () => setIsMobile(window.innerWidth < 768);
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   if (!isOpen) return null;
 
@@ -132,12 +139,12 @@ export function ProtocolSelectorModal({ isOpen, onClose, objective, level, onApp
         overflow: 'hidden', color: '#fff', fontFamily: 'system-ui, sans-serif'
       }}>
         {/* Header */}
-        <div style={{ padding: '20px 24px', borderBottom: '1px solid #222', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid #222', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <h2 style={{ margin: 0, fontSize: '20px', color: '#fff' }}>
+            <h2 style={{ margin: 0, fontSize: '18px', color: '#fff' }}>
               {isStrengthBlock ? '🏋️ Protocolos de Fuerza General' : '📚 Protocolos Científicos'}
             </h2>
-            <p style={{ margin: '4px 0 0', fontSize: '13px', color: '#888' }}>
+            <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#888' }}>
               Mostrando para:{' '}
               <strong style={{ color: isStrengthBlock ? '#f59e0b' : '#0ea5e9', textTransform: 'capitalize' }}>{objective}</strong>
               {' • '}
@@ -148,11 +155,11 @@ export function ProtocolSelectorModal({ isOpen, onClose, objective, level, onApp
         </div>
 
         {/* Content */}
-        <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+        <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', flex: 1, overflow: isMobile ? 'auto' : 'hidden' }}>
           
           {/* Sidebar: Lista de protocolos */}
-          <div style={{ width: '300px', borderRight: '1px solid #222', overflowY: 'auto', padding: '16px' }}>
-            <h3 style={{ fontSize: '12px', textTransform: 'uppercase', color: '#666', letterSpacing: '0.05em', marginBottom: '12px' }}>Plantillas Recomendadas</h3>
+          <div style={{ width: isMobile ? '100%' : '280px', borderRight: isMobile ? 'none' : '1px solid #222', borderBottom: isMobile ? '1px solid #222' : 'none', overflowY: isMobile ? 'visible' : 'auto', padding: '16px', boxSizing: 'border-box' }}>
+            <h3 style={{ fontSize: '11px', textTransform: 'uppercase', color: '#666', letterSpacing: '0.05em', marginBottom: '12px' }}>Plantillas Recomendadas</h3>
             {protocols.map(p => (
               <div 
                 key={p.id}
@@ -164,13 +171,13 @@ export function ProtocolSelectorModal({ isOpen, onClose, objective, level, onApp
                   transition: 'all 0.2s ease'
                 }}
               >
-                <div style={{ fontWeight: 600, fontSize: '14px', marginBottom: '4px', color: selectedProtocol?.id === p.id ? '#0ea5e9' : '#fff' }}>
+                <div style={{ fontWeight: 600, fontSize: '13px', marginBottom: '4px', color: selectedProtocol?.id === p.id ? '#0ea5e9' : '#fff' }}>
                   {p.name}
                 </div>
-                <div style={{ fontSize: '11px', color: '#888', marginBottom: '8px' }}>
+                <div style={{ fontSize: '11px', color: '#888', marginBottom: '6px' }}>
                   {p.daysPerWeek} días/semana • Nivel: <span style={{ textTransform: 'capitalize' }}>{p.level}</span>
                 </div>
-                <div style={{ fontSize: '12px', color: '#aaa', lineHeight: 1.4 }}>
+                <div style={{ fontSize: '11px', color: '#aaa', lineHeight: 1.4 }}>
                   {p.description}
                 </div>
               </div>
@@ -178,10 +185,10 @@ export function ProtocolSelectorModal({ isOpen, onClose, objective, level, onApp
           </div>
 
           {/* Main Area: Guía Científica */}
-          <div style={{ flex: 1, padding: '24px', overflowY: 'auto', background: '#0a0a0a' }}>
+          <div style={{ flex: 1, padding: isMobile ? '16px' : '24px', overflowY: isMobile ? 'visible' : 'auto', background: '#0a0a0a', boxSizing: 'border-box' }}>
             {selectedProtocol ? (
               <div>
-                <div style={{ display: 'inline-block', background: 'rgba(14, 165, 233, 0.15)', color: '#38bdf8', padding: '4px 8px', borderRadius: '4px', fontSize: '11px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px' }}>
+                <div style={{ display: 'inline-block', background: 'rgba(14, 165, 233, 0.15)', color: '#38bdf8', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px' }}>
                   Guía del Mentor Científico
                 </div>
                 <h3 style={{ margin: '0 0 16px 0', fontSize: '24px' }}>¿Por qué este protocolo?</h3>
