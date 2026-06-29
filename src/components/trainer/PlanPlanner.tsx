@@ -3691,7 +3691,7 @@ export const PlanPlanner: React.FC = () => {
                               onChange={(e) => handleExerciseChange(day.id, ex.id, 'description', e.target.value)}
                               placeholder="Escribe aquí las indicaciones paso a paso de cómo realizar el ejercicio..."
                               rows={3}
-                              style={{ width: '100%', padding: '8px 12px', border: '1px solid var(--border2)', background: 'rgba(255,255,255,0.03)', color: 'white', borderRadius: '12px', fontSize: '0.8rem', fontFamily: 'inherit', resize: 'vertical', transition: 'border-color 0.2s' }}
+                              style={{ width: '100%', padding: '8px 12px', border: '1px solid var(--border2)', background: 'rgba(255,255,255,0.03)', color: 'white', borderRadius: '12px', fontSize: '0.8rem', fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", resize: 'vertical', transition: 'border-color 0.2s' }}
                             />
                           </div>
 
@@ -3712,7 +3712,7 @@ export const PlanPlanner: React.FC = () => {
                               onChange={(e) => handleExerciseChange(day.id, ex.id, 'progression_notes', e.target.value)}
                               placeholder="Ej: Sem 1: Peso base 3x10. Sem 2: +2.5kg 3x9... O deja que la automatización genere la pauta."
                               rows={3}
-                              style={{ width: '100%', padding: '8px 12px', border: '1px solid var(--border2)', background: 'rgba(255,255,255,0.03)', color: 'white', borderRadius: '12px', fontSize: '0.8rem', fontFamily: 'inherit', resize: 'vertical', transition: 'border-color 0.2s' }}
+                              style={{ width: '100%', padding: '8px 12px', border: '1px solid var(--border2)', background: 'rgba(255,255,255,0.03)', color: 'white', borderRadius: '12px', fontSize: '0.8rem', fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif", resize: 'vertical', transition: 'border-color 0.2s' }}
                             />
                           </div>
 
