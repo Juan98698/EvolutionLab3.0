@@ -203,9 +203,9 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
     );
   }
 
-  // ─── Render entrenador — 4 pasos ──────────────────────────────────────────
+  // ─── Render entrenador — 5 pasos ──────────────────────────────────────────
 
-  const totalSteps = 4;
+  const totalSteps = 5;
   const canNext = step === 1 ? metodologia !== null : step === 2 ? objetivo !== null : true;
 
   return (
@@ -225,7 +225,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
         {/* ── Paso 1 — Metodología ── */}
         {step === 1 && (
           <div>
-            <p style={{ fontSize: '11px', color: ACCENT, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '6px' }}>Paso 1 de 4</p>
+            <p style={{ fontSize: '11px', color: ACCENT, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '6px' }}>Paso 1 de 5</p>
             <h2 style={{ fontSize: '21px', fontWeight: 800, color: '#fff', marginBottom: '6px', lineHeight: 1.3 }}>¿Cómo describes tu metodología de entrenamiento?</h2>
             <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)', marginBottom: '22px' }}>Esto adapta el lenguaje de la app a tu nivel de familiaridad con la ciencia del ejercicio.</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -251,7 +251,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
         {/* ── Paso 2 — Objetivo del plan sandbox ── */}
         {step === 2 && (
           <div>
-            <p style={{ fontSize: '11px', color: ACCENT, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '6px' }}>Paso 2 de 4</p>
+            <p style={{ fontSize: '11px', color: ACCENT, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '6px' }}>Paso 2 de 5</p>
             <h2 style={{ fontSize: '21px', fontWeight: 800, color: '#fff', marginBottom: '6px', lineHeight: 1.3 }}>Crea un plan de práctica para explorar la app</h2>
             <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)', marginBottom: '22px' }}>Se creará bajo tu perfil, puedes modificarlo o eliminarlo cuando quieras. ¿Cuál sería el objetivo?</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -274,7 +274,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
         {/* ── Paso 3 — Estructura ── */}
         {step === 3 && (
           <div>
-            <p style={{ fontSize: '11px', color: ACCENT, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '6px' }}>Paso 3 de 4</p>
+            <p style={{ fontSize: '11px', color: ACCENT, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '6px' }}>Paso 3 de 5</p>
             <h2 style={{ fontSize: '21px', fontWeight: 800, color: '#fff', marginBottom: '6px', lineHeight: 1.3 }}>¿Cómo estructurarías el plan?</h2>
             <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)', marginBottom: '22px' }}>Estos valores se pueden cambiar después.</p>
 
@@ -295,7 +295,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
               <div style={{ display: 'flex', gap: '8px' }}>
                 {[4, 6, 8, 12].map(w => (
                   <button key={w} onClick={() => setSemanas(w)}
-                    style={{ flex: 1, padding: '10px 0', borderRadius: '10px', cursor: 'pointer', border: `1px solid ${semanas === w ? ACCENT : 'rgba(255,255,255,0.1)'}`, background: semanas === w ? `${ACCENT}12` : 'rgba(255,255,255,0.03)', color: semanas === w ? ACCENT : '#9ca3af', fontWeight: 700, fontSize: '13px', transition: 'all 0.2s' }}>
+                    style={{ flex: 1, padding: '10px 0', borderRadius: '10px', cursor: 'pointer', border: `1px solid semanas === w ? ACCENT : 'rgba(255,255,255,0.1)'}`, background: semanas === w ? `${ACCENT}12` : 'rgba(255,255,255,0.03)', color: semanas === w ? ACCENT : '#9ca3af', fontWeight: 700, fontSize: '13px', transition: 'all 0.2s' }}>
                     {w} sem
                   </button>
                 ))}
@@ -304,11 +304,40 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
           </div>
         )}
 
-        {/* ── Paso 4 — Confirmación ── */}
-        {step === 4 && objetivo && metodologia && (
+        {/* ── Paso 4 — Calculadora 1RM (Explicación) ── */}
+        {step === 4 && (
+          <div>
+            <p style={{ fontSize: '11px', color: ACCENT, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '6px' }}>Paso 4 de 5</p>
+            <h2 style={{ fontSize: '21px', fontWeight: 800, color: '#fff', marginBottom: '8px', lineHeight: 1.3 }}>🧮 Calibra la Fuerza Máxima (1RM)</h2>
+            <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.45)', marginBottom: '16px', lineHeight: 1.5 }}>
+              Para que el robot inteligente 🤖 pueda prescribir pesos precisos en los ejercicios, necesita conocer la <strong>Fuerza Máxima (1RM)</strong> del atleta en cada movimiento.
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '14px', padding: '16px', textAlign: 'left' }}>
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+                <span style={{ fontSize: '18px' }}>🤖</span>
+                <span style={{ fontSize: '12px', color: '#e2e8f0', lineHeight: 1.4 }}>
+                  <strong>Carga Inteligente:</strong> El robot lee el 1RM, las repeticiones y el RIR del plan para calcular el peso exacto a levantar. Si no hay 1RM, la casilla del robot no calculará nada.
+                </span>
+              </div>
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'flex-start', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '10px' }}>
+                <span style={{ fontSize: '18px' }}>🧮</span>
+                <span style={{ fontSize: '12px', color: '#e2e8f0', lineHeight: 1.4 }}>
+                  <strong>Calculadora Integrada:</strong> Si el atleta no conoce su 1RM, podrás usar la calculadora integrada del planificador para estimarlo a partir de un levantamiento conocido (ej: 80kg × 8 reps al fallo = ~100kg 1RM).
+                </span>
+              </div>
+            </div>
+            <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)', marginTop: '12px', textAlign: 'center' }}>
+              Recuerda rellenar las casillas de 1RM al crear o modificar tus planes.
+            </p>
+          </div>
+        )}
+
+        {/* ── Paso 5 — Confirmación ── */}
+        {step === 5 && objetivo && metodologia && (
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: '48px', marginBottom: '16px' }}>🚀</div>
-            <p style={{ fontSize: '11px', color: ACCENT, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '8px' }}>Paso 4 de 4</p>
+            <p style={{ fontSize: '11px', color: ACCENT, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '8px' }}>Paso 5 de 5</p>
             <h2 style={{ fontSize: '21px', fontWeight: 800, color: '#fff', marginBottom: '12px', lineHeight: 1.3 }}>Todo listo para crear tu plan de práctica</h2>
 
             <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '16px', marginBottom: '20px', textAlign: 'left' }}>
@@ -341,8 +370,8 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
           </div>
         )}
 
-        {/* Botón siguiente (pasos 1-3) */}
-        {step < 4 && (
+        {/* Botón siguiente (pasos 1-4) */}
+        {step < 5 && (
           <button
             onClick={() => setStep(s => s + 1)}
             disabled={!canNext}
@@ -352,7 +381,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
           </button>
         )}
 
-        {step > 1 && step < 4 && (
+        {step > 1 && step < 5 && (
           <button onClick={() => setStep(s => s - 1)} style={{ display: 'block', margin: '12px auto 0', background: 'none', border: 'none', color: 'rgba(255,255,255,0.2)', fontSize: '12px', cursor: 'pointer' }}>
             ← Atrás
           </button>

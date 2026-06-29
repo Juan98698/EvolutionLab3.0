@@ -6,7 +6,7 @@ import { Profile, PlanData, TrainingDay, Exercise, GlobalVariable, EjercicioGlob
 import Toast from '../common/Toast';
 import { InfoTooltip } from '../common/InfoTooltip';
 import ReasoningTooltip, { buildLoadReasoningSteps, buildVolumeReasoningSteps } from '../common/ReasoningTooltip';
-import { getWeakPointCorrection, getPrescribedLoad, getPrescribedLoadDetailed, mapExerciseToLiftKey } from '../../lib/periodizationEngine';
+import { getWeakPointCorrection, getPrescribedLoadDetailed, mapExerciseToLiftKey } from '../../lib/periodizationEngine';
 import { PeriodizationHelpModal } from '../common/PeriodizationHelpModal';
 import { evaluateVolumeStatus, getThresholdsForMuscleGroup } from '../../lib/volumeThresholds';
 import { humanizeAlert } from '../../lib/alertLanguage';
@@ -73,6 +73,11 @@ export const PlanPlanner: React.FC = () => {
   const [variablesOpen, setVariablesOpen] = useState<boolean>(false);
   const [showExitConfirm, setShowExitConfirm] = useState<boolean>(false);
   const [showTourSaveReminder, setShowTourSaveReminder] = useState<boolean>(false);
+  const [show1RMCalculator, setShow1RMCalculator] = useState<boolean>(false);
+  const [calcWeight, setCalcWeight] = useState<number>(80);
+  const [calcReps, setCalcReps] = useState<number>(8);
+  const [calcRIR, setCalcRIR] = useState<number>(2);
+  const [calcSelectedLift, setCalcSelectedLift] = useState<string>('press de banca');
 
   /**
    * languageMode — controla qué tan técnico es el lenguaje de las alertas inline.
@@ -111,23 +116,38 @@ export const PlanPlanner: React.FC = () => {
   const [periodizationConfig, setPeriodizationConfig] = useState<PeriodizationConfig | undefined>(undefined);
   const [weeklyTargets, setWeeklyTargets] = useState<Record<string, number>>({});
 
-  // Recalcular pesos sugeridos según marcas 1RM
-  const recalculatePlanWeights = (days: TrainingDay[], marcas: Record<string, number>): TrainingDay[] => {
+  // Recalcular pesos sugeridos según marcas 1RM y configuración de periodización
+  const recalculatePlanWeights = (
+    days: TrainingDay[],
+    marcas: Record<string, number>,
+    formulaOverride?: 'epley' | 'brzycki' | 'epley_brzycki_avg',
+    roundingOverride?: number
+  ): TrainingDay[] => {
+    const formula = formulaOverride || periodizationConfig?.formula_preferida || 'epley';
+    const rounding = roundingOverride ?? periodizationConfig?.redondeo_peso ?? 2.5;
+
     return days.map(day => ({
       ...day,
       exercises: day.exercises.map(ex => {
         if (!ex.nombre) return ex;
         const normName = ex.nombre.toLowerCase().trim();
         
-        // Buscar 1RM para este ejercicio
+        // Buscar 1RM para este ejercicio con fallback robusto a marcas base
         let oneRM = marcas[normName];
-        if (!oneRM) {
+        if (oneRM === undefined || oneRM === null || Number(oneRM) === 0 || String(oneRM).trim() === '' || isNaN(Number(oneRM))) {
           const alias = mapExerciseToLiftKey(normName);
-          if (alias) oneRM = marcas[alias];
+          if (alias) {
+            const aliasVal = marcas[alias];
+            if (aliasVal && !isNaN(Number(aliasVal)) && Number(aliasVal) > 0) {
+              oneRM = Number(aliasVal);
+            }
+          }
         }
         
-        // Si hay 1RM, calcular peso sugerido
-        if (oneRM && oneRM > 0) {
+        const numericOneRM = Number(oneRM) || 0;
+        
+        // Si hay 1RM, calcular peso sugerido usando la fórmula y redondeo preferidos
+        if (numericOneRM && numericOneRM > 0) {
           const repsStr = ex.variables?.['repeticiones'] || '';
           const repsMatch = repsStr.match(/\d+/);
           const reps = repsMatch ? parseInt(repsMatch[0], 10) : 0;
@@ -137,7 +157,8 @@ export const PlanPlanner: React.FC = () => {
           const targetRIR = rirMatch ? parseFloat(rirMatch[0]) : 0;
           
           if (reps > 0) {
-            const newLoad = getPrescribedLoad(oneRM, reps, targetRIR);
+            const lp = getPrescribedLoadDetailed(numericOneRM, reps, targetRIR, formula, rounding);
+            const newLoad = lp.weight;
             if (newLoad > 0) {
               return {
                 ...ex,
@@ -1218,12 +1239,19 @@ export const PlanPlanner: React.FC = () => {
                     const marcas = periodizationConfig?.marcas_1rm || {};
                     
                     let oneRM = marcas[normName];
-                    if (!oneRM) {
+                    if (oneRM === undefined || oneRM === null || Number(oneRM) === 0 || String(oneRM).trim() === '' || isNaN(Number(oneRM))) {
                       const alias = mapExerciseToLiftKey(normName);
-                      if (alias) oneRM = marcas[alias];
+                      if (alias) {
+                        const aliasVal = marcas[alias];
+                        if (aliasVal && !isNaN(Number(aliasVal)) && Number(aliasVal) > 0) {
+                          oneRM = Number(aliasVal);
+                        }
+                      }
                     }
                     
-                    if (oneRM && oneRM > 0) {
+                    const numericOneRM = Number(oneRM) || 0;
+                    
+                    if (numericOneRM && numericOneRM > 0) {
                       const repsStr = ex.variables?.['repeticiones'] || '';
                       const repsMatch = repsStr.match(/\d+/);
                       const reps = repsMatch ? parseInt(repsMatch[0], 10) : 0;
@@ -1233,7 +1261,10 @@ export const PlanPlanner: React.FC = () => {
                       const targetRIR = rirMatch ? parseFloat(rirMatch[0]) : 0;
                       
                       if (reps > 0) {
-                        const newLoad = getPrescribedLoad(oneRM, reps, targetRIR);
+                        const formula = periodizationConfig?.formula_preferida || 'epley';
+                        const rounding = periodizationConfig?.redondeo_peso || 2.5;
+                        const lp = getPrescribedLoadDetailed(numericOneRM, reps, targetRIR, formula, rounding);
+                        const newLoad = lp.weight;
                         if (newLoad > 0) {
                           updatedVars['peso'] = `🤖 ${newLoad} kg`;
                         }
@@ -1395,12 +1426,19 @@ export const PlanPlanner: React.FC = () => {
                   
                   // Buscar 1RM
                   let oneRM = marcas[normName];
-                  if (!oneRM) {
+                  if (oneRM === undefined || oneRM === null || Number(oneRM) === 0 || String(oneRM).trim() === '' || isNaN(Number(oneRM))) {
                     const alias = mapExerciseToLiftKey(normName);
-                    if (alias) oneRM = marcas[alias];
+                    if (alias) {
+                      const aliasVal = marcas[alias];
+                      if (aliasVal && !isNaN(Number(aliasVal)) && Number(aliasVal) > 0) {
+                        oneRM = Number(aliasVal);
+                      }
+                    }
                   }
                   
-                  if (oneRM && oneRM > 0) {
+                  const numericOneRM = Number(oneRM) || 0;
+                  
+                  if (numericOneRM && numericOneRM > 0) {
                     const repsStr = updatedVariables['repeticiones'] || '';
                     const repsMatch = repsStr.match(/\d+/);
                     const reps = repsMatch ? parseInt(repsMatch[0], 10) : 0;
@@ -1410,7 +1448,10 @@ export const PlanPlanner: React.FC = () => {
                     const targetRIR = rirMatch ? parseFloat(rirMatch[0]) : 0;
                     
                     if (reps > 0) {
-                      const newLoad = getPrescribedLoad(oneRM, reps, targetRIR);
+                      const formula = periodizationConfig?.formula_preferida || 'epley';
+                      const rounding = periodizationConfig?.redondeo_peso || 2.5;
+                      const lp = getPrescribedLoadDetailed(numericOneRM, reps, targetRIR, formula, rounding);
+                      const newLoad = lp.weight;
                       if (newLoad > 0) {
                         updatedVariables['peso'] = `🤖 ${newLoad} kg`;
                       }
@@ -2701,7 +2742,14 @@ export const PlanPlanner: React.FC = () => {
                         value={periodizationConfig.formula_preferida || 'epley'}
                         onChange={(e) => {
                           const val = e.target.value as 'epley' | 'brzycki' | 'epley_brzycki_avg';
-                          setPeriodizationConfig(prev => prev ? { ...prev, formula_preferida: val } : undefined);
+                          setPeriodizationConfig(prev => {
+                            if (!prev) return prev;
+                            const next = { ...prev, formula_preferida: val };
+                            setTimeout(() => {
+                              setTrainingDays(prevDays => recalculatePlanWeights(prevDays, next.marcas_1rm || {}, val, next.redondeo_peso || 2.5));
+                            }, 50);
+                            return next;
+                          });
                         }}
                         style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(167,139,250,0.2)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '12px', height: '38px', boxSizing: 'border-box' }}
                       >
@@ -2724,7 +2772,14 @@ export const PlanPlanner: React.FC = () => {
                         value={periodizationConfig.redondeo_peso ?? 2.5}
                         onChange={(e) => {
                           const val = parseFloat(e.target.value);
-                          setPeriodizationConfig(prev => prev ? { ...prev, redondeo_peso: val } : undefined);
+                          setPeriodizationConfig(prev => {
+                            if (!prev) return prev;
+                            const next = { ...prev, redondeo_peso: val };
+                            setTimeout(() => {
+                              setTrainingDays(prevDays => recalculatePlanWeights(prevDays, next.marcas_1rm || {}, next.formula_preferida || 'epley', val));
+                            }, 50);
+                            return next;
+                          });
                         }}
                         style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(167,139,250,0.2)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '12px', height: '38px', boxSizing: 'border-box' }}
                       >
@@ -2764,10 +2819,32 @@ export const PlanPlanner: React.FC = () => {
                   {/* Marcas de Fuerza 1RM */}
 
                   <div style={{ marginBottom: '16px' }}>
-                    <label style={{ display: 'flex', alignItems: 'center', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '8px', textTransform: 'uppercase' }}>
-                      Fuerza Máxima Estimada (1RM)
-                      <InfoTooltip title="1RM — Repetición Máxima" body="Es el peso máximo que el atleta puede levantar una sola vez con buena técnica. Se calcula automáticamente usando las fórmulas Epley+Brzycki a partir del peso, reps y RIR que el atleta ingrese. Este valor se usa para sugerir las cargas de entrenamiento: ej. si tu 1RM de sentadilla es 120kg y el plan dice 'RIR 2 x 8 reps', la app sugiere ~82.5kg." />
-                    </label>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, margin: 0, textTransform: 'uppercase' }}>
+                        Fuerza Máxima Estimada (1RM)
+                        <InfoTooltip title="1RM — Repetición Máxima" body="Es el peso máximo que el atleta puede levantar una sola vez con buena técnica. Se calcula automáticamente usando las fórmulas Epley+Brzycki a partir del peso, reps y RIR que el atleta ingrese. Este valor se usa para sugerir las cargas de entrenamiento: ej. si tu 1RM de sentadilla es 120kg y el plan dice 'RIR 2 x 8 reps', la app sugiere ~82.5kg." />
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => setShow1RMCalculator(true)}
+                        style={{
+                          background: 'rgba(194, 255, 0, 0.1)',
+                          border: '1px solid rgba(194, 255, 0, 0.3)',
+                          color: '#c2ff00',
+                          borderRadius: '6px',
+                          padding: '4px 10px',
+                          fontSize: '10px',
+                          fontWeight: 'bold',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '4px',
+                          fontFamily: "'Orbitron', sans-serif"
+                        }}
+                      >
+                        🧮 Calculadora 1RM
+                      </button>
+                    </div>
                     {/* Dynamic 1RM entries: 3 base powerlifts + all exercises from the plan + existing marcas */}
                     {(() => {
                       // Collect all unique exercise names: base 3 + plan exercises + existing marcas
@@ -4590,6 +4667,170 @@ export const PlanPlanner: React.FC = () => {
             >
               Comenzar a Planificar 🏋️
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* 🧮 Interactive 1RM Calculator Modal */}
+      {show1RMCalculator && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+          background: 'rgba(5, 8, 16, 0.88)', backdropFilter: 'blur(12px)',
+          zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px',
+          fontFamily: "'Inter', sans-serif"
+        }}>
+          <div style={{
+            background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            boxShadow: '0 24px 48px rgba(0, 0, 0, 0.8), 0 0 50px rgba(194, 255, 0, 0.15)',
+            borderRadius: '24px', maxWidth: '480px', width: '100%', padding: '28px',
+            color: 'white', position: 'relative'
+          }}>
+            <button
+              onClick={() => setShow1RMCalculator(false)}
+              style={{
+                position: 'absolute', top: '16px', right: '16px',
+                background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)',
+                fontSize: '18px', cursor: 'pointer', outline: 'none'
+              }}
+            >
+              ✕
+            </button>
+
+            <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+              <div style={{ fontSize: '36px', marginBottom: '8px' }}>🧮</div>
+              <h3 style={{ fontSize: '18px', fontWeight: 800, margin: 0, color: '#c2ff00', fontFamily: "'Orbitron', sans-serif" }}>
+                Calculadora Científica 1RM
+              </h3>
+              <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', margin: '4px 0 0 0' }}>
+                Estima tu Fuerza Máxima (1RM) a partir de una serie real y aplícala de inmediato a tu plan.
+              </p>
+            </div>
+
+            {/* Inputs */}
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '18px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '9px', fontWeight: 700, color: 'rgba(255,255,255,0.5)', marginBottom: '6px', textTransform: 'uppercase' }}>Peso (kg)</label>
+                <input
+                  type="number"
+                  value={calcWeight || ''}
+                  onChange={(e) => setCalcWeight(parseFloat(e.target.value) || 0)}
+                  style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '12px', boxSizing: 'border-box' }}
+                  placeholder="80"
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '9px', fontWeight: 700, color: 'rgba(255,255,255,0.5)', marginBottom: '6px', textTransform: 'uppercase' }}>Reps hechas</label>
+                <input
+                  type="number"
+                  value={calcReps || ''}
+                  onChange={(e) => setCalcReps(parseInt(e.target.value, 10) || 0)}
+                  style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '12px', boxSizing: 'border-box' }}
+                  placeholder="8"
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '9px', fontWeight: 700, color: 'rgba(255,255,255,0.5)', marginBottom: '6px', textTransform: 'uppercase' }}>RIR de la serie</label>
+                <input
+                  type="number"
+                  value={calcRIR ?? ''}
+                  onChange={(e) => setCalcRIR(parseInt(e.target.value, 10) ?? 0)}
+                  style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '12px', boxSizing: 'border-box' }}
+                  placeholder="2"
+                />
+              </div>
+            </div>
+
+            {/* Calculations Breakdown */}
+            {(() => {
+              const effective = calcReps + (calcRIR || 0);
+              const epleyVal = calcWeight * (1 + effective / 30);
+              const denom = 1.0278 - 0.0278 * effective;
+              const brzyckiVal = denom > 0.01 ? (calcWeight / denom) : calcWeight;
+              const avgVal = Math.round(((epleyVal + brzyckiVal) / 2) * 10) / 10;
+
+              // Collect exercises for applying
+              const baseLifts = ['sentadilla', 'press de banca', 'peso muerto'];
+              const planExerciseNames = trainingDays
+                .flatMap(d => d.exercises)
+                .map(ex => ex.nombre.trim().toLowerCase())
+                .filter(n => n.length > 0);
+              const existingMarcaKeys = Object.keys(periodizationConfig?.marcas_1rm || {});
+              const allLifts = [...new Set([...baseLifts, ...planExerciseNames, ...existingMarcaKeys])];
+
+              return (
+                <div>
+                  <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '12px', marginBottom: '18px', fontSize: '11px', lineHeight: '1.4' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                      <span style={{ color: 'rgba(255,255,255,0.5)' }}>Fórmula Epley (1985):</span>
+                      <strong style={{ color: '#fff' }}>{Math.round(epleyVal * 10) / 10} kg</strong>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                      <span style={{ color: 'rgba(255,255,255,0.5)' }}>Fórmula Brzycki (1993):</span>
+                      <strong style={{ color: '#fff' }}>{Math.round(brzyckiVal * 10) / 10} kg</strong>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '6px', fontSize: '13px' }}>
+                      <span style={{ color: '#a5b4fc', fontWeight: 600 }}>1RM Promedio Estimado:</span>
+                      <strong style={{ color: '#c2ff00', fontSize: '15px' }}>{avgVal} kg</strong>
+                    </div>
+                  </div>
+
+                  {/* Dropdown to Apply to Exercise */}
+                  <div style={{ marginBottom: '20px' }}>
+                    <label style={{ display: 'block', fontSize: '9px', fontWeight: 700, color: 'rgba(255,255,255,0.5)', marginBottom: '6px', textTransform: 'uppercase' }}>
+                      Aplicar esta marca al Ejercicio:
+                    </label>
+                    <select
+                      value={calcSelectedLift}
+                      onChange={(e) => setCalcSelectedLift(e.target.value)}
+                      style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '12px', height: '38px', boxSizing: 'border-box' }}
+                    >
+                      <option value="">-- Seleccionar Ejercicio --</option>
+                      {allLifts.map(lift => (
+                        <option key={lift} value={lift} style={{ background: '#0b0f19' }}>
+                          {lift.toUpperCase()}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      if (!calcSelectedLift) {
+                        showToast('Selecciona un ejercicio para aplicar el 1RM.', 'error');
+                        return;
+                      }
+                      if (avgVal <= 0) {
+                        showToast('Ingresa valores de peso y reps válidos.', 'error');
+                        return;
+                      }
+
+                      const updatedMarcas = {
+                        ...(periodizationConfig?.marcas_1rm || {}),
+                        [calcSelectedLift]: avgVal
+                      };
+
+                      setPeriodizationConfig(prev => {
+                        if (!prev) return prev;
+                        return { ...prev, marcas_1rm: updatedMarcas };
+                      });
+
+                      setTrainingDays(prevDays => recalculatePlanWeights(prevDays, updatedMarcas));
+                      showToast(`✅ 1RM de ${avgVal} kg aplicado a ${calcSelectedLift.toUpperCase()} con éxito. Pesos recalculados.`, 'success');
+                      setShow1RMCalculator(false);
+                    }}
+                    style={{
+                      width: '100%', background: 'linear-gradient(135deg, #c2ff00 0%, #a3e635 100%)',
+                      color: '#000', border: 'none', borderRadius: '10px', padding: '12px',
+                      fontSize: '13px', fontWeight: 800, cursor: 'pointer',
+                      boxShadow: '0 4px 15px rgba(194, 255, 0, 0.3)'
+                    }}
+                  >
+                    ✓ Aplicar Marca de 1RM al Plan
+                  </button>
+                </div>
+              );
+            })()}
           </div>
         </div>
       )}
