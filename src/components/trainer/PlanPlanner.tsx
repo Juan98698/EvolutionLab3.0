@@ -9,13 +9,13 @@ import ReasoningTooltip, { buildLoadReasoningSteps, buildVolumeReasoningSteps } 
 import { getWeakPointCorrection, getPrescribedLoad, getPrescribedLoadDetailed, mapExerciseToLiftKey } from '../../lib/periodizationEngine';
 import { PeriodizationHelpModal } from '../common/PeriodizationHelpModal';
 import { evaluateVolumeStatus, getThresholdsForMuscleGroup } from '../../lib/volumeThresholds';
+import { humanizeAlert } from '../../lib/alertLanguage';
 import { VolumeThresholdsTable } from './VolumeThresholdsTable';
 import { VolumeDistributorWizard } from './VolumeDistributorWizard';
 import { GuidedPlanSetup, GuidedPlanParams } from './GuidedPlanSetup';
 import { ProtocolSelectorModal } from './ProtocolSelectorModal';
 import { getProtocolsForContext } from '../../lib/protocols';
 import { VolumeTracker } from './VolumeTracker';
-import { humanizeAlert, AlertStatus } from '../../lib/alertLanguage';
 import { 
   getStrengthThreshold, 
   evaluateStrengthVolume,
@@ -62,6 +62,15 @@ export const PlanPlanner: React.FC = () => {
   // Estados de interfaz y navegación
   const [variablesOpen, setVariablesOpen] = useState<boolean>(false);
 
+  /**
+   * languageMode — controla qué tan técnico es el lenguaje de las alertas inline.
+   *   'simple'  → solo headline + acción (entrenadores metodología intuitiva/experiencia)
+   *   'tecnico' → headline + acción + dato técnico (entrenadores científicos)
+   * Se lee desde datos_plan.language_mode al cargar el plan.
+   * Default: 'tecnico' para no ocultar info a entrenadores sin onboarding.
+   */
+  const [languageMode, setLanguageMode] = useState<'simple' | 'tecnico'>('tecnico');
+
   // ── Guided mode — primer plan ──────────────────────────────────────────────
   const isFirstPlan = profile?.id ? !localStorage.getItem(`evolution_guided_plan_v1_${profile.id}`) : false;
   const [showGuidedSetup, setShowGuidedSetup]   = useState<boolean>(false);
@@ -89,8 +98,6 @@ export const PlanPlanner: React.FC = () => {
   const [trackerRules, setTrackerRules] = useState<any[]>([]);
   const [periodizationConfig, setPeriodizationConfig] = useState<PeriodizationConfig | undefined>(undefined);
   const [weeklyTargets, setWeeklyTargets] = useState<Record<string, number>>({});
-  const [languageMode, setLanguageMode] = useState<'simple' | 'tecnico'>('tecnico');
-  const [isSandbox, setIsSandbox] = useState<boolean>(false);
 
   // Recalcular pesos sugeridos según marcas 1RM
   const recalculatePlanWeights = (days: TrainingDay[], marcas: Record<string, number>): TrainingDay[] => {
@@ -364,8 +371,11 @@ export const PlanPlanner: React.FC = () => {
       localStorage.setItem(`evolution_guided_plan_v1_${profile.id}`, 'true');
     }
     setShowGuidedSetup(false);
-    setLanguageMode('tecnico');
-    setIsSandbox(false);
+
+    // 0. Calibrar lenguaje según nivel — proxy de familiaridad técnica
+    //    principiante → simple (sin datos técnicos en alertas)
+    //    intermedio/avanzado → técnico (con datos técnicos)
+    setLanguageMode(params.nivel === 'principiante' ? 'simple' : 'tecnico');
 
     // 1. Configurar periodización con los parámetros elegidos
     setPeriodizationConfig(prev => ({
@@ -770,8 +780,6 @@ export const PlanPlanner: React.FC = () => {
         globalNote: 'Recuerda calentar 10 min antes. Respeta el RIR y tempo indicado. Hidrátate bien.'
       });
     }
-    setLanguageMode('tecnico');
-    setIsSandbox(false);
   };
 
   // Cargar datos del cliente y plan
@@ -871,6 +879,11 @@ export const PlanPlanner: React.FC = () => {
         if (planData && planData.datos_plan) {
           setExistingPlanId(planData.id);
           const p = planData.datos_plan as PlanData;
+
+          // Leer language_mode guardado por el onboarding
+          if ((p as any).language_mode === 'simple' || (p as any).language_mode === 'tecnico') {
+            setLanguageMode((p as any).language_mode);
+          }
           if (p.globalVariables) setGlobalVariables(p.globalVariables);
           if (p.weeklyTargets) setWeeklyTargets(p.weeklyTargets);
           setVariableDefinitions({
@@ -928,8 +941,6 @@ export const PlanPlanner: React.FC = () => {
           if (p.trackerConfig) setTrackerConfig(p.trackerConfig);
           if (p.trackerRules) setTrackerRules(p.trackerRules || []);
           if (p.portada) setPortada(p.portada);
-          if (p.language_mode) setLanguageMode(p.language_mode);
-          if (p.is_sandbox) setIsSandbox(p.is_sandbox);
           if (p.periodizationConfig) {
             setPeriodizationConfig(p.periodizationConfig);
           } else {
@@ -1668,9 +1679,7 @@ export const PlanPlanner: React.FC = () => {
       trackerConfig,
       trackerRules,
       periodizationConfig,
-      weeklyTargets,
-      language_mode: languageMode,
-      is_sandbox: isSandbox
+      weeklyTargets
     };
 
     try {
@@ -1987,7 +1996,6 @@ export const PlanPlanner: React.FC = () => {
           weeklyTargets={weeklyTargets}
           athleteLevel={periodizationConfig?.nivel_atleta || 'intermedio'}
           blockObjective={periodizationConfig?.objetivo || 'hipertrofia'}
-          languageMode={languageMode}
         />
 
         {/* SECCIÓN 1: PORTADA / DETALLES DEL PLAN */}
@@ -2191,7 +2199,7 @@ export const PlanPlanner: React.FC = () => {
                     required
                     value={newVarLabel}
                     onChange={(e) => setNewVarLabel(e.target.value)}
-                    placeholder="Ej. RIR, Tempo, Series, etc."
+                    placeholder="Ej. RPE, Tempo, Series, etc."
                     style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '10px' }}
                   />
                 </div>
@@ -2873,58 +2881,60 @@ export const PlanPlanner: React.FC = () => {
                         .sort((a, b) => b[1] - a[1])
                         .map(([pattern, nl]) => {
                           const threshold = getStrengthThreshold(pattern as MovementPattern, periodizationConfig?.nivel_atleta || 'intermedio');
-                          const { status, message } = evaluateStrengthVolume(pattern as MovementPattern, nl, periodizationConfig?.nivel_atleta || 'intermedio');
-                          const isDanger = status === 'danger';
+                          const { status } = evaluateStrengthVolume(pattern as MovementPattern, nl, periodizationConfig?.nivel_atleta || 'intermedio');
+                          const humanized = humanizeAlert(status as any, {
+                            label:       threshold.label,
+                            current:     nl,
+                            mev:         threshold.mev,
+                            mavMin:      threshold.mavMin,
+                            mavMax:      threshold.mavMax,
+                            mrv:         threshold.mrv,
+                            unit:        'NL★',
+                            athleteLevel: (periodizationConfig?.nivel_atleta || 'intermedio') as any,
+                            mrvSignals:  threshold.mrvSignals,
+                          });
+                          const isDanger  = status === 'danger';
                           const isOptimal = status === 'optimal';
                           const color = isDanger ? '#ef4444' : isOptimal ? '#22c55e' : '#eab308';
-
-                          const rawStatus = status;
-                          const effectiveStatus: AlertStatus = (rawStatus === 'low' && nl >= threshold.mev) ? 'building' : rawStatus as AlertStatus;
-                          const humanAlert = humanizeAlert(effectiveStatus, {
-                            label: threshold.label,
-                            current: nl,
-                            mev: threshold.mev,
-                            mavMin: threshold.mavMin,
-                            mavMax: threshold.mavMax,
-                            mrv: threshold.mrv,
-                            unit: 'NL★',
-                            athleteLevel: periodizationConfig?.nivel_atleta || 'intermedio',
-                            mrvSignals: threshold.mrvSignals
-                          });
 
                           return (
                             <div key={pattern} style={{
                               background: 'rgba(0,0,0,0.2)',
                               border: `1px solid ${isDanger ? 'rgba(239,68,68,0.3)' : 'rgba(255,255,255,0.04)'}`,
-                              borderRadius: '10px',
-                              padding: '12px',
-                              position: 'relative',
-                              overflow: 'hidden'
+                              borderRadius: '10px', padding: '12px',
+                              position: 'relative', overflow: 'hidden'
                             }}>
-                              {isDanger && (
-                                <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: color }} />
-                              )}
+                              {isDanger && <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: color }} />}
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                                 <strong style={{ fontSize: '11px', color: 'white', fontFamily: "'Orbitron', sans-serif" }}>{threshold.label}</strong>
-                                <span style={{ fontSize: '12px', fontWeight: 800, color }}>{nl} NL</span>
+                                <span style={{ fontSize: '12px', fontWeight: 800, color }}>{nl} NL★</span>
                               </div>
-                              {languageMode === 'simple' ? (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                                  <div style={{ fontSize: '10.5px', color: '#e2e8f0', fontWeight: 600, lineHeight: '1.3' }}>
-                                    {humanAlert.headline}
-                                  </div>
-                                  <div style={{ fontSize: '9.5px', color: 'rgba(255,255,255,0.45)', lineHeight: '1.3' }}>
-                                    {humanAlert.action}
-                                  </div>
+                              {/* Mensaje humanizado — siempre visible */}
+                              <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.75)', lineHeight: 1.4, marginBottom: humanized.action ? '6px' : 0 }}>
+                                {humanized.headline}
+                              </div>
+                              {humanized.action && (
+                                <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.45)', lineHeight: 1.4, marginBottom: languageMode === 'tecnico' ? '6px' : 0 }}>
+                                  → {humanized.action}
                                 </div>
-                              ) : (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                                  <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)' }}>
-                                    Estado: <span style={{ color, fontWeight: 700 }}>{message}</span>
+                              )}
+                              {/* Dato técnico — solo en modo técnico */}
+                              {languageMode === 'tecnico' && (
+                                <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.25)', fontFamily: 'monospace', marginTop: '4px', paddingTop: '4px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                                  {humanized.technical}
+                                </div>
+                              )}
+                              {/* Señales MRV — solo en danger */}
+                              {isDanger && humanized.signals && humanized.signals.length > 0 && (
+                                <div style={{ marginTop: '6px', paddingTop: '6px', borderTop: '1px solid rgba(239,68,68,0.15)' }}>
+                                  <div style={{ fontSize: '9px', color: 'rgba(239,68,68,0.7)', fontWeight: 700, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                                    Señales a observar en el atleta
                                   </div>
-                                  <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.35)', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '4px', marginTop: '2px', lineHeight: '1.3' }}>
-                                    {humanAlert.headline}
-                                  </div>
+                                  {humanized.signals.map((s, i) => (
+                                    <div key={i} style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', marginBottom: '2px' }}>
+                                      › {s}
+                                    </div>
+                                  ))}
                                 </div>
                               )}
                             </div>
@@ -2935,70 +2945,47 @@ export const PlanPlanner: React.FC = () => {
                         .filter(([gm, volume]) => volume > 0 && gm !== 'General' && gm !== 'Cardio')
                         .sort((a, b) => b[1] - a[1])
                         .map(([gm, volume]) => {
-                          const thresholds = getThresholdsForMuscleGroup(gm, periodizationConfig.nivel_atleta || 'intermedio', periodizationConfig.objetivo || 'hipertrofia');
-                          const target = weeklyTargets[gm] || thresholds.mavMax;
-                          const { status, message } = evaluateVolumeStatus(gm, volume, periodizationConfig.nivel_atleta, periodizationConfig.objetivo as any, weeklyTargets[gm]);
-                          const isDanger = status === 'danger';
+                          const thresholds = getThresholdsForMuscleGroup(gm, periodizationConfig.nivel_atleta, periodizationConfig.objetivo as any);
+                          const { status } = evaluateVolumeStatus(gm, volume, periodizationConfig.nivel_atleta, periodizationConfig.objetivo as any, weeklyTargets[gm]);
+                          const humanized = humanizeAlert(status as any, {
+                            label:       gm,
+                            current:     volume,
+                            mev:         thresholds.mev,
+                            mavMin:      thresholds.mavMin,
+                            mavMax:      thresholds.mavMax,
+                            mrv:         thresholds.mrv,
+                            unit:        'series',
+                            athleteLevel: (periodizationConfig?.nivel_atleta || 'intermedio') as any,
+                          });
+                          const isDanger  = status === 'danger';
                           const isOptimal = status === 'optimal';
                           const color = isDanger ? '#ef4444' : isOptimal ? '#22c55e' : '#eab308';
-
-                          const isOver = volume > thresholds.mrv;
-                          const isOptimalVolume = weeklyTargets[gm] > 0
-                            ? volume === target
-                            : volume >= thresholds.mavMin && volume <= thresholds.mavMax;
-                          const isBuilding = !isOver && !isOptimalVolume && volume >= thresholds.mev && volume < thresholds.mavMin;
-                          const isWarning = !isOver && !isOptimalVolume && !isBuilding && volume > thresholds.mavMax;
-
-                          let effectiveStatus: AlertStatus = 'low';
-                          if (isOver)          effectiveStatus = 'danger';
-                          else if (isWarning)  effectiveStatus = 'warning';
-                          else if (isOptimalVolume)  effectiveStatus = 'optimal';
-                          else if (isBuilding) effectiveStatus = 'building';
-
-                          const humanAlert = humanizeAlert(effectiveStatus, {
-                            label: gm,
-                            current: volume,
-                            mev: thresholds.mev,
-                            mavMin: thresholds.mavMin,
-                            mavMax: thresholds.mavMax,
-                            mrv: thresholds.mrv,
-                            unit: 'series',
-                            athleteLevel: periodizationConfig.nivel_atleta || 'intermedio'
-                          });
 
                           return (
                             <div key={gm} style={{
                               background: 'rgba(0,0,0,0.2)',
                               border: `1px solid ${isDanger ? 'rgba(239,68,68,0.3)' : 'rgba(255,255,255,0.04)'}`,
-                              borderRadius: '10px',
-                              padding: '12px',
-                              position: 'relative',
-                              overflow: 'hidden'
+                              borderRadius: '10px', padding: '12px',
+                              position: 'relative', overflow: 'hidden'
                             }}>
-                              {isDanger && (
-                                <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: color }} />
-                              )}
+                              {isDanger && <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: color }} />}
                               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                                 <strong style={{ fontSize: '11px', color: 'white', fontFamily: "'Orbitron', sans-serif" }}>{gm}</strong>
                                 <span style={{ fontSize: '12px', fontWeight: 800, color }}>{volume} series</span>
                               </div>
-                              {languageMode === 'simple' ? (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                                  <div style={{ fontSize: '10.5px', color: '#e2e8f0', fontWeight: 600, lineHeight: '1.3' }}>
-                                    {humanAlert.headline}
-                                  </div>
-                                  <div style={{ fontSize: '9.5px', color: 'rgba(255,255,255,0.45)', lineHeight: '1.3' }}>
-                                    {humanAlert.action}
-                                  </div>
+                              {/* Mensaje humanizado — siempre visible */}
+                              <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.75)', lineHeight: 1.4, marginBottom: humanized.action ? '6px' : 0 }}>
+                                {humanized.headline}
+                              </div>
+                              {humanized.action && (
+                                <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.45)', lineHeight: 1.4, marginBottom: languageMode === 'tecnico' ? '6px' : 0 }}>
+                                  → {humanized.action}
                                 </div>
-                              ) : (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                                  <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)' }}>
-                                    Estado: <span style={{ color, fontWeight: 700 }}>{message}</span>
-                                  </div>
-                                  <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.35)', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '4px', marginTop: '2px', lineHeight: '1.3' }}>
-                                    {humanAlert.headline}
-                                  </div>
+                              )}
+                              {/* Dato técnico — solo en modo técnico */}
+                              {languageMode === 'tecnico' && (
+                                <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.25)', fontFamily: 'monospace', marginTop: '4px', paddingTop: '4px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                                  {humanized.technical}
                                 </div>
                               )}
                             </div>
