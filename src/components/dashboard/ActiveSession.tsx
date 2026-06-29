@@ -86,6 +86,7 @@ const ActiveSession: React.FC = () => {
   const [sessionNotes, setSessionNotes] = useState('');
   const [showFullImage, setShowFullImage] = useState(false);
   const [showGuideModal, setShowGuideModal] = useState(false);
+  const [showFeedbackGuide, setShowFeedbackGuide] = useState(false);
 
   // ─── Rest timer ──────────────────────────────────────────────────────────
   const [restSecondsLeft, setRestSecondsLeft] = useState<number | null>(null);
@@ -626,8 +627,57 @@ const ActiveSession: React.FC = () => {
 
       {/* ── Feedback (shown when all series are done) ── */}
       {allSeriesDone && (
-        <div className="active-session-feedback">
-          <p className="active-session-feedback-title">¿Cómo fue este ejercicio?</p>
+        <div className="active-session-feedback" style={{ position: 'relative' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+            <p className="active-session-feedback-title" style={{ margin: 0 }}>¿Cómo fue este ejercicio?</p>
+            <button
+              onClick={() => setShowFeedbackGuide(!showFeedbackGuide)}
+              style={{
+                background: showFeedbackGuide ? 'rgba(0, 242, 254, 0.15)' : 'rgba(255,255,255,0.05)',
+                border: `1px solid ${showFeedbackGuide ? 'rgba(0, 242, 254, 0.4)' : 'rgba(255,255,255,0.1)'}`,
+                color: showFeedbackGuide ? '#00f2fe' : 'rgba(255,255,255,0.5)',
+                borderRadius: '6px', padding: '3px 8px', fontSize: '10px', fontWeight: 600, cursor: 'pointer',
+                display: 'inline-flex', alignItems: 'center', gap: '4px', transition: 'all 0.2s'
+              }}
+            >
+              <span>ℹ️</span> {showFeedbackGuide ? 'Ocultar Guía' : 'Guía de Feedback'}
+            </button>
+          </div>
+
+          {/* Feedback Explanatory Guide Box */}
+          {showFeedbackGuide && (
+            <div style={{
+              background: 'rgba(5, 8, 16, 0.95)', border: '1px solid rgba(0, 242, 254, 0.25)',
+              borderRadius: '10px', padding: '12px', marginBottom: '14px', textAlign: 'left',
+              fontSize: '11px', lineHeight: 1.45, color: '#e2e8f0', boxShadow: '0 4px 20px rgba(0,0,0,0.5)'
+            }}>
+              <strong style={{ color: '#00f2fe', display: 'block', marginBottom: '6px', fontSize: '12px' }}>
+                ¿Cómo responder según la ciencia de Evolution Lab?
+              </strong>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <div>
+                  <span style={{ color: '#a5b4fc', fontWeight: 'bold' }}>Estímulo (Volumen & Congestión):</span>
+                  <ul style={{ margin: '4px 0 0 12px', padding: 0, color: 'rgba(255,255,255,0.75)' }}>
+                    <li><strong style={{ color: '#fff' }}>😐 Ninguno:</strong> No sentiste bombeo (pump) ni fatiga local en el músculo objetivo.</li>
+                    <li><strong style={{ color: '#fff' }}>💪 Bueno:</strong> Sentiste una congestión retadora y fatiga en el músculo que querías trabajar.</li>
+                    <li><strong style={{ color: '#fff' }}>🔥 Extremo:</strong> Fatiga local extrema o quemazón que limitó notablemente tus últimas series.</li>
+                  </ul>
+                </div>
+                <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '6px' }}>
+                  <span style={{ color: '#a5b4fc', fontWeight: 'bold' }}>Recuperación (Al llegar hoy):</span>
+                  <p style={{ margin: '4px 0', fontSize: '10.5px', color: 'rgba(255,255,255,0.5)' }}>
+                    Evalúa cómo se sentía el músculo objetivo <strong>antes de iniciar la primera serie hoy</strong> (para aislarlo de la fatiga que sientes justo ahora al terminar). <em>(Nota: Si es tu primera sesión o vienes de un descanso, marca "Llegué Recuperado")</em>.
+                  </p>
+                  <ul style={{ margin: '4px 0 0 12px', padding: 0, color: 'rgba(255,255,255,0.75)' }}>
+                    <li><strong style={{ color: '#fff' }}>✅ Llegué Recuperado:</strong> Te sentías fuerte, sin agujetas ni molestia residual en ese músculo al empezar.</li>
+                    <li><strong style={{ color: '#fff' }}>⚡ Llegué Justo:</strong> El músculo se recuperó justo a tiempo para hoy, pero estuvo tenso o cansado hasta hace poco.</li>
+                    <li><strong style={{ color: '#fff' }}>😫 Llegué Agotado:</strong> Tenías agujetas o una fatiga acumulada notable que afectó tu fuerza al iniciar.</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          )}
+
           <div className="active-session-feedback-row">
             <span className="active-session-feedback-label">Estímulo</span>
             <div className="active-session-feedback-options">
@@ -643,7 +693,7 @@ const ActiveSession: React.FC = () => {
             </div>
           </div>
           <div className="active-session-feedback-row">
-            <span className="active-session-feedback-label">Recuperación</span>
+            <span className="active-session-feedback-label">Recuperación (Al llegar)</span>
             <div className="active-session-feedback-options">
               {(['recovered', 'just_in_time', 'sore'] as const).map(opt => (
                 <button
@@ -651,7 +701,7 @@ const ActiveSession: React.FC = () => {
                   className={`active-session-feedback-btn${currentExercise.feedback_recuperacion === opt ? ' selected' : ''}`}
                   onClick={() => handleFeedbackChange(currentIdx, 'feedback_recuperacion', opt)}
                 >
-                  {opt === 'recovered' ? '✅ Recuperado' : opt === 'just_in_time' ? '⚡ Justo' : '😫 Agotado'}
+                  {opt === 'recovered' ? '✅ Llegué Recuperado' : opt === 'just_in_time' ? '⚡ Llegué Justo' : '😫 Llegué Agotado'}
                 </button>
               ))}
             </div>
