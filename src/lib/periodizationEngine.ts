@@ -313,17 +313,55 @@ export const getWeakPointCorrection = (
 /**
  * Evaluates athlete feedback after a training session to auto-regulate sets for the next week.
  * Follows the MEV/MAV/MRV logic (RP Hypertrophy model).
+ *
+ * BUG-13 fix: `nivel` now gates volume progression strategy by athlete level.
+ *
+ * — PRINCIPIANTE: Volumen FIJO durante todo el mesociclo. Progresan exclusivamente
+ *   via progresión lineal (más peso o más reps con el mismo peso). Aumentar series
+ *   semana a semana genera daño muscular excesivo que su sistema no puede reparar,
+ *   saboteando las ganancias. El MRV del principiante está pegado al MEV (4-10 series),
+ *   por lo que no hay margen para acumulación dinámica.
+ *
+ * — INTERMEDIO: Progresión dinámica ondulante. Arrancan cerca del MEV y van sumando
+ *   series de forma reactiva hasta alcanzar el MRV al final del bloque.
+ *
+ * — AVANZADO: Misma lógica dinámica que intermedio dentro de los grupos en foco.
+ *   La especialización por grupos (MV para el resto) se maneja a nivel de plan
+ *   config, no aquí.
  */
 export const calculateNextMicrocycleVolume = (
   currentSets: number,
   stimulusFeedback: 'none' | 'good' | 'extreme',
-  recoveryFeedback: 'recovered' | 'just_in_time' | 'sore'
+  recoveryFeedback: 'recovered' | 'just_in_time' | 'sore',
+  nivel: 'principiante' | 'intermedio' | 'avanzado' = 'intermedio'
 ): VolumeAdjustment => {
   if (currentSets <= 0) return { nextSets: 3, triggerDeload: false, notes: 'Volumen inicial por defecto.' };
 
+  // ── PRINCIPIANTE: volumen fijo, solo puede bajar si hay mal recovery ────────
+  // Su MEV y MRV están muy cerca, y su sensibilidad al estímulo es tan alta que
+  // un volumen mínimo y constante ya produce adaptación máxima. La progresión
+  // ocurre únicamente por carga y repeticiones (progresión lineal).
+  if (nivel === 'principiante') {
+    if (recoveryFeedback === 'sore') {
+      const reducedSets = Math.max(1, currentSets - 1);
+      return {
+        nextSets: reducedSets,
+        triggerDeload: currentSets >= 4,
+        notes: 'Principiante con recuperación insuficiente. Se reduce 1 serie. Progresión por carga/reps, no por volumen.'
+      };
+    }
+    // recovered o just_in_time → volumen intacto, progresión lineal en carga
+    return {
+      nextSets: currentSets,
+      triggerDeload: false,
+      notes: 'Principiante: volumen fijo. Progresa aumentando peso o repeticiones en la próxima sesión.'
+    };
+  }
+
+  // ── INTERMEDIO / AVANZADO: progresión dinámica reactiva ────────────────────
+
   // Under-recovered: Athlete is sore or performance fell
   if (recoveryFeedback === 'sore') {
-    // If they were doing more than 4 sets, reduce volume to clear fatigue
     const reducedSets = Math.max(1, currentSets - 1);
     return {
       nextSets: reducedSets,
@@ -424,12 +462,25 @@ const updateMarca1RM = (
 /**
  * Automatically calculates sets, updates functional 1RMs, and manages weeks / deloads
  * for the next microcycle based on the logged workout feedback (RP + MacroFactor hybrid).
- * 
+ *
  * BUG-02 fix: Deload is now per-exercise (handled by calculateNextMicrocycleVolume).
  *             Global deload only triggers at end-of-block (currentWeek >= totalWeeks).
- * BUG-04 fix: When in deload week, per-exercise volume adjustments are SKIPPED to 
+ * BUG-04 fix: When in deload week, per-exercise volume adjustments are SKIPPED to
  *             prevent double-reduction (feedback reduce + deload halving).
  * BUG-12 fix: Uses PlanData type instead of `any`.
+ * BUG-13 fix: Passes `nivel` to calculateNextMicrocycleVolume — principiantes no suben series.
+ * BUG-14 fix: Volume adjustment timing — el ajuste de volumen se aplica SOLO al cerrar el
+ *             microciclo (última sesión de la semana). Las sesiones intermedias acumulan
+ *             feedback en `config.weekly_session_feedback` sin tocar las series del plan.
+ *             El 1RM se sigue actualizando en cada sesión (no tiene el mismo problema).
+ *
+ *             Lógica de cierre de microciclo:
+ *             1. Cada sesión incrementa `sessions_completed_this_week`.
+ *             2. Cuando `sessions_completed_this_week >= sessions_per_week`, se procesa
+ *                el feedback acumulado y se avanza la semana.
+ *             3. El feedback se consolida por ejercicio: si un músculo reportó
+ *                recuperación mixta (sore en sesión A, recovered en sesión B),
+ *                se toma el peor caso (sore gana). Para el estímulo, se promedia.
  */
 export const autoRegulatePlanForNextWeek = (
   plan: PlanData,
@@ -448,47 +499,156 @@ export const autoRegulatePlanForNextWeek = (
   const marcas = config.marcas_1rm || {};
   const currentWeek = config.semana_actual || 1;
   const totalWeeks = config.total_semanas || 4;
+  const nivel = config.nivel_atleta as 'principiante' | 'intermedio' | 'avanzado';
+  const isStrengthBlock = config.objetivo === 'fuerza';
 
-  // BUG-02 + BUG-04 fix: Determine deload status BEFORE processing exercises
+  // ── BUG-14: Inicializar contadores si son la primera sesión del bloque ─────
+  if (config.sessions_per_week === undefined || config.sessions_per_week === 0) {
+    config.sessions_per_week = updatedPlan.trainingDays?.length || 3;
+  }
+  if (config.sessions_completed_this_week === undefined) {
+    config.sessions_completed_this_week = 0;
+  }
+  if (!config.weekly_session_feedback) {
+    config.weekly_session_feedback = [];
+  }
+
+  // ── PASO 1: 1RM tracking — siempre se ejecuta en cada sesión ──────────────
+  // El 1RM mejora con cada dato disponible. No hay riesgo de timing porque
+  // no modifica series — solo actualiza el estimado funcional del atleta.
+  loggedExercises.forEach(logged => {
+    const normName = logged.nombre.toLowerCase().trim();
+    const actualRIR = logged.rir;
+    const maxReps = Math.max(...(logged.repsArray || []), 0);
+
+    if (maxReps > 0 && logged.peso > 0) {
+      const currentEstimated1RM = calculate1RM(logged.peso, maxReps, actualRIR);
+      if (currentEstimated1RM > 0) {
+        updateMarca1RM(marcas, normName, currentEstimated1RM);
+        const aliasKey = mapExerciseToLiftKey(normName);
+        if (aliasKey && aliasKey !== normName) {
+          updateMarca1RM(marcas, aliasKey, currentEstimated1RM);
+        }
+      }
+    }
+
+    // Acumular feedback semanal para aplicar al cerrar el microciclo
+    const estimulo     = logged.feedback_estimulo    || 'good';
+    const recuperacion = logged.feedback_recuperacion || 'recovered';
+    config.weekly_session_feedback!.push({
+      ejercicio:   logged.nombre,
+      estimulo,
+      recuperacion,
+      fecha:       new Date().toISOString().slice(0, 10),
+    });
+  });
+
+  config.marcas_1rm = marcas;
+
+  // ── Recalcular pesos con el 1RM actualizado (siempre, cada sesión) ─────────
+  // La prescripción de peso mejora con cada sesión aunque las series no cambien.
+  updatedPlan.trainingDays?.forEach(day => {
+    day.exercises?.forEach(ex => {
+      if (!ex.nombre) return;
+      const normName = ex.nombre.toLowerCase().trim();
+      let oneRM = marcas[normName];
+      if (!oneRM) {
+        const alias = mapExerciseToLiftKey(normName);
+        if (alias) oneRM = marcas[alias];
+      }
+      if (oneRM && oneRM > 0) {
+        const repsStr   = ex.variables?.['repeticiones'] || '';
+        const repsMatch = repsStr.match(/\d+/);
+        const reps      = repsMatch ? parseInt(repsMatch[0], 10) : 0;
+        const rirStr    = ex.variables?.['rir'] || '0';
+        const rirMatch  = rirStr.match(/\d+/);
+        const targetRIR = rirMatch ? parseFloat(rirMatch[0]) : 0;
+        if (reps > 0) {
+          const newLoad = getPrescribedLoad(oneRM, reps, targetRIR);
+          if (newLoad > 0) {
+            if (!ex.variables) ex.variables = {};
+            ex.variables['peso'] = `🤖 ${newLoad} kg`;
+          }
+        }
+      }
+    });
+  });
+
+  // ── PASO 2: Incrementar contador de sesiones completadas ──────────────────
+  config.sessions_completed_this_week += 1;
+  const isLastSessionOfWeek =
+    config.sessions_completed_this_week >= (config.sessions_per_week || 3);
   const isEndOfBlock = currentWeek >= totalWeeks;
 
-  const isStrengthBlock = config.objetivo === 'fuerza';
-  const nivel = config.nivel_atleta as any;
+  // ── PASO 3: Si NO es la última sesión, guardar y salir ─────────────────────
+  // El plan se guarda con el 1RM y el peso actualizado, pero las series
+  // no cambian hasta que se complete la semana entera.
+  if (!isLastSessionOfWeek) {
+    config.has_new_updates = true;
+    return updatedPlan;
+  }
 
-  // ── Acumulador de volumen semanal — bifurcado por objetivo ─────────────────
-  //
-  // Hipertrofia/mantenimiento → weeklyVolumeMap
-  //   clave: grupo muscular (string), valor: series totales/semana
-  //
-  // Fuerza general → weeklyNLMap
-  //   clave: MovementPattern (string), valor: NL totales/semana a ≥80% 1RM
-  //   NL = número de levantamientos (reps × series en zona de intensidad)
-  //
-  const weeklyVolumeMap: Record<string, number> = {};  // hipertrofia/mantenimiento
-  const weeklyNLMap: Record<string, number> = {};       // fuerza general
+  // ── PASO 4: Es la última sesión — procesar feedback acumulado ──────────────
+  // Consolidar el feedback de toda la semana por ejercicio.
+  // Regla de consolidación:
+  //   Recuperación: worst-case (sore > just_in_time > recovered)
+  //   Estímulo:     worst-case hacia extremo (extreme > good > none)
+  const RECOVERY_RANK: Record<string, number> = {
+    sore: 2, just_in_time: 1, recovered: 0,
+  };
+  const STIMULUS_RANK: Record<string, number> = {
+    extreme: 2, good: 1, none: 0,
+  };
+
+  const consolidatedFeedback: Record<string, {
+    estimulo: 'none' | 'good' | 'extreme';
+    recuperacion: 'recovered' | 'just_in_time' | 'sore';
+  }> = {};
+
+  (config.weekly_session_feedback || []).forEach(fb => {
+    const key = fb.ejercicio.toLowerCase().trim();
+    if (!consolidatedFeedback[key]) {
+      consolidatedFeedback[key] = { estimulo: fb.estimulo, recuperacion: fb.recuperacion };
+    } else {
+      // Tomar el peor caso de recuperación
+      if (RECOVERY_RANK[fb.recuperacion] > RECOVERY_RANK[consolidatedFeedback[key].recuperacion]) {
+        consolidatedFeedback[key].recuperacion = fb.recuperacion;
+      }
+      // Tomar el peor caso de estímulo (hacia extremo)
+      if (STIMULUS_RANK[fb.estimulo] > STIMULUS_RANK[consolidatedFeedback[key].estimulo]) {
+        consolidatedFeedback[key].estimulo = fb.estimulo;
+      }
+    }
+  });
+
+  // ── PASO 5: Aplicar ajuste de volumen con el feedback consolidado ──────────
+  // BUG-02 + BUG-04: Deload global SOLO al final del bloque.
+  // BUG-13: nivel gatilla la lógica correcta en calculateNextMicrocycleVolume.
+  const weeklyVolumeMap: Record<string, number> = {};
+  const weeklyNLMap: Record<string, number>     = {};
 
   if (!isEndOfBlock) {
+    // Precalcular volumen semanal actual para chequeo de MRV
     updatedPlan.trainingDays?.forEach(day => {
       day.exercises?.forEach(ex => {
-        const setsStr = ex.variables?.['series de trabajo'] || ex.variables?.['series'] || '3';
-        const sets = parseInt(setsStr, 10) || 3;
-        const repsStr = ex.variables?.['repeticiones'] || '5';
+        const setsStr   = ex.variables?.['series de trabajo'] || ex.variables?.['series'] || '3';
+        const sets      = parseInt(setsStr, 10) || 3;
+        const repsStr   = ex.variables?.['repeticiones'] || '5';
         const repsMatch = repsStr.match(/\d+/);
-        const reps = repsMatch ? parseInt(repsMatch[0], 10) : 5;
+        const reps      = repsMatch ? parseInt(repsMatch[0], 10) : 5;
 
         if (isStrengthBlock) {
-          // Fuerza: acumulamos NL ponderados por patrón de movimiento
           const pattern = (ex as any).movement_pattern || detectPatternFromExerciseName((ex as any).nombre || '');
           if (pattern) {
-            const rirRaw  = ex.variables?.['rir'];
-            const rirVal  = (rirRaw === undefined || rirRaw === '')
+            const rirRaw = ex.variables?.['rir'];
+            const rirVal = (rirRaw === undefined || rirRaw === '')
               ? null
-              : (parseInt(rirRaw.match(/\d+/)?.[0] || '2', 10));
-            const weightedNL = calcWeightedNL(sets, reps, rirVal);
-            weeklyNLMap[pattern] = Math.round(((weeklyNLMap[pattern] || 0) + weightedNL) * 10) / 10;
+              : parseInt(rirRaw.match(/\d+/)?.[0] || '2', 10);
+            weeklyNLMap[pattern] = Math.round(
+              ((weeklyNLMap[pattern] || 0) + calcWeightedNL(sets, reps, rirVal)) * 10
+            ) / 10;
           }
         } else {
-          // Hipertrofia/mantenimiento: acumulamos series por grupo muscular
           const gm = getThresholdsForMuscleGroup(
             (ex as any).grupo_muscular || '', nivel, config.objetivo as any
           ).gm;
@@ -496,114 +656,77 @@ export const autoRegulatePlanForNextWeek = (
         }
       });
     });
-  }
 
-  // ── Process each logged exercise ───────────────────────────────────────────
-  loggedExercises.forEach(logged => {
-    const normName = logged.nombre.toLowerCase().trim();
-    let foundEx: any = null;
-
-    // Find the matching exercise in the plan
+    // Aplicar ajuste por ejercicio usando el feedback consolidado de la semana
     updatedPlan.trainingDays?.forEach(day => {
-      day.exercises?.forEach(ex => {
-        if (ex.nombre && ex.nombre.toLowerCase().trim() === normName) {
-          foundEx = ex;
-        }
-      });
-    });
+      day.exercises?.forEach((foundEx: any) => {
+        const normName = (foundEx.nombre || '').toLowerCase().trim();
+        const feedback = consolidatedFeedback[normName];
+        if (!feedback) return; // Ejercicio sin feedback esta semana — no tocar
 
-    if (!foundEx) return; // Exercise not in plan — skip
+        const currentSetsStr = foundEx.variables?.['series de trabajo'] || foundEx.variables?.['series'] || '3';
+        const currentSets    = parseInt(currentSetsStr, 10) || 3;
 
-    // ── Volume adjustment (only on non-deload weeks) ─────────────────────────
-    // BUG-04 fix: Skip per-exercise volume adjustment when entering deload
-    //             to avoid double-reduction (feedback + deload halving).
-    if (!isEndOfBlock) {
-      const currentSetsStr = foundEx.variables?.['series de trabajo'] || foundEx.variables?.['series'] || '3';
-      const currentSets = parseInt(currentSetsStr, 10) || 3;
-      const estimulo    = logged.feedback_estimulo    || 'good';
-      const recuperacion = logged.feedback_recuperacion || 'recovered';
+        const { nextSets, notes } = calculateNextMicrocycleVolume(
+          currentSets,
+          feedback.estimulo,
+          feedback.recuperacion,
+          nivel
+        );
 
-      const { nextSets, notes } = calculateNextMicrocycleVolume(currentSets, estimulo, recuperacion);
+        let finalSets  = nextSets;
+        let finalNotes = notes;
 
-      let finalSets  = nextSets;
-      let finalNotes = notes;
+        if (nextSets > currentSets) {
+          if (isStrengthBlock) {
+            const pattern = foundEx.movement_pattern || detectPatternFromExerciseName(foundEx.nombre || '');
+            if (pattern) {
+              const repsStr   = foundEx.variables?.['repeticiones'] || '5';
+              const repsMatch = repsStr.match(/\d+/);
+              const reps      = repsMatch ? parseInt(repsMatch[0], 10) : 5;
+              const rirRaw    = foundEx.variables?.['rir'];
+              const rirVal    = (rirRaw === undefined || rirRaw === '')
+                ? null
+                : parseInt(rirRaw.match(/\d+/)?.[0] || '2', 10);
+              const currentNL = weeklyNLMap[pattern] || 0;
+              const addedNL   = calcWeightedNL(nextSets - currentSets, reps, rirVal);
+              const threshold = getStrengthThreshold(pattern, nivel);
 
-      if (nextSets > currentSets) {
-        if (isStrengthBlock) {
-          // ── Fuerza: chequeo MRV con NL ponderados ────────────────────────
-          const pattern = (foundEx as any).movement_pattern || detectPatternFromExerciseName(foundEx.nombre || '');
-          if (pattern) {
-            const repsStr   = foundEx.variables?.['repeticiones'] || '5';
-            const repsMatch = repsStr.match(/\d+/);
-            const reps      = repsMatch ? parseInt(repsMatch[0], 10) : 5;
-            const rirRaw    = foundEx.variables?.['rir'];
-            const rirVal    = (rirRaw === undefined || rirRaw === '')
-              ? null
-              : (parseInt(rirRaw.match(/\d+/)?.[0] || '2', 10));
-            const currentNL  = weeklyNLMap[pattern] || 0;
-            const addedNL    = calcWeightedNL(nextSets - currentSets, reps, rirVal);
-            const threshold  = getStrengthThreshold(pattern, nivel);
-
-            if (currentNL + addedNL > threshold.mrv) {
+              if (currentNL + addedNL > threshold.mrv) {
+                finalSets  = currentSets;
+                finalNotes = `MRV de fuerza alcanzado para ${threshold.label} (${nivel}): `
+                  + `${currentNL} NL★ actuales ≥ ${threshold.mrv} NL★/semana. `
+                  + `No se incrementan series. Señales a monitorear: ${threshold.mrvSignals[0]}.`;
+              } else {
+                weeklyNLMap[pattern] = Math.round((currentNL + addedNL) * 10) / 10;
+              }
+            }
+          } else {
+            const gm        = getThresholdsForMuscleGroup(foundEx.grupo_muscular || '', nivel, config.objetivo as any).gm;
+            const threshold = getThresholdsForMuscleGroup(gm, nivel, config.objetivo as any);
+            if (weeklyVolumeMap[gm] >= threshold.mrv) {
               finalSets  = currentSets;
-              finalNotes = `MRV de fuerza alcanzado para ${threshold.label} (${nivel}): `
-                + `${currentNL} NL★ actuales ≥ ${threshold.mrv} NL★/semana. `
-                + `No se incrementan series. Señales a monitorear: ${threshold.mrvSignals[0]}.`;
+              finalNotes = `Límite MRV (${threshold.mrv} series) alcanzado para ${gm}. `
+                + `No se incrementan series para evitar sobreentrenamiento.`;
             } else {
-              weeklyNLMap[pattern] = Math.round((currentNL + addedNL) * 10) / 10;
+              weeklyVolumeMap[gm] += (nextSets - currentSets);
             }
           }
-        } else {
-          // ── Hipertrofia/mantenimiento: chequeo MRV por grupo muscular ──────
-          const gm        = getThresholdsForMuscleGroup(foundEx.grupo_muscular || '', nivel, config.objetivo as any).gm;
-          const threshold = getThresholdsForMuscleGroup(gm, nivel, config.objetivo as any);
-          if (weeklyVolumeMap[gm] >= threshold.mrv) {
-            finalSets  = currentSets;
-            finalNotes = `Límite MRV (${threshold.mrv} series) alcanzado para ${gm}. `
-              + `No se incrementan series para evitar sobreentrenamiento.`;
-          } else {
-            weeklyVolumeMap[gm] += (nextSets - currentSets);
-          }
         }
-      }
 
-      if (!foundEx.variables) foundEx.variables = {};
-      foundEx.variables['series de trabajo'] = String(finalSets);
-      foundEx.progression_notes = finalNotes;
-    }
+        if (!foundEx.variables) foundEx.variables = {};
+        foundEx.variables['series de trabajo'] = String(finalSets);
+        foundEx.progression_notes = finalNotes;
+      });
+    });
+  }
 
-    // ── 1RM tracking (always runs, even during deload) ───────────────────────
-    // Tracks 1RM for ANY exercise by its normalized name, not just the 3 powerlifts.
-    const actualRIR = logged.rir;
-    const maxReps = Math.max(...(logged.repsArray || []), 0);
-
-    if (maxReps > 0 && logged.peso > 0) {
-      const currentEstimated1RM = calculate1RM(logged.peso, maxReps, actualRIR);
-
-      if (currentEstimated1RM > 0) {
-        // Primary: Store by the exercise's exact normalized name
-        updateMarca1RM(marcas, normName, currentEstimated1RM);
-
-        // Secondary: Also update the powerlift alias key for backward compatibility
-        // (so 'sentadilla trasera' also updates the 'sentadilla' entry)
-        const aliasKey = mapExerciseToLiftKey(normName);
-        if (aliasKey && aliasKey !== normName) {
-          updateMarca1RM(marcas, aliasKey, currentEstimated1RM);
-        }
-      }
-    }
-  });
-
-  // ── Persist updated 1RM marks ──────────────────────────────────────────────
-  config.marcas_1rm = marcas;
-
-  // ── Week progression & end-of-block deload ─────────────────────────────────
-  // BUG-02 fix: Global deload ONLY at end of block, NOT from single exercise feedback
+  // ── PASO 6: Avanzar semana / cerrar bloque ─────────────────────────────────
   if (isEndOfBlock) {
     config.semana_actual = 1;
     config.mrv_limite_alcanzado = false;
 
-    // Apply planned deload: halve volume from ORIGINAL sets, set conservative RIR
+    // Deload: reducir series a la mitad, RIR conservador
     updatedPlan.trainingDays?.forEach(day => {
       day.exercises?.forEach(ex => {
         if (!ex.variables) ex.variables = {};
@@ -616,66 +739,29 @@ export const autoRegulatePlanForNextWeek = (
     config.semana_actual = currentWeek + 1;
   }
 
-  config.has_new_updates = true;
+  // ── PASO 7: Resetear contadores semanales ─────────────────────────────────
+  config.sessions_completed_this_week = 0;
+  config.weekly_session_feedback      = [];
+  config.has_new_updates              = true;
 
-  // ── Explicit Weight Mapping ────────────────────────────────────────────────
-  // Recalculate weights for all exercises using the updated 1RM and hardcode it
-  updatedPlan.trainingDays?.forEach(day => {
-    day.exercises?.forEach(ex => {
-      if (!ex.nombre) return;
-      const normName = ex.nombre.toLowerCase().trim();
-      
-      let oneRM = marcas[normName];
-      if (!oneRM) {
-        const alias = mapExerciseToLiftKey(normName);
-        if (alias) oneRM = marcas[alias];
-      }
+  // ── PASO 8: Historial de microciclos ──────────────────────────────────────
+  if (!updatedPlan.microcycles) updatedPlan.microcycles = [];
 
-      if (oneRM && oneRM > 0) {
-        const repsStr = ex.variables?.['repeticiones'] || '';
-        // Extract the first number from string like "8 a 10" or "8"
-        const repsMatch = repsStr.match(/\d+/);
-        const reps = repsMatch ? parseInt(repsMatch[0], 10) : 0;
-        
-        const rirStr = ex.variables?.['rir'] || '0';
-        const rirMatch = rirStr.match(/\d+/);
-        const targetRIR = rirMatch ? parseFloat(rirMatch[0]) : 0;
-
-        if (reps > 0) {
-          const newLoad = getPrescribedLoad(oneRM, reps, targetRIR);
-          if (newLoad > 0) {
-            if (!ex.variables) ex.variables = {};
-            ex.variables['peso'] = `🤖 ${newLoad} kg`;
-          }
-        }
-      }
-    });
-  });
-
-  // Agregar la nueva semana calculada al historial de microciclos
-  if (!updatedPlan.microcycles) {
-    updatedPlan.microcycles = [];
-  }
-  
-  // Actualizamos el flag isCompleted de la semana que acaba de pasar
-  const prevWeek = currentWeek;
-  const prevMicro = updatedPlan.microcycles.find(m => m.weekNumber === prevWeek);
+  const prevMicro = updatedPlan.microcycles.find(m => m.weekNumber === currentWeek);
   if (prevMicro) {
     prevMicro.isCompleted = true;
   }
 
-  // La nueva semana activa es currentWeek + 1, o si se reinició el bloque, semana 1
   const newWeekNumber = updatedPlan.periodizationConfig.semana_actual || currentWeek;
-  
   const existingNewMicro = updatedPlan.microcycles.find(m => m.weekNumber === newWeekNumber);
   if (existingNewMicro) {
     existingNewMicro.trainingDays = updatedPlan.trainingDays || [];
-    existingNewMicro.isCompleted = false;
+    existingNewMicro.isCompleted  = false;
   } else {
     updatedPlan.microcycles.push({
-      weekNumber: newWeekNumber,
-      isCompleted: false,
-      trainingDays: updatedPlan.trainingDays || []
+      weekNumber:   newWeekNumber,
+      isCompleted:  false,
+      trainingDays: updatedPlan.trainingDays || [],
     });
   }
 

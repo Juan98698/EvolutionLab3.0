@@ -78,6 +78,19 @@ export interface Microcycle {
   trainingDays: TrainingDay[];
 }
 
+/**
+ * Feedback de un ejercicio individual dentro de una sesión.
+ * Se acumula en `weekly_session_feedback` durante la semana y se procesa
+ * al completar la última sesión del microciclo (BUG-14 fix).
+ */
+export interface WeeklySessionFeedback {
+  ejercicio: string;
+  estimulo: 'none' | 'good' | 'extreme';
+  recuperacion: 'recovered' | 'just_in_time' | 'sore';
+  /** ISO date de la sesión donde se registró este feedback */
+  fecha: string;
+}
+
 export interface PeriodizationConfig {
   enabled: boolean;
   objetivo?: 'fuerza' | 'hipertrofia' | 'mantenimiento';
@@ -97,6 +110,24 @@ export interface PeriodizationConfig {
   has_new_updates?: boolean; // indicador de actualización para el UI
   formula_preferida?: 'epley' | 'brzycki' | 'epley_brzycki_avg'; // Formula for load prescription
   redondeo_peso?: number; // Rounding increment in kg (default 2.5)
+  /**
+   * BUG-14 fix: Acumulador de feedback semanal.
+   * El motor NO aplica el ajuste de volumen al completar cada sesión —
+   * acumula el feedback aquí y lo procesa al detectar el cierre del microciclo
+   * (última sesión de la semana completada). Se resetea al iniciar cada semana nueva.
+   */
+  weekly_session_feedback?: WeeklySessionFeedback[];
+  /**
+   * Número de sesiones de entrenamiento que tiene el plan por semana.
+   * Se calcula desde trainingDays.length al iniciar el bloque y se usa
+   * para detectar cuándo se completó la última sesión de la semana.
+   */
+  sessions_per_week?: number;
+  /**
+   * Contador de sesiones completadas en la semana actual.
+   * Se incrementa con cada sesión loggeada y se resetea al avanzar semana.
+   */
+  sessions_completed_this_week?: number;
 }
 
 export interface GlobalVariable {
