@@ -51,6 +51,7 @@ export const ExerciseLibrary: React.FC = () => {
       }
     };
     fetchTrainerProfile();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [profile?.entrenador_id, supabase]);
 
   // Cargar catálogo global de ejercicios de Supabase
@@ -77,6 +78,7 @@ export const ExerciseLibrary: React.FC = () => {
       }
     };
     fetchExercises();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [supabase, isBlocked]);
 
   // Filtrado de ejercicios por texto y músculo

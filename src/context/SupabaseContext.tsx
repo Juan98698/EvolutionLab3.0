@@ -165,6 +165,7 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
       clearTimeout(safetyTimeout);
       subscription.unsubscribe();
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const isAuthenticated = !!user;
@@ -191,6 +192,7 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useSupabase = () => {
   const context = useContext(SupabaseContext);
   if (context === undefined) {

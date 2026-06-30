@@ -71,7 +71,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // MercadoPago API returns metadata keys in lower_snake_case
     const userId = metadata.user_id || metadata.userId;
     const plan = metadata.plan;
-    const email = metadata.email || payment.payer?.email;
+    // const email = metadata.email || payment.payer?.email;
 
     if (!userId || !plan) {
       console.error(`⚠️ Webhook: Missing required metadata values (userId: ${userId}, plan: ${plan})`);

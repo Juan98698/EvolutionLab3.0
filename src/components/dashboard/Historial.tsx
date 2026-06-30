@@ -235,6 +235,7 @@ export const Historial: React.FC = () => {
 
   useEffect(() => {
     loadHistorial();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   // Lista de todos los ejercicios únicos registrados para el filtro

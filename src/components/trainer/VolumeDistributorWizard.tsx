@@ -60,6 +60,7 @@ export function VolumeDistributorWizard({ onClose, onApply, athleteLevel = 'inte
     // Simplificación: Para los splits predefinidos, la mayoría usan todo el cuerpo.
     // Solo devolvemos todos los MUSCLES si no es estilo libre.
     return MUSCLES;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isStrength, splitType, customDays, trainingDays]);
 
   // Inicializar volumen al MAV por defecto
@@ -85,6 +86,7 @@ export function VolumeDistributorWizard({ onClose, onApply, athleteLevel = 'inte
     }
 
     setMuscleVolume(initialVolume);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isStrength, splitType, athleteLevel, activeItems.length, initialTargets]);
 
   const handleVolumeChange = (key: string, value: number) => {

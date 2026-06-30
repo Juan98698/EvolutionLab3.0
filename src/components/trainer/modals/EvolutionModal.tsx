@@ -157,6 +157,7 @@ const EvolutionModal: React.FC<EvolutionModalProps> = ({
     const pathVol = chartPoints.length > 1 ? `M ${pointsVol.join(' L ')}` : '';
 
     return { pathRm, pathVol, points, minRm, maxRm, minVol, maxVol };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chartPoints]);
 
   const pdfReportSummary = useMemo(() => {

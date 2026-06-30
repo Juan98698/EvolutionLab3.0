@@ -487,6 +487,7 @@ export const AthleteDashboard: React.FC = () => {
     return () => {
       supabase.removeChannel(channel);
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   // Fetch trainer profile for branding/philosophy

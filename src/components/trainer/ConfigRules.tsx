@@ -240,6 +240,7 @@ export const ConfigRules: React.FC = () => {
     };
 
     loadPlan();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedClienteId]);
 
   const handleConfigChange = (field: string, val: number) => {

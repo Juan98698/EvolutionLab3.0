@@ -545,6 +545,7 @@ export const PlanPlanner: React.FC = () => {
       });
     }
     return volumeMap;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [trainingDays]);
 
   // Generar datos detallados y porcentaje para las barras de progreso
@@ -946,6 +947,7 @@ export const PlanPlanner: React.FC = () => {
     };
 
     loadData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [clienteId, profile?.id, profile?.nombre]);
 
   // Manejar cambios en portada

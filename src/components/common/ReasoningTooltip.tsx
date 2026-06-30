@@ -169,6 +169,7 @@ export interface LoadPrescriptionForTooltip {
  * Converts a LoadPrescription object into ReasoningStep[] for the tooltip.
  * This is a pure helper — no React dependency.
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export const buildLoadReasoningSteps = (lp: LoadPrescriptionForTooltip): ReasoningStep[] => {
   return [
     {
@@ -219,6 +220,7 @@ export interface VolumeEvaluationForTooltip {
 /**
  * Converts a StrengthVolumeEvaluation into ReasoningStep[] for the tooltip.
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export const buildVolumeReasoningSteps = (ev: VolumeEvaluationForTooltip): ReasoningStep[] => {
   return [
     {

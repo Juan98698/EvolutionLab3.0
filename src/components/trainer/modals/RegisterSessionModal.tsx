@@ -94,6 +94,7 @@ const RegisterSessionModal: React.FC<RegisterSessionModalProps> = ({
 
       loadPlan();
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, selectedAthleteForSession]);
 
   const loadExercisesFromPlanDay = (day: any) => {

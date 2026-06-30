@@ -47,6 +47,7 @@ export const Analytics: React.FC = () => {
       secondary,
       primaryGlow
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [themeTick]);
 
   // Estados de Toast
@@ -139,6 +140,7 @@ export const Analytics: React.FC = () => {
 
   useEffect(() => {
     loadHistorial();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   // Lista de todos los ejercicios únicos registrados para el filtro

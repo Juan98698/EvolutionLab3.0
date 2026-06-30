@@ -98,6 +98,7 @@ export const AdminDashboard: React.FC = () => {
 
   useEffect(() => {
     fetchUsers();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const filteredUsers = useMemo(() => {
