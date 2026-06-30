@@ -1,0 +1,43 @@
+name: CI
+
+# Corre en cada push a main y en cada Pull Request hacia main.
+# Esto es lo que faltaba: los 138 tests existían pero dependían de que
+# alguien se acordara de correr `npm test` antes de pushear. Con esto,
+# cada commit se valida automáticamente sin intervención manual.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-and-test:
+    name: TypeScript + Lint + Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Verificar tipos (TypeScript)
+        run: npx tsc --noEmit
+
+      - name: Lint (ESLint, 0 warnings permitidos)
+        run: npm run lint
+
+      - name: Tests unitarios (Vitest)
+        # `npm test` por defecto entra en watch mode — en CI hay que forzar
+        # `run` para que ejecute una vez y termine con exit code.
+        run: npx vitest run
+
+      - name: Build de producción
+        run: npm run build

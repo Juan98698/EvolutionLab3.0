@@ -1064,7 +1064,7 @@ export const AthleteDashboard: React.FC = () => {
               marginTop: '10px'
             }}>
               <div>
-                <h4 style={{ margin: '0 0 4px 0', fontSize: '13px', color: '#ffb703', fontFamily: "\'Orbitron\', sans-serif" }}>Evaluación Pendiente</h4>
+                <h4 style={{ margin: '0 0 4px 0', fontSize: '13px', color: '#ffb703', fontFamily: "'Orbitron', sans-serif" }}>Evaluación Pendiente</h4>
                 <p style={{ margin: 0, fontSize: '11px', color: 'rgba(255,255,255,0.7)' }}>Aún no has completado tu diagnóstico inicial de fuerza.</p>
               </div>
               <button 
@@ -1077,7 +1077,7 @@ export const AthleteDashboard: React.FC = () => {
                   borderRadius: '8px',
                   fontSize: '11px',
                   fontWeight: 800,
-                  fontFamily: "\'Orbitron\', sans-serif",
+                  fontFamily: "'Orbitron', sans-serif",
                   cursor: 'pointer'
                 }}
               >

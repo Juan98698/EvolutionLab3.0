@@ -362,7 +362,7 @@ export const AddSesion: React.FC<AddSesionProps> = ({
         showToast('¡Sesión guardada y sincronizada en la nube! ☁️', 'success');
       } else {
         // Encolar para sincronizar cuando vuelva a estar online
-        let queue = JSON.parse(localStorage.getItem('evolution_sync_queue') || '[]');
+        const queue = JSON.parse(localStorage.getItem('evolution_sync_queue') || '[]');
         queue.push(nuevaSesion);
         localStorage.setItem('evolution_sync_queue', JSON.stringify(queue));
 

@@ -40,7 +40,7 @@ export function ProtocolSelectorModal({ isOpen, onClose, objective, level, onApp
     const uniqueNames = [...new Set(allNames)];
 
     // Mapa alias → nombre_real
-    let aliasMap: Record<string, string> = {};
+    const aliasMap: Record<string, string> = {};
     try {
       const { data: aliasData } = await supabase
         .from('ejercicios_alias')
@@ -60,7 +60,7 @@ export function ProtocolSelectorModal({ isOpen, onClose, objective, level, onApp
     // Usa los nombres_real resueltos para traer imagen, video, descripcion
     // y movement_pattern de una sola query.
     const nombresReales = Object.values(aliasMap);
-    let globalMap: Record<string, {
+    const globalMap: Record<string, {
       imagen_url?: string | null;
       video_url?: string | null;
       descripcion?: string | null;
