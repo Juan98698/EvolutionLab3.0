@@ -644,14 +644,31 @@ export const autoRegulatePlanForNextWeek = (
       }
     }
 
-    // Acumular feedback semanal para aplicar al cerrar el microciclo
+    // Acumular feedback semanal para aplicar al cerrar el microciclo.
+    // Se guarda también grupo_muscular para consolidar por región corporal
+    // además de por nombre — resuelve sesiones con varios grupos musculares
+    // donde antes el feedback de pecho y espalda se mezclaba sin distinción.
     const estimulo     = logged.feedback_estimulo    || 'good';
     const recuperacion = logged.feedback_recuperacion || 'recovered';
+
+    // Buscar grupo_muscular del ejercicio en el plan (el logged no lo trae)
+    let grupoMuscularLogged: string | undefined;
+    for (const day of updatedPlan.trainingDays || []) {
+      const planEx = day.exercises?.find(
+        e => e.nombre?.toLowerCase().trim() === normName
+      ) as any;
+      if (planEx?.grupo_muscular) {
+        grupoMuscularLogged = planEx.grupo_muscular;
+        break;
+      }
+    }
+
     config.weekly_session_feedback!.push({
-      ejercicio:   logged.nombre,
+      ejercicio:      logged.nombre,
       estimulo,
       recuperacion,
-      fecha:       new Date().toISOString().slice(0, 10),
+      fecha:          new Date().toISOString().slice(0, 10),
+      grupo_muscular: grupoMuscularLogged,
     });
   });
 
@@ -764,23 +781,52 @@ export const autoRegulatePlanForNextWeek = (
     extreme: 2, good: 1, none: 0,
   };
 
+  // Feedback consolidado por nombre de ejercicio (resolución fina)
   const consolidatedFeedback: Record<string, {
     estimulo: 'none' | 'good' | 'extreme';
     recuperacion: 'recovered' | 'just_in_time' | 'sore';
   }> = {};
 
+  // Feedback consolidado por grupo muscular (visión sistémica de fatiga regional).
+  // Permite distinguir: "pecho fatigado pero espalda bien" dentro de la misma sesión.
+  // Si un ejercicio no tiene grupo_muscular registrado, se omite en esta vista.
+  const consolidatedFeedbackByGroup: Record<string, {
+    estimulo: 'none' | 'good' | 'extreme';
+    recuperacion: 'recovered' | 'just_in_time' | 'sore';
+    count: number;  // cuántos ejercicios aportaron feedback a este grupo
+  }> = {};
+
   (config.weekly_session_feedback || []).forEach(fb => {
+    // Consolidar por nombre de ejercicio (peor caso de la semana)
     const key = fb.ejercicio.toLowerCase().trim();
     if (!consolidatedFeedback[key]) {
       consolidatedFeedback[key] = { estimulo: fb.estimulo, recuperacion: fb.recuperacion };
     } else {
-      // Tomar el peor caso de recuperación
       if (RECOVERY_RANK[fb.recuperacion] > RECOVERY_RANK[consolidatedFeedback[key].recuperacion]) {
         consolidatedFeedback[key].recuperacion = fb.recuperacion;
       }
-      // Tomar el peor caso de estímulo (hacia extremo)
       if (STIMULUS_RANK[fb.estimulo] > STIMULUS_RANK[consolidatedFeedback[key].estimulo]) {
         consolidatedFeedback[key].estimulo = fb.estimulo;
+      }
+    }
+
+    // Consolidar por grupo muscular (peor caso entre todos los ejercicios del grupo)
+    if (fb.grupo_muscular) {
+      const gKey = fb.grupo_muscular.toLowerCase().trim();
+      if (!consolidatedFeedbackByGroup[gKey]) {
+        consolidatedFeedbackByGroup[gKey] = {
+          estimulo:    fb.estimulo,
+          recuperacion: fb.recuperacion,
+          count:        1,
+        };
+      } else {
+        consolidatedFeedbackByGroup[gKey].count += 1;
+        if (RECOVERY_RANK[fb.recuperacion] > RECOVERY_RANK[consolidatedFeedbackByGroup[gKey].recuperacion]) {
+          consolidatedFeedbackByGroup[gKey].recuperacion = fb.recuperacion;
+        }
+        if (STIMULUS_RANK[fb.estimulo] > STIMULUS_RANK[consolidatedFeedbackByGroup[gKey].estimulo]) {
+          consolidatedFeedbackByGroup[gKey].estimulo = fb.estimulo;
+        }
       }
     }
   });
@@ -836,12 +882,39 @@ export const autoRegulatePlanForNextWeek = (
         const currentSetsStr = foundEx.variables?.['series de trabajo'] || foundEx.variables?.['series'] || '3';
         const currentSets    = parseInt(currentSetsStr, 10) || 3;
 
-        const { nextSets, triggerDeload, notes } = calculateNextMicrocycleVolume(
+        // muscle_groups_in_focus: si está definido y el grupo del ejercicio NO
+        // está en foco, aplicar volumen de mantenimiento (MV ≈ MEV × 0.4).
+        // El motor sigue usando el feedback del ejercicio individual para NO
+        // perder sensibilidad, pero ignora la señal de subida de volumen.
+        const focusGroups   = config.muscle_groups_in_focus;
+        const exGrupo       = (foundEx.grupo_muscular || '').toLowerCase().trim();
+        const isInFocus     = !focusGroups
+          || focusGroups.length === 0
+          || focusGroups.map((g: string) => g.toLowerCase().trim()).includes(exGrupo);
+
+        // Para grupos fuera de foco: usar feedback del grupo muscular si existe
+        // (más preciso que el del ejercicio individual), forzar mantenimiento.
+        const feedbackForCalc = isInFocus
+          ? feedback
+          : (consolidatedFeedbackByGroup[exGrupo] || feedback);
+
+        const { nextSets: rawNextSets, triggerDeload, notes: rawNotes } = calculateNextMicrocycleVolume(
           currentSets,
-          feedback.estimulo,
-          feedback.recuperacion,
+          feedbackForCalc.estimulo,
+          feedbackForCalc.recuperacion,
           nivel
         );
+
+        // Si el grupo no está en foco: bloquear subida de series (MV fijo).
+        // Bajas por feedback (sore, triggerDeload) sí aplican — proteger recuperación.
+        const nextSets = isInFocus
+          ? rawNextSets
+          : Math.min(rawNextSets, currentSets);   // nunca sube, puede bajar
+        const notes    = isInFocus
+          ? rawNotes
+          : (rawNextSets > currentSets
+              ? `Grupo fuera de foco (${exGrupo || 'sin grupo'}): series en MV, sin incremento esta semana.`
+              : rawNotes);
 
         // Acumular votos de deload — cada ejercicio tiene voz
         feedbackCount += 1;
@@ -939,16 +1012,24 @@ export const autoRegulatePlanForNextWeek = (
     // Calcula el RIR target para la semana entrante y lo inyecta en todos
     // los ejercicios. La fórmula de prescripción de carga lo toma en el
     // Paso 2 de la próxima sesión → peso sube automáticamente al bajar RIR.
-    const rirInicial    = config.rir_inicial    ?? (nivel === 'avanzado' ? 4 : 3);
-    const rirProgresion = config.rir_progresion ?? (nivel === 'principiante' ? 'lenta' : 'normal');
-    const newTargetRIR  = calcTargetRIRForWeek(newWeek, rirInicial, nivel, rirProgresion);
+    //
+    // rir_override_manual: si el entrenador activó este flag, el motor NO
+    // sobreescribe el RIR — respeta el valor que el entrenador fijó a mano.
+    // Útil para semanas de transición, pruebas de fuerza, o protocolos
+    // específicos que no siguen la progresión estándar del mesociclo.
+    if (!config.rir_override_manual) {
+      const rirInicial    = config.rir_inicial    ?? (nivel === 'avanzado' ? 4 : 3);
+      const rirProgresion = config.rir_progresion ?? (nivel === 'principiante' ? 'lenta' : 'normal');
+      const newTargetRIR  = calcTargetRIRForWeek(newWeek, rirInicial, nivel, rirProgresion);
 
-    updatedPlan.trainingDays?.forEach(day => {
-      day.exercises?.forEach(ex => {
-        if (!ex.variables) ex.variables = {};
-        ex.variables['rir'] = String(newTargetRIR);
+      updatedPlan.trainingDays?.forEach(day => {
+        day.exercises?.forEach(ex => {
+          if (!ex.variables) ex.variables = {};
+          ex.variables['rir'] = String(newTargetRIR);
+        });
       });
-    });
+    }
+    // Si rir_override_manual = true: el RIR de cada ejercicio queda intacto.
   }
 
   // ── PASO 7: Resetear contadores semanales ─────────────────────────────────

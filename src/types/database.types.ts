@@ -89,6 +89,13 @@ export interface WeeklySessionFeedback {
   recuperacion: 'recovered' | 'just_in_time' | 'sore';
   /** ISO date de la sesión donde se registró este feedback */
   fecha: string;
+  /**
+   * Grupo muscular principal del ejercicio al momento del log.
+   * Permite consolidar el feedback por grupo muscular además de por nombre,
+   * resolviendo sesiones con varios grupos (pecho + espalda) donde antes
+   * todo se mezclaba sin distinguir qué grupo estaba fatigado.
+   */
+  grupo_muscular?: string;
 }
 
 export interface PeriodizationConfig {
@@ -142,6 +149,22 @@ export interface PeriodizationConfig {
    * agresiva:  cada semana desde rir_inicial=4 (avanzado alta intensidad)
    */
   rir_progresion?: 'lenta' | 'normal' | 'agresiva';
+  /**
+   * Si true, el motor NO sobreescribe el campo `rir` de cada ejercicio al
+   * cerrar semana. El entrenador ha fijado un RIR específico manualmente y
+   * ese valor debe respetarse hasta que el flag se desactive.
+   * Por defecto false (progresión automática activa).
+   */
+  rir_override_manual?: boolean;
+  /**
+   * Avanzados con especialización: lista de grupos musculares en foco.
+   * Los ejercicios de estos grupos reciben progresión dinámica completa
+   * (series + RIR). El resto recibe volumen de mantenimiento (MV ≈ MEV × 0.4)
+   * con series fijas para proteger el SNC y las articulaciones.
+   * Si el array está vacío o no definido, todos los grupos se tratan igual.
+   * Ejemplo: ['pecho', 'hombros'] — bíceps, espalda, pierna → MV fijo.
+   */
+  muscle_groups_in_focus?: string[];
 }
 
 export interface GlobalVariable {
