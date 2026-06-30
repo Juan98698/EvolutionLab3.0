@@ -25,6 +25,7 @@ const INSIGNIAS_DEFS = [
   { id: 'primera_sesion', titulo: 'Primera Sesión', desc: 'Registraste tu primera sesión', icono: '🎯', tipo: 'logro' as const, condition: (s: Session[]) => s.length >= 1 },
   { id: 'semana_5', titulo: 'Semana Fuerte', desc: '5 sesiones registradas', icono: '💪', tipo: 'logro' as const, condition: (s: Session[]) => uniqueDates(s).length >= 5 },
   { id: 'mes_constante', titulo: 'Mes Constante', desc: '20 sesiones en total', icono: '🔥', tipo: 'logro' as const, condition: (s: Session[]) => uniqueDates(s).length >= 20 },
+  { id: 'consistencia_acero', titulo: 'Consistencia de Acero', desc: '4+ semanas consecutivas de entrenamiento', icono: '🛡️', tipo: 'insignia' as const, condition: (s: Session[]) => calcularRachaSemanas(s).actual >= 4 },
   { id: 'veterano_50', titulo: 'Veterano', desc: '50 sesiones registradas', icono: '🏆', tipo: 'logro' as const, condition: (s: Session[]) => uniqueDates(s).length >= 50 },
   { id: 'centurion', titulo: 'Centurión', desc: '100 sesiones completadas', icono: '⭐', tipo: 'logro' as const, condition: (s: Session[]) => uniqueDates(s).length >= 100 },
   { id: 'variedad_5', titulo: 'Versatil', desc: '5+ ejercicios diferentes', icono: '🧠', tipo: 'insignia' as const, condition: (s: Session[]) => uniqueExercises(s) >= 5 },
@@ -145,6 +146,7 @@ export const GamificacionPanel: React.FC<GamificacionPanelProps> = ({ sesiones, 
 
   // Calculate stats
   const racha = useMemo(() => calcularRacha(sesiones), [sesiones]);
+  const rachaSemanas = useMemo(() => calcularRachaSemanas(sesiones), [sesiones]);
   const totalSesiones = useMemo(() => uniqueDates(sesiones).length, [sesiones]);
   const prCount = useMemo(() => countPRs(sesiones), [sesiones]);
 
@@ -220,8 +222,8 @@ export const GamificacionPanel: React.FC<GamificacionPanelProps> = ({ sesiones, 
 
   // Score and Level Calculations
   const totalPoints = useMemo(() => {
-    return (totalSesiones * 50) + (earnedBadges.length * 200) + (racha.actual * 25) + (prCount * 100);
-  }, [totalSesiones, earnedBadges.length, racha.actual, prCount]);
+    return (totalSesiones * 50) + (earnedBadges.length * 200) + (racha.actual * 25) + (rachaSemanas.actual * 100) + (prCount * 100);
+  }, [totalSesiones, earnedBadges.length, racha.actual, rachaSemanas.actual, prCount]);
 
   const currentLevel = useMemo(() => {
     return Math.floor(Math.sqrt(totalPoints / 250)) + 1;
@@ -329,6 +331,97 @@ export const GamificacionPanel: React.FC<GamificacionPanelProps> = ({ sesiones, 
               boxShadow: '0 0 10px rgba(0, 212, 255, 0.3)'
             }} />
           </div>
+        </div>
+      </div>
+
+      {/* Racha Semanal Banner */}
+      {rachaSemanas.actual >= 1 ? (
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(249, 115, 22, 0.15), rgba(253, 186, 116, 0.15))',
+          border: '1px solid rgba(249, 115, 22, 0.3)',
+          borderRadius: '16px', padding: '14px 18px', display: 'flex', alignItems: 'center', gap: '14px',
+          boxShadow: '0 8px 24px rgba(249, 115, 22, 0.08)'
+        }}>
+          <span style={{ fontSize: '28px', filter: 'drop-shadow(0 0 8px rgba(249,115,22,0.4))' }}>🔥</span>
+          <div style={{ textAlign: 'left' }}>
+            <div style={{ fontSize: '13px', fontWeight: 800, color: '#ffedd5', fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.5px' }}>
+              ¡LLEVAS {rachaSemanas.actual} {rachaSemanas.actual === 1 ? 'SEMANA CONSECUTIVA' : 'SEMANAS CONSECUTIVAS'} ENTRENANDO!
+            </div>
+            <div style={{ fontSize: '10px', color: 'rgba(253, 186, 116, 0.75)', marginTop: '2px', fontWeight: 500 }}>
+              Consistencia de acero. ¡Mantente fuerte y no rompas el hábito!
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div style={{
+          background: 'rgba(255, 255, 255, 0.015)',
+          border: '1px solid rgba(255, 255, 255, 0.05)',
+          borderRadius: '16px', padding: '14px 18px', display: 'flex', alignItems: 'center', gap: '14px'
+        }}>
+          <span style={{ fontSize: '28px', filter: 'grayscale(1)', opacity: 0.6 }}>❄️</span>
+          <div style={{ textAlign: 'left' }}>
+            <div style={{ fontSize: '13px', fontWeight: 800, color: 'rgba(255,255,255,0.45)', fontFamily: "'Orbitron', sans-serif" }}>
+              SIN RACHA ACTIVA ESTA SEMANA
+            </div>
+            <div style={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.3)', marginTop: '2px' }}>
+              Completa al menos un entrenamiento esta semana para iniciar tu racha de constancia.
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Mini-Calendario de la Semana Actual */}
+      <div style={{
+        background: 'rgba(15, 23, 42, 0.25)',
+        border: '1px solid rgba(255, 255, 255, 0.05)',
+        borderRadius: '16px', padding: '16px',
+        display: 'flex', flexDirection: 'column', gap: '12px',
+        marginTop: '12px', marginBottom: '12px'
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, letterSpacing: '1px', fontFamily: "'Orbitron', sans-serif" }}>
+            CONSISTENCIA SEMANAL
+          </span>
+          <span style={{ fontSize: '9px', color: 'var(--theme-primary, #00d4ff)', fontWeight: 700, fontFamily: "'Orbitron', sans-serif" }}>
+            ESTA SEMANA
+          </span>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '4px' }}>
+          {['L', 'M', 'M', 'J', 'V', 'S', 'D'].map((dia, idx) => {
+            const dateOfDia = new Date();
+            const currentDay = dateOfDia.getDay() || 7;
+            const offset = idx + 1 - currentDay;
+            dateOfDia.setDate(dateOfDia.getDate() + offset);
+            const dateString = dateOfDia.toISOString().split('T')[0];
+            
+            const hasSession = uniqueDates(sesiones).includes(dateString);
+            const isToday = offset === 0;
+
+            return (
+              <div key={idx} style={{
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', flex: 1
+              }}>
+                <span style={{ fontSize: '9px', color: isToday ? 'var(--theme-primary, #00d4ff)' : 'rgba(255,255,255,0.4)', fontWeight: isToday ? '700' : 'normal' }}>
+                  {dia}
+                </span>
+                <div style={{
+                  width: '26px', height: '26px', borderRadius: '50%',
+                  background: hasSession 
+                    ? 'rgba(249, 115, 22, 0.15)' 
+                    : (isToday ? 'rgba(0, 212, 255, 0.05)' : 'rgba(255, 255, 255, 0.02)'),
+                  border: `1px solid ${hasSession 
+                    ? '#fbbf24' 
+                    : (isToday ? 'var(--theme-primary, #00d4ff)' : 'rgba(255, 255, 255, 0.06)')}`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '11px',
+                  boxShadow: hasSession ? '0 0 10px rgba(249, 115, 22, 0.25)' : 'none',
+                  transition: 'all 0.3s'
+                }}>
+                  {hasSession ? '🔥' : (isToday ? '⚡' : '')}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -569,5 +662,75 @@ export const GamificacionPanel: React.FC<GamificacionPanelProps> = ({ sesiones, 
     </div>
   );
 };
+
+function getISOWeekString(date: Date): string {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  const dayNum = d.getUTCDay() || 7;
+  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+  return `${d.getUTCFullYear()}-W${weekNo.toString().padStart(2, '0')}`;
+}
+
+function calcularRachaSemanas(sessions: Session[]): { actual: number; maxima: number } {
+  if (sessions.length === 0) return { actual: 0, maxima: 0 };
+
+  const sessionWeeks = new Set(sessions.map(s => {
+    const [year, month, day] = s.fecha.split('-').map(Number);
+    return getISOWeekString(new Date(year, month - 1, day));
+  }));
+
+  const getOffsetWeekString = (weeksAgo: number): string => {
+    const d = new Date();
+    d.setDate(d.getDate() - 7 * weeksAgo);
+    return getISOWeekString(d);
+  };
+
+  let actual = 0;
+  const currentWeek = getOffsetWeekString(0);
+  const lastWeek = getOffsetWeekString(1);
+
+  const hasCurrent = sessionWeeks.has(currentWeek);
+  const hasLast = sessionWeeks.has(lastWeek);
+
+  if (hasCurrent || hasLast) {
+    let weeksAgo = hasCurrent ? 0 : 1;
+    while (sessionWeeks.has(getOffsetWeekString(weeksAgo))) {
+      actual++;
+      weeksAgo++;
+    }
+  }
+
+  const sortedWeeks = Array.from(sessionWeeks).sort();
+  let maxima = 0;
+  if (sortedWeeks.length > 0) {
+    let currentMax = 1;
+    maxima = 1;
+
+    for (let i = 1; i < sortedWeeks.length; i++) {
+      const [y1, w1] = sortedWeeks[i - 1].split('-W').map(Number);
+      const [y2, w2] = sortedWeeks[i].split('-W').map(Number);
+
+      let isConsecutive = false;
+      if (y1 === y2 && w2 === w1 + 1) {
+        isConsecutive = true;
+      } else if (y2 === y1 + 1) {
+        if ((w1 === 52 || w1 === 53) && w2 === 1) {
+          isConsecutive = true;
+        }
+      }
+
+      if (isConsecutive) {
+        currentMax++;
+      } else {
+        maxima = Math.max(maxima, currentMax);
+        currentMax = 1;
+      }
+    }
+    maxima = Math.max(maxima, currentMax);
+  }
+
+  return { actual, maxima };
+}
 
 export default GamificacionPanel;

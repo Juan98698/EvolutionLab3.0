@@ -1,7 +1,6 @@
 // @vitest-environment happy-dom
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, act, fireEvent, cleanup } from '@testing-library/react';
-import React from 'react';
 import { SupabaseProvider, useSupabase } from '../SupabaseContext';
 
 // Mock Supabase Client and Auth listeners
@@ -123,5 +122,54 @@ describe('SupabaseContext Provider', () => {
     expect(screen.getByTestId('auth-state').textContent).toBe('logged-out');
     expect(screen.getByTestId('user-email').textContent).toBe('no-email');
     expect(localStorage.getItem('pwa_user_profile')).toBeNull();
+  });
+
+  it('should handle token expiration (SIGNED_OUT event) and update authentication state to false', async () => {
+    render(
+      <SupabaseProvider>
+        <TestConsumer />
+      </SupabaseProvider>
+    );
+
+    const mockUser = { id: 'test-user-id', email: 'test@example.com' };
+    const mockSession = { user: mockUser };
+
+    // Login first
+    await act(async () => {
+      await authCallback('INITIAL_SESSION', mockSession);
+    });
+    expect(screen.getByTestId('auth-state').textContent).toBe('logged-in');
+
+    // Simulate token expiration / sign out event
+    await act(async () => {
+      await authCallback('SIGNED_OUT', null);
+    });
+
+    expect(screen.getByTestId('auth-state').textContent).toBe('logged-out');
+    expect(screen.getByTestId('user-email').textContent).toBe('no-email');
+  });
+
+  it('should end loading state after 6s safety timeout if initialization is delayed', async () => {
+    vi.useFakeTimers();
+
+    render(
+      <SupabaseProvider>
+        <TestConsumer />
+      </SupabaseProvider>
+    );
+
+    // Initially loading
+    expect(screen.getByTestId('loading-state')).toBeDefined();
+
+    // Advance virtual timers by 6 seconds (6000ms)
+    act(() => {
+      vi.advanceTimersByTime(6000);
+    });
+
+    // Loading should be forced to false, turning loading off and showing unauthenticated view
+    expect(screen.queryByTestId('loading-state')).toBeNull();
+    expect(screen.getByTestId('auth-state').textContent).toBe('logged-out');
+
+    vi.useRealTimers();
   });
 });

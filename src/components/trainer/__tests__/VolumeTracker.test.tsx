@@ -2,10 +2,9 @@
 import { describe, it, expect, afterEach } from 'vitest';
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import { VolumeTracker } from '../VolumeTracker';
-import React from 'react';
-
 const mockTrainingDays = [
   {
+    id: 'day-1',
     name: 'Día 1: Pecho',
     exercises: [
       {
@@ -27,7 +26,7 @@ describe('VolumeTracker Component', () => {
   it('should render weekly volume details for hypertrophy mode', () => {
     render(
       <VolumeTracker
-        trainingDays={mockTrainingDays}
+        trainingDays={mockTrainingDays as any}
         weeklyTargets={{ Pecho: 10 }}
         athleteLevel="intermedio"
         blockObjective="hipertrofia"
@@ -42,7 +41,7 @@ describe('VolumeTracker Component', () => {
   it('should render weekly volume details for strength mode in NL', () => {
     render(
       <VolumeTracker
-        trainingDays={mockTrainingDays}
+        trainingDays={mockTrainingDays as any}
         weeklyTargets={{}}
         athleteLevel="intermedio"
         blockObjective="fuerza"
@@ -57,7 +56,7 @@ describe('VolumeTracker Component', () => {
   it('should toggle expanded details when item is clicked', () => {
     render(
       <VolumeTracker
-        trainingDays={mockTrainingDays}
+        trainingDays={mockTrainingDays as any}
         weeklyTargets={{ Pecho: 10 }}
         athleteLevel="intermedio"
         blockObjective="hipertrofia"

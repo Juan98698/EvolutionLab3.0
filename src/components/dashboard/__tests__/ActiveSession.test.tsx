@@ -2,7 +2,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, act, cleanup } from '@testing-library/react';
 import ActiveSession from '../ActiveSession';
-import React from 'react';
 
 // Mock react-router-dom
 const mockNavigate = vi.fn();
@@ -74,7 +73,7 @@ describe('ActiveSession Component', () => {
     global.window.alert = vi.fn();
 
     // Mock vibration API
-    global.navigator.vibrate = vi.fn();
+    global.navigator.vibrate = vi.fn() as any;
 
     // Load mock plan in localStorage
     const mockPlan = {
