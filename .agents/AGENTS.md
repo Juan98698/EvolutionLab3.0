@@ -1,0 +1,10 @@
+# Reglas del Proyecto - EvolutionLab
+
+- **Formato de Imágenes de Ejercicios**: Todas las imágenes de ejercicios generadas o procesadas para este proyecto deben exportarse en formato **WebP** para optimizar el rendimiento y la calidad.
+- **Estilo de Fondo**: Mantener un fondo oscuro y minimalista (estilo render anatómico en estudio oscuro con iluminación limpia) para coincidir con la estética premium de la aplicación.
+- **Relación de Aspecto**: Las imágenes deben recortarse/ajustarse exactamente a una relación de aspecto de **11:8** (preferiblemente con dimensiones de **660x480 px**), que es la proporción exacta de las tarjetas de ejercicio (`ExerciseCard`) para evitar bordes o barras negras.
+- **Fases del Ejercicio (Formato Comparativo)**: Cada ilustración generada debe mostrar de forma conjunta la **fase inicial** y la **fase final** del ejercicio (lado a lado o en secuencia), permitiendo visualizar el rango completo de movimiento en una sola imagen.
+- **Encuadre y Recorte Inteligente (Sin cabezas cortadas)**: Para evitar recortar la cabeza en ejercicios donde el maniquí está de pie o sentado, se debe utilizar el script de recorte inteligente (`scratch/smart_crop_webp.py`). Este script analiza la silueta del maniquí y ajusta la ventana de recorte hacia la parte superior (`y_min`) para asegurar que la cabeza y el cuerpo estén siempre 100% visibles, recortando el exceso únicamente de la parte inferior.
+- **Detalle de Equipamiento (Cargas)**: Las barras (rectas, EZ, romana, etc.) deben mostrar discos de peso colocados en los extremos para representar la carga del ejercicio.
+- **Orientación con Poleas**: En ejercicios de polea, el maniquí debe estar posicionado **de frente a la máquina de poleas** (mirando hacia ella, con el cable viniendo de frente) a menos que la mecánica natural del ejercicio sea inversa.
+- **Coloración Muscular Simétrica (Ambas Extremidades)**: Al resaltar los músculos activos en color rojo brillante, se debe asegurar que se coloreen **ambas extremidades** por igual (brazo izquierdo y derecho, pierna izquierda y derecha) para mantener la simetría y claridad anatómica completa.
