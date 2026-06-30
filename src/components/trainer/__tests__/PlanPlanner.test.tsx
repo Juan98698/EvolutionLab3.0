@@ -135,4 +135,22 @@ describe('PlanPlanner Component', () => {
     expect(title).toBeDefined();
     expect(screen.getByText('Juan Perez')).toBeDefined();
   });
+
+  // FIX: planes antiguos sin `id` en trainingDays no deben generar el warning
+  // "Each child in a list should have a unique key prop" — confirma que la
+  // normalización de carga (línea ~970 de PlanPlanner.tsx) asigna un id
+  // de respaldo cuando el plan guardado no lo trae.
+  it('plan sin day.id (formato legacy): no genera warning de React keys', async () => {
+    const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+
+    render(<PlanPlanner />);
+    await screen.findByText('PLANIFICADOR DE RUTINA');
+
+    const keyWarnings = consoleErrorSpy.mock.calls.filter(call =>
+      typeof call[0] === 'string' && call[0].includes('unique "key" prop')
+    );
+    expect(keyWarnings.length).toBe(0);
+
+    consoleErrorSpy.mockRestore();
+  });
 });

@@ -968,6 +968,13 @@ export const PlanPlanner: React.FC = () => {
               }
               return {
                 ...day,
+                // FIX: planes antiguos pueden no tener `id` en el día (solo lo
+                // tenían los ejercicios). Sin id, los selects que iteran
+                // trainingDays (ej. el mapeo de días de la semana) usan
+                // key={day.id}=undefined para todos los días, lo cual genera
+                // el warning de React "each child needs a unique key" y puede
+                // causar reconciliación incorrecta entre renders.
+                id: day.id || `day_${generateId()}`,
                 exercises
               };
             });
@@ -2649,6 +2656,101 @@ export const PlanPlanner: React.FC = () => {
                                   transition: 'left 0.2s',
                                 }} />
                               </div>
+                            </div>
+                          );
+                        })()}
+
+                        {/* Selector: muscle_groups_in_focus — especialización para avanzados */}
+                        {nivAtl === 'avanzado' && (() => {
+                          // Grupos musculares disponibles: derivados de los ejercicios
+                          // actuales del plan (no hardcodeados — siempre coinciden con
+                          // lo que el atleta realmente entrena).
+                          const gruposDisponibles = Array.from(
+                            new Set(
+                              trainingDays
+                                .flatMap(d => d.exercises || [])
+                                .map(ex => (ex as any).grupo_muscular)
+                                .filter((g): g is string => !!g && g.trim() !== '')
+                            )
+                          ).sort();
+
+                          const focoActual = periodizationConfig.muscle_groups_in_focus || [];
+                          const especializacionActiva = focoActual.length > 0;
+
+                          const toggleGrupo = (grupo: string) => {
+                            setPeriodizationConfig(prev => {
+                              if (!prev) return undefined;
+                              const actual = prev.muscle_groups_in_focus || [];
+                              const yaEsta = actual.includes(grupo);
+                              const nuevo  = yaEsta
+                                ? actual.filter(g => g !== grupo)
+                                : [...actual, grupo];
+                              return { ...prev, muscle_groups_in_focus: nuevo };
+                            });
+                          };
+
+                          if (gruposDisponibles.length === 0) {
+                            return null; // Sin ejercicios con grupo_muscular aún — no mostrar selector vacío
+                          }
+
+                          return (
+                            <div style={{
+                              background: especializacionActiva ? 'rgba(168,85,247,0.07)' : 'rgba(0,0,0,0.15)',
+                              border: `1px solid ${especializacionActiva ? 'rgba(168,85,247,0.3)' : 'rgba(255,255,255,0.06)'}`,
+                              borderRadius: '10px',
+                              padding: '12px 14px',
+                              marginBottom: '14px',
+                            }}>
+                              <div style={{ marginBottom: '8px' }}>
+                                <div style={{ fontSize: '11px', fontWeight: 700, color: especializacionActiva ? 'rgba(192,132,252,0.9)' : 'rgba(255,255,255,0.5)', marginBottom: '2px' }}>
+                                  {especializacionActiva ? '🎯 ESPECIALIZACIÓN ACTIVA' : '🎯 GRUPOS EN FOCO (opcional)'}
+                                </div>
+                                <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', lineHeight: '1.3' }}>
+                                  {especializacionActiva
+                                    ? `Solo ${focoActual.length === 1 ? 'el grupo seleccionado recibe' : 'los grupos seleccionados reciben'} progresión dinámica completa. El resto se mantiene en volumen de mantenimiento (MV).`
+                                    : 'Selecciona 1–2 grupos rezagados para priorizar. Sin selección, todos los grupos progresan igual.'}
+                                </div>
+                              </div>
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                                {gruposDisponibles.map(grupo => {
+                                  const activo = focoActual.includes(grupo);
+                                  return (
+                                    <button
+                                      key={grupo}
+                                      type="button"
+                                      onClick={() => toggleGrupo(grupo)}
+                                      style={{
+                                        fontSize: '11px',
+                                        fontWeight: 600,
+                                        padding: '5px 12px',
+                                        borderRadius: '999px',
+                                        border: `1px solid ${activo ? 'rgba(168,85,247,0.6)' : 'rgba(255,255,255,0.12)'}`,
+                                        background: activo ? 'rgba(168,85,247,0.25)' : 'rgba(255,255,255,0.04)',
+                                        color: activo ? 'rgba(216,180,254,1)' : 'rgba(255,255,255,0.5)',
+                                        cursor: 'pointer',
+                                        textTransform: 'capitalize',
+                                        transition: 'all 0.15s',
+                                      }}
+                                    >
+                                      {activo ? '✓ ' : ''}{grupo}
+                                    </button>
+                                  );
+                                })}
+                              </div>
+                              {especializacionActiva && (
+                                <div
+                                  onClick={() => setPeriodizationConfig(prev => prev ? { ...prev, muscle_groups_in_focus: [] } : undefined)}
+                                  style={{
+                                    fontSize: '10px',
+                                    color: 'rgba(255,255,255,0.35)',
+                                    marginTop: '8px',
+                                    cursor: 'pointer',
+                                    textDecoration: 'underline',
+                                  }}
+                                >
+                                  Limpiar selección — volver a progresión uniforme
+                                </div>
+                              )}
                             </div>
                           );
                         })()}
