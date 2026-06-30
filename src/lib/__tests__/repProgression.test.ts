@@ -284,4 +284,75 @@ describe('autoRegulatePlanForNextWeek — doble progresión', () => {
     // Debe ser múltiplo de 1.25
     expect(pesoNum % 1.25).toBeCloseTo(0, 5);
   });
+
+  // ── Ejercicio repetido en dos días: doble progresión se aplica solo una vez ──
+  it('ejercicio repetido en dos días del plan: doble progresión se aplica solo una vez', () => {
+    // Plan con "Press de banca" en Día A y Día B
+    const plan: PlanData = {
+      trainingDays: [
+        {
+          id: 'day_a',
+          name: 'Día A',
+          exercises: [{
+            id: 'ex_a',
+            nombre: 'Press de banca',
+            variables: {
+              'series de trabajo': '3',
+              'repeticiones': '10-12',
+              'rir': '1',
+              'descanso': '120',
+            },
+          }],
+        },
+        {
+          id: 'day_b',
+          name: 'Día B',
+          exercises: [{
+            id: 'ex_b',
+            nombre: 'Press de banca',
+            variables: {
+              'series de trabajo': '3',
+              'repeticiones': '10-12',
+              'rir': '1',
+              'descanso': '120',
+            },
+          }],
+        }
+      ],
+      periodizationConfig: {
+        enabled: true,
+        nivel_atleta: 'intermedio',
+        objetivo: 'hipertrofia',
+        semana_actual: 1,
+        total_semanas: 4,
+        sessions_per_week: 2,
+        sessions_completed_this_week: 0,
+        weekly_session_feedback: [],
+        marcas_1rm: { 'press de banca': 100 },
+        rir_inicial: 3,
+        rir_progresion: 'normal',
+        redondeo_peso: 2.5,
+      },
+    };
+
+    // Logged con trigger de doble progresión (12 reps con RIR 3, target 1)
+    const logged = makeLogged([12, 12, 12], 3);
+
+    const result = autoRegulatePlanForNextWeek(plan, logged);
+    expect(result).not.toBeNull();
+
+    // Ejercicio en Día A (primer día)
+    const exA = result!.trainingDays![0].exercises[0];
+    // Ejercicio en Día B (segundo día)
+    const exB = result!.trainingDays![1].exercises[0];
+
+    // Solo el primer día debe recibir la nota de progresión
+    expect(exA.progression_notes).toContain('Rango completado');
+    // El segundo día recibe prescripción estándar sin nota de doble progresión
+    expect(exB.progression_notes ?? '').not.toContain('Rango completado');
+    // Ambos reciben peso prescrito por el robot
+    expect(exA.variables['peso']).toMatch(/🤖/);
+    expect(exB.variables['peso']).toMatch(/🤖/);
+  });
 });
+
