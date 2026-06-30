@@ -6,7 +6,7 @@ import { Profile, PlanData, TrainingDay, Exercise, GlobalVariable, EjercicioGlob
 import Toast from '../common/Toast';
 import { InfoTooltip } from '../common/InfoTooltip';
 import ReasoningTooltip, { buildLoadReasoningSteps, buildVolumeReasoningSteps } from '../common/ReasoningTooltip';
-import { getWeakPointCorrection, getPrescribedLoadDetailed, mapExerciseToLiftKey } from '../../lib/periodizationEngine';
+import { getWeakPointCorrection, getPrescribedLoadDetailed, mapExerciseToLiftKey, calcTargetRIRForWeek } from '../../lib/periodizationEngine';
 import { PeriodizationHelpModal } from '../common/PeriodizationHelpModal';
 import { evaluateVolumeStatus, getThresholdsForMuscleGroup } from '../../lib/volumeThresholds';
 import { humanizeAlert } from '../../lib/alertLanguage';
@@ -415,13 +415,19 @@ export const PlanPlanner: React.FC = () => {
     // 1. Configurar periodización con los parámetros elegidos
     setPeriodizationConfig(prev => ({
       ...prev,
-      enabled:        true,
-      objetivo:       params.objetivo,
-      total_semanas:  params.semanas,
-      semana_actual:  1,
-      nivel_atleta:   params.nivel,
-      rir_inicial:    params.nivel === 'avanzado' ? 4 : 3,
-      rir_progresion: params.nivel === 'principiante' ? 'lenta' : 'normal',
+      enabled:                      true,
+      objetivo:                     params.objetivo,
+      total_semanas:                params.semanas,
+      semana_actual:                1,
+      nivel_atleta:                 params.nivel,
+      rir_inicial:                  params.nivel === 'avanzado' ? 4 : 3,
+      rir_progresion:               params.nivel === 'principiante' ? 'lenta' : 'normal',
+      // FIX: sessions_per_week se setea desde params.dias al crear el plan,
+      // no desde trainingDays.length en runtime. Evita desincronización si el
+      // entrenador modifica los días del plan después de crearlo.
+      sessions_per_week:            params.dias,
+      sessions_completed_this_week: 0,
+      weekly_session_feedback:      [],
     }));
 
     // 2. Buscar el protocolo más adecuado para objetivo + nivel
@@ -2554,13 +2560,10 @@ export const PlanPlanner: React.FC = () => {
                     const semActual = periodizationConfig.semana_actual || 1;
                     const totalSem  = periodizationConfig.total_semanas || 4;
 
-                    // Calcular RIR para cada semana del bloque (inline, sin importar la función del engine)
-                    const floorRIR = nivAtl === 'principiante' ? 1 : 0;
-                    const calcRIR  = (sem: number) => {
-                      const dec = rirProg === 'lenta' ? Math.floor((sem - 1) / 2) : sem - 1;
-                      return Math.max(floorRIR, rirIni - dec);
-                    };
-                    const rirActual = calcRIR(semActual);
+                    // Usar directamente calcTargetRIRForWeek del engine — así el preview
+                    // siempre refleja exactamente lo que el motor va a calcular,
+                    // sin riesgo de divergencia si la lógica del engine cambia.
+                    const rirActual = calcTargetRIRForWeek(semActual, rirIni, nivAtl, rirProg);
 
                     return (
                       <div style={{ marginTop: '16px' }}>
@@ -2623,7 +2626,7 @@ export const PlanPlanner: React.FC = () => {
                           </div>
                           <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
                             {Array.from({ length: totalSem }, (_, i) => i + 1).map(sem => {
-                              const r     = calcRIR(sem);
+                              const r     = calcTargetRIRForWeek(sem, rirIni, nivAtl, rirProg);
                               const isNow = sem === semActual;
                               return (
                                 <div

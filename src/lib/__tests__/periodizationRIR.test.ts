@@ -314,3 +314,121 @@ describe('autoRegulatePlanForNextWeek — progresión RIR', () => {
     expect(getRIRFromPlan(result!)).toBe('3');
   });
 });
+
+// ─── 3. Deload mid-block por fatiga sistémica (triggerDeload conectado) ──────
+
+describe('deload mid-block por fatiga sistémica', () => {
+
+  /** Plan con ejercicios en volumen alto para disparar triggerDeload */
+  const makeHighVolumePlan = (
+    nivel: 'principiante' | 'intermedio' | 'avanzado',
+    setsPerExercise: number,
+    sessionsPerWeek = 1,
+  ): PlanData => ({
+    trainingDays: [{
+      id: 'day_1',
+      name: 'Día A',
+      exercises: [
+        {
+          id: 'ex_1',
+          nombre: 'Press de banca',
+          variables: { 'series de trabajo': String(setsPerExercise), 'repeticiones': '10', 'rir': '1', 'descanso': '120' },
+        },
+        {
+          id: 'ex_2',
+          nombre: 'Sentadilla',
+          variables: { 'series de trabajo': String(setsPerExercise), 'repeticiones': '8', 'rir': '1', 'descanso': '180' },
+        },
+        {
+          id: 'ex_3',
+          nombre: 'Remo con barra',
+          variables: { 'series de trabajo': String(setsPerExercise), 'repeticiones': '10', 'rir': '1', 'descanso': '120' },
+        },
+      ],
+    }],
+    periodizationConfig: {
+      enabled:                      true,
+      nivel_atleta:                 nivel,
+      objetivo:                     'hipertrofia',
+      semana_actual:                2,    // mid-block, no es el final
+      total_semanas:                4,
+      sessions_per_week:            sessionsPerWeek,
+      sessions_completed_this_week: 0,
+      weekly_session_feedback:      [],
+      marcas_1rm:                   {},
+      rir_inicial:                  3,
+      rir_progresion:               'normal',
+    },
+  });
+
+  const makeAllSoreLogged = () => [
+    { nombre: 'Press de banca', repsArray: [10, 10], peso: 80, rir: 1, feedback_estimulo: 'good'  as const, feedback_recuperacion: 'sore' as const },
+    { nombre: 'Sentadilla',     repsArray: [8, 8],   peso: 100, rir: 1, feedback_estimulo: 'good' as const, feedback_recuperacion: 'sore' as const },
+    { nombre: 'Remo con barra', repsArray: [10, 10], peso: 70, rir: 1, feedback_estimulo: 'good'  as const, feedback_recuperacion: 'sore' as const },
+  ];
+
+  it('mayoría sore en volumen alto: dispara deload mid-block y setea mrv_limite_alcanzado', () => {
+    // 3 ejercicios con 7 series y sore → triggerDeload en los 3 → mayoría (3/3 > 50%)
+    const plan   = makeHighVolumePlan('intermedio', 7, 1);
+    const logged = makeAllSoreLogged();
+
+    const result = autoRegulatePlanForNextWeek(plan, logged);
+    expect(result).not.toBeNull();
+
+    // mrv_limite_alcanzado = true: señal para la UI
+    expect(result!.periodizationConfig?.mrv_limite_alcanzado).toBe(true);
+    // semana_actual NO se resetea — el bloque continúa desde donde estaba
+    expect(result!.periodizationConfig?.semana_actual).toBe(2);
+    // RIR sube a DELOAD_RIR (4) en todos los ejercicios
+    const allRIRs = result!.trainingDays!.flatMap(d => d.exercises.map(ex => ex.variables['rir']));
+    expect(allRIRs.every(r => r === '4')).toBe(true);
+    // Series reducidas a la mitad (7 → max(2, round(7/2)) = 4)
+    const allSets = result!.trainingDays!.flatMap(d => d.exercises.map(ex => parseInt(ex.variables['series de trabajo'], 10)));
+    expect(allSets.every(s => s <= 4)).toBe(true);
+  });
+
+  it('mayoría sore en volumen BAJO: NO dispara deload mid-block (triggerDeload=false con pocas series)', () => {
+    // 3 series con sore: triggerDeload solo si currentSets >= 6 para intermedios → no aplica
+    const plan   = makeHighVolumePlan('intermedio', 3, 1);
+    const logged = makeAllSoreLogged();
+
+    const result = autoRegulatePlanForNextWeek(plan, logged);
+    expect(result).not.toBeNull();
+
+    // Sin deload mid-block — el volumen bajo con sore solo reduce series
+    expect(result!.periodizationConfig?.mrv_limite_alcanzado).toBeFalsy();
+    // La semana avanza normalmente
+    expect(result!.periodizationConfig?.semana_actual).toBe(3);
+  });
+
+  it('solo 1 de 3 ejercicios con sore: no alcanza mayoría — sin deload mid-block', () => {
+    const plan   = makeHighVolumePlan('intermedio', 7, 1);
+    const logged = [
+      { nombre: 'Press de banca', repsArray: [10, 10], peso: 80, rir: 1, feedback_estimulo: 'good'     as const, feedback_recuperacion: 'sore'      as const },
+      { nombre: 'Sentadilla',     repsArray: [8, 8],   peso: 100, rir: 1, feedback_estimulo: 'good'    as const, feedback_recuperacion: 'recovered'  as const },
+      { nombre: 'Remo con barra', repsArray: [10, 10], peso: 70, rir: 1, feedback_estimulo: 'good'     as const, feedback_recuperacion: 'recovered'  as const },
+    ];
+
+    const result = autoRegulatePlanForNextWeek(plan, logged);
+    expect(result).not.toBeNull();
+
+    // 1/3 votos = 33% < 50% → sin deload mid-block
+    expect(result!.periodizationConfig?.mrv_limite_alcanzado).toBeFalsy();
+    expect(result!.periodizationConfig?.semana_actual).toBe(3);
+  });
+
+  it('deload al final del bloque: semana_actual se resetea a 1 y mrv_limite_alcanzado=false', () => {
+    // semana_actual=4 con total_semanas=4 → isEndOfBlock → deload planificado
+    const plan = makeHighVolumePlan('intermedio', 7, 1);
+    plan.periodizationConfig!.semana_actual  = 4;
+    plan.periodizationConfig!.total_semanas  = 4;
+    const logged = makeAllSoreLogged();
+
+    const result = autoRegulatePlanForNextWeek(plan, logged);
+    expect(result).not.toBeNull();
+
+    // Deload planificado: resetea el bloque
+    expect(result!.periodizationConfig?.semana_actual).toBe(1);
+    expect(result!.periodizationConfig?.mrv_limite_alcanzado).toBe(false);
+  });
+});

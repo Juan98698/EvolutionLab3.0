@@ -661,6 +661,21 @@ export const autoRegulatePlanForNextWeek = (
   // La prescripción de peso mejora con cada sesión aunque las series no cambien.
   // Si además el atleta completó el tope del rango con RIR de sobra, aplica
   // doble progresión: sube el peso y resetea a repsMin del rango.
+  //
+  // FIX: Se construye un Map de loggedExercises por nombre normalizado ANTES
+  // del forEach de ejercicios del plan. Esto evita el bug donde el mismo
+  // ejercicio presente en dos días distintos (ej. "Sentadilla" en Día A y Día C)
+  // recibía la doble progresión dos veces: una por cada aparición en el plan,
+  // ambas usando los datos del único loggedEntry encontrado por nombre.
+  // Con el Map + Set de nombres ya procesados, la doble progresión se aplica
+  // como máximo UNA vez por nombre de ejercicio por sesión.
+  const loggedMap = new Map<string, typeof loggedExercises[0]>();
+  for (const l of loggedExercises) {
+    loggedMap.set(l.nombre.toLowerCase().trim(), l);
+  }
+  // Rastrear qué ejercicios ya tuvieron doble progresión aplicada en esta sesión
+  const doubleProgressionApplied = new Set<string>();
+
   updatedPlan.trainingDays?.forEach(day => {
     day.exercises?.forEach(ex => {
       if (!ex.nombre) return;
@@ -681,14 +696,14 @@ export const autoRegulatePlanForNextWeek = (
         if (!parsedRange) return;
         const { repsMin, repsMax } = parsedRange;
 
-        // Buscar el ejercicio en la sesión loggeada para chequear doble progresión
-        const loggedEntry = loggedExercises.find(
-          l => l.nombre.toLowerCase().trim() === normName
-        );
+        // Buscar el ejercicio en la sesión loggeada usando el Map O(1)
+        const loggedEntry = loggedMap.get(normName);
 
         let appliedProgression = false;
 
-        if (loggedEntry && loggedEntry.repsArray.length > 0) {
+        // Doble progresión: solo si fue loggeado en esta sesión Y no se aplicó
+        // ya en otro día del mismo plan (ejercicio repetido en múltiples días)
+        if (loggedEntry && loggedEntry.repsArray.length > 0 && !doubleProgressionApplied.has(normName)) {
           const loggedMaxReps = Math.max(...loggedEntry.repsArray);
           const rirLogrado    = loggedEntry.rir;
 
@@ -707,6 +722,7 @@ export const autoRegulatePlanForNextWeek = (
             ex.variables['peso']          = `🤖 ${progressionResult.newWeight} kg`;
             ex.progression_notes          = progressionResult.note;
             appliedProgression            = true;
+            doubleProgressionApplied.add(normName);
           }
         }
 
@@ -770,10 +786,15 @@ export const autoRegulatePlanForNextWeek = (
   });
 
   // ── PASO 5: Aplicar ajuste de volumen con el feedback consolidado ──────────
-  // BUG-02 + BUG-04: Deload global SOLO al final del bloque.
+  // BUG-02 + BUG-04: Deload global SOLO al final del bloque o por fatiga sistémica.
   // BUG-13: nivel gatilla la lógica correcta en calculateNextMicrocycleVolume.
+  // FIX triggerDeload: los votos de deload de ejercicios individuales se acumulan
+  // aquí. Si más de la mitad de los ejercicios con feedback votan deload, se
+  // trata como cierre anticipado de bloque (fatiga sistémica mid-block).
   const weeklyVolumeMap: Record<string, number> = {};
   const weeklyNLMap: Record<string, number>     = {};
+  let deloadVotes     = 0;  // ejercicios que pidieron deload esta semana
+  let feedbackCount   = 0;  // ejercicios con feedback esta semana (denominador)
 
   if (!isEndOfBlock) {
     // Precalcular volumen semanal actual para chequeo de MRV
@@ -815,12 +836,16 @@ export const autoRegulatePlanForNextWeek = (
         const currentSetsStr = foundEx.variables?.['series de trabajo'] || foundEx.variables?.['series'] || '3';
         const currentSets    = parseInt(currentSetsStr, 10) || 3;
 
-        const { nextSets, notes } = calculateNextMicrocycleVolume(
+        const { nextSets, triggerDeload, notes } = calculateNextMicrocycleVolume(
           currentSets,
           feedback.estimulo,
           feedback.recuperacion,
           nivel
         );
+
+        // Acumular votos de deload — cada ejercicio tiene voz
+        feedbackCount += 1;
+        if (triggerDeload) deloadVotes += 1;
 
         let finalSets  = nextSets;
         let finalNotes = notes;
@@ -869,11 +894,23 @@ export const autoRegulatePlanForNextWeek = (
     });
   }
 
-  // ── PASO 6: Avanzar semana / cerrar bloque ─────────────────────────────────
-  if (isEndOfBlock) {
-    config.semana_actual = 1;
-    config.mrv_limite_alcanzado = false;
+  // ── Deload mid-block por fatiga sistémica ─────────────────────────────────
+  // Si más de la mitad de los ejercicios con feedback votan triggerDeload,
+  // el cuerpo está en fatiga sistémica real — se aplica deload anticipado.
+  // Umbral: mayoría simple (>50%) para evitar que un solo ejercicio fuera de
+  // rango dispare el deload de todo el bloque.
+  // Distinción importante vs isEndOfBlock:
+  //   - isEndOfBlock: deload planificado → semana_actual se resetea a 1
+  //   - isMidBlockDeload: deload de emergencia → semana_actual se mantiene
+  //     para que el bloque continúe desde donde estaba al recuperarse.
+  const isMidBlockDeload = !isEndOfBlock
+    && feedbackCount > 0
+    && deloadVotes > feedbackCount / 2;
 
+  // ── PASO 6: Avanzar semana / cerrar bloque ─────────────────────────────────
+  const applyDeload = isEndOfBlock || isMidBlockDeload;
+
+  if (applyDeload) {
     // Deload: reducir series a la mitad, RIR conservador
     updatedPlan.trainingDays?.forEach(day => {
       day.exercises?.forEach(ex => {
@@ -883,6 +920,17 @@ export const autoRegulatePlanForNextWeek = (
         ex.variables['rir'] = DELOAD_RIR;
       });
     });
+
+    if (isEndOfBlock) {
+      // Deload planificado → reiniciar bloque
+      config.semana_actual        = 1;
+      config.mrv_limite_alcanzado = false;
+    } else {
+      // Deload mid-block → conservar semana actual, marcar para que la UI
+      // pueda mostrar un aviso al entrenador ("deload anticipado por fatiga")
+      config.mrv_limite_alcanzado = true;
+      // semana_actual NO cambia: el bloque reanuda desde aquí al recuperarse
+    }
   } else {
     const newWeek = currentWeek + 1;
     config.semana_actual = newWeek;
@@ -891,9 +939,9 @@ export const autoRegulatePlanForNextWeek = (
     // Calcula el RIR target para la semana entrante y lo inyecta en todos
     // los ejercicios. La fórmula de prescripción de carga lo toma en el
     // Paso 2 de la próxima sesión → peso sube automáticamente al bajar RIR.
-    const rirInicial   = config.rir_inicial   ?? (nivel === 'avanzado' ? 4 : 3);
+    const rirInicial    = config.rir_inicial    ?? (nivel === 'avanzado' ? 4 : 3);
     const rirProgresion = config.rir_progresion ?? (nivel === 'principiante' ? 'lenta' : 'normal');
-    const newTargetRIR = calcTargetRIRForWeek(newWeek, rirInicial, nivel, rirProgresion);
+    const newTargetRIR  = calcTargetRIRForWeek(newWeek, rirInicial, nivel, rirProgresion);
 
     updatedPlan.trainingDays?.forEach(day => {
       day.exercises?.forEach(ex => {
