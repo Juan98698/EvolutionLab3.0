@@ -1,4 +1,4 @@
-import React, { useState, useEffect, Suspense, lazy, useRef } from 'react';
+import React, { useState, useEffect, Suspense, lazy, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useSupabase } from '../../context/SupabaseContext';
 import { supabase } from '../../lib/supabaseClient';
@@ -35,9 +35,13 @@ export const TrainerDashboard: React.FC = () => {
     type: 'success',
   });
 
-  const showToast = (msg: string, type: 'success' | 'error' | 'info') => {
+  const showToast = useCallback((msg: string, type: 'success' | 'error' | 'info') => {
     setToastState({ visible: true, message: msg, type });
-  };
+    // Ocultar toast automáticamente
+    setTimeout(() => {
+      setToastState(prev => ({ ...prev, visible: false }));
+    }, 3000);
+  }, []);
 
   // Hooks
   const { trainerSubscription, setTrainerSubscription } = useTrainerSubscription(profile, refreshProfile, showToast);
