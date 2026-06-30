@@ -2600,6 +2600,59 @@ export const PlanPlanner: React.FC = () => {
                           </div>
                         </div>
 
+                        {/* Toggle: rir_override_manual */}
+                        {(() => {
+                          const isOverride = !!periodizationConfig.rir_override_manual;
+                          return (
+                            <div style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'space-between',
+                              background: isOverride ? 'rgba(251,191,36,0.08)' : 'rgba(0,0,0,0.15)',
+                              border: `1px solid ${isOverride ? 'rgba(251,191,36,0.3)' : 'rgba(255,255,255,0.06)'}`,
+                              borderRadius: '10px',
+                              padding: '10px 14px',
+                              marginBottom: '14px',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s',
+                            }}
+                              onClick={() => setPeriodizationConfig(prev => prev ? { ...prev, rir_override_manual: !prev.rir_override_manual } : undefined)}
+                            >
+                              <div>
+                                <div style={{ fontSize: '11px', fontWeight: 700, color: isOverride ? 'rgba(251,191,36,0.9)' : 'rgba(255,255,255,0.5)', marginBottom: '2px' }}>
+                                  {isOverride ? '🔒 RIR MANUAL ACTIVO' : '🤖 RIR AUTOMÁTICO'}
+                                </div>
+                                <div style={{ fontSize: '10px', color: isOverride ? 'rgba(251,191,36,0.6)' : 'rgba(255,255,255,0.3)', lineHeight: '1.3' }}>
+                                  {isOverride
+                                    ? 'El motor no tocará el RIR. Tú controlas cada ejercicio. Toca para volver al automático.'
+                                    : 'El motor actualiza el RIR semana a semana. Toca para tomar control manual.'}
+                                </div>
+                              </div>
+                              <div style={{
+                                width: '36px',
+                                height: '20px',
+                                borderRadius: '10px',
+                                background: isOverride ? 'rgba(251,191,36,0.7)' : 'rgba(255,255,255,0.15)',
+                                position: 'relative',
+                                flexShrink: 0,
+                                marginLeft: '12px',
+                                transition: 'background 0.2s',
+                              }}>
+                                <div style={{
+                                  position: 'absolute',
+                                  top: '3px',
+                                  left: isOverride ? '19px' : '3px',
+                                  width: '14px',
+                                  height: '14px',
+                                  borderRadius: '50%',
+                                  background: 'white',
+                                  transition: 'left 0.2s',
+                                }} />
+                              </div>
+                            </div>
+                          );
+                        })()}
+
                         {/* Indicador visual: RIR actual + proyección del bloque */}
                         <div style={{
                           background: 'linear-gradient(135deg, rgba(0,212,255,0.06), rgba(99,102,241,0.06))',
