@@ -320,6 +320,60 @@ test.describe('Evolution Lab 3.0 Visual Regression Tests', () => {
       });
     });
 
+    // Intercept planes fetch to avoid hitting production database in CI
+    await page.route('**/rest/v1/planes*', async route => {
+      await route.fulfill({
+        json: [
+          {
+            id: 'test-plan-id',
+            cliente_id: 'test-client-id',
+            creador_id: 'test-trainer-id',
+            activo: true,
+            datos_plan: {
+              portada: {
+                userName: 'Juan Perez',
+                userGoal: 'Hipertrofia',
+                startDate: '2026-06-30',
+                planVigenciaPlan: '28',
+                trainerName: 'Coach Juan',
+                whatsappLink: '',
+                instagramLink: '',
+                globalNote: 'Ejecuta con cuidado'
+              },
+              globalVariables: [
+                { id: 'series de trabajo', label: 'SERIES DE TRABAJO', type: 'text', defaultValue: '3' },
+                { id: 'repeticiones', label: 'REPETICIONES', type: 'text', defaultValue: '10' }
+              ],
+              trainingDays: [
+                {
+                  id: 'day-1',
+                  name: 'Lunes: Pecho',
+                  exercises: [
+                    {
+                      id: 'ex-1',
+                      nombre: 'Press de banca',
+                      grupo_muscular: 'Pecho',
+                      variables: {
+                        'series de trabajo': '3',
+                        'repeticiones': '10'
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        ]
+      });
+    });
+
+    // Intercept sesiones_historial fetch
+    await page.route('**/rest/v1/sesiones_historial*', async route => {
+      await route.fulfill({
+        json: []
+      });
+    });
+
     // Mock Athlete Session in LocalStorage
     await page.addInitScript(({ projectRef }) => {
       (window as any)._playwright_test = true;
