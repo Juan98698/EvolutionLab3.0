@@ -78,7 +78,9 @@ function renderModal(overrides: {
   const showToast = vi.fn();
 
   // Usar hasOwnProperty para permitir pasar null como atleta sin que el ?? lo reemplace por mockAthlete
-  const selectedAthlete = overrides.hasOwnProperty('athlete') ? overrides.athlete : mockAthlete;
+  const selectedAthlete: Profile | null = overrides.hasOwnProperty('athlete')
+    ? (overrides.athlete ?? null)
+    : mockAthlete;
 
   const utils = render(
     <EvolutionModal

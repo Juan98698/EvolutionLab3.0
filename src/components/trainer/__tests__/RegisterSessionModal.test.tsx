@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import { render, screen, cleanup, fireEvent, waitFor } from '@testing-library/react';
 import RegisterSessionModal from '../modals/RegisterSessionModal';
 import type { Profile } from '../../../types/database.types';
@@ -268,7 +268,7 @@ describe('RegisterSessionModal — cierre', () => {
     // El botón × usa &times; que se renderiza como el carácter ×
     const closeBtn =
       screen.queryByRole('button', { name: /×/ }) ??
-      screen.getAllRole?.('button').find((b: HTMLElement) => b.textContent === '×') ??
+      screen.getAllByRole('button').find((b: HTMLElement) => b.textContent === '×') ??
       Array.from(document.querySelectorAll('button')).find(b => b.textContent?.trim() === '×');
 
     expect(closeBtn).toBeDefined();
