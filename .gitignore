@@ -37,3 +37,13 @@ scratch/
 *.sw?
 
 .vercel
+
+# Archivos temporales y backups de trabajo — nunca commitear al historial
+# (ver Hallazgo #4 del informe de refactorización 2026-06-30)
+*.backup.tsx
+*.backup.ts
+temp_*.tsx
+temp_*.ts
+temp_*.js
+fix-*.cjs
+fix-*.mjs
