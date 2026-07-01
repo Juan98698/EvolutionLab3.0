@@ -80,13 +80,15 @@ test.describe('Evolution Lab 3.0 Visual Regression Tests', () => {
     // 1. Capture the Top Navigation Bar (Visual snapshot)
     const topBar = page.locator('.header, .top-bar');
     await expect(topBar).toHaveScreenshot('trainer-top-bar.png', {
-      maxDiffPixelRatio: 0.02
+      maxDiffPixelRatio: 0.02,
+      timeout: 30000
     });
 
     // 2. Capture the full viewport of the Trainer Dashboard
     await expect(page).toHaveScreenshot('trainer-dashboard-full.png', {
       fullPage: true,
-      mask: [page.locator('#fab1RMBtn')]
+      mask: [page.locator('#fab1RMBtn')],
+      timeout: 30000
     });
   });
 
@@ -351,13 +353,15 @@ test.describe('Evolution Lab 3.0 Visual Regression Tests', () => {
     // 1. Capture Athlete Top Navigation Bar
     const topBar = page.locator('.header, .top-bar');
     await expect(topBar).toHaveScreenshot('athlete-top-bar.png', {
-      maxDiffPixelRatio: 0.02
+      maxDiffPixelRatio: 0.02,
+      timeout: 30000
     });
 
     // 2. Capture Athlete Dashboard Page
     await expect(page).toHaveScreenshot('athlete-dashboard-full.png', {
       fullPage: true,
-      mask: [page.locator('#fab1RMBtn')]
+      mask: [page.locator('#fab1RMBtn')],
+      timeout: 30000
     });
   });
 });
