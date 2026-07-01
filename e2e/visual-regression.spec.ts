@@ -356,6 +356,9 @@ test.describe('Evolution Lab 3.0 Visual Regression Tests', () => {
     // Wait for header/top-bar
     await page.waitForSelector('.header, .top-bar', { timeout: 60000 });
 
+    // Esperar a que el plan esté completamente cargado y renderizado para evitar discrepancias de tamaño/alto
+    await page.waitForSelector('text=PLAN DE ENTRENAMIENTO PERSONALIZADO', { timeout: 60000 });
+
     // 1. Capture Athlete Top Navigation Bar
     const topBar = page.locator('.header, .top-bar');
     await expect(topBar).toHaveScreenshot('athlete-top-bar.png', {
