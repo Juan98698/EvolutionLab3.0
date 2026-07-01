@@ -41,3 +41,44 @@ jobs:
 
       - name: Build de producción
         run: npm run build
+
+  e2e:
+    name: E2E + Regresión Visual (Playwright)
+    runs-on: ubuntu-latest
+    needs: build-and-test
+
+    # Usamos la imagen oficial de Playwright en vez de `playwright install` porque
+    # así el renderizado (fuentes, antialiasing) es siempre el mismo entre quien
+    # genera las capturas baseline y quien las compara acá. Si se generan baselines
+    # en otro entorno (ej. Windows local) van a fallar por mismatch de plataforma
+    # aunque el diseño esté bien — hay que regenerarlas con esta misma imagen.
+    # --ipc=host evita que Chromium crashee por falta de memoria compartida en Docker.
+    container:
+      image: mcr.microsoft.com/playwright:v1.44.0-jammy
+      options: --ipc=host
+
+    env:
+      # El cliente de Supabase (src/lib/supabaseClient.ts) llama a createClient()
+      # con estos valores ANTES de aplicar los mocks de modo E2E, así que tienen
+      # que existir con formato válido aunque nunca se use una conexión real.
+      # Agregalos en Settings → Secrets and variables → Actions del repo.
+      VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Tests E2E y regresión visual (Playwright)
+        run: npx playwright test
+
+      - name: Subir evidencia si falla (screenshots/traces)
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-test-results
+          path: test-results/
+          retention-days: 7
