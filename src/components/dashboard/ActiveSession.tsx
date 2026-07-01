@@ -183,26 +183,34 @@ const ActiveSession: React.FC = () => {
 
   const handleSeriesDone = useCallback(
     (exIdx: number, sIdx: number) => {
+      const isCurrentlyDone = exercises[exIdx]?.series[sIdx]?.done;
+
       setExercises(prev => {
         const copy = [...prev];
         const series = [...copy[exIdx].series];
 
-        // Fill in ghost values if the field is still empty
-        if (!series[sIdx].peso && copy[exIdx].suggestedPeso) {
-          series[sIdx] = { ...series[sIdx], peso: copy[exIdx].suggestedPeso };
-        }
-        if (!series[sIdx].reps && copy[exIdx].suggestedReps) {
-          series[sIdx] = { ...series[sIdx], reps: copy[exIdx].suggestedReps };
+        if (isCurrentlyDone) {
+          series[sIdx] = { ...series[sIdx], done: false };
+        } else {
+          // Fill in ghost values if the field is still empty
+          if (!series[sIdx].peso && copy[exIdx].suggestedPeso) {
+            series[sIdx] = { ...series[sIdx], peso: copy[exIdx].suggestedPeso };
+          }
+          if (!series[sIdx].reps && copy[exIdx].suggestedReps) {
+            series[sIdx] = { ...series[sIdx], reps: copy[exIdx].suggestedReps };
+          }
+          series[sIdx] = { ...series[sIdx], done: true };
         }
 
-        series[sIdx] = { ...series[sIdx], done: true };
         copy[exIdx] = { ...copy[exIdx], series };
         return copy;
       });
 
-      // Start rest timer
-      const descanso = exercises[exIdx]?.descanso || 90;
-      startRestTimer(descanso);
+      // Start rest timer only if marked as done (was not done previously)
+      if (!isCurrentlyDone) {
+        const descanso = exercises[exIdx]?.descanso || 90;
+        startRestTimer(descanso);
+      }
     },
     [exercises, startRestTimer]
   );
@@ -537,9 +545,9 @@ const ActiveSession: React.FC = () => {
             {/* Done button */}
             <button
               className={`active-session-check-btn${s.done ? ' done' : ''}`}
-              onClick={() => !s.done && handleSeriesDone(currentIdx, sIdx)}
-              disabled={s.done}
-              aria-label={s.done ? 'Serie completada' : `Marcar serie ${sIdx + 1} como completada`}
+              onClick={() => handleSeriesDone(currentIdx, sIdx)}
+              disabled={saving}
+              aria-label={s.done ? `Desmarcar serie ${sIdx + 1}` : `Marcar serie ${sIdx + 1} como completada`}
             >
               {s.done ? '✓' : '○'}
             </button>
@@ -649,7 +657,8 @@ const ActiveSession: React.FC = () => {
             <div style={{
               background: 'rgba(5, 8, 16, 0.95)', border: '1px solid rgba(0, 242, 254, 0.25)',
               borderRadius: '10px', padding: '12px', marginBottom: '14px', textAlign: 'left',
-              fontSize: '11px', lineHeight: 1.45, color: '#e2e8f0', boxShadow: '0 4px 20px rgba(0,0,0,0.5)'
+              fontSize: '11px', lineHeight: 1.45, color: '#e2e8f0', boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
+              fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
             }}>
               <strong style={{ color: '#00f2fe', display: 'block', marginBottom: '6px', fontSize: '12px' }}>
                 ¿Cómo responder según la ciencia de Evolution Lab?
