@@ -270,16 +270,17 @@ test.describe('Evolution Lab 3.0 Visual Regression Tests', () => {
     // Wait for the planner structure to load
     await page.waitForSelector('.planner-title-main', { timeout: 20000 });
 
-    // Locate the Periodization Panel card
-    const periodizationCard = page.locator('div:has(h3:has-text("PERIODIZACIÓN CIENTÍFICA"))').first();
-    await page.waitForSelector('h3:has-text("PERIODIZACIÓN CIENTÍFICA")', { timeout: 15000 });
+    // Locate the Periodization Panel card via stable data-testid attribute
+    await page.waitForSelector('[data-testid="periodization-card"]', { timeout: 20000 });
+    const periodizationCard = page.locator('[data-testid="periodization-card"]').first();
 
     // Scroll to the Periodization Card to load it stably
     await periodizationCard.scrollIntoViewIfNeeded();
 
     // 1. Capture the Periodization Panel card in its default state (Automated RIR)
     await expect(periodizationCard).toHaveScreenshot('trainer-periodization-card-default.png', {
-      maxDiffPixelRatio: 0.02
+      maxDiffPixelRatio: 0.02,
+      timeout: 15000
     });
 
     // 2. Locate and toggle RIR manual override button
@@ -291,7 +292,8 @@ test.describe('Evolution Lab 3.0 Visual Regression Tests', () => {
 
     // 3. Capture the Periodization Panel card in Manual Override state
     await expect(periodizationCard).toHaveScreenshot('trainer-periodization-card-manual.png', {
-      maxDiffPixelRatio: 0.02
+      maxDiffPixelRatio: 0.02,
+      timeout: 15000
     });
   });
 

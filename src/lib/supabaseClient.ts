@@ -95,6 +95,18 @@ if (typeof window !== 'undefined') {
         return builder;
       },
       order: (_col: string, _options?: any) => builder,
+      limit: (_count: number) => builder,
+      range: (_from: number, _to: number) => builder,
+      in: (_col: string, _vals: any[]) => builder,
+      not: (_col: string, _op: string, _val: any) => builder,
+      is: (_col: string, _val: any) => builder,
+      gt: (_col: string, _val: any) => builder,
+      gte: (_col: string, _val: any) => builder,
+      lt: (_col: string, _val: any) => builder,
+      lte: (_col: string, _val: any) => builder,
+      contains: (_col: string, _val: any) => builder,
+      overlaps: (_col: string, _val: any) => builder,
+      textSearch: (_col: string, _query: string, _opts?: any) => builder,
       upsert: (_data: any, _options?: any) => Promise.resolve({ data: [], error: null }),
       single: () => {
         if (table === 'profiles') {
