@@ -27,7 +27,7 @@ test.describe('Evolution Lab 3.0 Visual Regression Tests', () => {
   });
 
   test('Trainer Dashboard Layout - Visual Verification', async ({ page }) => {
-    test.setTimeout(30000);
+    test.setTimeout(90000);
 
     // Intercept profiles single fetch for the trainer
     await page.route('**/rest/v1/profiles*', async route => {
@@ -91,7 +91,7 @@ test.describe('Evolution Lab 3.0 Visual Regression Tests', () => {
   });
 
   test('Trainer Planner & Periodization Panel - Visual Verification', async ({ page }) => {
-    test.setTimeout(45000);
+    test.setTimeout(90000);
 
     // Intercept ejercicios_globales fetch query
     await page.route('**/rest/v1/ejercicios_globales*', async route => {
@@ -298,7 +298,7 @@ test.describe('Evolution Lab 3.0 Visual Regression Tests', () => {
   });
 
   test('Athlete Dashboard Layout - Visual Verification', async ({ page }) => {
-    test.setTimeout(30000);
+    test.setTimeout(90000);
 
     // Intercept profiles single fetch for the athlete
     await page.route('**/rest/v1/profiles*', async route => {

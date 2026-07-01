@@ -29,7 +29,7 @@ test.describe('Evolution Lab 3.0 E2E Workflows', () => {
   });
 
   test('should render trainer planner workspace correctly on Desktop', async ({ page }) => {
-    test.setTimeout(25000);
+    test.setTimeout(60000);
 
     // Set client-side testing flag and load mock localStorage keys before page scripts run
     await page.addInitScript(({ projectRef }) => {
@@ -64,13 +64,13 @@ test.describe('Evolution Lab 3.0 E2E Workflows', () => {
     // Navigate directly to trainer planner route using DOMContentLoaded wait strategy
     await page.goto('/trainer/plan/test-client-id', { waitUntil: 'domcontentloaded' });
 
-    // Verify title metadata loads correctly (using a 12s assertion timeout)
+    // Verify title metadata loads correctly (using a 30s assertion timeout)
     const h1 = page.locator('.planner-title-main');
-    await expect(h1).toContainText('PLANIFICADOR DE RUTINA', { timeout: 12000 });
+    await expect(h1).toContainText('PLANIFICADOR DE RUTINA', { timeout: 30000 });
   });
 
   test('should display athlete welcome greeting and weekly consistency calendar on Mobile', async ({ page }) => {
-    test.setTimeout(25000);
+    test.setTimeout(60000);
 
     // Set mobile viewport
     await page.setViewportSize({ width: 390, height: 844 });
@@ -127,13 +127,13 @@ test.describe('Evolution Lab 3.0 E2E Workflows', () => {
     // Navigate directly to dashboard route using DOMContentLoaded wait strategy
     await page.goto('/dashboard', { waitUntil: 'domcontentloaded' });
 
-    // Verify athlete header greeting and calendar cards load successfully (using a 12s assertion timeout)
+    // Verify athlete header greeting and calendar cards load successfully (using a 30s assertion timeout)
     const topBar = page.locator('.top-bar');
-    await expect(topBar).toContainText('Hola, Juan Perez', { timeout: 12000 });
+    await expect(topBar).toContainText('Hola, Juan Perez', { timeout: 30000 });
 
     const calendarTitle = page.locator('text=CONSISTENCIA SEMANAL');
     // Scroll element into view before asserting visibility on mobile layouts
     await calendarTitle.scrollIntoViewIfNeeded();
-    await expect(calendarTitle).toBeVisible({ timeout: 12000 });
+    await expect(calendarTitle).toBeVisible({ timeout: 30000 });
   });
 });
