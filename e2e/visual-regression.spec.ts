@@ -1,6 +1,16 @@
 import { test, expect } from '@playwright/test';
 
-const PROJECT_REF = 'szqitksfxiuuiljftlrl';
+// Derivado de VITE_SUPABASE_URL para evitar hardcodear el identificador del proyecto.
+// Si se migra el proyecto de Supabase, solo hay que actualizar la variable de entorno —
+// no buscar referencias dispersas en el código. Se puede sobreescribir explícitamente
+// con la variable SUPABASE_PROJECT_REF en .env.local o en el entorno de CI.
+//
+// Ejemplo en .env.local:
+//   VITE_SUPABASE_URL=https://szqitksfxiuuiljftlrl.supabase.co
+//   SUPABASE_PROJECT_REF=szqitksfxiuuiljftlrl  (opcional, si se quiere valor explícito)
+const PROJECT_REF = process.env['SUPABASE_PROJECT_REF']
+  || process.env['VITE_SUPABASE_URL']?.split('//')[1]?.split('.')[0]
+  || '';
 
 test.describe('Evolution Lab 3.0 Visual Regression Tests', () => {
   

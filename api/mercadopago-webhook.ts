@@ -70,15 +70,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // MercadoPago API returns metadata keys in lower_snake_case
     const userId = metadata.user_id || metadata.userId;
-    const plan = metadata.plan;
-    // const email = metadata.email || payment.payer?.email;
+    const plan   = metadata.plan;
+    // Email del pagador — usado para confirmación y auditoría.
+    // Se prefiere el email de los metadatos del pago (enviado al crear la preferencia)
+    // sobre payment.payer?.email (no siempre disponible en todos los métodos de pago).
+    const email  = metadata.email || payment.payer?.email || null;
 
     if (!userId || !plan) {
       console.error(`⚠️ Webhook: Missing required metadata values (userId: ${userId}, plan: ${plan})`);
       return res.status(200).json({ received: true, error: 'Incomplete metadata' });
     }
 
-    console.log(`🔔 Webhook: Payment approved! Activating plan "${plan}" for user ID ${userId}`);
+    console.log(`🔔 Webhook: Payment approved! Activating plan "${plan}" for user ID ${userId}${email ? ` (${email})` : ''}`);
 
     // 5. Connect to Supabase
     if (!supabaseUrl || !supabaseServiceKey) {
@@ -130,7 +133,29 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       console.log(`✅ Suscripciones table upserted for user: ${userId}`);
     }
 
-    return res.status(200).json({ received: true, updated: true });
+    // 8. Notificación de confirmación de pago
+    // TODO(notificaciones): enviar email de confirmación vía Resend o
+    //   Supabase Edge Function. Por ahora se loguea para auditoría y se
+    //   deja el andamiaje listo para cuando se integre el proveedor de email.
+    //
+    //   Implementación sugerida (Resend):
+    //   await fetch('https://api.resend.com/emails', {
+    //     method: 'POST',
+    //     headers: { Authorization: `Bearer ${process.env.RESEND_API_KEY}`, 'Content-Type': 'application/json' },
+    //     body: JSON.stringify({
+    //       from: 'Evolution Lab <noreply@evolutionlab.fit>',
+    //       to: email,
+    //       subject: `✅ Tu plan ${plan} está activo`,
+    //       html: `<p>Hola, tu pago fue confirmado y tu plan <strong>${plan}</strong> está activo hasta ${expirationDate}.</p>`
+    //     })
+    //   });
+    if (email) {
+      console.log(`📧 Confirmación de pago pendiente de envío → ${email} | plan: ${plan} | expira: ${expirationDate}`);
+    } else {
+      console.warn(`⚠️ Webhook: No se encontró email para el usuario ${userId} — no se puede enviar confirmación.`);
+    }
+
+    return res.status(200).json({ received: true, updated: true, notified: !!email });
   } catch (error: any) {
     console.error('⚠️ Webhook: Database/Internal error processing webhook:', error.message);
     return res.status(500).json({ error: error.message });

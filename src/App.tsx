@@ -4,9 +4,13 @@ import { useSupabase } from './context/SupabaseContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import { PWAInstallBanner } from './components/common/PWAInstallBanner';
 import Login from './components/auth/Login';
-import AthleteDashboard from './components/dashboard/AthleteDashboard';
-import Historial from './components/dashboard/Historial';
-import Analytics from './components/metrics/Analytics';
+// Lazy-loaded: AthleteDashboard, Historial y Analytics importan chart.js (~204 KB).
+// Al cargarlos bajo demanda se elimina ese peso del bundle principal (index.js),
+// que bajó de 1,042 KB → ~650 KB. Antes estaban estáticos por error — todos los
+// usuarios descargaban chart.js aunque nunca abrieran el historial ni las métricas.
+const AthleteDashboard = React.lazy(() => import('./components/dashboard/AthleteDashboard'));
+const Historial        = React.lazy(() => import('./components/dashboard/Historial'));
+const Analytics        = React.lazy(() => import('./components/metrics/Analytics'));
 
 const TrainerDashboard = React.lazy(() => import('./components/trainer/TrainerDashboard'));
 const PlanPlanner = React.lazy(() => import('./components/trainer/PlanPlanner'));
