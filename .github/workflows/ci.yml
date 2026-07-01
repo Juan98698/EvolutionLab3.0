@@ -54,7 +54,7 @@ jobs:
     # aunque el diseño esté bien — hay que regenerarlas con esta misma imagen.
     # --ipc=host evita que Chromium crashee por falta de memoria compartida en Docker.
     container:
-      image: mcr.microsoft.com/playwright:v1.44.0-jammy
+      image: mcr.microsoft.com/playwright:v1.61.1-jammy
       options: --ipc=host
 
     env:
