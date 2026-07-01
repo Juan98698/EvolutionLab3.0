@@ -370,7 +370,28 @@ test.describe('Evolution Lab 3.0 Visual Regression Tests', () => {
     // Intercept sesiones_historial fetch
     await page.route('**/rest/v1/sesiones_historial*', async route => {
       await route.fulfill({
-        json: []
+        json: [
+          {
+            id: 'mock-session-1',
+            fecha: '2026-06-30',
+            notas_generales: 'Gran entrenamiento',
+            sesiones_ejercicios: [
+              {
+                id: 'ex-1',
+                nombre_ejercicio: 'Press de banca',
+                grupo_muscular: 'Pecho',
+                series_reps: [10, 10, 10],
+                peso: 80,
+                rpe_rir: 8,
+                descanso: 2,
+                volumen: 2400,
+                rm_estimado: 106.6,
+                feedback_estimulo: 'bueno',
+                feedback_recuperacion: 'bueno'
+              }
+            ]
+          }
+        ]
       });
     });
 
@@ -439,6 +460,28 @@ test.describe('Evolution Lab 3.0 Visual Regression Tests', () => {
         ]
       };
       window.localStorage.setItem('pwa_client_plan', JSON.stringify(mockPlan));
+
+      // Inyectar el historial de sesiones mockeado en localStorage para forzar que la Gamificación siempre se renderice (3328px de alto)
+      const mockSessionsCache = [
+        {
+          id: 'mock-session-1',
+          fecha: '2026-06-30',
+          notas_sesion: 'Gran entrenamiento',
+          ejercicios: [
+            {
+              id_ej: 'ex-1',
+              nombre: 'Press de banca',
+              grupo: 'Pecho',
+              peso: 80,
+              repsArray: [10, 10, 10],
+              rpe: 8,
+              descanso: 2,
+              notas_ej: ''
+            }
+          ]
+        }
+      ];
+      window.localStorage.setItem('sobrecarga_v5', JSON.stringify(mockSessionsCache));
     }, { projectRef: PROJECT_REF });
 
     // Navigate to Athlete Dashboard
