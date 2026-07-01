@@ -77,8 +77,8 @@ function renderModal(overrides: {
   const onClose  = vi.fn();
   const showToast = vi.fn();
 
-  // Usar hasOwnProperty para permitir pasar null como atleta sin que el ?? lo reemplace por mockAthlete
-  const selectedAthlete: Profile | null = overrides.hasOwnProperty('athlete')
+  // Usar hasOwnProperty de forma segura para permitir pasar null como atleta sin que el ?? lo reemplace por mockAthlete
+  const selectedAthlete: Profile | null = Object.prototype.hasOwnProperty.call(overrides, 'athlete')
     ? (overrides.athlete ?? null)
     : mockAthlete;
 
