@@ -343,11 +343,48 @@ test.describe('Evolution Lab 3.0 Visual Regression Tests', () => {
       window.localStorage.setItem('evolution_trainer_onboarded_v1_test-client-id', 'true');
       window.localStorage.setItem('evolution_guided_plan_v1_test-client-id', 'true');
       window.localStorage.setItem('evolution_onboarded_v1', 'true');
+      window.localStorage.setItem('pwa_push_prompt_dismissed_test-client-id', 'true');
       window.localStorage.setItem('pwa_user_profile', JSON.stringify({
         id: 'test-client-id',
         nombre: 'Juan Perez',
         rol: 'cliente'
       }));
+
+      // Inyectar el plan mockeado de forma síncrona para que cargue instantáneamente (0ms) sin depender de red/timeouts
+      const mockPlan = {
+        portada: {
+          userName: 'Juan Perez',
+          userGoal: 'Hipertrofia',
+          startDate: '2026-06-30',
+          planVigenciaPlan: '28',
+          trainerName: 'Coach Juan',
+          whatsappLink: '',
+          instagramLink: '',
+          globalNote: 'Ejecuta con cuidado'
+        },
+        globalVariables: [
+          { id: 'series de trabajo', label: 'SERIES DE TRABAJO', type: 'text', defaultValue: '3' },
+          { id: 'repeticiones', label: 'REPETICIONES', type: 'text', defaultValue: '10' }
+        ],
+        trainingDays: [
+          {
+            id: 'day-1',
+            name: 'Lunes: Pecho',
+            exercises: [
+              {
+                id: 'ex-1',
+                nombre: 'Press de banca',
+                grupo_muscular: 'Pecho',
+                variables: {
+                  'series de trabajo': '3',
+                  'repeticiones': '10'
+                }
+              }
+            ]
+          }
+        ]
+      };
+      window.localStorage.setItem('pwa_client_plan', JSON.stringify(mockPlan));
     }, { projectRef: PROJECT_REF });
 
     // Navigate to Athlete Dashboard
@@ -356,8 +393,8 @@ test.describe('Evolution Lab 3.0 Visual Regression Tests', () => {
     // Wait for header/top-bar
     await page.waitForSelector('.header, .top-bar', { timeout: 60000 });
 
-    // Esperar a que el plan esté completamente cargado y renderizado para evitar discrepancias de tamaño/alto
-    await page.waitForSelector('text=PLAN DE ENTRENAMIENTO PERSONALIZADO', { timeout: 60000 });
+    // Esperar a que el plan esté realmente cargado buscando el botón de entrenar ahora, el cual es condicional
+    await page.waitForSelector('#start-session-btn', { timeout: 60000 });
 
     // 1. Capture Athlete Top Navigation Bar
     const topBar = page.locator('.header, .top-bar');
