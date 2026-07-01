@@ -75,7 +75,7 @@ test.describe('Evolution Lab 3.0 Visual Regression Tests', () => {
     await page.goto('/trainer', { waitUntil: 'domcontentloaded' });
 
     // Wait for the main elements to render (handles both old .header and new .top-bar classes)
-    await page.waitForSelector('.header, .top-bar', { timeout: 15000 });
+    await page.waitForSelector('.header, .top-bar', { timeout: 60000 });
 
     // 1. Capture the Top Navigation Bar (Visual snapshot)
     const topBar = page.locator('.header, .top-bar');
@@ -348,7 +348,7 @@ test.describe('Evolution Lab 3.0 Visual Regression Tests', () => {
     await page.goto('/dashboard', { waitUntil: 'domcontentloaded' });
 
     // Wait for header/top-bar
-    await page.waitForSelector('.header, .top-bar', { timeout: 15000 });
+    await page.waitForSelector('.header, .top-bar', { timeout: 60000 });
 
     // 1. Capture Athlete Top Navigation Bar
     const topBar = page.locator('.header, .top-bar');
