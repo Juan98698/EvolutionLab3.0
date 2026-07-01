@@ -47,3 +47,4 @@ temp_*.ts
 temp_*.js
 fix-*.cjs
 fix-*.mjs
+e2e/**/*-win32.png

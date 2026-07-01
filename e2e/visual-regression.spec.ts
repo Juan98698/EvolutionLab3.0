@@ -15,16 +15,22 @@ const PROJECT_REF = process.env['SUPABASE_PROJECT_REF']
 test.describe('Evolution Lab 3.0 Visual Regression Tests', () => {
   
   test.beforeEach(({ page }) => {
-    // Listen for all browser console logs and print them to terminal
     page.on('console', msg => {
       console.log(`[BROWSER CONSOLE ${msg.type()}]: ${msg.text()}`);
     });
     
-    // Listen for uncaught exceptions in the browser page
     page.on('pageerror', err => {
       console.log(`[BROWSER UNCAUGHT EXCEPTION]: ${err.message}\nStack: ${err.stack}`);
     });
+
+    page.on('request', req => {              
+      if (req.url().includes('supabase.co') && !req.url().includes('/auth/')) {
+        console.log(`[REQUEST]: ${req.method()} ${req.url()}`);
+      }
+    });
   });
+
+
 
   test('Trainer Dashboard Layout - Visual Verification', async ({ page }) => {
     test.setTimeout(90000);
@@ -336,7 +342,7 @@ test.describe('Evolution Lab 3.0 Visual Regression Tests', () => {
       window.localStorage.setItem(`sb-${projectRef}-auth-token`, JSON.stringify(mockSession));
       window.localStorage.setItem('evolution_trainer_onboarded_v1_test-client-id', 'true');
       window.localStorage.setItem('evolution_guided_plan_v1_test-client-id', 'true');
-      
+      window.localStorage.setItem('evolution_onboarded_v1', 'true');
       window.localStorage.setItem('pwa_user_profile', JSON.stringify({
         id: 'test-client-id',
         nombre: 'Juan Perez',
