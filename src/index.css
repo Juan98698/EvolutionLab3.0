@@ -4230,4 +4230,17 @@ body::before {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif !important;
 }
 
+/* Forzar fuente legible en todo el contenido de lectura de la aplicación (párrafos, listas, celdas de datos, formularios y etiquetas) */
+p,
+li,
+td,
+input,
+textarea,
+select,
+blockquote,
+label,
+option {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif !important;
+}
+
 
