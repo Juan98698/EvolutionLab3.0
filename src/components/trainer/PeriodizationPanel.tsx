@@ -288,7 +288,7 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
     </p>
 
     {/* Guía visual inline para el entrenador */}
-    <div style={{
+    <div className="periodization-flow-guide-panel" style={{
       background: 'linear-gradient(135deg, rgba(0, 212, 255, 0.04), rgba(0, 100, 200, 0.04))',
       border: '1px solid rgba(0, 212, 255, 0.1)',
       borderRadius: '12px',
@@ -1023,7 +1023,7 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
               if (correctionsToSuggest.length === 0) return null;
 
               return (
-                <div style={{
+                <div className="smart-coach-suggestions-panel" style={{
                   marginTop: '20px',
                   background: 'rgba(0, 212, 255, 0.03)',
                   border: '1px solid rgba(0, 212, 255, 0.15)',
@@ -1127,7 +1127,7 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
         </div>
 
         {/* PANEL DE AUDITORÍA DE VOLUMEN MRV */}
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '20px', marginTop: '10px' }}>
+        <div className="weekly-volume-audit-panel" style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '20px', marginTop: '10px' }}>
           <h4 style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '11px', color: 'var(--theme-primary)', letterSpacing: '0.5px', marginBottom: '12px', marginTop: 0, textTransform: 'uppercase', display: 'flex', alignItems: 'center' }}>
             {config?.objetivo === 'fuerza' ? 'Auditoría de Volumen de Fuerza Semanal (Patrones RP)' : 'Auditoría de Volumen Semanal (Periodización RP)'}
             <InfoTooltip 
