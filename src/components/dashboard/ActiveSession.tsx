@@ -109,12 +109,30 @@ const ActiveSession: React.FC = () => {
       // Build ActiveExercise array from plan exercises
       const built: ActiveExercise[] = day.exercises.map(ex => {
         const vars = ex.variables || {};
-        const numSeries = parseSeries(vars['series de trabajo'] || vars['series']);
-        const numReps = parseReps(vars['repeticiones'] || vars['reps']);
-        const pesoSugerido = parsePeso(vars['peso']);
+        const seriesKey = Object.keys(vars).find(k => {
+          const kl = k.toLowerCase();
+          return kl.includes('series de trabajo') || kl.includes('series');
+        });
+        const seriesRaw = seriesKey ? vars[seriesKey] : undefined;
+        const numSeries = parseSeries(seriesRaw);
+
+        const repsKey = Object.keys(vars).find(k => {
+          const kl = k.toLowerCase();
+          return kl.includes('repeticiones') || kl.includes('reps');
+        });
+        const repsRaw = repsKey ? vars[repsKey] : undefined;
+        const numReps = parseReps(repsRaw);
+
+        const pesoKey = Object.keys(vars).find(k => k.toLowerCase().includes('peso'));
+        const pesoRaw = pesoKey ? vars[pesoKey] : undefined;
+        const pesoSugerido = parsePeso(pesoRaw);
+
         const descansoKey = Object.keys(vars).find(k => k.toLowerCase().includes('descanso'));
         const descansoRaw = descansoKey ? vars[descansoKey] : undefined;
         const descanso = parseDescanso(descansoRaw);
+
+        const rirKey = Object.keys(vars).find(k => k.toLowerCase().trim() === 'rir');
+        const rirRaw = rirKey ? vars[rirKey] : '';
 
         const series: SeriesEntry[] = Array.from({ length: numSeries }, () => ({
           reps: numReps,
@@ -127,7 +145,7 @@ const ActiveSession: React.FC = () => {
           grupo: (ex as any).grupo_muscular || ex.grupo_muscular || '',
           suggestedPeso: pesoSugerido,
           suggestedReps: numReps,
-          targetRIR: vars['rir'] || '',
+          targetRIR: rirRaw || '',
           descanso,
           series,
           feedback_estimulo: 'good',
