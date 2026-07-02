@@ -367,7 +367,7 @@ export const Analytics: React.FC = () => {
                 <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
                 <polyline points="17 6 23 6 23 12" />
               </svg>
-              <span style={{ fontSize: '14px', maxWidth: '320px', fontWeight: 500, lineHeight: 1.4, color: 'rgba(255,255,255,0.6)' }}>
+              <span className="desc-text" style={{ fontSize: '14px', maxWidth: '320px', fontWeight: 500, lineHeight: 1.4, color: 'rgba(255,255,255,0.6)' }}>
                 Registra sesiones en tu historial para ver tu progresión de sobrecarga progresiva.
               </span>
             </div>

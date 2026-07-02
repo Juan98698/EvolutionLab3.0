@@ -510,13 +510,13 @@ export const Historial: React.FC = () => {
         {/* Motivacional Hook */}
         <div className="hook-banner" id="dynamicHookBanner" style={{ display: 'block', marginBottom: '25px', padding: '20px', background: 'var(--theme-card-bg)', borderRadius: '14px', border: '1px solid var(--theme-border)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
           <span className="hook-quote-mark" style={{ display: 'block', fontSize: '32px', color: '#ff7e2e', lineHeight: 0.5, marginBottom: '10px' }}>&ldquo;</span>
-          <p className="hook-text" id="dynamicHookText" style={{ margin: 0, fontSize: '12px', lineHeight: 1.6, color: '#94a3b8' }}>
+          <p className="hook-text desc-text" id="dynamicHookText" style={{ margin: 0, fontSize: '12px', lineHeight: 1.6, color: '#94a3b8' }}>
             <strong style={{ fontSize: '15px', color: 'white', display: 'block', marginBottom: '8px' }}>
               {sesiones.length} sesiones completadas en total
             </strong>
             La sobrecarga progresiva — el principio más importante del entrenamiento de fuerza — requiere que sepas exactamente qué y cuánto hiciste la última vez para poder superarlo. Sin esa información, ese esfuerzo se pierde en el aire. Un registro completo convierte cada sesión en información útil.
           </p>
-          <span className="hook-closing" id="dynamicHookSubtext" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#ff9f43', marginTop: '12px', fontWeight: 600 }}>
+          <span className="hook-closing desc-text" id="dynamicHookSubtext" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#ff9f43', marginTop: '12px', fontWeight: 600 }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ff9f43" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
               <line x1="12" y1="9" x2="12" y2="13"/>

@@ -1127,7 +1127,7 @@ export const AthleteDashboard: React.FC = () => {
               <span style={{ fontSize: '24px' }}>🔔</span>
               <div style={{ textAlign: 'left' }}>
                 <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--theme-primary)', fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.5px' }}>ACTIVAR NOTIFICACIONES PUSH</div>
-                <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)', marginTop: '4px', lineHeight: '1.4' }}>Recibe recordatorios para mantener tu racha de entrenamiento y entérate al instante cuando tu entrenador actualice tu plan.</div>
+                <div className="desc-text" style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)', marginTop: '4px', lineHeight: '1.4' }}>Recibe recordatorios para mantener tu racha de entrenamiento y entérate al instante cuando tu entrenador actualice tu plan.</div>
               </div>
             </div>
             <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
@@ -1318,7 +1318,7 @@ export const AthleteDashboard: React.FC = () => {
                 color: 'var(--theme-primary)', letterSpacing: '1.5px',
                 textTransform: 'uppercase', margin: '0 0 12px 0'
               }}>Quick Start</h2>
-              <p style={{ fontSize: '13px', color: '#94a3b8', lineHeight: 1.6, margin: '0 0 24px 0' }}>
+              <p className="desc-text" style={{ fontSize: '13px', color: '#94a3b8', lineHeight: 1.6, margin: '0 0 24px 0' }}>
                 Aún no tienes un plan de entrenamiento. Crea tu propia rutina personalizada y empieza a entrenar con el motor de sobrecarga progresiva.
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'center' }}>
@@ -1638,7 +1638,7 @@ export const AthleteDashboard: React.FC = () => {
             <div style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', boxShadow: '0 8px 32px 0 var(--theme-glow)', borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '14px', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
               <div>
                 <h4 style={{ margin: '0 0 8px 0', fontSize: '13px', fontFamily: "'Orbitron', sans-serif", color: 'var(--theme-secondary)', letterSpacing: '0.5px' }}>INDICACIONES GENERALES</h4>
-                <p style={{ margin: 0, fontSize: '12px', lineHeight: 1.5, color: '#94a3b8', fontStyle: 'italic' }}>
+                <p className="desc-text" style={{ margin: 0, fontSize: '12px', lineHeight: 1.5, color: '#94a3b8', fontStyle: 'italic' }}>
                   "{portada.globalNote || 'Entrena duro, controla tus ejecuciones y descansa lo necesario para lograr el máximo estímulo progresivo.'}"
                 </p>
               </div>

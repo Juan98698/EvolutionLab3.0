@@ -61,7 +61,9 @@ const parsePeso = (val: string | undefined): string => {
 const parseDescanso = (val: string | undefined): number => {
   if (!val) return 90;
   const n = parseNumericField(val);
-  return Math.max(30, n || 90);
+  // If the parsed number is small (e.g. less than 30), it represents minutes. We convert it to seconds.
+  const seconds = n < 30 ? Math.round(n * 60) : Math.round(n);
+  return Math.max(30, seconds || 90);
 };
 
 /**
@@ -110,7 +112,9 @@ const ActiveSession: React.FC = () => {
         const numSeries = parseSeries(vars['series de trabajo'] || vars['series']);
         const numReps = parseReps(vars['repeticiones'] || vars['reps']);
         const pesoSugerido = parsePeso(vars['peso']);
-        const descanso = parseDescanso(vars['descanso']);
+        const descansoKey = Object.keys(vars).find(k => k.toLowerCase().includes('descanso'));
+        const descansoRaw = descansoKey ? vars[descansoKey] : undefined;
+        const descanso = parseDescanso(descansoRaw);
 
         const series: SeriesEntry[] = Array.from({ length: numSeries }, () => ({
           reps: numReps,

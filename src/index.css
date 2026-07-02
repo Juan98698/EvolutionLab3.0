@@ -3606,12 +3606,12 @@ body::before {
 .active-session-check-btn { width: 44px; height: 44px; background: rgba(255,255,255,0.06); border: 1.5px solid rgba(255,255,255,0.12); border-radius: 50%; color: rgba(255,255,255,0.4); font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s ease; -webkit-tap-highlight-color: transparent; flex-shrink: 0; }
 .active-session-check-btn:not(.done):hover, .active-session-check-btn:not(.done):active { background: rgba(124,58,237,0.3); border-color: #7c3aed; color: white; transform: scale(1.08); }
 .active-session-check-btn.done { background: rgba(16,185,129,0.2); border-color: #10b981; color: #6ee7b7; cursor: default; }
-.active-session-rest-timer { margin: 0 20px 8px; background: rgba(124,58,237,0.08); border: 1px solid rgba(124,58,237,0.2); border-radius: 14px; padding: 10px 14px; display: flex; align-items: center; gap: 10px; }
-.active-session-rest-track { flex: 1; height: 4px; background: rgba(255,255,255,0.08); border-radius: 99px; overflow: hidden; }
+.active-session-rest-timer { margin: 16px 20px; background: rgba(124,58,237,0.12); border: 1.5px solid rgba(124,58,237,0.3); border-radius: 16px; padding: 14px 18px; display: flex; align-items: center; gap: 14px; box-shadow: 0 4px 20px rgba(124,58,237,0.15); }
+.active-session-rest-track { flex: 1; height: 6px; background: rgba(255,255,255,0.08); border-radius: 99px; overflow: hidden; }
 .active-session-rest-fill { height: 100%; background: linear-gradient(90deg, #7c3aed, #4f46e5); border-radius: 99px; transition: width 1s linear; }
-.active-session-rest-label { font-size: 12px; font-weight: 700; color: #c4b5fd; white-space: nowrap; }
-.active-session-rest-skip { font-size: 10px; font-weight: 700; color: rgba(167,139,250,0.6); background: none; border: none; cursor: pointer; padding: 4px 0; -webkit-tap-highlight-color: transparent; white-space: nowrap; }
-.active-session-rest-skip:hover { color: #c4b5fd; }
+.active-session-rest-label { font-size: 20px; font-weight: 800; color: #ff9f43; white-space: nowrap; font-family: 'Orbitron', sans-serif !important; text-shadow: 0 0 10px rgba(255, 159, 67, 0.4); }
+.active-session-rest-skip { font-size: 13px; font-weight: 700; color: rgba(167,139,250,0.8); background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); border-radius: 8px; cursor: pointer; padding: 6px 12px; -webkit-tap-highlight-color: transparent; white-space: nowrap; transition: all 0.2s ease; }
+.active-session-rest-skip:hover { color: #fff; background: rgba(167,139,250,0.2); border-color: rgba(167,139,250,0.4); }
 .active-session-feedback { margin: 0 20px 8px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.07); border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
 .active-session-feedback-title { margin: 0; font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.4); text-transform: uppercase; letter-spacing: 0.06em; }
 .active-session-feedback-row { display: flex; flex-direction: column; gap: 6px; }
@@ -4219,6 +4219,14 @@ body::before {
 .perfil-atleta-panel span,
 .perfil-atleta-panel strong,
 .perfil-atleta-panel input {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif !important;
+}
+
+/* Ensure all elements with .desc-text class use highly legible Inter sans-serif font */
+.desc-text,
+.desc-text p,
+.desc-text span,
+.desc-text strong {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif !important;
 }
 

@@ -1090,7 +1090,7 @@ export const QuickStartPlanner: React.FC = () => {
             </span>
             Configuración de Días de la Semana
           </div>
-          <p style={{ margin: '0 0 16px 0', fontSize: '11px', color: 'rgba(255,255,255,0.35)', lineHeight: '1.4' }}>
+          <p className="desc-text" style={{ margin: '0 0 16px 0', fontSize: '11px', color: 'rgba(255,255,255,0.35)', lineHeight: '1.4' }}>
             Asigna qué día de tu rutina le corresponde a cada día calendario de la semana para activar el banner dinámico en tu Dashboard.
           </p>
 
