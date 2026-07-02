@@ -34,6 +34,7 @@ export interface MarcaConfig {
   tipografia: 'Inter' | 'Outfit' | 'Montserrat' | 'Bebas Neue' | 'Oswald' | 'Orbitron' | 'Rajdhani' | 'Chakra Petch';
   eslogan?: string;
   whatsapp?: string;
+  instagram?: string;
 }
 
 export interface Plan {

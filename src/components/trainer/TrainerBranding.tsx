@@ -51,6 +51,7 @@ const DEFAULT_MARCA: MarcaConfig = {
   tipografia: 'Inter',
   eslogan: '',
   whatsapp: '',
+  instagram: '',
 };
 
 const DEFAULT_PILAR: FilosofiaPilar = {
@@ -494,6 +495,24 @@ export const TrainerBranding: React.FC = () => {
                 />
               </div>
 
+              {/* Info redes de contacto */}
+              <div style={{
+                background: 'rgba(0, 212, 255, 0.08)',
+                border: '1px solid rgba(0, 212, 255, 0.2)',
+                borderRadius: '14px',
+                padding: '14px 16px',
+                display: 'flex',
+                alignItems: 'start',
+                gap: '10px',
+                marginBottom: '4px'
+              }}>
+                <span style={{ fontSize: '16px', marginTop: '-2px' }}>ℹ️</span>
+                <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.75)', lineHeight: '1.5', fontFamily: 'Inter, sans-serif' }}>
+                  <strong style={{ color: '#00d4ff', fontFamily: 'Orbitron, sans-serif', fontSize: '10px', display: 'block', marginBottom: '4px' }}>DIRECTORIO PÚBLICO DE ENTRENADORES</strong>
+                  El número de WhatsApp y tu usuario de Instagram serán visibles para los atletas independientes dentro de la aplicación que estén interesados en ponerse en contacto contigo para solicitarte un plan de entrenamiento.
+                </div>
+              </div>
+
               {/* WhatsApp */}
               <div style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '14px', padding: '20px', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
                 <label htmlFor="brand-whatsapp" style={{ display: 'block', fontSize: '9px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '8px', letterSpacing: '1px', fontFamily: "'Orbitron', sans-serif", textTransform: 'uppercase' }}>
@@ -505,6 +524,24 @@ export const TrainerBranding: React.FC = () => {
                   value={marca.whatsapp || ''}
                   onChange={(e) => setMarca((prev) => ({ ...prev, whatsapp: e.target.value }))}
                   placeholder="Ej: +573001234567"
+                  style={{
+                    width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--theme-border)',
+                    borderRadius: '8px', color: 'white', padding: '12px', fontSize: '13px'
+                  }}
+                />
+              </div>
+
+              {/* Instagram */}
+              <div style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '14px', padding: '20px', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
+                <label htmlFor="brand-instagram" style={{ display: 'block', fontSize: '9px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '8px', letterSpacing: '1px', fontFamily: "'Orbitron', sans-serif", textTransform: 'uppercase' }}>
+                  Usuario de Instagram
+                </label>
+                <input
+                  id="brand-instagram"
+                  type="text"
+                  value={marca.instagram || ''}
+                  onChange={(e) => setMarca((prev) => ({ ...prev, instagram: e.target.value }))}
+                  placeholder="Ej: @tu_coach"
                   style={{
                     width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid var(--theme-border)',
                     borderRadius: '8px', color: 'white', padding: '12px', fontSize: '13px'

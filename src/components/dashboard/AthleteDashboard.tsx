@@ -218,12 +218,19 @@ export const AthleteDashboard: React.FC = () => {
     }
   }, [plan?.periodizationConfig?.semana_actual]);
 
-  // Estados de modales
   const [philosophyOpen, setPhilosophyOpen] = useState<boolean>(false);
   const [guideModal, setGuideModal] = useState<{ open: boolean; title: string; content: string }>({ open: false, title: '', content: '' });
   const [is1RMModalOpen, setIs1RMModalOpen] = useState<boolean>(false);
   const [showSmartCoach, setShowSmartCoach] = useState<boolean>(false);
   const [showUpdateModal, setShowUpdateModal] = useState<boolean>(false);
+
+  // Directorio de Entrenadores para Atletas Autónomos
+  const [trainers, setTrainers] = useState<any[]>([]);
+  const [loadingTrainers, setLoadingTrainers] = useState(false);
+  const [showTrainersDir, setShowTrainersDir] = useState(false);
+  const [trainerSearch, setTrainerSearch] = useState('');
+  const [trainerPage, setTrainerPage] = useState(0);
+  const TRAINERS_PER_PAGE = 10;
 
   // Estados de Toast
   const [toastState, setToastState] = useState<{ visible: boolean; message: string; type: 'success' | 'error' | 'info' }>({
@@ -484,6 +491,28 @@ export const AthleteDashboard: React.FC = () => {
     };
     fetchTrainerProfile();
   }, [user]);
+
+  // Obtener entrenadores para atletas autónomos
+  useEffect(() => {
+    if (isSoloClient) {
+      const fetchTrainers = async () => {
+        setLoadingTrainers(true);
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('id, nombre, logo_url, marca, filosofia')
+            .eq('rol', 'entrenador');
+          if (error) throw error;
+          setTrainers(data || []);
+        } catch (err) {
+          console.error('Error al cargar entrenadores:', err);
+        } finally {
+          setLoadingTrainers(false);
+        }
+      };
+      fetchTrainers();
+    }
+  }, [isSoloClient]);
 
   // Cargar historial de sesiones desde Supabase (+ caché offline)
   useEffect(() => {
@@ -1418,6 +1447,182 @@ export const AthleteDashboard: React.FC = () => {
               </div>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--theme-primary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
             </button>
+          </div>
+        )}
+
+        {/* DIRECTORIO DE ENTRENADORES */}
+        {!planExpiration.expired && isSoloClient && (
+          <div style={{ marginTop: '20px', marginBottom: '20px' }}>
+            <div style={{
+              background: 'var(--theme-card-bg)',
+              border: '1px solid var(--theme-border)',
+              borderRadius: '20px',
+              padding: '16px 20px',
+              backdropFilter: 'blur(20px)',
+              WebkitBackdropFilter: 'blur(20px)',
+              boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+            }}>
+              <button
+                onClick={() => setShowTrainersDir(!showTrainersDir)}
+                style={{
+                  width: '100%',
+                  background: 'none',
+                  border: 'none',
+                  color: 'white',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  cursor: 'pointer',
+                  padding: 0,
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span style={{ fontSize: '20px' }}>🤝</span>
+                  <div style={{ textAlign: 'left' }}>
+                    <div style={{ fontSize: '12px', fontWeight: 800, color: 'var(--theme-primary)', fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.5px' }}>CONTRATAR UN ENTRENADOR</div>
+                    <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', marginTop: '2px' }}>¿Prefieres asesoría personalizada? Contacta un coach por WhatsApp</div>
+                  </div>
+                </div>
+                <span style={{ transform: showTrainersDir ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', color: 'rgba(255,255,255,0.5)' }}>▼</span>
+              </button>
+
+              {showTrainersDir && (
+                <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '16px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '16px' }}>
+                  {loadingTrainers ? (
+                    <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px', textAlign: 'center' }}>Cargando entrenadores...</div>
+                  ) : (() => {
+                    const filtered = trainers.filter((t) => {
+                      const brand = t.marca || {};
+                      const name = (brand.nombre_display || t.nombre || '').toLowerCase();
+                      const ig = (brand.instagram || '').toLowerCase();
+                      const q = trainerSearch.toLowerCase().trim();
+                      return !q || name.includes(q) || ig.includes(q);
+                    });
+                    const totalPages = Math.ceil(filtered.length / TRAINERS_PER_PAGE);
+                    const paginated = filtered.slice(trainerPage * TRAINERS_PER_PAGE, (trainerPage + 1) * TRAINERS_PER_PAGE);
+
+                    return (
+                      <>
+                        {/* Buscador */}
+                        <div style={{ position: 'relative' }}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+                            <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                          </svg>
+                          <input
+                            type="text"
+                            value={trainerSearch}
+                            onChange={(e) => { setTrainerSearch(e.target.value); setTrainerPage(0); }}
+                            placeholder="Buscar por nombre o usuario de Instagram..."
+                            style={{
+                              width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)',
+                              borderRadius: '30px', color: 'white', padding: '10px 14px 10px 36px',
+                              fontSize: '12px', outline: 'none', boxSizing: 'border-box',
+                              fontFamily: 'Inter, sans-serif'
+                            }}
+                          />
+                          {trainerSearch && (
+                            <button onClick={() => { setTrainerSearch(''); setTrainerPage(0); }} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: '14px', padding: 0 }}>✕</button>
+                          )}
+                        </div>
+
+                        {/* Resultado del filtro */}
+                        {filtered.length === 0 ? (
+                          <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px', textAlign: 'center', padding: '10px 0' }}>No se encontraron entrenadores con ese nombre o usuario.</div>
+                        ) : (
+                          paginated.map((t) => {
+                            const brand = t.marca || {};
+                            const coachName = brand.nombre_display || t.nombre || 'Entrenador';
+                            const slogan = brand.eslogan || '';
+                            const whatsappNum = brand.whatsapp || '';
+                            const instagramUser = brand.instagram || '';
+                            const initials = coachName.split(' ').map((w: any) => w[0]).join('').substring(0, 2).toUpperCase();
+
+                            return (
+                              <div key={t.id} style={{
+                                background: 'rgba(255, 255, 255, 0.02)',
+                                border: '1px solid rgba(255, 255, 255, 0.05)',
+                                borderRadius: '14px',
+                                padding: '16px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                flexWrap: 'wrap',
+                                gap: '12px'
+                              }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: '200px' }}>
+                                  {t.logo_url ? (
+                                    <img src={t.logo_url} alt={coachName} style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', border: '1.5px solid var(--theme-border)' }} />
+                                  ) : (
+                                    <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'rgba(0, 212, 255, 0.1)', border: '1.5px solid rgba(0, 212, 255, 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 800, color: 'var(--theme-primary)', fontFamily: "'Orbitron', sans-serif" }}>
+                                      {initials}
+                                    </div>
+                                  )}
+                                  <div>
+                                    <div style={{ fontSize: '13px', fontWeight: 700, color: 'white', fontFamily: "'Orbitron', sans-serif" }}>{coachName}</div>
+                                    {slogan && <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)', marginTop: '2px', fontFamily: 'Inter, sans-serif' }}>{slogan}</div>}
+                                    {instagramUser && <div style={{ fontSize: '10px', color: '#ff3366', marginTop: '2px', fontFamily: 'Inter, sans-serif', opacity: 0.8 }}>{instagramUser.startsWith('http') ? '@' + instagramUser.split('/').filter(Boolean).pop() : instagramUser}</div>}
+                                  </div>
+                                </div>
+
+                                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                  {whatsappNum && (
+                                    <a
+                                      href={`https://wa.me/${whatsappNum.replace(/[^\d+]/g, '')}?text=Hola%20${encodeURIComponent(coachName)}!%20Encontr%C3%A9%20tu%20perfil%20en%20Evolution%20Lab%20y%20me%20gustar%C3%ADa%20solicitarte%20un%20plan%20de%20entrenamiento%20personalizado.`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="btn-whatsapp btn-shine"
+                                      style={{ padding: '8px 16px', borderRadius: '20px', fontSize: '11px', fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                                    >
+                                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                                      </svg>
+                                      WhatsApp
+                                    </a>
+                                  )}
+                                  {instagramUser && (
+                                    <a
+                                      href={instagramUser.trim().startsWith('http') ? instagramUser.trim() : `https://www.instagram.com/${instagramUser.replace('@', '').trim()}`}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="btn-instagram btn-shine"
+                                      style={{ padding: '8px 16px', borderRadius: '20px', fontSize: '11px', fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                                    >
+                                      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                                        <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/>
+                                      </svg>
+                                      Instagram
+                                    </a>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })
+                        )}
+
+                        {/* Paginación */}
+                        {totalPages > 1 && (
+                          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', marginTop: '8px', paddingTop: '12px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                            <button
+                              onClick={() => setTrainerPage((p) => Math.max(0, p - 1))}
+                              disabled={trainerPage === 0}
+                              style={{ background: 'none', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: trainerPage === 0 ? 'rgba(255,255,255,0.2)' : 'white', padding: '6px 12px', cursor: trainerPage === 0 ? 'not-allowed' : 'pointer', fontSize: '12px', fontFamily: "'Orbitron', sans-serif", transition: 'all 0.2s' }}
+                            >← ANT</button>
+                            <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', fontFamily: 'Inter, sans-serif', minWidth: '80px', textAlign: 'center' }}>
+                              {trainerPage + 1} / {totalPages} &nbsp;·&nbsp; {filtered.length} entrenadores
+                            </span>
+                            <button
+                              onClick={() => setTrainerPage((p) => Math.min(totalPages - 1, p + 1))}
+                              disabled={trainerPage >= totalPages - 1}
+                              style={{ background: 'none', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: trainerPage >= totalPages - 1 ? 'rgba(255,255,255,0.2)' : 'white', padding: '6px 12px', cursor: trainerPage >= totalPages - 1 ? 'not-allowed' : 'pointer', fontSize: '12px', fontFamily: "'Orbitron', sans-serif", transition: 'all 0.2s' }}
+                            >SIG →</button>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
+              )}
+            </div>
           </div>
         )}
 

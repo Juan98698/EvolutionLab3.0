@@ -28,8 +28,8 @@ if (typeof window !== 'undefined') {
   (window as any).supabase = supabase;
 
   // Determine if execution context is an E2E testing environment
-  const isE2E = window.location.port === '5173' || navigator.userAgent.includes('Headless') || (window as any)._playwright_test;
-  console.log('⚡ Supabase Client Init - isE2E:', isE2E, 'port:', window.location.port, '_playwright_test:', (window as any)._playwright_test);
+  const isE2E = navigator.userAgent.includes('Headless') || (window as any)._playwright_test === true || window.location.search.includes('e2e=true');
+  console.log('⚡ Supabase Client Init - isE2E:', isE2E, 'userAgent:', navigator.userAgent, '_playwright_test:', (window as any)._playwright_test);
 
   if (isE2E) {
     (supabase as any).auth = {

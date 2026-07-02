@@ -38,6 +38,8 @@ export const AdminDashboard: React.FC = () => {
   const [creatingUser, setCreatingUser] = useState(false);
   const [createWhatsapp, setCreateWhatsapp] = useState('');
   const [editWhatsapp, setEditWhatsapp] = useState('');
+  const [createInstagram, setCreateInstagram] = useState('');
+  const [editInstagram, setEditInstagram] = useState('');
 
   // Editar Usuario Modal State
   const [editOpen, setEditOpen] = useState(false);
@@ -173,7 +175,8 @@ export const AdminDashboard: React.FC = () => {
           color_secundario: '#0070a0',
           tipografia: 'Inter' as const,
           eslogan: '',
-          whatsapp: createWhatsapp.trim() || undefined
+          whatsapp: createWhatsapp.trim() || undefined,
+          instagram: createInstagram.trim() || undefined
         };
         await supabase
           .from('profiles')
@@ -193,6 +196,7 @@ export const AdminDashboard: React.FC = () => {
       setCreateObjetivo('');
       setCreateEntrenadorId('');
       setCreateWhatsapp('');
+      setCreateInstagram('');
 
       // Recargar datos
       fetchUsers();
@@ -212,6 +216,7 @@ export const AdminDashboard: React.FC = () => {
     setEditObjetivo(u.objetivo || '');
     setEditEntrenadorId(u.entrenador_id || '');
     setEditWhatsapp(u.marca?.whatsapp || '');
+    setEditInstagram(u.marca?.instagram || '');
     setEditSuscripcionPlan(u.suscripcion_plan || 'free');
     setEditSuscripcionEstado(u.suscripcion_estado || 'activo');
     setEditSuscripcionExpiraAt(u.suscripcion_expira_at ? u.suscripcion_expira_at.substring(0, 10) : '');
@@ -232,7 +237,8 @@ export const AdminDashboard: React.FC = () => {
           tipografia: 'Inter' as const,
           eslogan: '',
         }),
-        whatsapp: editWhatsapp.trim() || undefined
+        whatsapp: editWhatsapp.trim() || undefined,
+        instagram: editInstagram.trim() || undefined
       } : (editingUser.marca || null);
 
       const { error } = await supabase
@@ -911,13 +917,24 @@ export const AdminDashboard: React.FC = () => {
               </div>
 
               {createRol === 'entrenador' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, fontFamily: "'Orbitron', sans-serif" }}>NÚMERO DE WHATSAPP / CONTACTO *</label>
-                  <input
-                    type="text" required placeholder="Ej. +573001234567"
-                    value={createWhatsapp} onChange={(e) => setCreateWhatsapp(e.target.value)}
-                    style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '13px' }}
-                  />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, fontFamily: "'Orbitron', sans-serif" }}>NÚMERO DE WHATSAPP / CONTACTO *</label>
+                    <input
+                      type="text" required placeholder="Ej. +573001234567"
+                      value={createWhatsapp} onChange={(e) => setCreateWhatsapp(e.target.value)}
+                      style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '13px' }}
+                    />
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, fontFamily: "'Orbitron', sans-serif" }}>USUARIO DE INSTAGRAM (OPCIONAL)</label>
+                    <input
+                      type="text" placeholder="Ej. @coach_ejemplo"
+                      value={createInstagram} onChange={(e) => setCreateInstagram(e.target.value)}
+                      style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '13px' }}
+                    />
+                  </div>
                 </div>
               )}
 
@@ -1015,13 +1032,24 @@ export const AdminDashboard: React.FC = () => {
               </div>
 
               {editRol === 'entrenador' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, fontFamily: "'Orbitron', sans-serif" }}>NÚMERO DE WHATSAPP / CONTACTO</label>
-                  <input
-                    type="text" placeholder="Ej. +573001234567"
-                    value={editWhatsapp} onChange={(e) => setEditWhatsapp(e.target.value)}
-                    style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '13px' }}
-                  />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, fontFamily: "'Orbitron', sans-serif" }}>NÚMERO DE WHATSAPP / CONTACTO</label>
+                    <input
+                      type="text" placeholder="Ej. +573001234567"
+                      value={editWhatsapp} onChange={(e) => setEditWhatsapp(e.target.value)}
+                      style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '13px' }}
+                    />
+                  </div>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, fontFamily: "'Orbitron', sans-serif" }}>USUARIO DE INSTAGRAM (OPCIONAL)</label>
+                    <input
+                      type="text" placeholder="Ej. @coach_ejemplo"
+                      value={editInstagram} onChange={(e) => setEditInstagram(e.target.value)}
+                      style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '13px' }}
+                    />
+                  </div>
                 </div>
               )}
 

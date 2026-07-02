@@ -4262,4 +4262,54 @@ option {
   font-family: 'Orbitron', sans-serif !important;
 }
 
+/* Botones interactivos globales de WhatsApp e Instagram (estilo CTA brillante) */
+.btn-whatsapp {
+  background: rgba(37, 211, 102, 0.08) !important;
+  border: 1px solid rgba(37, 211, 102, 0.25) !important;
+  color: #25d366 !important;
+  border-radius: 30px !important;
+  padding: 12px 24px !important;
+  font-size: 11px !important;
+  font-family: 'Orbitron', sans-serif !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.5px !important;
+  transition: all 0.3s ease !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  text-decoration: none !important;
+  box-sizing: border-box;
+  box-shadow: 0 0 10px rgba(37, 211, 102, 0.1) !important;
+}
+.btn-whatsapp:hover {
+  background: #25d366 !important;
+  color: white !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 20px rgba(37, 211, 102, 0.4) !important;
+}
+.btn-instagram {
+  background: rgba(255, 51, 102, 0.12) !important;
+  border: 1px solid rgba(255, 51, 102, 0.35) !important;
+  color: #ff3366 !important;
+  border-radius: 30px !important;
+  padding: 12px 24px !important;
+  font-size: 11px !important;
+  font-family: 'Orbitron', sans-serif !important;
+  font-weight: 700 !important;
+  letter-spacing: 0.5px !important;
+  transition: all 0.3s ease !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  text-decoration: none !important;
+  box-sizing: border-box;
+  box-shadow: 0 0 15px rgba(255, 51, 102, 0.2) !important;
+}
+.btn-instagram:hover {
+  background: linear-gradient(45deg, #f09433 0%, #e6683c 25%, #dc2743 50%, #cc2366 75%, #bc1888 100%) !important;
+  color: white !important;
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 22px rgba(255, 51, 102, 0.5) !important;
+}
+
 
