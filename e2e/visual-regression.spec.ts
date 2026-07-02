@@ -308,6 +308,17 @@ test.describe('Evolution Lab 3.0 Visual Regression Tests', () => {
   test('Athlete Dashboard Layout - Visual Verification', async ({ page }) => {
     test.setTimeout(90000);
 
+    // Congelar SOLO la fecha del navegador (no los timers). GamificacionPanel y
+    // AthleteDashboard usan `new Date()` / `Date.now()` en varios lugares
+    // (daysSinceLast, racha, vigencia del plan, día de la semana resaltado en
+    // "Consistencia Semanal"). Sin esto, el resultado visual depende del día
+    // real en que se corre el test — pasando algunos días y fallando otros de
+    // forma intermitente. Se usa setFixedTime() en lugar de install() porque
+    // install() también pausa setTimeout/setInterval reales, lo cual bloquearía
+    // el fallback de 6s de SupabaseContext.tsx y dejaría la app en loading
+    // infinito. setFixedTime() solo fija la fecha, los timers siguen normales.
+    await page.clock.setFixedTime(new Date('2026-06-30T15:00:00'));
+
     // Intercept profiles single fetch for the athlete
     await page.route('**/rest/v1/profiles*', async route => {
       await route.fulfill({
@@ -393,6 +404,21 @@ test.describe('Evolution Lab 3.0 Visual Regression Tests', () => {
               }
             ]
           }
+        ]
+      });
+    });
+
+    // Intercept gamificacion fetch — el badge "Primera Sesión" ya viene guardado
+    // de antemano. Esto evita que GamificacionPanel lo detecte como "nuevo" y
+    // dispare canvas-confetti (animación vía requestAnimationFrame, no CSS, que
+    // Playwright no puede neutralizar con disableAnimations). Sin este mock, el
+    // confetti se disparaba de forma no determinística por el doble-efecto de
+    // React StrictMode en el servidor de desarrollo de Vite, dejando restos de
+    // partículas con física aleatoria que variaban entre corridas (~160px de diff).
+    await page.route('**/rest/v1/gamificacion*', async route => {
+      await route.fulfill({
+        json: [
+          { titulo: 'Primera Sesión' }
         ]
       });
     });
