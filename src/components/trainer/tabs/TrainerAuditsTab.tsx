@@ -49,7 +49,6 @@ interface TrainerAuditsTabProps {
   expandedActividades: Record<string, boolean>;
   setExpandedActividades: React.Dispatch<React.SetStateAction<Record<string, boolean>>>;
   clientes: Profile[];
-  activeSubTab?: string;
 }
 
 const TrainerAuditsTab: React.FC<TrainerAuditsTabProps> = ({
@@ -68,11 +67,10 @@ const TrainerAuditsTab: React.FC<TrainerAuditsTabProps> = ({
   setAuditViewMode,
   expandedActividades,
   setExpandedActividades,
-  clientes,
-  activeSubTab
+  clientes
 }) => {
   return (
-    <div className="stagger-item" style={{ animationDelay: '0.1s', display: activeSubTab === 'auditoria' ? 'block' : 'none' }}>
+    <div className="stagger-item" style={{ animationDelay: '0.1s' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
         <h2 style={{ fontFamily: 'Orbitron, sans-serif', fontSize: '18px', fontWeight: 800, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span style={{ color: 'var(--theme-primary)' }}>📊</span> HISTORIAL DE ACTIVIDAD Y AUDITORÍA
