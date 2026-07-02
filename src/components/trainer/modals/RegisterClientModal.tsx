@@ -283,7 +283,7 @@ const RegisterClientModal: React.FC<RegisterClientModalProps> = ({
             type="button"
             onClick={handleCopyAppLink}
             style={{
-              padding: '8px 14px', borderRadius: '8px', border: 'none', cursor: 'pointer',
+              padding: '8px 14px', borderRadius: '8px', cursor: 'pointer',
               background: linkCopied ? 'rgba(0,255,136,0.15)' : 'rgba(255,255,255,0.07)',
               color: linkCopied ? '#00ff88' : 'rgba(255,255,255,0.8)',
               fontFamily: 'Inter, sans-serif', fontSize: '11px', fontWeight: 700,
