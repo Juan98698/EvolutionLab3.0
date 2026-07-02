@@ -545,9 +545,18 @@ test.describe('Evolution Lab 3.0 Visual Regression Tests', () => {
     });
 
     // 2. Capture Athlete Dashboard Page
+    // maxDiffPixelRatio: 0.005 (0.5%) tolera ruido de renderizado sub-pixel
+    // (anti-aliasing de emojis, glow/boxShadow con variables CSS de tema) que
+    // varía levemente entre corridas de Chromium en el contenedor incluso con
+    // datos 100% mockeados y deterministas. Los diffs observados tras fijar
+    // fecha/sesiones/badges rondan 160-7500px sobre ~4.3M píxeles totales
+    // (~0.003-0.17%) — ruido de renderizado, no una regresión real. Un cambio
+    // de layout genuino difiere en decenas/cientos de miles de píxeles, muy
+    // por encima de este umbral, así que sigue detectando regresiones reales.
     await expect(page).toHaveScreenshot('athlete-dashboard-full.png', {
       fullPage: true,
       mask: [page.locator('#fab1RMBtn')],
+      maxDiffPixelRatio: 0.005,
       timeout: 30000
     });
   });
