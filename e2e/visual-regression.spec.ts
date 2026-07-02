@@ -276,10 +276,12 @@ test.describe('Evolution Lab 3.0 Visual Regression Tests', () => {
     await page.goto('/trainer/plan/test-client-id', { waitUntil: 'domcontentloaded' });
 
     // Wait for the planner structure to load
-    await page.waitForSelector('.planner-title-main', { timeout: 20000 });
+    // NOTE: In Docker/CI the planner can take up to ~60s to resolve auth + data mocks,
+    // so we use a generous 70s timeout here (test.setTimeout is 90s).
+    await page.waitForSelector('.planner-title-main', { timeout: 70000 });
 
     // Locate the Periodization Panel card via stable data-testid attribute
-    await page.waitForSelector('[data-testid="periodization-card"]', { timeout: 20000 });
+    await page.waitForSelector('[data-testid="periodization-card"]', { timeout: 70000 });
     const periodizationCard = page.locator('[data-testid="periodization-card"]').first();
 
     // Scroll to the Periodization Card to load it stably

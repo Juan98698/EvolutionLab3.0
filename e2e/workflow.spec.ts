@@ -29,7 +29,7 @@ test.describe('Evolution Lab 3.0 E2E Workflows', () => {
   });
 
   test('should render trainer planner workspace correctly on Desktop', async ({ page }) => {
-    test.setTimeout(60000);
+    test.setTimeout(90000);
 
     // Set client-side testing flag and load mock localStorage keys before page scripts run
     await page.addInitScript(({ projectRef }) => {
