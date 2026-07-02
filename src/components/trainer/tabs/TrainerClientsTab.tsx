@@ -139,7 +139,7 @@ const TrainerClientsTab: React.FC<TrainerClientsTabProps> = ({
                   </h3>
                   <p style={{ margin: '0 0 14px 0', fontSize: '12px', color: 'rgba(255,255,255,0.4)' }}>{atleta.email}</p>
                   
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '11px', background: 'rgba(255,255,255,0.02)', padding: '12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.04)' }}>
+                  <div className="perfil-atleta-panel" style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '11px', background: 'rgba(255,255,255,0.02)', padding: '12px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.04)' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                       <span style={{ color: 'rgba(255,255,255,0.5)' }}>Objetivo:</span>
                       <span style={{ fontWeight: 600, color: 'var(--theme-primary)' }}>{atleta.objetivo || 'Sin objetivo'}</span>

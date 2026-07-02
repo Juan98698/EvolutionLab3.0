@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useSupabase } from '../../context/SupabaseContext';
 import { supabase } from '../../lib/supabaseClient';
+import Toast from './Toast';
 
 export const AthleteNavbar: React.FC = () => {
   const navigate = useNavigate();
@@ -28,6 +29,60 @@ export const AthleteNavbar: React.FC = () => {
     });
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [streakWeeks, setStreakWeeks] = useState<number>(0);
+
+  // Estados del modal de pago global Solo Lifter
+  const [paymentLoading, setPaymentLoading] = useState<boolean>(false);
+  const [showSoloUpgradeModal, setShowSoloUpgradeModal] = useState<boolean>(false);
+  const [toastState, setToastState] = useState<{ visible: boolean; message: string; type: 'success' | 'error' | 'info' }>({
+    visible: false,
+    message: '',
+    type: 'success',
+  });
+
+  const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
+    setToastState({ visible: true, message, type });
+    setTimeout(() => {
+      setToastState((prev) => ({ ...prev, visible: false }));
+    }, 3000);
+  };
+
+  const handleMercadoPagoCheckout = async (plan: 'premium' | 'coach', redirectPath: string) => {
+    setPaymentLoading(true);
+    try {
+      const response = await fetch('/api/create-mercadopago-preference', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: profile?.id,
+          email: profile?.email,
+          plan,
+          redirectPath,
+        }),
+      });
+
+      const data = await response.json();
+      if (data.url) {
+        window.location.href = data.url; // Redirigir a MercadoPago Checkout
+      } else {
+        throw new Error(data.error || 'No se obtuvo la URL de pago');
+      }
+    } catch (err: any) {
+      console.error('MercadoPago redirect error:', err);
+      showToast('Error al conectar con MercadoPago: ' + err.message, 'error');
+    } finally {
+      setPaymentLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    const handleShowUpgrade = () => {
+      setShowSoloUpgradeModal(true);
+    };
+    window.addEventListener('pwa-show-upgrade-modal', handleShowUpgrade);
+    return () => window.removeEventListener('pwa-show-upgrade-modal', handleShowUpgrade);
+  }, []);
 
   useEffect(() => {
     const handleThemeChange = (e: Event) => {
@@ -739,6 +794,74 @@ export const AthleteNavbar: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Upgrade Modal para Clientes Autónomos (Solo Lifter) */}
+      {showSoloUpgradeModal && (
+        <div className="modal-overlay open" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999, backdropFilter: 'blur(8px)' }}>
+          <div className="modal-box" style={{ maxWidth: '450px', width: '90%', background: 'rgba(15, 23, 42, 0.98)', border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '20px', padding: '28px', boxShadow: '0 20px 50px rgba(0,0,0,0.5)', textAlign: 'center' }}>
+            <div style={{ display: 'inline-flex', width: '56px', height: '56px', borderRadius: '50%', background: 'rgba(123, 47, 247, 0.1)', border: '1px solid rgba(123, 47, 247, 0.25)', alignItems: 'center', justifyContent: 'center', fontSize: '24px', color: '#a855f7', marginBottom: '16px' }}>
+              🧠
+            </div>
+            
+            <h3 style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '16px', fontWeight: 800, color: 'white', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '12px' }}>
+              ACTUALIZA A SOLO LIFTER PRO
+            </h3>
+            
+            <p style={{ fontSize: '13px', color: 'rgba(255, 255, 255, 0.6)', lineHeight: '1.6', marginBottom: '20px' }}>
+              Las sugerencias pre-entrenamiento del <strong>Smart Coach</strong> y la automatización de sobrecarga progresiva son exclusivas del plan premium. ¡Desbloquea rutinas ilimitadas, reglas avanzadas y Smart Coach por solo <strong>$19.900 COP / mes</strong>!
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              <button
+                onClick={() => handleMercadoPagoCheckout('premium', '/dashboard')}
+                disabled={paymentLoading}
+                style={{
+                  background: 'linear-gradient(135deg, #7b2ff7, #00d4ff)',
+                  color: 'white', border: 'none', padding: '12px', borderRadius: '10px',
+                  fontSize: '11px', fontFamily: "'Orbitron', sans-serif", fontWeight: 700,
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                  boxShadow: '0 4px 15px rgba(123, 47, 247, 0.25)',
+                  cursor: paymentLoading ? 'not-allowed' : 'pointer',
+                  opacity: paymentLoading ? 0.7 : 1
+                }}
+              >
+                {paymentLoading ? 'PROCESANDO PAGO...' : 'PAGAR CON MERCADOPAGO 💳'}
+              </button>
+              
+              <a
+                href={`https://wa.me/573113666959?text=Hola!%20Quiero%20adquirir%20el%20plan%20Solo%20Lifter%20Pro%20en%20Evolution%20Lab.%20Mi%20correo%20de%20usuario%20es:%20${encodeURIComponent(profile?.email || '')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  background: 'rgba(37, 211, 102, 0.12)',
+                  border: '1px solid rgba(37, 211, 102, 0.35)',
+                  color: '#4ade80', textDecoration: 'none', padding: '12px', borderRadius: '10px',
+                  fontSize: '11px', fontFamily: "'Orbitron', sans-serif", fontWeight: 700,
+                  display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
+                  cursor: paymentLoading ? 'not-allowed' : 'pointer',
+                  pointerEvents: paymentLoading ? 'none' : 'auto'
+                }}
+              >
+                PAGAR CON NEQUI/PSE (WHATSAPP 💬)
+              </a>
+
+              <button
+                onClick={() => setShowSoloUpgradeModal(false)}
+                disabled={paymentLoading}
+                style={{
+                  background: 'transparent', border: '1px solid rgba(255, 255, 255, 0.1)', color: 'rgba(255, 255, 255, 0.6)',
+                  padding: '10px', borderRadius: '10px', fontSize: '11px', fontFamily: "'Orbitron', sans-serif",
+                  fontWeight: 700, cursor: paymentLoading ? 'not-allowed' : 'pointer', transition: 'all 0.2s'
+                }}
+              >
+                LUEGO
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      <Toast message={toastState.message} type={toastState.type} visible={toastState.visible} />
     </>
   );
 };

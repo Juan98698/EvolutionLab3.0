@@ -8,7 +8,7 @@ import { autoRegulatePlanForNextWeek } from '../../lib/periodizationEngine';
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface SeriesEntry {
-  reps: number;
+  reps: number | string;
   peso: string;
   done: boolean;
 }
@@ -170,7 +170,12 @@ const ActiveSession: React.FC = () => {
         const copy = [...prev];
         const series = [...copy[exIdx].series];
         if (field === 'reps') {
-          series[sIdx] = { ...series[sIdx], reps: Math.max(1, parseInt(value, 10) || 1) };
+          if (value === '') {
+            series[sIdx] = { ...series[sIdx], reps: '' };
+          } else {
+            const parsed = parseInt(value, 10);
+            series[sIdx] = { ...series[sIdx], reps: isNaN(parsed) ? '' : parsed };
+          }
         } else {
           series[sIdx] = { ...series[sIdx], peso: value };
         }
@@ -267,7 +272,12 @@ const ActiveSession: React.FC = () => {
       const ejerciciosGuardar = exercises
         .filter(ex => ex.series.some(s => s.done))
         .map((ex, index) => {
-          const repsArray = ex.series.filter(s => s.done).map(s => s.reps);
+          const repsArray = ex.series
+            .filter(s => s.done)
+            .map(s => {
+              const r = parseInt(String(s.reps), 10);
+              return isNaN(r) || r < 1 ? ex.suggestedReps || 1 : r;
+            });
           const pesoRaw = (ex.series.find(s => s.done)?.peso || '').trim().toLowerCase();
           const pesoNum = (pesoRaw === '' || pesoRaw === 'autocarga') ? 0 : parseFloat(pesoRaw) || 0;
           return {
@@ -528,19 +538,80 @@ const ActiveSession: React.FC = () => {
               aria-label={`Peso serie ${sIdx + 1}`}
             />
 
-            {/* Reps input */}
-            <input
-              type="number"
-              inputMode="numeric"
-              className={`active-session-input${s.done ? ' done' : ''}`}
-              value={s.reps || ''}
-              placeholder={String(currentExercise.suggestedReps || '—')}
-              onChange={e => handleSeriesFieldChange(currentIdx, sIdx, 'reps', e.target.value)}
-              disabled={s.done}
-              min={1}
-              max={50}
-              aria-label={`Reps serie ${sIdx + 1}`}
-            />
+            {/* Reps input with +/- buttons */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '3px', width: '100%', justifyContent: 'center' }}>
+              <button
+                type="button"
+                onClick={() => {
+                  const currentVal = parseInt(String(s.reps), 10) || currentExercise.suggestedReps || 10;
+                  handleSeriesFieldChange(currentIdx, sIdx, 'reps', String(Math.max(1, currentVal - 1)));
+                }}
+                disabled={s.done}
+                style={{
+                  width: '24px',
+                  height: '38px',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  background: 'rgba(255,255,255,0.04)',
+                  color: 'white',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: 'bold',
+                  fontSize: '14px',
+                  transition: 'all 0.15s ease',
+                  flexShrink: 0
+                }}
+              >
+                −
+              </button>
+              <input
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                className={`active-session-input${s.done ? ' done' : ''}`}
+                value={s.reps === undefined || s.reps === null || s.reps === '' ? '' : s.reps}
+                placeholder={String(currentExercise.suggestedReps || '—')}
+                onChange={e => handleSeriesFieldChange(currentIdx, sIdx, 'reps', e.target.value)}
+                disabled={s.done}
+                style={{
+                  flex: 1,
+                  minWidth: '20px',
+                  padding: '10px 2px',
+                  fontSize: '13px',
+                  height: '38px',
+                  boxSizing: 'border-box'
+                }}
+                aria-label={`Reps serie ${sIdx + 1}`}
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  const currentVal = parseInt(String(s.reps), 10) || currentExercise.suggestedReps || 10;
+                  handleSeriesFieldChange(currentIdx, sIdx, 'reps', String(Math.min(100, currentVal + 1)));
+                }}
+                disabled={s.done}
+                style={{
+                  width: '24px',
+                  height: '38px',
+                  borderRadius: '8px',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  background: 'rgba(255,255,255,0.04)',
+                  color: 'white',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontWeight: 'bold',
+                  fontSize: '14px',
+                  transition: 'all 0.15s ease',
+                  flexShrink: 0
+                }}
+              >
+                +
+              </button>
+            </div>
 
             {/* Done button */}
             <button

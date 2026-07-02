@@ -4204,4 +4204,22 @@ body::before {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif !important;
 }
 
+/* Ensure all explanatory modals, checkout modals, dialogues, and athlete profile metadata use clean, readable sans-serif typography */
+.modal-overlay p,
+.modal-overlay li,
+.modal-overlay td,
+.modal-overlay div:not(.brand-name):not(.modal-title),
+.modal-box p,
+.modal-box li,
+.modal-box td,
+.modal-box div:not(.brand-name):not(.modal-title),
+.modal-msg,
+.perfil-atleta-panel,
+.perfil-atleta-panel div,
+.perfil-atleta-panel span,
+.perfil-atleta-panel strong,
+.perfil-atleta-panel input {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif !important;
+}
+
 
