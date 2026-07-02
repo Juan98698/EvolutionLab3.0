@@ -55,6 +55,8 @@ export const useTrainerClients = (
   }, []);
 
   const fetchClientes = useCallback(async (forceRefresh = false) => {
+    if (!profile?.id) return;
+
     const now = Date.now();
     if (!forceRefresh && now - lastFetchedAt.current < FETCH_THROTTLE_MS && lastFetchedAt.current > 0) {
       // Datos recientes (<5 min) — saltar re-fetch para evitar parpadeo al cambiar pestaña
@@ -81,6 +83,7 @@ export const useTrainerClients = (
         .from('profiles')
         .select('*')
         .eq('rol', 'cliente')
+        .eq('entrenador_id', profile.id)
         .order('nombre', { ascending: true });
 
       if (error) throw error;

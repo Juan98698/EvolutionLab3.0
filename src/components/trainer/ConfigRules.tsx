@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
+import { useSupabase } from '../../context/SupabaseContext';
 import { Profile, PlanData } from '../../types/database.types';
 import Toast from '../common/Toast';
 import { InfoTooltip } from '../common/InfoTooltip';
@@ -120,6 +121,7 @@ const NumberStepper: React.FC<NumberStepperProps> = ({ id, value, min, max, onCh
 
 export const ConfigRules: React.FC = () => {
   const navigate = useNavigate();
+  const { profile } = useSupabase();
 
   const [clientes, setClientes] = useState<Profile[]>([]);
   const [selectedClienteId, setSelectedClienteId] = useState<string>('');
@@ -178,12 +180,15 @@ export const ConfigRules: React.FC = () => {
 
   // Cargar lista de clientes
   useEffect(() => {
+    if (!profile?.id) return;
+
     const fetchClientes = async () => {
       try {
         const { data, error } = await supabase
           .from('profiles')
           .select('id, nombre, email, rol')
           .eq('rol', 'cliente')
+          .eq('entrenador_id', profile.id)
           .order('nombre', { ascending: true });
 
         if (error) throw error;
@@ -196,7 +201,7 @@ export const ConfigRules: React.FC = () => {
       }
     };
     fetchClientes();
-  }, []);
+  }, [profile?.id]);
 
   // Cargar plan cuando el cliente es seleccionado
   useEffect(() => {
