@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useRef } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { Profile } from '../../types/database.types';
 
@@ -10,10 +10,20 @@ export const useTrainerClients = (
   const [clientes, setClientes] = useState<Profile[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [searchQuery, setSearchQuery] = useState<string>('');
-  
+
   const [clientesLogros, setClientesLogros] = useState<Record<string, { titulo: string, icono: string, tipo: string }[]>>({});
   const [clientesRachas, setClientesRachas] = useState<Record<string, { actual: number, maxima: number }>>({});
   const [activePlanDays, setActivePlanDays] = useState<string>('7 Días / Sem');
+
+  // Ref para throttling: evita re-fetch al cambiar de pestaña o restaurar ventana.
+  // Solo vuelve a cargar si pasaron más de 5 minutos desde el último fetch.
+  const lastFetchedAt = useRef<number>(0);
+  const FETCH_THROTTLE_MS = 5 * 60 * 1000; // 5 minutos
+
+  // Ref estable para showToast — evita que fetchClientes cambie de identidad
+  // cada vez que el componente padre re-renderiza con una nueva referencia de showToast.
+  const showToastRef = useRef(showToast);
+  showToastRef.current = showToast;
 
   const calcularRachaLocal = useCallback((sessions: { fecha: string }[]): { actual: number; maxima: number } => {
     if (sessions.length === 0) return { actual: 0, maxima: 0 };
@@ -44,7 +54,12 @@ export const useTrainerClients = (
     return { actual: activeStreak, maxima: maxStreak };
   }, []);
 
-  const fetchClientes = useCallback(async () => {
+  const fetchClientes = useCallback(async (forceRefresh = false) => {
+    const now = Date.now();
+    if (!forceRefresh && now - lastFetchedAt.current < FETCH_THROTTLE_MS && lastFetchedAt.current > 0) {
+      // Datos recientes (<5 min) — saltar re-fetch para evitar parpadeo al cambiar pestaña
+      return;
+    }
     setLoading(true);
     try {
       if (profile?.id && setTrainerSubscription) {
@@ -150,11 +165,12 @@ export const useTrainerClients = (
       }
     } catch (err: any) {
       console.error('Error al cargar clientes:', err);
-      showToast('Error al cargar clientes: ' + err.message, 'error');
+      showToastRef.current('Error al cargar clientes: ' + err.message, 'error');
     } finally {
       setLoading(false);
+      lastFetchedAt.current = Date.now();
     }
-  }, [profile, setTrainerSubscription, showToast, calcularRachaLocal]);
+  }, [profile, setTrainerSubscription, calcularRachaLocal]);
 
   const filteredClientes = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();

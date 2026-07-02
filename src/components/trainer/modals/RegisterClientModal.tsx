@@ -182,7 +182,7 @@ const RegisterClientModal: React.FC<RegisterClientModalProps> = ({
       showToast(`🎉 ¡${linkPreview.nombre} vinculado a tu cuenta exitosamente!`, 'success');
       resetAll();
       onClose();
-      fetchClientes();
+      fetchClientes(true);
     } catch (err: any) {
       showToast('Error al vincular: ' + err.message, 'error');
     } finally {
@@ -236,7 +236,7 @@ const RegisterClientModal: React.FC<RegisterClientModalProps> = ({
       showToast(`🎉 ¡Atleta ${newName} registrado con éxito!`, 'success');
       resetAll();
       onClose();
-      fetchClientes();
+      fetchClientes(true);
     } catch (err: any) {
       showToast('Error al registrar: ' + err.message, 'error');
     } finally {
