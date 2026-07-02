@@ -9,7 +9,7 @@ interface RegisterClientModalProps {
   onClose: () => void;
   profile: Profile | null;
   clientes: Profile[];
-  fetchClientes: () => void;
+  fetchClientes: (force?: boolean) => void;
   showToast: (msg: string, type: 'success' | 'error' | 'info') => void;
 }
 
