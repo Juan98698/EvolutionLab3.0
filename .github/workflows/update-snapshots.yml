@@ -1,0 +1,52 @@
+name: Actualizar Snapshots de Regresión Visual
+
+# Se activa SOLO de forma manual desde la pestaña "Actions" del repo.
+# Úsalo cuando hagas cambios de UI intencionales y necesites regenerar
+# las imágenes baseline para que el CI vuelva a pasar.
+on:
+  workflow_dispatch:
+
+jobs:
+  update-snapshots:
+    name: Regenerar baselines con Playwright y commitear
+    runs-on: ubuntu-latest
+
+    # Misma imagen que usa el CI normal → renderizado idéntico (fuentes, antialiasing).
+    container:
+      image: mcr.microsoft.com/playwright:v1.61.1-jammy
+      options: --ipc=host
+
+    env:
+      VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+      VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+        with:
+          # Se necesita un token con permiso de push para que el commit automático funcione.
+          # Usa el token por defecto del workflow (GITHUB_TOKEN) — ya tiene permiso
+          # de escritura sobre el repo si está configurado en Settings → Actions → General
+          # → Workflow permissions → "Read and write permissions".
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Actualizar snapshots
+        run: npx playwright test --update-snapshots --reporter=list
+
+      - name: Configurar Git
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Commitear nuevos baselines
+        run: |
+          git add e2e/visual-regression.spec.ts-snapshots/
+          # Si no hay cambios (nada nuevo) el commit falla suavemente
+          git diff --cached --quiet && echo "Sin cambios en snapshots." || \
+            git commit -m "ci: actualizar snapshots de regresión visual [skip ci]"
+
+      - name: Pushear al branch actual
+        run: git push
