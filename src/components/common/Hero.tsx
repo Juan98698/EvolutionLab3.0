@@ -1,7 +1,7 @@
 import React from 'react';
 
 export const Hero: React.FC = () => {
-  const heroImg = '/hero_banner.png';
+  const heroImg = '/hero_banner.webp';
   return (
     <section className="hero-section" style={{
       backgroundImage: `url(${heroImg})`,

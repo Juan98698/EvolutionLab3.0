@@ -1,6 +1,4 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import jsPDF from 'jspdf';
-import html2canvas from 'html2canvas';
 import { supabase } from '../../../lib/supabaseClient';
 import { Profile } from '../../../types/database.types';
 
@@ -247,6 +245,13 @@ const EvolutionModal: React.FC<EvolutionModalProps> = ({
       reportEl.style.zIndex = '-9999';
 
       await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+      // Carga diferida: jsPDF + html2canvas pesan ~580KB juntas y solo hacen
+      // falta acá, cuando el usuario (con plan pago) realmente exporta un PDF.
+      const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+        import('html2canvas'),
+        import('jspdf')
+      ]);
 
       const canvas = await html2canvas(reportEl, {
         scale: 2,

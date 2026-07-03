@@ -42,6 +42,13 @@ export default defineConfig({
         // Solo pre-cachear los bundles generados por Vite (JS, CSS, HTML).
         // Los iconos y fondo se cargan bajo demanda, no necesitan precache.
         globPatterns: ['**/*.{js,css,html}'],
+        // Excluir del precache los chunks pesados y de uso minoritario: jsPDF +
+        // html2canvas (~590KB, solo se usan al exportar un reporte PDF, función
+        // premium) y AdminDashboard (~39KB, solo lo usa el admin). Se siguen
+        // cacheando bajo demanda vía runtimeCaching más abajo, así que la
+        // experiencia offline no cambia — solo dejan de descargarse para TODOS
+        // los usuarios apenas instalan la PWA.
+        globIgnores: ['**/jspdf*.js', '**/html2canvas*.js', '**/AdminDashboard*.js'],
         skipWaiting: true,
         clientsClaim: true,
         cleanupOutdatedCaches: true,
@@ -99,6 +106,22 @@ export default defineConfig({
               cacheName: 'external-media-cache',
               expiration: {
                 maxEntries: 100,
+                maxAgeSeconds: 60 * 60 * 24 * 30 // 30 días
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          },
+          {
+            // Los chunks excluidos del precache (jsPDF, html2canvas, AdminDashboard)
+            // se cachean recién cuando alguien los usa de verdad, no en el install.
+            urlPattern: /\/(jspdf|html2canvas|AdminDashboard)[^/]*\.js$/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'on-demand-chunks-cache',
+              expiration: {
+                maxEntries: 6,
                 maxAgeSeconds: 60 * 60 * 24 * 30 // 30 días
               },
               cacheableResponse: {
