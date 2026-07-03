@@ -20,6 +20,7 @@ import {
   resolveOverloadConfig,
   resolveOverloadRules,
   SESSIONS_UPDATED_EVENT,
+  SESSIONS_SYNC_FAILED_EVENT,
 } from '../../lib/sessions';
 import {
   DISMISSED_NOTIFS_KEY,
@@ -567,8 +568,31 @@ export const AthleteDashboard: React.FC = () => {
     };
   }, [user]);
 
+  // Avisar si alguna sesión offline no pudo subirse a Supabase
+  useEffect(() => {
+    const onSyncFailed = (e: Event) => {
+      const detail = (e as CustomEvent<{ failedCount: number }>).detail;
+      const n = detail?.failedCount ?? 1;
+      showToast(
+        n === 1
+          ? '⚠️ Una sesión no se pudo sincronizar. Se reintentará más tarde, no la borres.'
+          : `⚠️ ${n} sesiones no se pudieron sincronizar. Se reintentará más tarde.`,
+        'error'
+      );
+    };
+    window.addEventListener(SESSIONS_SYNC_FAILED_EVENT, onSyncFailed);
+    return () => window.removeEventListener(SESSIONS_SYNC_FAILED_EVENT, onSyncFailed);
+  }, []);
+
   const overloadSessions = useMemo(
     () => flattenSessionsForOverload(localSesiones),
+    [localSesiones]
+  );
+
+  // Sesiones registradas offline que todavía tienen un id numérico local
+  // (no llegaron a Supabase). Sirve para el indicador persistente de "pendiente".
+  const pendingSyncCount = useMemo(
+    () => localSesiones.filter((s) => typeof s.id === 'number').length,
     [localSesiones]
   );
 
@@ -1144,6 +1168,31 @@ export const AthleteDashboard: React.FC = () => {
       <AthleteNavbar />
 
       <div className="container stagger-3" style={{ padding: '0 20px', maxWidth: '1200px', margin: '0 auto' }}>
+
+        {/* Indicador persistente: sesiones offline aún sin subir al servidor */}
+        {pendingSyncCount > 0 && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            background: 'rgba(245, 158, 11, 0.1)',
+            border: '1px solid rgba(245, 158, 11, 0.4)',
+            borderRadius: '12px',
+            padding: '10px 16px',
+            marginBottom: '16px',
+            fontSize: '12px',
+            color: '#f59e0b',
+            fontWeight: 600
+          }}>
+            <span style={{ fontSize: '16px' }}>🔄</span>
+            <span>
+              {pendingSyncCount === 1
+                ? 'Tenés 1 sesión guardada localmente pendiente de sincronizar.'
+                : `Tenés ${pendingSyncCount} sesiones guardadas localmente pendientes de sincronizar.`}
+              {' '}Se subirán solas cuando vuelva la conexión — no cierres sesión ni borres el navegador mientras tanto.
+            </span>
+          </div>
+        )}
         
         {/* Banner de invitación a activar notificaciones Push */}
         {showPushPrompt && !planExpiration.expired && (

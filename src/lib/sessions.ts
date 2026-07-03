@@ -5,6 +5,13 @@ import { DEFAULT_RULES } from './rules';
 
 export const SESSIONS_CACHE_KEY = 'sobrecarga_v5';
 export const SESSIONS_UPDATED_EVENT = 'pwa-sessions-updated';
+/** Se dispara cuando una o más sesiones offline no pudieron subirse a Supabase. */
+export const SESSIONS_SYNC_FAILED_EVENT = 'pwa-sessions-sync-failed';
+
+export interface SyncResult {
+  syncedCount: number;
+  failedCount: number;
+}
 
 const SESIONES_SELECT = `
   id,
@@ -94,14 +101,15 @@ export async function fetchAthleteSessions(userId: string): Promise<LocalSesion[
 }
 
 /** Sincroniza las sesiones registradas localmente en modo offline hacia Supabase. */
-export async function syncOfflineSessions(userId: string): Promise<void> {
-  if (!navigator.onLine) return;
-  
+export async function syncOfflineSessions(userId: string): Promise<SyncResult> {
+  if (!navigator.onLine) return { syncedCount: 0, failedCount: 0 };
+
   const sessions = readSessionsFromCache();
   const unsynced = sessions.filter((s) => typeof s.id === 'number');
-  if (unsynced.length === 0) return;
+  if (unsynced.length === 0) return { syncedCount: 0, failedCount: 0 };
 
-  let hasChanged = false;
+  let syncedCount = 0;
+  let failedCount = 0;
   for (const s of unsynced) {
     try {
       // 1. Insertar cabecera de la sesión
@@ -151,15 +159,25 @@ export async function syncOfflineSessions(userId: string): Promise<void> {
 
       // Sincronización exitosa: cambiar ID numérico local por el UUID real del servidor
       s.id = sesionId;
-      hasChanged = true;
+      syncedCount++;
     } catch (err) {
       console.error('[Sync] Error al sincronizar sesión offline:', err);
+      failedCount++;
     }
   }
 
-  if (hasChanged) {
+  if (syncedCount > 0) {
     writeSessionsToCache(sessions);
   }
+
+  if (failedCount > 0) {
+    // Avisar a la UI que quedaron sesiones sin subir, para mostrar un toast/indicador.
+    window.dispatchEvent(
+      new CustomEvent(SESSIONS_SYNC_FAILED_EVENT, { detail: { failedCount } })
+    );
+  }
+
+  return { syncedCount, failedCount };
 }
 
 /** Descarga de Supabase con fallback a caché local (offline-first). */
@@ -170,12 +188,31 @@ export async function loadAthleteSessions(userId: string): Promise<LocalSesion[]
 
     // Descargar el historial completo del servidor
     const sessions = await fetchAthleteSessions(userId);
-    writeSessionsToCache(sessions);
-    return sessions;
+
+    // Si alguna sesión offline no pudo subirse (p. ej. se cayó la red a mitad
+    // del insert), sigue en caché con su id numérico local. NO hay que pisarla
+    // con la lista del servidor -que obviamente no la incluye- o se pierde para
+    // siempre. Se fusiona en vez de sobrescribir.
+    const stillUnsynced = readSessionsFromCache().filter(
+      (s) => typeof s.id === 'number'
+    );
+    const merged = [...sessions, ...stillUnsynced];
+    writeSessionsToCache(merged);
+    return merged;
   } catch {
     // Si falla por red, conservar las sesiones que ya teníamos en caché (incluyendo las offline)
     return readSessionsFromCache();
   }
+}
+
+/** true si hay sesiones registradas localmente que todavía no llegaron al servidor. */
+export function hasUnsyncedSessions(): boolean {
+  return readSessionsFromCache().some((s) => typeof s.id === 'number');
+}
+
+/** Cantidad de sesiones registradas localmente que todavía no llegaron al servidor. */
+export function countUnsyncedSessions(): number {
+  return readSessionsFromCache().filter((s) => typeof s.id === 'number').length;
 }
 
 /** Convierte historial anidado en filas planas para el motor de sobrecarga. */
