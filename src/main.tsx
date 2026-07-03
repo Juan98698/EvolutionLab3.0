@@ -5,6 +5,18 @@ import { SupabaseProvider } from './context/SupabaseContext.tsx';
 import { inject } from '@vercel/analytics';
 import './index.css';
 
+// Auto-recuperación de "Failed to fetch dynamically imported module": pasa
+// cuando el navegador tiene un index.html/bundle viejo en memoria que
+// apunta a un chunk (ej. ConfigRules-xxxxx.js) que un deploy más nuevo ya
+// borró del servidor. Vite emite este evento específicamente para este
+// caso — antes esto dejaba al usuario con una pantalla rota hasta que
+// refrescara manualmente una segunda vez.
+window.addEventListener('vite:preloadError', (event) => {
+  console.warn('⚠️ Chunk desactualizado detectado, recargando automáticamente...', event);
+  event.preventDefault();
+  window.location.reload();
+});
+
 // Síncronamente inicializar el tema de enfoque para evitar parpadeos visuales (cero-flicker)
 const savedTheme = localStorage.getItem('pwa_login_theme') || 'cyan';
 document.documentElement.setAttribute('data-theme', savedTheme);
@@ -68,7 +80,18 @@ purgeOldServiceWorkersAndCaches().then((wasPurged) => {
   // Registrar el Service Worker DESPUÉS de verificar que la caché está limpia.
   // Importar dinámicamente para que no se ejecute en el scope global antes de la purga.
   import('virtual:pwa-register').then(({ registerSW }) => {
-    registerSW({ immediate: true });
+    const updateSW = registerSW({ immediate: true });
+
+    // El navegador solo revisa automáticamente si hay una versión nueva del
+    // Service Worker al navegar. En una SPA, si alguien deja la pestaña
+    // abierta sin recargar, nunca se entera de un deploy nuevo hasta que
+    // por casualidad falla algo. Revisamos manualmente al volver a la
+    // pestaña y cada 30 minutos mientras sigue abierta.
+    const checkForUpdate = () => updateSW(false).catch(() => {});
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'visible') checkForUpdate();
+    });
+    setInterval(checkForUpdate, 30 * 60 * 1000);
   });
 
   ReactDOM.createRoot(document.getElementById('root')!).render(
