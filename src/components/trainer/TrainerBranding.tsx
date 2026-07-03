@@ -4,6 +4,7 @@ import { useSupabase } from '../../context/SupabaseContext';
 import { supabase } from '../../lib/supabaseClient';
 import { FilosofiaPilar, MarcaConfig } from '../../types/database.types';
 import Toast from '../common/Toast';
+import { loadBrandFonts } from '../../lib/dynamicFonts';
 
 export interface CustomBadgeDef {
   id?: string;
@@ -80,6 +81,13 @@ export const TrainerBranding: React.FC = () => {
     const handleResize = () => setIsMobile(window.innerWidth < 768);
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Esta pantalla necesita las 8 tipografías disponibles para mostrar la
+  // vista previa del selector — se cargan acá bajo demanda en vez de
+  // globalmente, ya que solo el entrenador visita esta pantalla.
+  useEffect(() => {
+    loadBrandFonts(FONT_OPTIONS);
   }, []);
 
   // Toast

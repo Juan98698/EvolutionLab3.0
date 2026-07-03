@@ -35,6 +35,7 @@ import { OnboardingModal } from '../common/OnboardingModal';
 import { ShareableProgressCard } from './ShareableProgressCard';
 import { InitialPeriodizationEvaluation } from './InitialPeriodizationEvaluation';
 import { subscribirNotificacionesPush, verificarSuscripcionPushActiva } from '../../lib/pushNotifications';
+import { loadBrandFonts } from '../../lib/dynamicFonts';
 
 export const AthleteDashboard: React.FC = () => {
   const location = useLocation();
@@ -195,6 +196,15 @@ export const AthleteDashboard: React.FC = () => {
     suscripcion_expira_at?: string | null;
     insignias_custom?: any[] | null;
   } | null>(null);
+
+  // Cargar bajo demanda solo la tipografía que su entrenador eligió para su
+  // marca (si eligió alguna de las 6 opcionales) — no todas las opciones,
+  // que solo hacen falta en la pantalla de branding del entrenador.
+  useEffect(() => {
+    if (trainerProfile?.marca?.tipografia) {
+      loadBrandFonts([trainerProfile.marca.tipografia]);
+    }
+  }, [trainerProfile?.marca?.tipografia]);
 
   const wsHref = useMemo(() => {
     if (trainerProfile?.marca?.whatsapp) {
