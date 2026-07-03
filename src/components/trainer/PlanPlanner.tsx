@@ -725,91 +725,89 @@ export const PlanPlanner: React.FC = () => {
       setLoading(true);
 
       try {
-        // 1. Cargar perfil del cliente
-        const { data: profData, error: profError } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', clienteId)
-          .single();
+        // La sincronización de biblioteca de ejercicios (autocompletado local)
+        // no bloquea el render del plan — se dispara en paralelo sin esperarla.
+        const trainerId = profile?.id;
+        if (trainerId) {
+          (async () => {
+            try {
+              const { data: plansData } = await supabase
+                .from('planes')
+                .select('datos_plan')
+                .eq('creador_id', trainerId);
 
+              if (plansData) {
+                const libraryKey = `evolution_exercise_library_${trainerId}`;
+                const library = JSON.parse(localStorage.getItem(libraryKey) || '{}');
+                let updated = false;
+
+                plansData.forEach(p => {
+                  const dp = p.datos_plan as any;
+                  if (dp && Array.isArray(dp.trainingDays)) {
+                    dp.trainingDays.forEach((day: any) => {
+                      if (day && Array.isArray(day.exercises)) {
+                        day.exercises.forEach((ex: any) => {
+                          if (ex && ex.nombre) {
+                            const nameClean = ex.nombre.trim().toLowerCase();
+                            const imageVal = ex.image_url || ex.imageData || '';
+                            const gifVal = ex.gif_url || ex.gifData || '';
+                            const videoVal = ex.video_url || ex.videoUrl || '';
+                            const descVal = ex.description || '';
+                            const origVal = ex.nombre_original || '';
+                            const gmVal = normalizeMuscleGroup(ex.grupo_muscular || '');
+
+                            if (nameClean && (imageVal || gifVal || videoVal || descVal || origVal || gmVal)) {
+                              if (
+                                !library[nameClean] ||
+                                (imageVal && library[nameClean].imageData !== imageVal) ||
+                                (gifVal && library[nameClean].gifData !== gifVal) ||
+                                (videoVal && library[nameClean].videoUrl !== videoVal) ||
+                                (descVal && library[nameClean].description !== descVal) ||
+                                (origVal && library[nameClean].nombreOriginal !== origVal) ||
+                                (gmVal && library[nameClean].grupoMuscular !== gmVal)
+                              ) {
+                                library[nameClean] = {
+                                  imageData: imageVal || library[nameClean]?.imageData || '',
+                                  gifData: gifVal || library[nameClean]?.gifData || '',
+                                  videoUrl: videoVal || library[nameClean]?.videoUrl || '',
+                                  description: descVal || library[nameClean]?.description || '',
+                                  nombreOriginal: origVal || library[nameClean]?.nombreOriginal || '',
+                                  grupoMuscular: gmVal || library[nameClean]?.grupoMuscular || ''
+                                };
+                                updated = true;
+                              }
+                            }
+                          }
+                        });
+                      }
+                    });
+                  }
+                });
+
+                if (updated) {
+                  localStorage.setItem(libraryKey, JSON.stringify(library));
+                  console.log(`✨ [Biblioteca de Ejercicios] Biblioteca local del entrenador ${trainerId} sincronizada desde Supabase:`, library);
+                }
+              }
+            } catch (e) {
+              console.error('Error al sincronizar biblioteca de ejercicios desde Supabase:', e);
+            }
+          })();
+        }
+
+        // 1 y 2: perfil del cliente y plan activo son independientes entre sí
+        // (ninguno depende del resultado del otro) — antes se esperaban en
+        // serie, ahora van en paralelo.
+        const [profResult, planResult] = await Promise.all([
+          supabase.from('profiles').select('*').eq('id', clienteId).single(),
+          supabase.from('planes').select('*').eq('cliente_id', clienteId).eq('activo', true).maybeSingle()
+        ]);
+
+        const { data: profData, error: profError } = profResult;
         if (profError) throw profError;
         setClientProfile(profData as Profile);
 
-        // Sincronizar los planes del entrenador desde Supabase para crear una biblioteca de autocompletado privada
-        try {
-          const trainerId = profile?.id;
-          if (trainerId) {
-            const { data: plansData } = await supabase
-              .from('planes')
-              .select('datos_plan')
-              .eq('creador_id', trainerId);
-
-            if (plansData) {
-              const libraryKey = `evolution_exercise_library_${trainerId}`;
-              const library = JSON.parse(localStorage.getItem(libraryKey) || '{}');
-              let updated = false;
-
-              plansData.forEach(p => {
-                const dp = p.datos_plan as any;
-                if (dp && Array.isArray(dp.trainingDays)) {
-                  dp.trainingDays.forEach((day: any) => {
-                    if (day && Array.isArray(day.exercises)) {
-                      day.exercises.forEach((ex: any) => {
-                        if (ex && ex.nombre) {
-                          const nameClean = ex.nombre.trim().toLowerCase();
-                          const imageVal = ex.image_url || ex.imageData || '';
-                          const gifVal = ex.gif_url || ex.gifData || '';
-                          const videoVal = ex.video_url || ex.videoUrl || '';
-                          const descVal = ex.description || '';
-                          const origVal = ex.nombre_original || '';
-                          const gmVal = normalizeMuscleGroup(ex.grupo_muscular || '');
-
-                          if (nameClean && (imageVal || gifVal || videoVal || descVal || origVal || gmVal)) {
-                            if (
-                              !library[nameClean] ||
-                              (imageVal && library[nameClean].imageData !== imageVal) ||
-                              (gifVal && library[nameClean].gifData !== gifVal) ||
-                              (videoVal && library[nameClean].videoUrl !== videoVal) ||
-                              (descVal && library[nameClean].description !== descVal) ||
-                              (origVal && library[nameClean].nombreOriginal !== origVal) ||
-                              (gmVal && library[nameClean].grupoMuscular !== gmVal)
-                            ) {
-                              library[nameClean] = {
-                                imageData: imageVal || library[nameClean]?.imageData || '',
-                                gifData: gifVal || library[nameClean]?.gifData || '',
-                                videoUrl: videoVal || library[nameClean]?.videoUrl || '',
-                                description: descVal || library[nameClean]?.description || '',
-                                nombreOriginal: origVal || library[nameClean]?.nombreOriginal || '',
-                                grupoMuscular: gmVal || library[nameClean]?.grupoMuscular || ''
-                              };
-                              updated = true;
-                            }
-                          }
-                        }
-                      });
-                    }
-                  });
-                }
-              });
-
-              if (updated) {
-                localStorage.setItem(libraryKey, JSON.stringify(library));
-                console.log(`✨ [Biblioteca de Ejercicios] Biblioteca local del entrenador ${trainerId} sincronizada desde Supabase:`, library);
-              }
-            }
-          }
-        } catch (e) {
-          console.error('Error al sincronizar biblioteca de ejercicios desde Supabase:', e);
-        }
-
-        // 2. Cargar plan activo
-        const { data: planData, error: planError } = await supabase
-          .from('planes')
-          .select('*')
-          .eq('cliente_id', clienteId)
-          .eq('activo', true)
-          .maybeSingle();
-
+        const { data: planData, error: planError } = planResult;
         if (planError) throw planError;
 
         if (planData && planData.datos_plan) {

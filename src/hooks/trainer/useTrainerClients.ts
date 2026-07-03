@@ -64,12 +64,27 @@ export const useTrainerClients = (
     }
     setLoading(true);
     try {
-      if (profile?.id && setTrainerSubscription) {
-        const { data: tData, error: tErr } = await supabase
+      // Oleada 1: suscripción del entrenador y lista de clientes son
+      // independientes entre sí (ninguna depende de la otra) — antes se
+      // esperaban en serie, ahora van en paralelo.
+      const [subResult, clientesResult] = await Promise.all([
+        setTrainerSubscription
+          ? supabase
+              .from('profiles')
+              .select('suscripcion_plan, suscripcion_estado, suscripcion_expira_at')
+              .eq('id', profile.id)
+              .maybeSingle()
+          : Promise.resolve(null),
+        supabase
           .from('profiles')
-          .select('suscripcion_plan, suscripcion_estado, suscripcion_expira_at')
-          .eq('id', profile.id)
-          .maybeSingle();
+          .select('*')
+          .eq('rol', 'cliente')
+          .eq('entrenador_id', profile.id)
+          .order('nombre', { ascending: true })
+      ]);
+
+      if (subResult && setTrainerSubscription) {
+        const { data: tData, error: tErr } = subResult;
         if (!tErr && tData) {
           setTrainerSubscription({
             plan: tData.suscripcion_plan || 'free',
@@ -79,23 +94,31 @@ export const useTrainerClients = (
         }
       }
 
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('rol', 'cliente')
-        .eq('entrenador_id', profile.id)
-        .order('nombre', { ascending: true });
-
+      const { data, error } = clientesResult;
       if (error) throw error;
       setClientes(data || []);
 
       if (data && data.length > 0) {
         const clientIds = data.map(c => c.id);
 
-        const { data: achData } = await supabase
-          .from('gamificacion')
-          .select('cliente_id, titulo, tipo, datos')
-          .in('cliente_id', clientIds);
+        // Oleada 2: logros, rachas y planes activos dependen todos del mismo
+        // dato (clientIds), pero no entre sí — antes eran 3 round-trips en
+        // serie, ahora van en paralelo.
+        const [{ data: achData }, { data: sessData }, { data: plansData, error: plansError }] = await Promise.all([
+          supabase
+            .from('gamificacion')
+            .select('cliente_id, titulo, tipo, datos')
+            .in('cliente_id', clientIds),
+          supabase
+            .from('sesiones_historial')
+            .select('cliente_id, fecha')
+            .in('cliente_id', clientIds),
+          supabase
+            .from('planes')
+            .select('cliente_id, datos_plan')
+            .in('cliente_id', clientIds)
+            .eq('activo', true)
+        ]);
 
         const logrosMap: Record<string, { titulo: string, icono: string, tipo: string }[]> = {};
         if (achData) {
@@ -111,11 +134,6 @@ export const useTrainerClients = (
           });
         }
         setClientesLogros(logrosMap);
-
-        const { data: sessData } = await supabase
-          .from('sesiones_historial')
-          .select('cliente_id, fecha')
-          .in('cliente_id', clientIds);
 
         const rachasMap: Record<string, { actual: number; maxima: number }> = {};
         if (sessData) {
@@ -133,12 +151,6 @@ export const useTrainerClients = (
           });
         }
         setClientesRachas(rachasMap);
-
-        const { data: plansData, error: plansError } = await supabase
-          .from('planes')
-          .select('cliente_id, datos_plan')
-          .in('cliente_id', clientIds)
-          .eq('activo', true);
 
         if (!plansError && plansData && plansData.length > 0) {
           let totalTrainingDays = 0;
