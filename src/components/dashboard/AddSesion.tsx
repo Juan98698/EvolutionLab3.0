@@ -681,10 +681,15 @@ export const AddSesion: React.FC<AddSesionProps> = ({
                             padding: '4px'
                           }}>
                             {filtered.map((sug, sIdx) => (
-                              <div
+                              <button
                                 key={sIdx}
+                                type="button"
                                 onMouseDown={() => handleSelectSuggestion(idx, sug.nombre, sug.grupo)}
                                 style={{
+                                  width: '100%',
+                                  textAlign: 'left',
+                                  font: 'inherit',
+                                  border: 'none',
                                   padding: '10px 12px',
                                   borderRadius: '6px',
                                   cursor: 'pointer',
@@ -722,7 +727,7 @@ export const AddSesion: React.FC<AddSesionProps> = ({
                                     {sug.grupo}
                                   </span>
                                 )}
-                              </div>
+                              </button>
                             ))}
                           </div>
                         );

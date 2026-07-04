@@ -2009,7 +2009,16 @@ export const PlanPlanner: React.FC = () => {
         {/* SECCIÓN 3: VARIABLES GLOBALES */}
         <div style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '16px', padding: '20px', marginBottom: '24px', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', boxShadow: '0 8px 32px 0 var(--theme-glow)' }}>
           <div
+            role="button"
+            tabIndex={0}
+            aria-expanded={variablesOpen}
             onClick={() => setVariablesOpen(!variablesOpen)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setVariablesOpen(!variablesOpen);
+              }
+            }}
             style={{
               display: 'flex',
               justifyContent: 'space-between',
@@ -2419,8 +2428,9 @@ export const PlanPlanner: React.FC = () => {
                                   gap: '2px'
                                 }}>
                                   {filteredSuggestions.map((sug) => (
-                                    <div
+                                    <button
                                       key={sug.id}
+                                      type="button"
                                       onMouseDown={(e) => {
                                         e.preventDefault();
                                         handleExerciseChange(day.id, ex.id, 'nombre', sug.nombre);
@@ -2428,6 +2438,11 @@ export const PlanPlanner: React.FC = () => {
                                         setFilteredSuggestions([]);
                                       }}
                                       style={{
+                                        width: '100%',
+                                        textAlign: 'left',
+                                        font: 'inherit',
+                                        border: 'none',
+                                        background: 'transparent',
                                         display: 'flex',
                                         alignItems: 'center',
                                         gap: '10px',
@@ -2468,7 +2483,7 @@ export const PlanPlanner: React.FC = () => {
                                           {sug.grupo_muscular}
                                         </span>
                                       </div>
-                                    </div>
+                                    </button>
                                   ))}
                                 </div>
                               )}

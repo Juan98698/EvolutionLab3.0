@@ -238,6 +238,7 @@ const RegisterSessionModal: React.FC<RegisterSessionModalProps> = ({
   if (!isOpen || !selectedAthleteForSession) return null;
 
   return (
+    // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- backdrop de modal: cierra al hacer click afuera; el cierre por teclado (Escape) y el foco atrapado se implementan en la Fase 3 junto con role="dialog"
     <div className="modal-overlay modal-overlay-enter open" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999 }} onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
       <div className="modal-box modal-enter" style={{ maxWidth: '650px', width: '90%', maxHeight: '85vh', overflowY: 'auto', border: '1px solid var(--theme-border)', boxShadow: '0 20px 50px var(--theme-glow)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '12px', marginBottom: '15px' }}>
@@ -478,15 +479,16 @@ const RegisterSessionModal: React.FC<RegisterSessionModalProps> = ({
             {exerciseSuggestions.length > 0 && (
               <div style={{ position: 'absolute', top: '100%', left: '14px', right: '14px', background: '#090f1d', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', zIndex: 100, maxHeight: '180px', overflowY: 'auto', marginTop: '4px', boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }}>
                 {exerciseSuggestions.map((item, idx) => (
-                  <div
+                  <button
                     key={idx}
+                    type="button"
                     onClick={() => handleAddFreeExercise(item)}
-                    style={{ padding: '10px 14px', fontSize: '12px', color: 'rgba(255,255,255,0.8)', borderBottom: '1px solid rgba(255,255,255,0.03)', cursor: 'pointer', transition: 'background 0.2s' }}
+                    style={{ display: 'block', width: '100%', textAlign: 'left', font: 'inherit', background: 'none', padding: '10px 14px', fontSize: '12px', color: 'rgba(255,255,255,0.8)', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.03)', cursor: 'pointer', transition: 'background 0.2s' }}
                     onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.05)'}
                     onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                   >
                     🏋️ {item}
-                  </div>
+                  </button>
                 ))}
               </div>
             )}

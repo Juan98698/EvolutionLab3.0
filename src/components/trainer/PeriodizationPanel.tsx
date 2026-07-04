@@ -253,7 +253,11 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
         <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', fontFamily: "'Orbitron', sans-serif", userSelect: 'none' }}>
           {config.enabled ? 'ACTIVO' : 'DESACTIVADO'}
         </span>
-        <div
+        <button
+          type="button"
+          role="switch"
+          aria-checked={config.enabled}
+          aria-label="Activar periodización científica RIR"
           onClick={() => {
             setConfig(prev => prev ? { ...prev, enabled: !prev.enabled } : undefined);
           }}
@@ -279,7 +283,7 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
             transform: config.enabled ? 'translateX(20px)' : 'translateX(0px)',
             transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
           }} />
-        </div>
+        </button>
       </div>
     </div>
 
@@ -462,18 +466,27 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
                 {(() => {
                   const isOverride = !!config.rir_override_manual;
                   return (
-                    <div style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      background: isOverride ? 'rgba(251,191,36,0.08)' : 'rgba(0,0,0,0.15)',
-                      border: `1px solid ${isOverride ? 'rgba(251,191,36,0.3)' : 'rgba(255,255,255,0.06)'}`,
-                      borderRadius: '10px',
-                      padding: '10px 14px',
-                      marginBottom: '14px',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                    }}
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={isOverride}
+                      aria-label="Activar control manual de RIR"
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        background: isOverride ? 'rgba(251,191,36,0.08)' : 'rgba(0,0,0,0.15)',
+                        border: `1px solid ${isOverride ? 'rgba(251,191,36,0.3)' : 'rgba(255,255,255,0.06)'}`,
+                        borderRadius: '10px',
+                        padding: '10px 14px',
+                        marginBottom: '14px',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                        width: '100%',
+                        textAlign: 'left',
+                        font: 'inherit',
+                        color: 'inherit',
+                      }}
                       onClick={() => setConfig(prev => prev ? { ...prev, rir_override_manual: !prev.rir_override_manual } : undefined)}
                     >
                       <div>
@@ -507,7 +520,7 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
                           transition: 'left 0.2s',
                         }} />
                       </div>
-                    </div>
+                    </button>
                   );
                 })()}
 
@@ -589,9 +602,14 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
                         })}
                       </div>
                       {especializacionActiva && (
-                        <div
+                        <button
+                          type="button"
                           onClick={() => setConfig(prev => prev ? { ...prev, muscle_groups_in_focus: [] } : undefined)}
                           style={{
+                            background: 'none',
+                            border: 'none',
+                            padding: 0,
+                            font: 'inherit',
                             fontSize: '10px',
                             color: 'rgba(255,255,255,0.35)',
                             marginTop: '8px',
@@ -600,7 +618,7 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
                           }}
                         >
                           Limpiar selección — volver a progresión uniforme
-                        </div>
+                        </button>
                       )}
                     </div>
                   );

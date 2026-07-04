@@ -1017,9 +1017,11 @@ export const QuickStartPlanner: React.FC = () => {
 
         {/* ── Step 1: Plan Metadata ──────────────────────────────────────────── */}
         <div style={styles.card}>
-          <div
-            style={styles.collapsibleHeader}
+          <button
+            type="button"
+            style={{ ...styles.collapsibleHeader, width: '100%', background: 'none', border: 'none', padding: 0, font: 'inherit', color: 'inherit', textAlign: 'left' }}
             onClick={() => setMetaOpen(!metaOpen)}
+            aria-expanded={metaOpen}
           >
             <div style={styles.sectionLabel}>
               <span style={styles.stepBadge}>1</span>
@@ -1035,7 +1037,7 @@ export const QuickStartPlanner: React.FC = () => {
             >
               <polyline points="6 9 12 15 18 9" />
             </svg>
-          </div>
+          </button>
 
           {metaOpen && (
             <div style={{ marginTop: '14px' }}>
@@ -1719,6 +1721,7 @@ export const QuickStartPlanner: React.FC = () => {
 
       {/* 1RM CALCULATOR MODAL OVERLAY */}
       {is1RMModalOpen && (
+        // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- backdrop de modal: cierra al hacer click afuera; el cierre por teclado (Escape) y el foco atrapado se implementan en la Fase 3 junto con role="dialog"
         <div id="modal-1rm" className={is1RMModalOpen ? 'open' : ''} style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', display: is1RMModalOpen ? 'flex' : 'none', justifyContent: 'center', alignItems: 'center', background: 'rgba(0,0,0,0.6)', zIndex: 99999 }} onClick={(e) => { if (e.target === e.currentTarget) { setIs1RMModalOpen(false); setRmResult(null); setCalcTargetEx(null); } }}>
           <div className="modal-1rm-box">
             <div className="modal-1rm-header">

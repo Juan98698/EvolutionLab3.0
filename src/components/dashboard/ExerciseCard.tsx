@@ -118,7 +118,11 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
     >
       <div className="exercise-header">
         {/* Checkbox */}
-        <div
+        <button
+          type="button"
+          role="checkbox"
+          aria-checked={isChecked}
+          aria-label={`Marcar ${displayName} como completado`}
           className={`exercise-checkbox client-only-checkbox${isChecked ? ' checked' : ''}`}
           data-ex-id={exercise.id}
           data-day-id={dayId}
@@ -126,6 +130,7 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
             e.stopPropagation();
             onToggleCheck(exercise.id);
           }}
+          style={{ background: isChecked ? undefined : 'transparent', padding: 0 }}
         />
 
         {/* Nombre del ejercicio */}
@@ -216,10 +221,14 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
               </span>
               {' '}{escapeHtml(displayValue)}
               {definition && (
-                <span
+                <button
+                  type="button"
                   className="var-tooltip-trigger"
                   onClick={(e) => { e.stopPropagation(); e.preventDefault(); onShowGuide?.(v.label, definition); }}
+                  aria-label={`Ver definición de ${v.label}`}
                   style={{
+                    padding: 0,
+                    font: 'inherit',
                     cursor: 'pointer',
                     fontSize: '10px',
                     color: '#f97316',
@@ -228,7 +237,7 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
                   }}
                 >
                   ⓘ
-                </span>
+                </button>
               )}
             </div>
           );

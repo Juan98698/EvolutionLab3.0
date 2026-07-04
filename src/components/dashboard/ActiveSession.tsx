@@ -653,14 +653,20 @@ const ActiveSession: React.FC = () => {
             <div className="active-session-guide-content">
               {/* Left side: Image thumbnail */}
               {(currentExercise.image_url || currentExercise.gif_url) && (
-                <div className="active-session-guide-thumbnail-container" onClick={() => setShowFullImage(true)}>
+                <button
+                  type="button"
+                  className="active-session-guide-thumbnail-container"
+                  onClick={() => setShowFullImage(true)}
+                  aria-label={`Ver imagen completa de ${currentExercise.nombre}`}
+                  style={{ padding: 0 }}
+                >
                   <img
                     src={currentExercise.image_url || currentExercise.gif_url}
                     alt={currentExercise.nombre}
                     className="active-session-guide-thumbnail"
                   />
                   <span className="active-session-guide-zoom-badge">🔍</span>
-                </div>
+                </button>
               )}
               
               {/* Right side: Actions & Video/Guide buttons */}
@@ -859,7 +865,9 @@ const ActiveSession: React.FC = () => {
 
       {/* ── Full Screen Image Modal ── */}
       {showFullImage && (currentExercise.image_url || currentExercise.gif_url) && (
+        // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- backdrop de modal: cierra al hacer click afuera; el cierre por teclado (Escape) y el foco atrapado se implementan en la Fase 3 junto con role="dialog"
         <div className="active-session-image-overlay" onClick={() => setShowFullImage(false)}>
+          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- solo evita que el click se propague al backdrop; no es un control interactivo en sí mismo */}
           <div className="active-session-image-modal-content" onClick={e => e.stopPropagation()}>
             <button className="active-session-image-close" onClick={() => setShowFullImage(false)}>✕</button>
             <img
@@ -874,7 +882,9 @@ const ActiveSession: React.FC = () => {
 
       {/* ── Execution Guide Modal Overlay ── */}
       {showGuideModal && currentExercise.description && (
+        // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- backdrop de modal: cierra al hacer click afuera; el cierre por teclado (Escape) y el foco atrapado se implementan en la Fase 3 junto con role="dialog"
         <div className="active-session-modal-overlay" onClick={() => setShowGuideModal(false)}>
+          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- solo evita que el click se propague al backdrop; no es un control interactivo en sí mismo */}
           <div className="active-session-guide-modal-box" onClick={e => e.stopPropagation()}>
             <div className="active-session-guide-modal-header">
               <h3 className="active-session-guide-modal-title">

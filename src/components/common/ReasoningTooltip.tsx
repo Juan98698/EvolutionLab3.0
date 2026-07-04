@@ -77,6 +77,12 @@ export const ReasoningTooltip: React.FC<ReasoningTooltipProps> = React.memo(({
         ref={triggerRef}
         className={`reasoning-tooltip-trigger${open ? ' active' : ''}`}
         onClick={handleToggle}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            setOpen(prev => !prev);
+          }
+        }}
         role="button"
         tabIndex={0}
         aria-expanded={open}

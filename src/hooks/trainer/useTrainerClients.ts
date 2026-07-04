@@ -2,6 +2,11 @@ import { useState, useMemo, useCallback, useRef } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { Profile } from '../../types/database.types';
 
+// Throttling: evita re-fetch al cambiar de pestaña o restaurar ventana.
+// Solo vuelve a cargar si pasaron más de 5 minutos desde el último fetch.
+// Declarada fuera del hook para que sea una referencia estable entre renders.
+const FETCH_THROTTLE_MS = 5 * 60 * 1000; // 5 minutos
+
 export const useTrainerClients = (
   profile: Profile | null, 
   showToast: (msg: string, type: 'success' | 'error' | 'info') => void, 
@@ -15,10 +20,7 @@ export const useTrainerClients = (
   const [clientesRachas, setClientesRachas] = useState<Record<string, { actual: number, maxima: number }>>({});
   const [activePlanDays, setActivePlanDays] = useState<string>('7 Días / Sem');
 
-  // Ref para throttling: evita re-fetch al cambiar de pestaña o restaurar ventana.
-  // Solo vuelve a cargar si pasaron más de 5 minutos desde el último fetch.
   const lastFetchedAt = useRef<number>(0);
-  const FETCH_THROTTLE_MS = 5 * 60 * 1000; // 5 minutos
 
   // Ref estable para showToast — evita que fetchClientes cambie de identidad
   // cada vez que el componente padre re-renderiza con una nueva referencia de showToast.

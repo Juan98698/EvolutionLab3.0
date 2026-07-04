@@ -591,12 +591,14 @@ export const GamificacionPanel: React.FC<GamificacionPanelProps> = ({ sesiones, 
 
       {/* CELEBRATION FULLSCREEN MODAL */}
       {celebratingBadge && (
+        // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- backdrop de modal: cierra al hacer click afuera; el cierre por teclado (Escape) y el foco atrapado se implementan en la Fase 3 junto con role="dialog"
         <div style={{
           position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
           background: 'rgba(5, 7, 12, 0.92)', backdropFilter: 'blur(12px)',
           display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center',
           zIndex: 999999, padding: '20px'
         }} onClick={() => setCelebratingBadge(null)}>
+          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- solo evita que el click se propague al backdrop; no es un control interactivo en sí mismo */}
           <div style={{
             background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(10, 15, 28, 0.95))',
             border: '1px solid rgba(0, 212, 255, 0.3)',

@@ -161,10 +161,13 @@ export function ProtocolSelectorModal({ isOpen, onClose, objective, level, onApp
           <div style={{ width: isMobile ? '100%' : '280px', borderRight: isMobile ? 'none' : '1px solid #222', borderBottom: isMobile ? '1px solid #222' : 'none', overflowY: isMobile ? 'visible' : 'auto', padding: '16px', boxSizing: 'border-box' }}>
             <h3 style={{ fontSize: '11px', textTransform: 'uppercase', color: '#666', letterSpacing: '0.05em', marginBottom: '12px' }}>Plantillas Recomendadas</h3>
             {protocols.map(p => (
-              <div 
+              <button
                 key={p.id}
+                type="button"
                 onClick={() => setSelectedProtocol(p)}
+                aria-pressed={selectedProtocol?.id === p.id}
                 style={{
+                  display: 'block', width: '100%', textAlign: 'left', font: 'inherit', color: 'inherit',
                   padding: '12px', borderRadius: '8px', cursor: 'pointer', marginBottom: '8px',
                   background: selectedProtocol?.id === p.id ? 'rgba(14, 165, 233, 0.1)' : '#1a1a1a',
                   border: `1px solid ${selectedProtocol?.id === p.id ? '#0ea5e9' : '#222'}`,
@@ -180,7 +183,7 @@ export function ProtocolSelectorModal({ isOpen, onClose, objective, level, onApp
                 <div style={{ fontSize: '11px', color: '#aaa', lineHeight: 1.4 }}>
                   {p.description}
                 </div>
-              </div>
+              </button>
             ))}
           </div>
 

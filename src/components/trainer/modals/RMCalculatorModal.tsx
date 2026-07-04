@@ -69,6 +69,7 @@ const RMCalculatorModal: React.FC<RMCalculatorModalProps> = ({
   };
 
   return (
+    // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- backdrop de modal: cierra al hacer click afuera; el cierre por teclado (Escape) y el foco atrapado se implementan en la Fase 3 junto con role="dialog"
     <div id="modal-1rm" className={`modal-overlay-enter open`} onClick={(e) => { if (e.target === e.currentTarget) { onClose(); setRmResult(null); } }}>
       <div className="modal-1rm-box modal-enter">
         <div className="modal-1rm-header">

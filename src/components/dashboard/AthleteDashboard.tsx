@@ -1759,9 +1759,11 @@ export const AthleteDashboard: React.FC = () => {
 
           {/* Philosophy Collapsible */}
           <div style={{ marginBottom: '25px' }}>
-            <div
+            <button
+              type="button"
               className={`philosophy-toggle${philosophyOpen ? ' open' : ''}`}
               onClick={() => setPhilosophyOpen(!philosophyOpen)}
+              aria-expanded={philosophyOpen}
               style={{
                 background: 'rgba(255, 255, 255, 0.04)',
                 border: '1px solid rgba(255, 255, 255, 0.06)',
@@ -1771,7 +1773,11 @@ export const AthleteDashboard: React.FC = () => {
                 justifyContent: 'space-between',
                 alignItems: 'center',
                 cursor: 'pointer',
-                transition: 'all 0.3s ease'
+                transition: 'all 0.3s ease',
+                width: '100%',
+                textAlign: 'left',
+                font: 'inherit',
+                color: 'inherit'
               }}
             >
               <span className="philosophy-toggle-title" style={{ fontWeight: 700, fontSize: '13px', fontFamily: "'Orbitron', sans-serif", color: 'var(--theme-primary)', letterSpacing: '0.5px', textTransform: 'uppercase', display: 'flex', alignItems: 'center' }}>
@@ -1783,7 +1789,7 @@ export const AthleteDashboard: React.FC = () => {
               <span className="philosophy-toggle-icon" style={{ fontSize: '12px', color: 'var(--theme-primary)', transition: 'transform 0.3s ease' }}>
                 {philosophyOpen ? '▲' : '▼'}
               </span>
-            </div>
+            </button>
 
             <div
               className="philosophy-collapsible"
@@ -2083,6 +2089,7 @@ export const AthleteDashboard: React.FC = () => {
 
       {/* 1RM CALCULATOR MODAL OVERLAY */}
       {is1RMModalOpen && (
+        // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- backdrop de modal: cierra al hacer click afuera; el cierre por teclado (Escape) y el foco atrapado se implementan en la Fase 3 junto con role="dialog"
         <div id="modal-1rm" className={is1RMModalOpen ? 'open' : ''} style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', display: is1RMModalOpen ? 'flex' : 'none', justifyContent: 'center', alignItems: 'center', background: 'rgba(0,0,0,0.6)', zIndex: 99999 }} onClick={(e) => { if (e.target === e.currentTarget) { setIs1RMModalOpen(false); setRmResult(null); } }}>
           <div className="modal-1rm-box">
             <div className="modal-1rm-header">

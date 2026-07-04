@@ -372,8 +372,9 @@ export const VolumeTracker: React.FC<VolumeTrackerProps> = ({
           scrollbarWidth: 'thin'
         }}>
           {expandedItemsList.map(item => (
-            <div
+            <button
               key={item.key}
+              type="button"
               onClick={() => toggleItem(item.key)}
               title="Clic para colapsar"
               style={{
@@ -382,7 +383,8 @@ export const VolumeTracker: React.FC<VolumeTrackerProps> = ({
                 borderRadius: '12px', padding: '10px 14px', minWidth: '140px',
                 display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '5px',
                 position: 'relative', flexShrink: 0, cursor: 'pointer',
-                transition: 'all 0.2s ease'
+                transition: 'all 0.2s ease',
+                font: 'inherit', color: 'inherit', textAlign: 'left'
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', width: '100%', justifyContent: 'center' }}>
@@ -456,7 +458,7 @@ export const VolumeTracker: React.FC<VolumeTrackerProps> = ({
                   Excedido
                 </div>
               )}
-            </div>
+            </button>
           ))}
         </div>
       )}

@@ -551,6 +551,7 @@ export const TrainerDashboard: React.FC = () => {
 
       {/* Modal de Información del Plan del Entrenador */}
       {showPlanInfoModal && (
+        // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- backdrop de modal: cierra al hacer click afuera; el cierre por teclado (Escape) y el foco atrapado se implementan en la Fase 3 junto con role="dialog"
         <div style={{
           position: 'fixed',
           top: 0,
@@ -566,6 +567,7 @@ export const TrainerDashboard: React.FC = () => {
           zIndex: 9999,
           padding: '20px'
         }} onClick={() => setShowPlanInfoModal(false)}>
+          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- solo evita que el click se propague al backdrop; no es un control interactivo en sí mismo */}
           <div style={{
             background: 'var(--theme-card-bg, #0f172a)',
             border: '1px solid var(--theme-border, rgba(255, 255, 255, 0.1))',
@@ -716,9 +718,11 @@ export const TrainerDashboard: React.FC = () => {
 
         {/* COLLAPSIBLE PHILOSOPHY CARD */}
         <div style={{ marginBottom: '25px' }}>
-          <div
+          <button
+            type="button"
             className={`philosophy-toggle${philosophyOpen ? ' open' : ''}`}
             onClick={() => setPhilosophyOpen(!philosophyOpen)}
+            aria-expanded={philosophyOpen}
             style={{
               background: 'rgba(255, 255, 255, 0.04)',
               border: '1px solid rgba(255, 255, 255, 0.06)',
@@ -728,7 +732,11 @@ export const TrainerDashboard: React.FC = () => {
               justifyContent: 'space-between',
               alignItems: 'center',
               cursor: 'pointer',
-              transition: 'all 0.3s ease'
+              transition: 'all 0.3s ease',
+              width: '100%',
+              textAlign: 'left',
+              font: 'inherit',
+              color: 'inherit'
             }}
           >
             <span className="philosophy-toggle-title" style={{ fontWeight: 700, fontSize: '13px', fontFamily: "'Orbitron', sans-serif", color: 'var(--theme-primary)', letterSpacing: '0.5px', textTransform: 'uppercase', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
@@ -737,7 +745,7 @@ export const TrainerDashboard: React.FC = () => {
             <span className="philosophy-toggle-icon" style={{ fontSize: '12px', color: 'var(--theme-primary)', transition: 'transform 0.3s ease' }}>
               {philosophyOpen ? '▲' : '▼'}
             </span>
-          </div>
+          </button>
 
           <div
             className="philosophy-collapsible"

@@ -442,6 +442,7 @@ export const ExerciseLibrary: React.FC = () => {
                         gap: '20px'
                       }}>
                         {filteredExercises.slice(0, visibleCount).map((exercise) => (
+                        // eslint-disable-next-line jsx-a11y/no-static-element-interactions -- efecto hover decorativo, no ejecuta ninguna acción de click; el link real es el <a> "Ver Video" de más abajo
                         <div
                           key={exercise.id}
                           style={{

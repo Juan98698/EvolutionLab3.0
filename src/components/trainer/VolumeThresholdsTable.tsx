@@ -241,6 +241,7 @@ export function VolumeThresholdsTable({ onClose, defaultMode = 'hipertrofia' }: 
                         const data = thresholds[muscle] || thresholds['General'];
                         if (!data) return null;
                         return (
+                          // eslint-disable-next-line jsx-a11y/no-static-element-interactions -- solo resalta al pasar el mouse, no ejecuta ninguna acción de click
                           <div key={muscle} style={{
                             display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '16px',
                             padding: '16px', borderBottom: '1px solid #333',
@@ -283,6 +284,7 @@ export function VolumeThresholdsTable({ onClose, defaultMode = 'hipertrofia' }: 
                         if (!data) return null;
                         return (
                           <div key={pattern}>
+                            {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions -- solo resalta al pasar el mouse, no ejecuta ninguna acción de click */}
                             <div style={{
                               display: 'grid', gridTemplateColumns: '1.4fr 0.8fr 1fr 0.8fr 1.6fr', gap: '12px',
                               padding: '14px 16px', borderBottom: '1px solid #2a2a2a',
