@@ -1,5 +1,17 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
+/* Los botones nativos tienen un "appearance" (chrome del sistema operativo) que
+   Chrome/Safari renderizan por debajo del background/border que definimos en
+   cada componente — aunque los pisemos, ese chrome nativo puede seguir
+   afectando el render final en un par de píxeles. Al convertir varios <div
+   onClick> a <button> por accesibilidad (Fase 2), esto causó una regresión
+   visual de ~3px en pruebas de Playwright. Se resetea acá una sola vez para
+   que TODOS los botones (existentes y futuros) rendericen igual que antes. */
+button {
+  appearance: none;
+  -webkit-appearance: none;
+}
+
 :root {
   --bg-image-url: radial-gradient(at 10% 10%, rgba(0, 212, 255, 0.12) 0px, transparent 55%), radial-gradient(at 90% 90%, rgba(123, 47, 247, 0.15) 0px, transparent 55%);
   --bg: rgba(15, 23, 42, 0.85);
