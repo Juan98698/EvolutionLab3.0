@@ -606,11 +606,14 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
                           type="button"
                           onClick={() => setConfig(prev => prev ? { ...prev, muscle_groups_in_focus: [] } : undefined)}
                           style={{
+                            display: 'block',
                             background: 'none',
                             border: 'none',
                             padding: 0,
+                            margin: 0,
                             font: 'inherit',
                             fontSize: '10px',
+                            lineHeight: 'normal',
                             color: 'rgba(255,255,255,0.35)',
                             marginTop: '8px',
                             cursor: 'pointer',
