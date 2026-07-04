@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabaseClient';
 import { Profile } from '../../../types/database.types';
+import { useModalA11y } from '../../../hooks/useModalA11y';
 
 const SUGGESTIONS_EJERCICIOS = [
   'Sentadilla Libre con Barra',
@@ -235,14 +236,24 @@ const RegisterSessionModal: React.FC<RegisterSessionModalProps> = ({
     }
   };
 
+  const dialogRef = useModalA11y<HTMLDivElement>({ isOpen: isOpen && !!selectedAthleteForSession, onClose });
+
   if (!isOpen || !selectedAthleteForSession) return null;
 
   return (
-    // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- backdrop de modal: cierra al hacer click afuera; el cierre por teclado (Escape) y el foco atrapado se implementan en la Fase 3 junto con role="dialog"
+    // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- backdrop de modal: cierra al hacer click afuera (conveniencia de mouse); el diálogo de abajo ya tiene cierre con Escape y foco atrapado vía useModalA11y
     <div className="modal-overlay modal-overlay-enter open" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999 }} onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}>
-      <div className="modal-box modal-enter" style={{ maxWidth: '650px', width: '90%', maxHeight: '85vh', overflowY: 'auto', border: '1px solid var(--theme-border)', boxShadow: '0 20px 50px var(--theme-glow)' }}>
+      <div
+        ref={dialogRef}
+        className="modal-box modal-enter"
+        style={{ maxWidth: '650px', width: '90%', maxHeight: '85vh', overflowY: 'auto', border: '1px solid var(--theme-border)', boxShadow: '0 20px 50px var(--theme-glow)' }}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="register-session-title"
+        tabIndex={-1}
+      >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '12px', marginBottom: '15px' }}>
-          <h3 style={{ margin: 0, fontFamily: "'Orbitron', sans-serif", color: 'var(--theme-primary)', fontSize: '1.05rem', letterSpacing: '0.5px' }}>
+          <h3 id="register-session-title" style={{ margin: 0, fontFamily: "'Orbitron', sans-serif", color: 'var(--theme-primary)', fontSize: '1.05rem', letterSpacing: '0.5px' }}>
             ⏱️ REGISTRAR ENTRENAMIENTO
           </h3>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '20px', cursor: 'pointer' }}>&times;</button>

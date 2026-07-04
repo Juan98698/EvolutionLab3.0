@@ -17,6 +17,7 @@ import React, { useState } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { getProtocolsForContext } from '../../lib/protocols';
 import { TrainingDay } from '../../types/database.types';
+import { useModalA11y } from '../../hooks/useModalA11y';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -60,6 +61,11 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
 
   // ── Cliente — slides estáticos simplificados ──
   const [clientStep, setClientStep]  = useState(1);
+
+  // Este modal no recibe `isOpen` — el padre lo monta/desmonta directamente,
+  // así que mientras está montado, siempre está "abierto".
+  const dialogRef = useModalA11y<HTMLDivElement>({ isOpen: true, onClose });
+
   const clientSlides = rol === 'cliente_guiado'
     ? [
         { emoji: '👋', title: 'Tu plan está listo', text: 'Tu entrenador configuró todo. Solo tienes que entrenar y registrar cada serie.' },
@@ -180,9 +186,16 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
 
     return (
       <div style={{ position: 'fixed', inset: 0, background: 'rgba(5,8,16,0.96)', backdropFilter: 'blur(12px)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
-        <div style={{ background: 'rgba(15,23,42,0.9)', border: `1px solid ${ACCENT}22`, borderRadius: '24px', maxWidth: '420px', width: '100%', padding: '36px 28px', textAlign: 'center', boxShadow: `0 20px 50px rgba(0,0,0,0.5)` }}>
+        <div
+          ref={dialogRef}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="onboarding-client-title"
+          tabIndex={-1}
+          style={{ background: 'rgba(15,23,42,0.9)', border: `1px solid ${ACCENT}22`, borderRadius: '24px', maxWidth: '420px', width: '100%', padding: '36px 28px', textAlign: 'center', boxShadow: `0 20px 50px rgba(0,0,0,0.5)` }}
+        >
           <div style={{ fontSize: '48px', marginBottom: '20px' }}>{slide.emoji}</div>
-          <h2 style={{ fontSize: '20px', fontWeight: 800, color: '#fff', marginBottom: '12px' }}>{slide.title}</h2>
+          <h2 id="onboarding-client-title" style={{ fontSize: '20px', fontWeight: 800, color: '#fff', marginBottom: '12px' }}>{slide.title}</h2>
           <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, marginBottom: '28px' }}>{slide.text}</p>
           <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', marginBottom: '20px' }}>
             {clientSlides.map((_, i) => (
@@ -210,7 +223,14 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
 
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(5,8,16,0.97)', backdropFilter: 'blur(16px)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', fontFamily: "'Inter','Roboto',sans-serif" }}>
-      <div style={{ width: '100%', maxWidth: '520px', background: 'rgba(15,23,42,0.92)', border: `1px solid ${ACCENT}22`, borderRadius: '24px', padding: '36px 32px', position: 'relative', overflow: 'hidden', boxShadow: `0 24px 64px rgba(0,0,0,0.6)` }}>
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="onboarding-trainer-title"
+        tabIndex={-1}
+        style={{ width: '100%', maxWidth: '520px', background: 'rgba(15,23,42,0.92)', border: `1px solid ${ACCENT}22`, borderRadius: '24px', padding: '36px 32px', position: 'relative', overflow: 'hidden', boxShadow: `0 24px 64px rgba(0,0,0,0.6)` }}
+      >
 
         {/* Glow */}
         <div style={{ position: 'absolute', top: '-60px', left: '50%', transform: 'translateX(-50%)', width: '200px', height: '200px', background: ACCENT, filter: 'blur(80px)', opacity: 0.06, pointerEvents: 'none', borderRadius: '50%' }} />
@@ -226,7 +246,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
         {step === 1 && (
           <div>
             <p style={{ fontSize: '11px', color: ACCENT, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '6px' }}>Paso 1 de 5</p>
-            <h2 style={{ fontSize: '21px', fontWeight: 800, color: '#fff', marginBottom: '6px', lineHeight: 1.3 }}>¿Cómo describes tu metodología de entrenamiento?</h2>
+            <h2 id="onboarding-trainer-title" style={{ fontSize: '21px', fontWeight: 800, color: '#fff', marginBottom: '6px', lineHeight: 1.3 }}>¿Cómo describes tu metodología de entrenamiento?</h2>
             <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)', marginBottom: '22px' }}>Esto adapta el lenguaje de la app a tu nivel de familiaridad con la ciencia del ejercicio.</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {([
@@ -252,7 +272,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
         {step === 2 && (
           <div>
             <p style={{ fontSize: '11px', color: ACCENT, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '6px' }}>Paso 2 de 5</p>
-            <h2 style={{ fontSize: '21px', fontWeight: 800, color: '#fff', marginBottom: '6px', lineHeight: 1.3 }}>Crea un plan de práctica para explorar la app</h2>
+            <h2 id="onboarding-trainer-title" style={{ fontSize: '21px', fontWeight: 800, color: '#fff', marginBottom: '6px', lineHeight: 1.3 }}>Crea un plan de práctica para explorar la app</h2>
             <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)', marginBottom: '22px' }}>Se creará bajo tu perfil, puedes modificarlo o eliminarlo cuando quieras. ¿Cuál sería el objetivo?</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {([
@@ -275,7 +295,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
         {step === 3 && (
           <div>
             <p style={{ fontSize: '11px', color: ACCENT, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '6px' }}>Paso 3 de 5</p>
-            <h2 style={{ fontSize: '21px', fontWeight: 800, color: '#fff', marginBottom: '6px', lineHeight: 1.3 }}>¿Cómo estructurarías el plan?</h2>
+            <h2 id="onboarding-trainer-title" style={{ fontSize: '21px', fontWeight: 800, color: '#fff', marginBottom: '6px', lineHeight: 1.3 }}>¿Cómo estructurarías el plan?</h2>
             <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)', marginBottom: '22px' }}>Estos valores se pueden cambiar después.</p>
 
             <div style={{ marginBottom: '22px' }}>
@@ -308,7 +328,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
         {step === 4 && (
           <div>
             <p style={{ fontSize: '11px', color: ACCENT, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '6px' }}>Paso 4 de 5</p>
-            <h2 style={{ fontSize: '21px', fontWeight: 800, color: '#fff', marginBottom: '8px', lineHeight: 1.3 }}>🧮 Calibra la Fuerza Máxima (1RM)</h2>
+            <h2 id="onboarding-trainer-title" style={{ fontSize: '21px', fontWeight: 800, color: '#fff', marginBottom: '8px', lineHeight: 1.3 }}>🧮 Calibra la Fuerza Máxima (1RM)</h2>
             <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.45)', marginBottom: '16px', lineHeight: 1.5 }}>
               Para que el robot inteligente 🤖 pueda prescribir pesos precisos en los ejercicios, necesita conocer la <strong>Fuerza Máxima (1RM)</strong> del atleta en cada movimiento.
             </p>
@@ -338,7 +358,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: '48px', marginBottom: '16px' }}>🚀</div>
             <p style={{ fontSize: '11px', color: ACCENT, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '8px' }}>Paso 5 de 5</p>
-            <h2 style={{ fontSize: '21px', fontWeight: 800, color: '#fff', marginBottom: '12px', lineHeight: 1.3 }}>Todo listo para crear tu plan de práctica</h2>
+            <h2 id="onboarding-trainer-title" style={{ fontSize: '21px', fontWeight: 800, color: '#fff', marginBottom: '12px', lineHeight: 1.3 }}>Todo listo para crear tu plan de práctica</h2>
 
             <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '16px', marginBottom: '20px', textAlign: 'left' }}>
               {[

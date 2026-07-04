@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useModalA11y } from '../../../hooks/useModalA11y';
 
 interface RMCalculatorModalProps {
   isOpen: boolean;
@@ -17,6 +18,13 @@ const RMCalculatorModal: React.FC<RMCalculatorModalProps> = ({
   const [calcFormula, setCalcFormula] = useState<string>('promedio');
   const [rmResult, setRmResult] = useState<number | null>(null);
   const [rmTable, setRmTable] = useState<{ pct: number; carga: number; reps: number }[]>([]);
+
+  const handleClose = () => {
+    onClose();
+    setRmResult(null);
+  };
+
+  const dialogRef = useModalA11y<HTMLDivElement>({ isOpen, onClose: handleClose });
 
   if (!isOpen) return null;
 
@@ -69,15 +77,22 @@ const RMCalculatorModal: React.FC<RMCalculatorModalProps> = ({
   };
 
   return (
-    // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- backdrop de modal: cierra al hacer click afuera; el cierre por teclado (Escape) y el foco atrapado se implementan en la Fase 3 junto con role="dialog"
-    <div id="modal-1rm" className={`modal-overlay-enter open`} onClick={(e) => { if (e.target === e.currentTarget) { onClose(); setRmResult(null); } }}>
-      <div className="modal-1rm-box modal-enter">
+    // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- backdrop de modal: cierra al hacer click afuera (conveniencia de mouse); el diálogo de abajo ya tiene cierre con Escape y foco atrapado vía useModalA11y
+    <div id="modal-1rm" className={`modal-overlay-enter open`} onClick={(e) => { if (e.target === e.currentTarget) { handleClose(); } }}>
+      <div
+        ref={dialogRef}
+        className="modal-1rm-box modal-enter"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="rm-calculator-title"
+        tabIndex={-1}
+      >
         <div className="modal-1rm-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <span style={{ fontSize: '16px' }}>🧮</span>
-            <span className="modal-1rm-title">CALCULADORA 1RM</span>
+            <span className="modal-1rm-title" id="rm-calculator-title">CALCULADORA 1RM</span>
           </div>
-          <button className="modal-1rm-close" onClick={() => { onClose(); setRmResult(null); }}>&times;</button>
+          <button className="modal-1rm-close" onClick={handleClose}>&times;</button>
         </div>
 
         <form onSubmit={handleCalculate1RM} className="modal-1rm-form">

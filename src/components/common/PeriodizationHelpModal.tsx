@@ -1,5 +1,6 @@
 // src/components/common/PeriodizationHelpModal.tsx
 import React, { useState } from 'react';
+import { useModalA11y } from '../../hooks/useModalA11y';
 
 interface PeriodizationHelpModalProps {
   isOpen: boolean;
@@ -10,6 +11,8 @@ type TabType = 'quickstart' | 'glossary' | 'faq';
 
 export const PeriodizationHelpModal: React.FC<PeriodizationHelpModalProps> = ({ isOpen, onClose }) => {
   const [activeTab, setActiveTab] = useState<TabType>('quickstart');
+
+  const dialogRef = useModalA11y<HTMLDivElement>({ isOpen, onClose });
 
   if (!isOpen) return null;
 
@@ -75,7 +78,7 @@ export const PeriodizationHelpModal: React.FC<PeriodizationHelpModalProps> = ({ 
           }
         }
       `}</style>
-      <div className="help-modal-box" style={{
+      <div className="help-modal-box" ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="periodization-help-title" tabIndex={-1} style={{
         background: 'rgba(10, 15, 30, 0.96)',
         border: '1px solid rgba(0, 212, 255, 0.15)',
         borderRadius: '20px',
@@ -99,7 +102,7 @@ export const PeriodizationHelpModal: React.FC<PeriodizationHelpModalProps> = ({ 
         }}>
           <div>
             <span style={{ fontSize: '9px', fontFamily: "'Orbitron', sans-serif", color: themeColor, letterSpacing: '2px', textTransform: 'uppercase' }}>🧬 CIENCIA APLICADA</span>
-            <h2 style={{ margin: '4px 0 0 0', fontSize: '18px', fontWeight: 800, fontFamily: "'Orbitron', sans-serif", letterSpacing: '1px' }}>GUÍA DE PERIODIZACIÓN RIR</h2>
+            <h2 id="periodization-help-title" style={{ margin: '4px 0 0 0', fontSize: '18px', fontWeight: 800, fontFamily: "'Orbitron', sans-serif", letterSpacing: '1px' }}>GUÍA DE PERIODIZACIÓN RIR</h2>
           </div>
           <button
             onClick={onClose}

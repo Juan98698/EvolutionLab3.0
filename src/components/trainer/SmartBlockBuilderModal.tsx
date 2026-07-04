@@ -1,6 +1,7 @@
 import React from 'react';
 import { TrainingDay, Exercise } from '../../types/database.types';
 import { generateProgressionText } from '../../lib/progressionTemplates';
+import { useModalA11y } from '../../hooks/useModalA11y';
 
 export interface ProgModalState {
   isOpen: boolean;
@@ -53,6 +54,11 @@ export const SmartBlockBuilderModal: React.FC<SmartBlockBuilderModalProps> = ({
   setExerciseHistory,
   showToast,
 }) => {
+  const dialogRef = useModalA11y<HTMLDivElement>({
+    isOpen: !!progModal?.isOpen,
+    onClose: () => setProgModal(null),
+  });
+
   if (!progModal || !progModal.isOpen) return null;
 
   // Aplicar la progresión con los parámetros del modal
@@ -133,20 +139,26 @@ export const SmartBlockBuilderModal: React.FC<SmartBlockBuilderModalProps> = ({
       zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center',
       animation: 'fadeIn 0.2s ease', padding: '16px'
     }}>
-      <div style={{
-        background: 'linear-gradient(165deg, rgba(20,20,24,0.98), rgba(12,12,16,0.99))',
-        border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '20px',
-        width: '100%', maxWidth: '520px', padding: '24px',
-        boxShadow: '0 24px 60px rgba(0,0,0,0.8)',
-        display: 'flex', flexDirection: 'column', gap: '20px'
-      }}>
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="smart-block-builder-title"
+        tabIndex={-1}
+        style={{
+          background: 'linear-gradient(165deg, rgba(20,20,24,0.98), rgba(12,12,16,0.99))',
+          border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '20px',
+          width: '100%', maxWidth: '520px', padding: '24px',
+          boxShadow: '0 24px 60px rgba(0,0,0,0.8)',
+          display: 'flex', flexDirection: 'column', gap: '20px'
+        }}>
         {/* Cabecera */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
             <span style={{ fontSize: '9px', fontWeight: 800, color: 'var(--theme-primary)', fontFamily: "'Orbitron', sans-serif", letterSpacing: '1px', textTransform: 'uppercase' }}>
               Smart Block Builder
             </span>
-            <h3 style={{ margin: '4px 0 0 0', fontSize: '18px', fontWeight: 800, fontFamily: "'Orbitron', sans-serif", color: 'white', letterSpacing: '0.5px' }}>
+            <h3 id="smart-block-builder-title" style={{ margin: '4px 0 0 0', fontSize: '18px', fontWeight: 800, fontFamily: "'Orbitron', sans-serif", color: 'white', letterSpacing: '0.5px' }}>
               {progModal.template === 'linear' && '📈 CONFIGURAR PROGRESIÓN LINEAL'}
               {progModal.template === 'double' && '🔁 CONFIGURAR PROGRESIÓN DOBLE'}
               {progModal.template === 'undulating' && '🌊 CONFIGURAR PERIODIZACIÓN ONDULANTE'}

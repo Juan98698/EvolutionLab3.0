@@ -4,6 +4,7 @@ import { ProtocolTemplate, getProtocolsForContext } from '../../lib/protocols';
 import { TrainingDay } from '../../types/database.types';
 import { detectPatternFromExerciseName } from '../../lib/strengthThresholds';
 import { supabase } from '../../lib/supabaseClient';
+import { useModalA11y } from '../../hooks/useModalA11y';
 
 interface Props {
   isOpen: boolean;
@@ -23,6 +24,8 @@ export function ProtocolSelectorModal({ isOpen, onClose, objective, level, onApp
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  const dialogRef = useModalA11y<HTMLDivElement>({ isOpen, onClose });
 
   if (!isOpen) return null;
 
@@ -133,15 +136,21 @@ export function ProtocolSelectorModal({ isOpen, onClose, objective, level, onApp
       display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px'
     }}>
       <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-      <div style={{
-        background: '#111', width: '100%', maxWidth: '800px', maxHeight: '90vh',
-        borderRadius: '12px', border: '1px solid #333', display: 'flex', flexDirection: 'column',
-        overflow: 'hidden', color: '#fff', fontFamily: 'system-ui, sans-serif'
-      }}>
+      <div
+        ref={dialogRef}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="protocol-selector-title"
+        tabIndex={-1}
+        style={{
+          background: '#111', width: '100%', maxWidth: '800px', maxHeight: '90vh',
+          borderRadius: '12px', border: '1px solid #333', display: 'flex', flexDirection: 'column',
+          overflow: 'hidden', color: '#fff', fontFamily: 'system-ui, sans-serif'
+        }}>
         {/* Header */}
         <div style={{ padding: '16px 20px', borderBottom: '1px solid #222', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <h2 style={{ margin: 0, fontSize: '18px', color: '#fff' }}>
+            <h2 id="protocol-selector-title" style={{ margin: 0, fontSize: '18px', color: '#fff' }}>
               {isStrengthBlock ? '🏋️ Protocolos de Fuerza General' : '📚 Protocolos Científicos'}
             </h2>
             <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#888' }}>

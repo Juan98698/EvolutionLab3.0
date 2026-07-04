@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { supabase } from '../../../lib/supabaseClient';
 import { Profile } from '../../../types/database.types';
 import { isRealEmailDomain } from '../../../lib/validations';
+import { useModalA11y } from '../../../hooks/useModalA11y';
 
 interface RegisterClientModalProps {
   isOpen: boolean;
@@ -59,6 +60,8 @@ const RegisterClientModal: React.FC<RegisterClientModalProps> = ({
       setTimeout(() => setLinkCopied(false), 2000);
     }
   };
+
+  const dialogRef = useModalA11y<HTMLDivElement>({ isOpen, onClose });
 
   if (!isOpen) return null;
 
@@ -257,11 +260,19 @@ const RegisterClientModal: React.FC<RegisterClientModalProps> = ({
 
   return (
     <div className="modal-overlay modal-overlay-enter open" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 99999 }}>
-      <div className="modal-box modal-enter" style={{ maxWidth: '460px', width: '90%', border: '1px solid var(--theme-border)', boxShadow: '0 20px 50px var(--theme-glow)' }}>
+      <div
+        ref={dialogRef}
+        className="modal-box modal-enter"
+        style={{ maxWidth: '460px', width: '90%', border: '1px solid var(--theme-border)', boxShadow: '0 20px 50px var(--theme-glow)' }}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="register-client-title"
+        tabIndex={-1}
+      >
 
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '12px', marginBottom: '16px' }}>
-          <h3 style={{ margin: 0, fontFamily: "'Orbitron', sans-serif", color: 'var(--theme-primary)', fontSize: '1rem', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <h3 id="register-client-title" style={{ margin: 0, fontFamily: "'Orbitron', sans-serif", color: 'var(--theme-primary)', fontSize: '1rem', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
               <circle cx="8.5" cy="7" r="4" />
