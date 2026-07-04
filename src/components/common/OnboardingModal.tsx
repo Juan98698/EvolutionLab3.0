@@ -122,6 +122,18 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
           }))
         : [];
 
+      // Antes de crear un plan nuevo, desactivar cualquier plan activo previo
+      // del mismo cliente. Sin esto, cada intento de crear un plan (incluso
+      // reintentos silenciosos por errores previos) acumula filas con
+      // activo=true, y luego la consulta `.maybeSingle()` de PlanPlanner/
+      // AthleteDashboard falla con PGRST116 ("Results contain N rows")
+      // porque espera como máximo un plan activo por cliente.
+      await supabase
+        .from('planes')
+        .update({ activo: false })
+        .eq('cliente_id', trainerId)
+        .eq('activo', true);
+
       const planPayload = {
         cliente_id: trainerId,
         creador_id: trainerId,
