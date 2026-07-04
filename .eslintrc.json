@@ -18,7 +18,7 @@
       "jsx": true
     }
   },
-  "plugins": ["@typescript-eslint", "react-hooks", "react-refresh"],
+  "plugins": ["@typescript-eslint", "react-hooks", "react-refresh", "jsx-a11y"],
   "ignorePatterns": [
     "dist",
     "dev-dist",
@@ -43,6 +43,13 @@
 
     "no-empty": ["warn", { "allowEmptyCatch": true }],
 
-    "no-case-declarations": "off"
+    "no-case-declarations": "off",
+
+    "jsx-a11y/alt-text": "warn",
+    "jsx-a11y/click-events-have-key-events": "warn",
+    "jsx-a11y/no-static-element-interactions": "warn",
+    "jsx-a11y/aria-role": "warn",
+    "jsx-a11y/aria-props": "warn",
+    "jsx-a11y/role-has-required-aria-props": "warn"
   }
 }

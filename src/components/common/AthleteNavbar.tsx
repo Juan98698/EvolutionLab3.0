@@ -649,7 +649,7 @@ export const AthleteNavbar: React.FC = () => {
           profile?.suscripcion_plan === 'premium' ? (
             <span>Plan Actual: Solo Lifter Premium Pro (Ilimitado) | Estado: Activo</span>
           ) : (
-            <span>Plan Actual: Solo Lifter Gratuito | <span style={{ color: 'var(--theme-primary)', cursor: 'pointer', textDecoration: 'underline' }} onClick={() => window.dispatchEvent(new CustomEvent('pwa-show-upgrade-modal'))}>Obtener Pro ⚡</span></span>
+            <span>Plan Actual: Solo Lifter Gratuito | <button type="button" style={{ background: 'none', border: 'none', padding: 0, font: 'inherit', color: 'var(--theme-primary)', cursor: 'pointer', textDecoration: 'underline' }} onClick={() => window.dispatchEvent(new CustomEvent('pwa-show-upgrade-modal'))}>Obtener Pro ⚡</button></span>
           )
         ) : (
           <span>Plan Actual: Atleta Guiado | Entrenador: {trainerProfile?.marca?.nombre_display || trainerProfile?.nombre || 'Mi Coach'}</span>
@@ -675,6 +675,7 @@ export const AthleteNavbar: React.FC = () => {
 
       {/* Modal de Información del Plan */}
       {showPlanInfoModal && (
+        // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- backdrop de modal: cierra al hacer click afuera; el cierre por teclado (Escape) y el foco atrapado se implementan en la Fase 3 junto con role="dialog"
         <div style={{
           position: 'fixed',
           top: 0,
@@ -690,6 +691,7 @@ export const AthleteNavbar: React.FC = () => {
           zIndex: 9999,
           padding: '20px'
         }} onClick={() => setShowPlanInfoModal(false)}>
+          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- solo evita que el click se propague al backdrop; no es un control interactivo en sí mismo */}
           <div style={{
             background: 'var(--theme-card-bg, #0f172a)',
             border: '1px solid var(--theme-border, rgba(255, 255, 255, 0.1))',

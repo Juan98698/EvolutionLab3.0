@@ -405,6 +405,7 @@ export const AdminDashboard: React.FC = () => {
 
       {/* Modal de Información del Plan del Administrador */}
       {showPlanInfoModal && (
+        // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- backdrop de modal: cierra al hacer click afuera; el cierre por teclado (Escape) y el foco atrapado se implementan en la Fase 3 junto con role="dialog"
         <div style={{
           position: 'fixed',
           top: 0,
@@ -420,6 +421,7 @@ export const AdminDashboard: React.FC = () => {
           zIndex: 9999,
           padding: '20px'
         }} onClick={() => setShowPlanInfoModal(false)}>
+          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- solo evita que el click se propague al backdrop; no es un control interactivo en sí mismo */}
           <div style={{
             background: 'var(--theme-card-bg, #0f172a)',
             border: '1px solid var(--theme-border, rgba(255, 255, 255, 0.1))',

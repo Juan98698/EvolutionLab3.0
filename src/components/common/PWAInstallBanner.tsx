@@ -195,6 +195,7 @@ export const PWAInstallBanner: React.FC = () => {
 
       {/* ═══ iOS Instructions Modal ═══ */}
       {showiOSModal && (
+        // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- backdrop de modal: cierra al hacer click afuera; el cierre por teclado (Escape) y el foco atrapado se implementan en la Fase 3 junto con role="dialog"
         <div 
           className="ios-modal-overlay"
           style={{

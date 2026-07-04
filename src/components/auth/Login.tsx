@@ -725,7 +725,7 @@ const AUDIENCE_DATA = {
         features: ['Indicador de adherencia visual (Semáforo)', 'Acceso directo a planificadores', 'Buscador y filtros avanzados de alumnos'],
         content: (_color: string) => (
           <div style={containerStyle}>
-            <img src="/capturas/Panel_Del_Coach.jpeg" style={imgStyle} loading="lazy" />
+            <img src="/capturas/Panel_Del_Coach.jpeg" alt="Captura de pantalla: PANEL DEL COACH — Gestión de Atletas" style={imgStyle} loading="lazy" />
           </div>
         )
       },
@@ -736,7 +736,7 @@ const AUDIENCE_DATA = {
         features: ['Registra y gestiona tus atletas', 'Gestiona su estado de vinculación', 'Visualización rápida con motor de buscqueda'],
         content: (_color: string) => (
           <div style={containerStyle}>
-            <img src="/capturas/Gestion_Atletas.jpeg" style={imgStyle} loading="lazy" />
+            <img src="/capturas/Gestion_Atletas.jpeg" alt="Captura de pantalla: GESTION DE ATLETAS — Visualiza tus atletas" style={imgStyle} loading="lazy" />
           </div>
         )
       },
@@ -758,7 +758,7 @@ const AUDIENCE_DATA = {
         features: ['Configuración flexible por RIR', 'Control de series acumulativas', 'Filtro de volumen basura'],
         content: (_color: string) => (
           <div style={containerStyle}>
-            <img src="/capturas/Motor_Sobrecarga_dos.jpeg" style={imgStyle} loading="lazy" />
+            <img src="/capturas/Motor_Sobrecarga_dos.jpeg" alt="Captura de pantalla: MOTOR DE SOBRECARGA — Mas de 10 reglas configurables" style={imgStyle} loading="lazy" />
           </div>
         )
       },
@@ -769,7 +769,7 @@ const AUDIENCE_DATA = {
         features: ['Distribución semanal flexible', 'Ajuste dinámico de variables', 'Personalización de variables del entrenamiento'],
         content: (_color: string) => (
           <div style={containerStyle}>
-            <img src="/capturas/Planifica_entrenamientos_dos.jpeg" style={imgStyle} loading="lazy" />
+            <img src="/capturas/Planifica_entrenamientos_dos.jpeg" alt="Captura de pantalla: PLANIFICA LOS ENTRENAMIENTOS — Planificador flexible" style={imgStyle} loading="lazy" />
           </div>
         )
       },
@@ -780,7 +780,7 @@ const AUDIENCE_DATA = {
         features: ['Integración directa de vídeos explicativos', 'Notas de técnica y posicionamiento', 'Animaciones GIF automáticas sin internet'],
         content: (_color: string) => (
           <div style={containerStyle}>
-            <img src="/capturas/Planifica_Entrenamientos.jpeg" style={imgStyle} loading="lazy" />
+            <img src="/capturas/Planifica_Entrenamientos.jpeg" alt="Captura de pantalla: PLANIFICA LOS ENTRENAMIENTOS — Instrucciones Técnicas Precisas" style={imgStyle} loading="lazy" />
           </div>
         )
       },
@@ -791,7 +791,7 @@ const AUDIENCE_DATA = {
         features: ['Sistema de Marca Blanca', 'Tu Logotipo e identidad propia en PWA', 'Diseño de interfaz personalizado'],
         content: (_color: string) => (
           <div style={containerStyle}>
-            <img src="/capturas/Personaliza_Tu_Marca.jpeg" style={imgStyle} loading="lazy" />
+            <img src="/capturas/Personaliza_Tu_Marca.jpeg" alt="Captura de pantalla: PERSONALIZA TU MARCA — Tu Marca Personal" style={imgStyle} loading="lazy" />
           </div>
         )
       },
@@ -802,7 +802,7 @@ const AUDIENCE_DATA = {
         features: ['Muro de pilares y valores', 'Enlaces de contacto integrados', 'Canal directo de comunicación'],
         content: (_color: string) => (
           <div style={containerStyle}>
-            <img src="/capturas/Personaliza_tu_Filosofia.jpeg" style={imgStyle} loading="lazy" />
+            <img src="/capturas/Personaliza_tu_Filosofia.jpeg" alt="Captura de pantalla: PERSONALIZA TU MARCA — Plasmas tu Filosofía" style={imgStyle} loading="lazy" />
           </div>
         )
       },
@@ -813,7 +813,7 @@ const AUDIENCE_DATA = {
         features: ['Notificación en vivo de entrenamientos', 'Detección de estancamientos', 'Auditoría automática por tus reglas impuestas'],
         content: (_color: string) => (
           <div style={containerStyle}>
-            <img src="/capturas/Hub_De_Atletas.jpeg" style={imgStyle} loading="lazy" />
+            <img src="/capturas/Hub_De_Atletas.jpeg" alt="Captura de pantalla: AUDITA TUS ATLETAS — Hub de Alertas" style={imgStyle} loading="lazy" />
           </div>
         )
       },
@@ -824,7 +824,7 @@ const AUDIENCE_DATA = {
         features: ['Desglose exacto de series', 'Auditoría a distancia', 'Historial detallado del atleta', 'Visualiza a detalle como trabajaron tus atletas'],
         content: (_color: string) => (
           <div style={containerStyle}>
-            <img src="/capturas/Audita_Tus_Atletas.jpeg" style={imgStyle} loading="lazy" />
+            <img src="/capturas/Audita_Tus_Atletas.jpeg" alt="Captura de pantalla: AUDITA TUS ATLETAS — Visualiza entrenamientos en tiempo real" style={imgStyle} loading="lazy" />
           </div>
         )
       }
@@ -843,7 +843,7 @@ const AUDIENCE_DATA = {
         features: ['Calendario rápido de entrenamiento', 'Indicadores clave de volumen', 'Últimos logros desbloqueados'],
         content: (_color: string) => (
           <div style={containerStyle}>
-            <img src="/capturas/Vista_Cliente_autonomo.jpeg" style={imgStyle} loading="lazy" />
+            <img src="/capturas/Vista_Cliente_autonomo.jpeg" alt="Captura de pantalla: VISTA CLIENTE AUTÓNOMO — Panel Central e Indicadores" style={imgStyle} loading="lazy" />
           </div>
         )
       },
@@ -854,7 +854,7 @@ const AUDIENCE_DATA = {
         features: ['Base de datos global de ejercicios', 'Estructuración por días de entreno', 'Definición precisa de objetivo y fecha'],
         content: (_color: string) => (
           <div style={containerStyle}>
-            <img src="/capturas/Planificacion_Plan_CA.jpeg" style={imgStyle} loading="lazy" />
+            <img src="/capturas/Planificacion_Plan_CA.jpeg" alt="Captura de pantalla: PLANIFICACIÓN DEL PLAN — Diseña tu Rutina Inteligente" style={imgStyle} loading="lazy" />
           </div>
         )
       },
@@ -865,7 +865,7 @@ const AUDIENCE_DATA = {
         features: ['Esta información servira como base para el motor de sobrecarga', 'Copia rápida de series', 'RIR asistido por historial'],
         content: (_color: string) => (
           <div style={containerStyle}>
-            <img src="/capturas/Registra_Sesiones_CA.jpeg" style={imgStyle} loading="lazy" />
+            <img src="/capturas/Registra_Sesiones_CA.jpeg" alt="Captura de pantalla: REGISTRO DE SESIONES — Registra tus sesiones en el Gimnasio" style={imgStyle} loading="lazy" />
           </div>
         )
       },
@@ -876,7 +876,7 @@ const AUDIENCE_DATA = {
         features: ['Filtrado por ejercicios en especifico', 'Indicadores de volumen de sesión', 'Resúmenes semanales consolidados'],
         content: (_color: string) => (
           <div style={containerStyle}>
-            <img src="/capturas/Historial_Sesiones_CA.jpeg" style={imgStyle} loading="lazy" />
+            <img src="/capturas/Historial_Sesiones_CA.jpeg" alt="Captura de pantalla: HISTORIAL DE SESIONES — Registro Histórico Completo" style={imgStyle} loading="lazy" />
           </div>
         )
       },
@@ -887,7 +887,7 @@ const AUDIENCE_DATA = {
         features: ['Detalle serie por serie', 'Comparación con marcas anteriores', 'Notas personales de la sesión'],
         content: (_color: string) => (
           <div style={containerStyle}>
-            <img src="/capturas/Historial_Sesiones_dos_CA.jpeg" style={imgStyle} loading="lazy" />
+            <img src="/capturas/Historial_Sesiones_dos_CA.jpeg" alt="Captura de pantalla: DETALLE DE LA SESIÓN — Inspecciona tus Variables" style={imgStyle} loading="lazy" />
           </div>
         )
       },
@@ -898,7 +898,7 @@ const AUDIENCE_DATA = {
         features: ['Detección automática de estancamientos', 'Recomendaciones de carga/esfuerzo', 'Auditoría de consistencia'],
         content: (_color: string) => (
           <div style={containerStyle}>
-            <img src="/capturas/Historial_Sobrecarga_CA.jpeg" style={imgStyle} loading="lazy" />
+            <img src="/capturas/Historial_Sobrecarga_CA.jpeg" alt="Captura de pantalla: MOTOR DE SOBRECARGA — Auditoría Científica de Progreso" style={imgStyle} loading="lazy" />
           </div>
         )
       },
@@ -909,7 +909,7 @@ const AUDIENCE_DATA = {
         features: ['Gráficas de volumen por ejercicio', 'Curvas históricas de fuerza', 'Métricas avanzadas de fatiga'],
         content: (_color: string) => (
           <div style={containerStyle}>
-            <img src="/capturas/Vista_Progresion_CA.jpeg" style={imgStyle} loading="lazy" />
+            <img src="/capturas/Vista_Progresion_CA.jpeg" alt="Captura de pantalla: PROGRESIÓN POR CADA EJERCICIO — Gráficos de Evolución Física" style={imgStyle} loading="lazy" />
           </div>
         )
       },
@@ -920,7 +920,7 @@ const AUDIENCE_DATA = {
         features: ['Cálculo multiparámetro avanzado', 'Tabla de porcentajes de intensidad', 'Vincular peso y reps directamente a cada ejercicio'],
         content: (_color: string) => (
           <div style={containerStyle}>
-            <img src="/capturas/Calculadora_1RM_CA.jpeg" style={imgStyle} loading="lazy" />
+            <img src="/capturas/Calculadora_1RM_CA.jpeg" alt="Captura de pantalla: CALCULADORA 1RM — Estima tu Fuerza Máxima" style={imgStyle} loading="lazy" />
           </div>
         )
       },
@@ -931,7 +931,7 @@ const AUDIENCE_DATA = {
         features: ['Histórico de récords logrados', 'Medallas de consistencia', 'Cada sesión te acerca a una recompensa'],
         content: (_color: string) => (
           <div style={containerStyle}>
-            <img src="/capturas/Desbloquea_Logros_CA.jpeg" style={imgStyle} loading="lazy" />
+            <img src="/capturas/Desbloquea_Logros_CA.jpeg" alt="Captura de pantalla: LOGROS Y MEDALLAS — Gamificación Científica" style={imgStyle} loading="lazy" />
           </div>
         )
       },
@@ -942,7 +942,7 @@ const AUDIENCE_DATA = {
         features: ['Notificaciones inteligentes', 'Ajustes automáticos semanales', 'Mensajes del motor de sobrecarga'],
         content: (_color: string) => (
           <div style={containerStyle}>
-            <img src="/capturas/Recibe_Notificaciones_CA.jpeg" style={{ ...imgStyle, objectFit: 'contain' }} loading="lazy" />
+            <img src="/capturas/Recibe_Notificaciones_CA.jpeg" alt="Captura de pantalla: NOTIFICACIONES — Alertas de Rendimiento" style={{ ...imgStyle, objectFit: 'contain' }} loading="lazy" />
           </div>
         )
       }
@@ -961,7 +961,7 @@ const AUDIENCE_DATA = {
         features: ['Branding y marca del coach', 'Enlace directo de chat', 'Acceso directo a la sesión de hoy'],
         content: (_color: string) => (
           <div style={containerStyle}>
-            <img src="/capturas/Vista_Portada_CG.jpeg" style={imgStyle} loading="lazy" />
+            <img src="/capturas/Vista_Portada_CG.jpeg" alt="Captura de pantalla: PORTADA DEL PLAN — Acceso Directo y Bienvenida" style={imgStyle} loading="lazy" />
           </div>
         )
       },
@@ -972,7 +972,7 @@ const AUDIENCE_DATA = {
         features: ['Calendario interactivo de rutinas', 'Variables técnicas objetivo', 'Instrucciones del plan del coach'],
         content: (_color: string) => (
           <div style={containerStyle}>
-            <img src="/capturas/Plan_Personalizado_CG.jpeg" style={imgStyle} loading="lazy" />
+            <img src="/capturas/Plan_Personalizado_CG.jpeg" alt="Captura de pantalla: PLAN PERSONALIZADO — Visualiza tus Rutinas Asignadas" style={imgStyle} loading="lazy" />
           </div>
         )
       },
@@ -983,7 +983,7 @@ const AUDIENCE_DATA = {
         features: ['Sincronización en la nube en tiempo real', 'Asistente de RIR y RPE', 'Visualizador de marcas anteriores'],
         content: (_color: string) => (
           <div style={containerStyle}>
-            <img src="/capturas/Refistra_Sesiones_CG.jpeg" style={imgStyle} loading="lazy" />
+            <img src="/capturas/Refistra_Sesiones_CG.jpeg" alt="Captura de pantalla: REGISTRO DE SESIONES — Registra y Sincroniza al Instante" style={imgStyle} loading="lazy" />
           </div>
         )
       },
@@ -994,7 +994,7 @@ const AUDIENCE_DATA = {
         features: ['Calendario histórico de sesiones', 'Sesiones marcadas como auditadas', 'Resúmenes de adherencia deportiva'],
         content: (_color: string) => (
           <div style={containerStyle}>
-            <img src="/capturas/Hitorial_Sesiones_CG.jpeg" style={imgStyle} loading="lazy" />
+            <img src="/capturas/Hitorial_Sesiones_CG.jpeg" alt="Captura de pantalla: HISTORIAL DE SESIONES — Tus Entrenamientos Completados" style={imgStyle} loading="lazy" />
           </div>
         )
       },
@@ -1005,7 +1005,7 @@ const AUDIENCE_DATA = {
         features: ['Desglose serie por serie', 'Comentarios del coach asignados', 'Comparativa contra objetivos planificados'],
         content: (_color: string) => (
           <div style={containerStyle}>
-            <img src="/capturas/Historial_Sesiones_dos_CG.jpeg" style={imgStyle} loading="lazy" />
+            <img src="/capturas/Historial_Sesiones_dos_CG.jpeg" alt="Captura de pantalla: DETALLE DE LA SESIÓN — Desglose Técnico de la Sesión" style={imgStyle} loading="lazy" />
           </div>
         )
       },
@@ -1016,7 +1016,7 @@ const AUDIENCE_DATA = {
         features: ['Gráficas de fuerza máxima 1RM', 'Tonelaje levantado por sesión', 'Progreso de volumen semanal'],
         content: (_color: string) => (
           <div style={containerStyle}>
-            <img src="/capturas/Vista_Progresiones_CG.jpeg" style={{ ...imgStyle, objectFit: 'contain' }} loading="lazy" />
+            <img src="/capturas/Vista_Progresiones_CG.jpeg" alt="Captura de pantalla: VISTA DE PROGRESIONES — Tus Avances de Fuerza" style={{ ...imgStyle, objectFit: 'contain' }} loading="lazy" />
           </div>
         )
       },
@@ -1027,7 +1027,7 @@ const AUDIENCE_DATA = {
         features: ['Cálculo rápido y libre de fallos', 'Tabla de intensidades de fuerza', 'Integrado con el plan del preparador'],
         content: (_color: string) => (
           <div style={containerStyle}>
-            <img src="/capturas/Calculadore_1RM_CG.jpeg" style={imgStyle} loading="lazy" />
+            <img src="/capturas/Calculadore_1RM_CG.jpeg" alt="Captura de pantalla: CALCULADORA 1RM — Cálculo de Fuerza Máxima" style={imgStyle} loading="lazy" />
           </div>
         )
       },
@@ -1038,7 +1038,7 @@ const AUDIENCE_DATA = {
         features: ['Ejecución técnica paso a paso', 'Evita lesiones en sala de musculación', 'Optimiza el reclutamiento motor'],
         content: (_color: string) => (
           <div style={containerStyle}>
-            <img src="/capturas/Videos_Explicativos_CG.jpeg" style={imgStyle} loading="lazy" />
+            <img src="/capturas/Videos_Explicativos_CG.jpeg" alt="Captura de pantalla: VIDEOS EXPLICATIVOS — Vídeo Tutoriales de Técnica" style={imgStyle} loading="lazy" />
           </div>
         )
       },
@@ -1049,7 +1049,7 @@ const AUDIENCE_DATA = {
         features: ['Carga automática sin internet', 'Animaciones de técnica fluidas', 'Independencia de conexión móvil'],
         content: (_color: string) => (
           <div style={containerStyle}>
-            <img src="/capturas/Gifs_en_el_modo_oflline_CG.jpeg" style={imgStyle} loading="lazy" />
+            <img src="/capturas/Gifs_en_el_modo_oflline_CG.jpeg" alt="Captura de pantalla: ANIMACIONES OFFLINE — Guía de Técnica sin Conexión" style={imgStyle} loading="lazy" />
           </div>
         )
       },
@@ -1060,7 +1060,7 @@ const AUDIENCE_DATA = {
         features: ['Pautas generales de adherencia', 'Visión y valores deportivos del coach', 'Consejos generales de estilo de vida'],
         content: (_color: string) => (
           <div style={containerStyle}>
-            <img src="/capturas/Conoce_Filosofia_Entrenador_CG.jpeg" style={imgStyle} loading="lazy" />
+            <img src="/capturas/Conoce_Filosofia_Entrenador_CG.jpeg" alt="Captura de pantalla: FILOSOFÍA DEL COACH — Conoce los Pilares de tu Coach" style={imgStyle} loading="lazy" />
           </div>
         )
       }
@@ -2401,11 +2401,18 @@ export const Login: React.FC = () => {
               {/* Dot Indicators */}
               <div className="dot-indicators">
                 {activeData.slides.map((_, sIdx) => (
-                  <div
+                  <button
                     key={sIdx}
+                    type="button"
                     className={`dot ${carouselIndex === sIdx ? 'active' : ''}`}
-                    style={{ background: carouselIndex === sIdx ? pri : 'rgba(255, 255, 255, 0.15)' }}
+                    style={{
+                      background: carouselIndex === sIdx ? pri : 'rgba(255, 255, 255, 0.15)',
+                      border: 'none',
+                      padding: 0,
+                    }}
                     onClick={() => setCarouselIndex(sIdx)}
+                    aria-label={`Ir a la diapositiva ${sIdx + 1}`}
+                    aria-current={carouselIndex === sIdx ? 'true' : undefined}
                   />
                 ))}
               </div>
@@ -2803,7 +2810,9 @@ export const Login: React.FC = () => {
 
       {/* ═══ Video Modal ═══ */}
       {isVideoModalOpen && (
+        // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- backdrop de modal: cierra al hacer click afuera; el cierre por teclado (Escape) y el foco atrapado se implementan en la Fase 3 junto con role="dialog"
         <div className="video-modal-overlay" onClick={() => setIsVideoModalOpen(false)}>
+          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- solo evita que el click se propague al backdrop; no es un control interactivo en sí mismo */}
           <div className="video-modal-container" onClick={(e) => e.stopPropagation()}>
             <button className="video-modal-close" onClick={() => setIsVideoModalOpen(false)}>✕</button>
             <h3 style={{ fontFamily: 'Orbitron, sans-serif', fontSize: '13px', fontWeight: 800, color: 'white', marginBottom: '16px', letterSpacing: '0.5px', textTransform: 'uppercase' }}>

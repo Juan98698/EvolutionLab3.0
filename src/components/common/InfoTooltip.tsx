@@ -55,6 +55,9 @@ export const InfoTooltip: React.FC<InfoTooltipProps> = React.memo(({ title, body
         <div
           className={`tooltip-overlay${open ? ' open' : ''}`}
           onClick={handleOverlayClick}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') setOpen(false);
+          }}
           role="dialog"
           aria-modal="true"
           aria-label={title}
