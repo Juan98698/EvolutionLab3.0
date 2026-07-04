@@ -1530,6 +1530,15 @@ export const PlanPlanner: React.FC = () => {
           .eq('id', existingPlanId);
       } else {
         const { data: { session } } = await supabase.auth.getSession();
+
+        // Antes de crear un plan nuevo, desactivar cualquier plan activo previo
+        // del mismo cliente para evitar acumulaciones de múltiples planes activos (causa de PGRST116)
+        await supabase
+          .from('planes')
+          .update({ activo: false })
+          .eq('cliente_id', clienteId)
+          .eq('activo', true);
+
         result = await supabase
           .from('planes')
           .insert({
