@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import { useSupabase } from '../../context/SupabaseContext';
+import { useConfirm } from '../../context/ConfirmDialogContext';
 import { PlanData, Rule } from '../../types/database.types';
 import { DEFAULT_RULES } from '../../lib/rules';
 import AthleteNavbar from '../common/AthleteNavbar';
@@ -249,6 +250,7 @@ const paramLabelStyle: React.CSSProperties = {
 export const SoloConfigRules: React.FC = () => {
   const navigate = useNavigate();
   const { user, profile, isSoloClient } = useSupabase();
+  const confirm = useConfirm();
 
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
@@ -360,8 +362,8 @@ export const SoloConfigRules: React.FC = () => {
     });
   };
 
-  const handleResetDefaults = () => {
-    if (window.confirm('¿Seguro que deseas restaurar todos los parámetros y mensajes a sus valores por defecto?')) {
+  const handleResetDefaults = async () => {
+    if (await confirm('¿Seguro que deseas restaurar todos los parámetros y mensajes a sus valores por defecto?', { title: 'Restaurar valores por defecto', confirmText: 'Restaurar', danger: true })) {
       setTrackerConfig(DEFAULT_CONFIG);
       setTrackerRules(DEFAULT_RULES.map(r => ({ ...r })));
       showToast('Valores restablecidos por defecto.', 'info');

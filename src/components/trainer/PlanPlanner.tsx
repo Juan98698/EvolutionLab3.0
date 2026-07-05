@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import { useSupabase } from '../../context/SupabaseContext';
+import { useConfirm } from '../../context/ConfirmDialogContext';
 import { Profile, PlanData, TrainingDay, Exercise, GlobalVariable, EjercicioGlobal, PeriodizationConfig } from '../../types/database.types';
 import Toast from '../common/Toast';
 import { InfoTooltip } from '../common/InfoTooltip';
@@ -62,6 +63,7 @@ export const PlanPlanner: React.FC = () => {
   const { clienteId } = useParams<{ clienteId: string }>();
   const navigate = useNavigate();
   const { profile } = useSupabase();
+  const confirm = useConfirm();
 
   // Estados de datos
   const [clientProfile, setClientProfile] = useState<Profile | null>(null);
@@ -210,7 +212,7 @@ export const PlanPlanner: React.FC = () => {
   // Generar ID aleatorio
   const generateId = (): string => Math.random().toString(36).substring(2, 11);
 
-  const handleApplyDistribution = (sessions: GeneratedSession[], targets: Record<string, number>) => {
+  const handleApplyDistribution = async (sessions: GeneratedSession[], targets: Record<string, number>) => {
     // Si se pasa un arreglo vacío (como en el modo Fuerza), solo actualizamos targets
     if (sessions.length === 0) {
       setWeeklyTargets(targets);
@@ -221,7 +223,10 @@ export const PlanPlanner: React.FC = () => {
     // Si ya hay ejercicios creados, advertimos
     const hasExercises = trainingDays.some(day => day.exercises && day.exercises.some(ex => ex.nombre_original !== ''));
     if (hasExercises) {
-      if (!window.confirm("Aplicar el esqueleto de volumen reemplazará los días y ejercicios actuales. ¿Estás seguro de que quieres continuar?")) {
+      if (!(await confirm(
+        'Aplicar el esqueleto de volumen reemplazará los días y ejercicios actuales. ¿Estás seguro de que quieres continuar?',
+        { title: 'Reemplazar plan actual', confirmText: 'Reemplazar', danger: true }
+      ))) {
         return;
       }
     }
@@ -986,8 +991,8 @@ export const PlanPlanner: React.FC = () => {
     showToast('Variable global añadida.', 'success');
   };
 
-  const handleRemoveGlobalVar = (id: string) => {
-    if (window.confirm('¿Eliminar esta variable global del plan? Se quitará de todos los ejercicios.')) {
+  const handleRemoveGlobalVar = async (id: string) => {
+    if (await confirm('¿Eliminar esta variable global del plan? Se quitará de todos los ejercicios.', { title: 'Eliminar variable global', confirmText: 'Eliminar', danger: true })) {
       setGlobalVariables(prev => prev.filter(v => v.id !== id));
       setVariableDefinitions(prev => {
         const copy = { ...prev };
@@ -1014,8 +1019,8 @@ export const PlanPlanner: React.FC = () => {
     });
   };
 
-  const handleRemoveDay = (dayId: string) => {
-    if (window.confirm('¿Seguro que deseas eliminar este día completo de entrenamiento?')) {
+  const handleRemoveDay = async (dayId: string) => {
+    if (await confirm('¿Seguro que deseas eliminar este día completo de entrenamiento?', { title: 'Eliminar día', confirmText: 'Eliminar', danger: true })) {
       setTrainingDays(prev => {
         const next = prev.filter(d => d.id !== dayId);
         if (activeTab >= next.length) {

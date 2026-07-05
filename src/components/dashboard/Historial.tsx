@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useSupabase } from '../../context/SupabaseContext';
+import { useConfirm } from '../../context/ConfirmDialogContext';
 import { supabase } from '../../lib/supabaseClient';
 import {
   fetchAthleteSessions,
@@ -37,6 +38,7 @@ ChartJS.register(
 
 export const Historial: React.FC = () => {
   const { user } = useSupabase();
+  const confirm = useConfirm();
 
   const [sesiones, setSesiones] = useState<LocalSesion[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -379,7 +381,7 @@ export const Historial: React.FC = () => {
   // Eliminar ejercicio o sesión
   const handleDeleteRow = async (idSesion: string | number, idEj: string | number) => {
     const confirmMessage = '¿Seguro que deseas eliminar este registro del historial?';
-    if (!window.confirm(confirmMessage)) return;
+    if (!(await confirm(confirmMessage, { title: 'Eliminar registro', confirmText: 'Eliminar', danger: true }))) return;
 
     try {
       const sessionToDelete = sesiones.find(s => String(s.id) === String(idSesion));

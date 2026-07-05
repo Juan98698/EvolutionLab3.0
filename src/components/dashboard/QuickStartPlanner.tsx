@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { useSupabase } from '../../context/SupabaseContext';
+import { useConfirm } from '../../context/ConfirmDialogContext';
 import { useNavigate } from 'react-router-dom';
 import AthleteNavbar from '../common/AthleteNavbar';
 import Toast from '../common/Toast';
@@ -197,6 +198,7 @@ const ROUTINE_TEMPLATES: Record<string, { title: string; days: TemplateDay[] }> 
 export const QuickStartPlanner: React.FC = () => {
   const navigate = useNavigate();
   const { user, profile } = useSupabase();
+  const confirm = useConfirm();
 
   // ── Toast ─────────────────────────────────────────────────────────────────────
   const [toastState, setToastState] = useState<{ visible: boolean; message: string; type: 'success' | 'error' | 'info' }>({
@@ -400,11 +402,14 @@ export const QuickStartPlanner: React.FC = () => {
     showToast(`✅ Variable "${cleanName.toUpperCase()}" agregada`, 'success');
   };
 
-  const handleRemoveVariable = (varId: string) => {
+  const handleRemoveVariable = async (varId: string) => {
     const variable = globalVars.find((v) => v.id === varId);
     if (!variable) return;
 
-    if (!window.confirm(`¿Seguro que deseas eliminar la variable "${variable.label}" del plan? Se eliminará de todos los ejercicios.`)) {
+    if (!(await confirm(
+      `¿Seguro que deseas eliminar la variable "${variable.label}" del plan? Se eliminará de todos los ejercicios.`,
+      { title: 'Eliminar variable', confirmText: 'Eliminar', danger: true }
+    ))) {
       return;
     }
 
@@ -417,12 +422,12 @@ export const QuickStartPlanner: React.FC = () => {
     showToast(`❌ Variable "${variable.label}" eliminada`, 'info');
   };
 
-  const handleLoadTemplate = (key: string) => {
+  const handleLoadTemplate = async (key: string) => {
     const template = ROUTINE_TEMPLATES[key];
     if (!template) return;
 
     if (days.some(d => d.exercises.some(e => e.nombre.trim() !== ''))) {
-      if (!window.confirm('Cargar una plantilla reemplazará tus días y ejercicios actuales. ¿Deseas continuar?')) {
+      if (!(await confirm('Cargar una plantilla reemplazará tus días y ejercicios actuales. ¿Deseas continuar?', { title: 'Reemplazar plan actual', confirmText: 'Reemplazar', danger: true }))) {
         return;
       }
     }
@@ -526,7 +531,7 @@ export const QuickStartPlanner: React.FC = () => {
     setDays((prev) => [...prev, createDefaultDay(prev.length)]);
   };
 
-  const removeDay = (dayId: string) => {
+  const removeDay = async (dayId: string) => {
     if (days.length <= 1) {
       showToast('Necesitas al menos 1 día de entrenamiento', 'info');
       return;
@@ -534,7 +539,7 @@ export const QuickStartPlanner: React.FC = () => {
     const day = days.find((d) => d.id === dayId);
     const hasExercises = day?.exercises.some((e) => e.nombre.trim() !== '');
     if (hasExercises) {
-      if (!window.confirm('Este día tiene ejercicios. ¿Seguro que deseas eliminarlo?')) return;
+      if (!(await confirm('Este día tiene ejercicios. ¿Seguro que deseas eliminarlo?', { title: 'Eliminar día', confirmText: 'Eliminar', danger: true }))) return;
     }
     setDays((prev) => prev.filter((d) => d.id !== dayId));
   };

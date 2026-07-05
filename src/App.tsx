@@ -4,6 +4,7 @@ import { useSupabase } from './context/SupabaseContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import { PWAInstallBanner } from './components/common/PWAInstallBanner';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
+import { ConfirmDialogProvider } from './context/ConfirmDialogContext';
 import Login from './components/auth/Login';
 // Lazy-loaded: AthleteDashboard, Historial y Analytics importan chart.js (~204 KB).
 // Al cargarlos bajo demanda se elimina ese peso del bundle principal (index.js),
@@ -85,9 +86,10 @@ const ProtectedPage: React.FC<{
 
 export const App: React.FC = () => {
   return (
-    <BrowserRouter>
-      <React.Suspense fallback={<LoadingFallback />}>
-        <Routes>
+    <ConfirmDialogProvider>
+      <BrowserRouter>
+        <React.Suspense fallback={<LoadingFallback />}>
+          <Routes>
           {/* Rutas Públicas */}
           <Route path="/login" element={<Login />} />
 
@@ -222,6 +224,7 @@ export const App: React.FC = () => {
       </React.Suspense>
       <PWAInstallBanner />
     </BrowserRouter>
+    </ConfirmDialogProvider>
   );
 };
 

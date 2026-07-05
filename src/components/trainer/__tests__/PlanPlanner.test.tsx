@@ -2,6 +2,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, cleanup } from '@testing-library/react';
 import { PlanPlanner } from '../PlanPlanner';
+import { ConfirmDialogProvider } from '../../../context/ConfirmDialogContext';
 
 // Mock Router
 const mockNavigate = vi.fn();
@@ -125,7 +126,7 @@ describe('PlanPlanner Component', () => {
   afterEach(cleanup);
 
   it('should render loading state initially, then render planner workspace once resolved', async () => {
-    render(<PlanPlanner />);
+    render(<ConfirmDialogProvider><PlanPlanner /></ConfirmDialogProvider>);
 
     // Initially shows loader
     expect(screen.getByText('Cargando Planificador de Rutina...')).toBeDefined();
@@ -143,7 +144,7 @@ describe('PlanPlanner Component', () => {
   it('plan sin day.id (formato legacy): no genera warning de React keys', async () => {
     const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    render(<PlanPlanner />);
+    render(<ConfirmDialogProvider><PlanPlanner /></ConfirmDialogProvider>);
     await screen.findByText('PLANIFICADOR DE RUTINA');
 
     const keyWarnings = consoleErrorSpy.mock.calls.filter(call =>

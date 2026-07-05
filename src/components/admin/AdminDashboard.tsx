@@ -6,6 +6,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { Profile } from '../../types/database.types';
 import Toast from '../common/Toast';
 import { isRealEmailDomain } from '../../lib/validations';
+import { useConfirm } from '../../context/ConfirmDialogContext';
 
 type RolOption = 'admin' | 'entrenador' | 'cliente';
 
@@ -18,6 +19,7 @@ const ROLE_COLORS: Record<RolOption, { bg: string; border: string; text: string;
 export const AdminDashboard: React.FC = () => {
   const navigate = useNavigate();
   const { profile, signOut } = useSupabase();
+  const confirm = useConfirm();
   const [users, setUsers] = useState<Profile[]>([]);
   const [trainers, setTrainers] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
@@ -299,7 +301,10 @@ export const AdminDashboard: React.FC = () => {
       return;
     }
 
-    if (!window.confirm(`⚠️ ¿Estás seguro de que deseas eliminar permanentemente al usuario "${userName}" y TODOS sus datos (planes, historiales, etc.) de forma irreversible?`)) {
+    if (!(await confirm(
+      `¿Estás seguro de que deseas eliminar permanentemente al usuario "${userName}" y TODOS sus datos (planes, historiales, etc.) de forma irreversible?`,
+      { title: 'Eliminar usuario', confirmText: 'Eliminar', danger: true }
+    ))) {
       return;
     }
 
@@ -320,7 +325,7 @@ export const AdminDashboard: React.FC = () => {
   };
 
   const handleLogout = async () => {
-    if (window.confirm('¿Seguro que deseas cerrar la sesión?')) {
+    if (await confirm('¿Seguro que deseas cerrar la sesión?', { title: 'Cerrar sesión', confirmText: 'Cerrar sesión' })) {
       await signOut();
       navigate('/login');
     }

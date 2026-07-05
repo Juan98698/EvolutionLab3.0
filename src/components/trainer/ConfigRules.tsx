@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import { useSupabase } from '../../context/SupabaseContext';
+import { useConfirm } from '../../context/ConfirmDialogContext';
 import { Profile, PlanData } from '../../types/database.types';
 import Toast from '../common/Toast';
 import { InfoTooltip } from '../common/InfoTooltip';
@@ -122,6 +123,7 @@ const NumberStepper: React.FC<NumberStepperProps> = ({ id, value, min, max, onCh
 export const ConfigRules: React.FC = () => {
   const navigate = useNavigate();
   const { profile } = useSupabase();
+  const confirm = useConfirm();
 
   const [clientes, setClientes] = useState<Profile[]>([]);
   const [selectedClienteId, setSelectedClienteId] = useState<string>('');
@@ -268,8 +270,8 @@ export const ConfigRules: React.FC = () => {
     });
   };
 
-  const handleResetDefaults = () => {
-    if (window.confirm('¿Seguro que deseas restaurar todos los parámetros y mensajes a sus valores científicos por defecto?')) {
+  const handleResetDefaults = async () => {
+    if (await confirm('¿Seguro que deseas restaurar todos los parámetros y mensajes a sus valores científicos por defecto?', { title: 'Restaurar valores por defecto', confirmText: 'Restaurar', danger: true })) {
       setTrackerConfig(DEFAULT_CONFIG);
       setTrackerRules(DEFAULT_RULES);
       showToast('Valores restablecidos por defecto.', 'info');
