@@ -28,6 +28,7 @@ const ConfirmDialogContext = createContext<ConfirmFn | null>(null);
  *   const confirm = useConfirm();
  *   if (!(await confirm('¿Seguro que deseas eliminar este día?', { danger: true }))) return;
  */
+// eslint-disable-next-line react-refresh/only-export-components
 export function useConfirm(): ConfirmFn {
   const ctx = useContext(ConfirmDialogContext);
   if (!ctx) {
@@ -98,7 +99,9 @@ const ConfirmDialogView: React.FC<ConfirmDialogViewProps> = ({
 
   return (
     <div
+      role="presentation"
       onClick={onCancel}
+      onKeyDown={(e) => { if (e.key === 'Escape') onCancel(); }}
       style={{
         position: 'fixed',
         top: 0, left: 0, width: '100vw', height: '100vh',
@@ -115,6 +118,7 @@ const ConfirmDialogView: React.FC<ConfirmDialogViewProps> = ({
         aria-describedby="confirm-dialog-message"
         tabIndex={-1}
         onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
         style={{
           background: 'rgba(10, 15, 30, 0.97)',
           border: `1px solid ${danger ? 'rgba(239, 68, 68, 0.25)' : 'rgba(0, 212, 255, 0.15)'}`,
