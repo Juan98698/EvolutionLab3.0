@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { PlanData } from '../../types/database.types';
 import { writeSessionsToCache, readSessionsFromCache } from '../../lib/sessions';
 import { autoRegulatePlanForNextWeek } from '../../lib/periodizationEngine';
+import { ErrorBoundary } from '../common/ErrorBoundary';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -514,6 +515,29 @@ const ActiveSession: React.FC = () => {
         </div>
       </div>
 
+      {/* ── Contenido del ejercicio actual: si algo rompe acá (datos raros de
+           un ejercicio puntual), la topbar y la navegación de abajo siguen
+           funcionando — el atleta puede saltar al siguiente ejercicio en
+           vez de quedar bloqueado a mitad de un entrenamiento. ── */}
+      <ErrorBoundary
+        label="Ejercicio actual"
+        fallback={(_error, reset) => (
+          <div className="active-session-exercise-header" role="alert" style={{ textAlign: 'center', padding: '30px 16px' }}>
+            <div style={{ fontSize: '28px', marginBottom: '8px' }}>⚠️</div>
+            <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '13px', marginBottom: '16px' }}>
+              No se pudo mostrar este ejercicio. Tu progreso hasta ahora está guardado.
+            </p>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+              <button className="active-session-btn-secondary" onClick={reset}>Reintentar</button>
+              {currentIdx < totalExercises - 1 && (
+                <button className="active-session-nav-btn primary" onClick={() => { reset(); setCurrentIdx(i => i + 1); }}>
+                  Saltar al siguiente →
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+      >
       {/* ── Exercise Name ── */}
       <div className="active-session-exercise-header">
         <h1 className="active-session-exercise-name">
@@ -815,6 +839,8 @@ const ActiveSession: React.FC = () => {
           </div>
         </div>
       )}
+
+      </ErrorBoundary>
 
       {/* ── Bottom Navigation ── */}
       <div className="active-session-bottom-nav">

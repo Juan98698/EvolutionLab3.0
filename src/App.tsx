@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useSupabase } from './context/SupabaseContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import { PWAInstallBanner } from './components/common/PWAInstallBanner';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
 import Login from './components/auth/Login';
 // Lazy-loaded: AthleteDashboard, Historial y Analytics importan chart.js (~204 KB).
 // Al cargarlos bajo demanda se elimina ese peso del bundle principal (index.js),
@@ -67,6 +68,21 @@ const HomeDispatcher = () => {
   return isTrainer ? <Navigate to="/trainer" replace /> : <Navigate to="/dashboard" replace />;
 };
 
+/**
+ * Combina ProtectedRoute (control de acceso por rol) con un ErrorBoundary
+ * por página. Si una página se rompe en render, el usuario ve un fallback
+ * contextual con opción de reintentar — no se lleva puesta toda la SPA.
+ */
+const ProtectedPage: React.FC<{
+  allowedRoles: ('admin' | 'entrenador' | 'cliente')[];
+  label: string;
+  children: React.ReactNode;
+}> = ({ allowedRoles, label, children }) => (
+  <ProtectedRoute allowedRoles={allowedRoles}>
+    <ErrorBoundary label={label}>{children}</ErrorBoundary>
+  </ProtectedRoute>
+);
+
 export const App: React.FC = () => {
   return (
     <BrowserRouter>
@@ -82,33 +98,33 @@ export const App: React.FC = () => {
           <Route
             path="/dashboard"
             element={
-              <ProtectedRoute allowedRoles={['cliente', 'entrenador']}>
+              <ProtectedPage allowedRoles={['cliente', 'entrenador']} label="Dashboard del Atleta">
                 <AthleteDashboard />
-              </ProtectedRoute>
+              </ProtectedPage>
             }
           />
           <Route
             path="/historial"
             element={
-              <ProtectedRoute allowedRoles={['cliente', 'entrenador']}>
+              <ProtectedPage allowedRoles={['cliente', 'entrenador']} label="Historial">
                 <Historial />
-              </ProtectedRoute>
+              </ProtectedPage>
             }
           />
           <Route
             path="/analytics"
             element={
-              <ProtectedRoute allowedRoles={['cliente', 'entrenador']}>
+              <ProtectedPage allowedRoles={['cliente', 'entrenador']} label="Analytics">
                 <Analytics />
-              </ProtectedRoute>
+              </ProtectedPage>
             }
           />
           <Route
             path="/biblioteca"
             element={
-              <ProtectedRoute allowedRoles={['cliente', 'entrenador']}>
+              <ProtectedPage allowedRoles={['cliente', 'entrenador']} label="Biblioteca de Ejercicios">
                 <ExerciseLibrary />
-              </ProtectedRoute>
+              </ProtectedPage>
             }
           />
 
@@ -116,17 +132,17 @@ export const App: React.FC = () => {
           <Route
             path="/solo/planner"
             element={
-              <ProtectedRoute allowedRoles={['cliente']}>
+              <ProtectedPage allowedRoles={['cliente']} label="Planificador Solo">
                 <QuickStartPlanner />
-              </ProtectedRoute>
+              </ProtectedPage>
             }
           />
           <Route
             path="/solo/config"
             element={
-              <ProtectedRoute allowedRoles={['cliente']}>
+              <ProtectedPage allowedRoles={['cliente']} label="Configuración Solo">
                 <SoloConfigRules />
-              </ProtectedRoute>
+              </ProtectedPage>
             }
           />
 
@@ -134,25 +150,25 @@ export const App: React.FC = () => {
           <Route
             path="/session/preview"
             element={
-              <ProtectedRoute allowedRoles={['cliente', 'entrenador']}>
+              <ProtectedPage allowedRoles={['cliente', 'entrenador']} label="Vista Previa de Sesión">
                 <SessionPreview />
-              </ProtectedRoute>
+              </ProtectedPage>
             }
           />
           <Route
             path="/session/active/:dayIndex"
             element={
-              <ProtectedRoute allowedRoles={['cliente', 'entrenador']}>
+              <ProtectedPage allowedRoles={['cliente', 'entrenador']} label="Sesión Activa">
                 <ActiveSession />
-              </ProtectedRoute>
+              </ProtectedPage>
             }
           />
           <Route
             path="/session/complete"
             element={
-              <ProtectedRoute allowedRoles={['cliente', 'entrenador']}>
+              <ProtectedPage allowedRoles={['cliente', 'entrenador']} label="Sesión Completa">
                 <SessionComplete />
-              </ProtectedRoute>
+              </ProtectedPage>
             }
           />
 
@@ -160,33 +176,33 @@ export const App: React.FC = () => {
           <Route
             path="/trainer"
             element={
-              <ProtectedRoute allowedRoles={['entrenador']}>
+              <ProtectedPage allowedRoles={['entrenador']} label="Dashboard del Entrenador">
                 <TrainerDashboard />
-              </ProtectedRoute>
+              </ProtectedPage>
             }
           />
           <Route
             path="/trainer/plan/:clienteId"
             element={
-              <ProtectedRoute allowedRoles={['entrenador']}>
+              <ProtectedPage allowedRoles={['entrenador']} label="Planificador de Rutina">
                 <PlanPlanner />
-              </ProtectedRoute>
+              </ProtectedPage>
             }
           />
           <Route
             path="/trainer/config"
             element={
-              <ProtectedRoute allowedRoles={['entrenador']}>
+              <ProtectedPage allowedRoles={['entrenador']} label="Configuración de Reglas">
                 <ConfigRules />
-              </ProtectedRoute>
+              </ProtectedPage>
             }
           />
           <Route
             path="/trainer/branding"
             element={
-              <ProtectedRoute allowedRoles={['entrenador']}>
+              <ProtectedPage allowedRoles={['entrenador']} label="Branding del Entrenador">
                 <TrainerBranding />
-              </ProtectedRoute>
+              </ProtectedPage>
             }
           />
 
@@ -194,9 +210,9 @@ export const App: React.FC = () => {
           <Route
             path="/admin"
             element={
-              <ProtectedRoute allowedRoles={['admin']}>
+              <ProtectedPage allowedRoles={['admin']} label="Dashboard de Administrador">
                 <AdminDashboard />
-              </ProtectedRoute>
+              </ProtectedPage>
             }
           />
 

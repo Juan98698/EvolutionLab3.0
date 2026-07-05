@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App.tsx';
 import { SupabaseProvider } from './context/SupabaseContext.tsx';
+import { ErrorBoundary } from './components/common/ErrorBoundary.tsx';
 import { inject } from '@vercel/analytics';
 import './index.css';
 
@@ -94,11 +95,60 @@ purgeOldServiceWorkersAndCaches().then((wasPurged) => {
     setInterval(checkForUpdate, 30 * 60 * 1000);
   });
 
+  const GlobalErrorFallback = (error: Error, reset: () => void) => (
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'center',
+      alignItems: 'center',
+      minHeight: '100vh',
+      background: '#0b0f19',
+      color: 'white',
+      fontFamily: "'Orbitron', sans-serif",
+      padding: '24px',
+      textAlign: 'center',
+    }}>
+      <div style={{ fontSize: '40px', marginBottom: '16px' }}>⚠️</div>
+      <div style={{ fontSize: '15px', fontWeight: 800, letterSpacing: '0.5px', marginBottom: '8px' }}>
+        ALGO SALIÓ MAL
+      </div>
+      <div style={{ fontSize: '12px', opacity: 0.6, marginBottom: '20px', maxWidth: '360px', fontFamily: 'system-ui, sans-serif' }}>
+        Tus datos están a salvo — se guardan localmente y en la nube antes de llegar a este punto.
+        Probá recargar la página.
+      </div>
+      {import.meta.env.DEV && (
+        <pre style={{ fontSize: '10px', opacity: 0.4, maxWidth: '90vw', overflow: 'auto', marginBottom: '20px' }}>
+          {error.message}
+        </pre>
+      )}
+      <button
+        type="button"
+        onClick={() => { reset(); window.location.reload(); }}
+        style={{
+          background: 'rgba(0, 212, 255, 0.12)',
+          border: '1px solid rgba(0, 212, 255, 0.4)',
+          color: '#00d4ff',
+          borderRadius: '10px',
+          padding: '10px 20px',
+          fontSize: '12px',
+          fontWeight: 700,
+          letterSpacing: '0.5px',
+          cursor: 'pointer',
+          fontFamily: "'Orbitron', sans-serif",
+        }}
+      >
+        RECARGAR
+      </button>
+    </div>
+  );
+
   ReactDOM.createRoot(document.getElementById('root')!).render(
     <React.StrictMode>
-      <SupabaseProvider>
-        <App />
-      </SupabaseProvider>
+      <ErrorBoundary label="App" fallback={GlobalErrorFallback}>
+        <SupabaseProvider>
+          <App />
+        </SupabaseProvider>
+      </ErrorBoundary>
     </React.StrictMode>
   );
 });
