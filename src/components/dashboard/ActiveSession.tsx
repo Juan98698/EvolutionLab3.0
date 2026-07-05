@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import { PlanData } from '../../types/database.types';
-import { writeSessionsToCache } from '../../lib/sessions';
+import { writeSessionsToCache, readSessionsFromCache } from '../../lib/sessions';
 import { autoRegulatePlanForNextWeek } from '../../lib/periodizationEngine';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -317,8 +317,7 @@ const ActiveSession: React.FC = () => {
         });
 
       // ── Offline-first: save to local cache ──
-      const cachedSessions = localStorage.getItem('sobrecarga_v5');
-      const sesiones = cachedSessions ? JSON.parse(cachedSessions) : [];
+      const sesiones = readSessionsFromCache();
       const nextSesionId = sesiones.length > 0
         ? Math.max(...sesiones.map((s: any) => (typeof s.id === 'number' ? s.id : 0))) + 1
         : 1;

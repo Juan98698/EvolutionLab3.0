@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { supabase } from '../../lib/supabaseClient';
-import { writeSessionsToCache } from '../../lib/sessions';
+import { writeSessionsToCache, readSessionsFromCache } from '../../lib/sessions';
 import { PlanData } from '../../types/database.types';
 import { autoRegulatePlanForNextWeek } from '../../lib/periodizationEngine';
 import { PeriodizationHelpModal } from '../common/PeriodizationHelpModal';
@@ -263,8 +263,7 @@ export const AddSesion: React.FC<AddSesionProps> = ({
       if (!currentUser) throw new Error('No se encontró una sesión activa de Supabase.');
 
       // 1. Guardar de forma local en el historial (offline-first)
-      const cachedSessions = localStorage.getItem('sobrecarga_v5');
-      const sesiones = cachedSessions ? JSON.parse(cachedSessions) : [];
+      const sesiones = readSessionsFromCache();
 
       // Generar IDs locales temporales numéricos
       const nextSesionId = sesiones.length > 0 ? Math.max(...sesiones.map((s: any) => typeof s.id === 'number' ? s.id : 0)) + 1 : 1;

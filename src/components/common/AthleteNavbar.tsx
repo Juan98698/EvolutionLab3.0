@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useSupabase } from '../../context/SupabaseContext';
 import { supabase } from '../../lib/supabaseClient';
+import { readSessionsFromCache, SESSIONS_UPDATED_EVENT } from '../../lib/sessions';
 import Toast from './Toast';
 
 export const AthleteNavbar: React.FC = () => {
@@ -106,47 +107,44 @@ export const AthleteNavbar: React.FC = () => {
   useEffect(() => {
     const calcularRachaNavbar = () => {
       try {
-        const cached = localStorage.getItem('sobrecarga_v5');
-        if (cached) {
-          const parsed = JSON.parse(cached);
-          if (Array.isArray(parsed)) {
-            const getISOWeek = (date: Date): string => {
-              const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-              const dayNum = d.getUTCDay() || 7;
-              d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-              const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-              const weekNo = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
-              return `${d.getUTCFullYear()}-W${weekNo.toString().padStart(2, '0')}`;
-            };
+        const parsed = readSessionsFromCache();
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const getISOWeek = (date: Date): string => {
+            const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+            const dayNum = d.getUTCDay() || 7;
+            d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+            const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+            const weekNo = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
+            return `${d.getUTCFullYear()}-W${weekNo.toString().padStart(2, '0')}`;
+          };
 
-            const sessionWeeks = new Set(parsed.map((s: any) => {
-              if (!s.fecha) return '';
-              const [year, month, day] = s.fecha.split('-').map(Number);
-              return getISOWeek(new Date(year, month - 1, day));
-            }).filter(Boolean));
+          const sessionWeeks = new Set(parsed.map((s: any) => {
+            if (!s.fecha) return '';
+            const [year, month, day] = s.fecha.split('-').map(Number);
+            return getISOWeek(new Date(year, month - 1, day));
+          }).filter(Boolean));
 
-            const getOffsetWeek = (weeksAgo: number): string => {
-              const d = new Date();
-              d.setDate(d.getDate() - 7 * weeksAgo);
-              return getISOWeek(d);
-            };
+          const getOffsetWeek = (weeksAgo: number): string => {
+            const d = new Date();
+            d.setDate(d.getDate() - 7 * weeksAgo);
+            return getISOWeek(d);
+          };
 
-            let actual = 0;
-            const currentWeek = getOffsetWeek(0);
-            const lastWeek = getOffsetWeek(1);
-            
-            const hasCurrent = sessionWeeks.has(currentWeek);
-            const hasLast = sessionWeeks.has(lastWeek);
+          let actual = 0;
+          const currentWeek = getOffsetWeek(0);
+          const lastWeek = getOffsetWeek(1);
 
-            if (hasCurrent || hasLast) {
-              let weeksAgo = hasCurrent ? 0 : 1;
-              while (sessionWeeks.has(getOffsetWeek(weeksAgo))) {
-                actual++;
-                weeksAgo++;
-              }
+          const hasCurrent = sessionWeeks.has(currentWeek);
+          const hasLast = sessionWeeks.has(lastWeek);
+
+          if (hasCurrent || hasLast) {
+            let weeksAgo = hasCurrent ? 0 : 1;
+            while (sessionWeeks.has(getOffsetWeek(weeksAgo))) {
+              actual++;
+              weeksAgo++;
             }
-            setStreakWeeks(actual);
           }
+          setStreakWeeks(actual);
         } else {
           setStreakWeeks(0);
         }
@@ -157,8 +155,8 @@ export const AthleteNavbar: React.FC = () => {
 
     calcularRachaNavbar();
 
-    window.addEventListener('pwa-sessions-updated', calcularRachaNavbar);
-    return () => window.removeEventListener('pwa-sessions-updated', calcularRachaNavbar);
+    window.addEventListener(SESSIONS_UPDATED_EVENT, calcularRachaNavbar);
+    return () => window.removeEventListener(SESSIONS_UPDATED_EVENT, calcularRachaNavbar);
   }, [profile?.id]);
 
   // Fetch Trainer Profile for brand assets

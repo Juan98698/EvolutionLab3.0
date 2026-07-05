@@ -2,8 +2,8 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, LineElement, PointElement, BarController, LineController, Tooltip, Legend } from 'chart.js';
 import { Chart } from 'react-chartjs-2';
 import { useSupabase } from '../../context/SupabaseContext';
-import { supabase } from '../../lib/supabaseClient';
 import { LocalSesion } from '../../types/database.types';
+import { loadAthleteSessions, readSessionsFromCache } from '../../lib/sessions';
 import AthleteNavbar from '../common/AthleteNavbar';
 import Toast from '../common/Toast';
 
@@ -69,70 +69,21 @@ export const Analytics: React.FC = () => {
     if (!user) return;
     setLoading(true);
 
-    let success = false;
-
     try {
-      const { data, error } = await supabase
-        .from('sesiones_historial')
-        .select(`
-          id,
-          fecha,
-          notas_generales,
-          sesiones_ejercicios (
-            id,
-            nombre_ejercicio,
-            grupo_muscular,
-            series_reps,
-            peso,
-            rpe_rir,
-            descanso,
-            volumen,
-            rm_estimado
-          )
-        `)
-        .eq('cliente_id', user.id)
-        .order('fecha', { ascending: true }); // Para gráficos es mejor orden cronológico ascendente
-
-      if (error) throw error;
-
-      if (data) {
-        const formatted: LocalSesion[] = data.map((s: any) => ({
-          id: s.id,
-          fecha: s.fecha,
-          notas_sesion: s.notas_generales || '',
-          ejercicios: (s.sesiones_ejercicios || []).map((e: any) => ({
-            id_ej: e.id,
-            nombre: e.nombre_ejercicio,
-            grupo: e.grupo_muscular || 'General',
-            peso: e.peso,
-            repsArray: e.series_reps || [],
-            rpe: e.rpe_rir,
-            descanso: e.descanso,
-            notas_ej: ''
-          }))
-        }));
-
-        setSesiones(formatted);
-        localStorage.setItem('sobrecarga_v5', JSON.stringify(formatted));
-        success = true;
+      // loadAthleteSessions ya sincroniza offline-first, fusiona sesiones
+      // pendientes y escribe al caché compartido de forma segura (mismo
+      // fix de la Fase 1). Antes esta función duplicaba esa lógica a mano
+      // acá y pisaba el caché sin fusionar — arriesgando perder sesiones
+      // offline si alguien abría esta pantalla de métricas con algo pendiente.
+      const sessions = await loadAthleteSessions(user.id);
+      setSesiones(sessions);
+      if (!navigator.onLine) {
+        showToast('Cargado en modo offline 🔌', 'info');
       }
     } catch (err) {
       console.warn('No se pudo descargar el historial de la nube para gráficos, usando caché:', err);
-    }
-
-    if (!success) {
-      // Offline / Caché fallback
-      try {
-        const cached = localStorage.getItem('sobrecarga_v5');
-        if (cached) {
-          setSesiones(JSON.parse(cached));
-          showToast('Cargado en modo offline 🔌', 'info');
-        } else {
-          setSesiones([]);
-        }
-      } catch (e) {
-        console.error('Error al cargar historial de caché:', e);
-      }
+      setSesiones(readSessionsFromCache());
+      showToast('Cargado en modo offline 🔌', 'info');
     }
 
     setLoading(false);

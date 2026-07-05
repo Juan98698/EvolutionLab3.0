@@ -2,6 +2,7 @@ import { supabase } from './supabaseClient';
 import { LocalSesion, Rule, TrackerConfig } from '../types/database.types';
 import { Session, OverloadConfig } from './overload';
 import { DEFAULT_RULES } from './rules';
+import { idbGet, idbSet, isIndexedDbAvailable } from './indexedDbStore';
 
 export const SESSIONS_CACHE_KEY = 'sobrecarga_v5';
 export const SESSIONS_UPDATED_EVENT = 'pwa-sessions-updated';
@@ -71,7 +72,28 @@ function formatSessions(data: RawSesionRow[]): LocalSesion[] {
   }));
 }
 
-export function readSessionsFromCache(): LocalSesion[] {
+// ─────────────────────────────────────────────────────────────────────────
+// Caché de sesiones: IndexedDB por dentro, misma firma síncrona por fuera.
+//
+// localStorage tiene un límite de ~5-10MB por origen. El historial completo
+// de sesiones de un atleta con años de entrenamientos puede acercarse a ese
+// techo. IndexedDB no tiene ese límite práctico, pero es 100% asíncrono —
+// y todo el código existente (incluido `useState(() => readSessionsFromCache())`
+// en AthleteDashboard) espera una lectura SÍNCRONA e inmediata.
+//
+// La solución: una variable en memoria (`cachedSessions`) es la fuente de
+// verdad síncrona durante la vida de la pestaña. Al cargar el módulo, se
+// siembra sincrónicamente desde localStorage (idéntico al comportamiento
+// anterior, sin ningún salto) y, en paralelo, se hidrata desde IndexedDB
+// de forma asíncrona — si IndexedDB tiene datos (o si es la primera vez y
+// hay que migrar lo que había en localStorage), se actualiza la variable
+// en memoria y se avisa a la UI vía SESSIONS_UPDATED_EVENT, el mismo evento
+// que ya escuchan los componentes.
+// ─────────────────────────────────────────────────────────────────────────
+
+let cachedSessions: LocalSesion[] = readLegacyLocalStorageSync();
+
+function readLegacyLocalStorageSync(): LocalSesion[] {
   try {
     const cached = localStorage.getItem(SESSIONS_CACHE_KEY);
     return cached ? (JSON.parse(cached) as LocalSesion[]) : [];
@@ -80,9 +102,61 @@ export function readSessionsFromCache(): LocalSesion[] {
   }
 }
 
+/** Hidrata `cachedSessions` desde IndexedDB (o migra lo que había en localStorage la primera vez). */
+async function hydrateFromIndexedDb(): Promise<void> {
+  if (!isIndexedDbAvailable()) return;
+  try {
+    const fromIdb = await idbGet<LocalSesion[]>(SESSIONS_CACHE_KEY);
+    if (fromIdb) {
+      cachedSessions = fromIdb;
+      notifySessionsUpdated();
+    } else if (cachedSessions.length > 0) {
+      // Primera vez que corre esta versión: migrar lo que había en localStorage.
+      await idbSet(SESSIONS_CACHE_KEY, cachedSessions);
+    }
+  } catch (err) {
+    console.warn('[IndexedDB] No se pudo hidratar el caché de sesiones, se sigue usando localStorage:', err);
+  }
+}
+
+// Arranca la hidratación al cargar el módulo. No se bloquea nada: mientras
+// tanto, las lecturas síncronas siguen sirviendo lo que había en localStorage.
+void hydrateFromIndexedDb();
+
+export function readSessionsFromCache(): LocalSesion[] {
+  // Copia defensiva: quien la reciba puede mutarla libremente sin afectar
+  // el estado interno hasta que llame a writeSessionsToCache explícitamente.
+  return [...cachedSessions];
+}
+
 export function writeSessionsToCache(sessions: LocalSesion[]): void {
-  localStorage.setItem(SESSIONS_CACHE_KEY, JSON.stringify(sessions));
+  cachedSessions = sessions;
   notifySessionsUpdated();
+
+  if (isIndexedDbAvailable()) {
+    idbSet(SESSIONS_CACHE_KEY, sessions).catch((err) => {
+      console.warn('[IndexedDB] Falló el guardado, se usa localStorage como respaldo:', err);
+      try {
+        localStorage.setItem(SESSIONS_CACHE_KEY, JSON.stringify(sessions));
+      } catch {
+        // Si tampoco entra en localStorage (cuota excedida), se pierde la
+        // persistencia de este guardado puntual, pero la sesión de la
+        // pestaña actual sigue viendo los datos correctos en memoria.
+      }
+    });
+  } else {
+    // Navegador sin IndexedDB (muy poco común): mantener el comportamiento anterior.
+    try {
+      localStorage.setItem(SESSIONS_CACHE_KEY, JSON.stringify(sessions));
+    } catch {
+      // Cuota excedida — no hay más respaldo posible en este caso.
+    }
+  }
+}
+
+/** Solo para tests: resetea el caché en memoria sin pasar por IndexedDB/localStorage. */
+export function __resetSessionsCacheForTests(sessions: LocalSesion[] = []): void {
+  cachedSessions = sessions;
 }
 
 export function notifySessionsUpdated(): void {
