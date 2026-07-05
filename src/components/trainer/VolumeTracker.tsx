@@ -275,13 +275,48 @@ export const VolumeTracker: React.FC<VolumeTrackerProps> = ({
   const expandedItemsList = trackerItems.filter(item => expandedItems[item.key]);
 
   return (
-    <div style={{
-      position: 'sticky', top: '70px', zIndex: 990,
-      background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)',
-      borderRadius: '16px', padding: '12px 16px', marginBottom: '24px',
-      boxShadow: '0 8px 32px 0 var(--theme-glow)',
-      backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)'
-    }}>
+    <div className="volume-tracker-container">
+      <style>{`
+        .volume-tracker-container {
+          position: sticky;
+          top: 70px;
+          z-index: 990;
+          background: var(--theme-card-bg);
+          border: 1px solid var(--theme-border);
+          border-radius: 16px;
+          padding: 12px 16px;
+          margin-bottom: 24px;
+          box-shadow: 0 8px 32px 0 var(--theme-glow);
+          backdrop-filter: blur(20px);
+          -webkit-backdrop-filter: blur(20px);
+          transition: all 0.3s ease;
+        }
+        .volume-tracker-compact-list {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 6px;
+          align-items: center;
+        }
+        @media (max-width: 768px) {
+          .volume-tracker-container {
+            padding: 8px 12px;
+            margin-bottom: 12px;
+            top: 50px;
+            border-radius: 12px;
+          }
+          .volume-tracker-compact-list {
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            padding-bottom: 4px;
+            scrollbar-width: none; /* Ocultar scrollbar en Firefox */
+            -webkit-overflow-scrolling: touch;
+          }
+          .volume-tracker-compact-list::-webkit-scrollbar {
+            display: none; /* Ocultar scrollbar en Chrome/Safari */
+          }
+        }
+      `}</style>
+
       {/* ─── Header ────────────────────────────────────────────────────────── */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -327,10 +362,12 @@ export const VolumeTracker: React.FC<VolumeTrackerProps> = ({
 
       {/* ─── Listado Compacto (Chips individuales clicables) ───────────────── */}
       {compactItems.length > 0 && (
-        <div style={{
-          display: 'flex', flexWrap: 'wrap', gap: '6px', alignItems: 'center',
-          marginBottom: expandedItemsList.length > 0 ? '12px' : '0'
-        }}>
+        <div
+          className="volume-tracker-compact-list"
+          style={{
+            marginBottom: expandedItemsList.length > 0 ? '12px' : '0'
+          }}
+        >
           {compactItems.map(item => (
             <button
               key={item.key}
