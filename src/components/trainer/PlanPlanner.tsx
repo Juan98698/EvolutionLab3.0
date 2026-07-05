@@ -814,11 +814,6 @@ export const PlanPlanner: React.FC = () => {
           setExistingPlanId(planData.id);
           const p = planData.datos_plan as PlanData;
 
-          // 🔍 DIAGNÓSTICO TEMPORAL — borrar después de revisar la consola
-          console.log('🔍 [DEBUG] clienteId:', clienteId, '| profile.id:', profile?.id);
-          console.log('🔍 [DEBUG] planData.id:', planData.id);
-          console.log('🔍 [DEBUG] p.globalVariables:', JSON.stringify(p.globalVariables));
-
           // Leer language_mode guardado por el onboarding
           if ((p as any).language_mode === 'simple' || (p as any).language_mode === 'tecnico') {
             setLanguageMode((p as any).language_mode);
@@ -938,7 +933,6 @@ export const PlanPlanner: React.FC = () => {
           }
           showToast('¡Plan activo cargado correctamente!', 'success');
         } else {
-          console.log('🔍 [DEBUG] No existe planData — corriendo resetToDefaultPlan(). clienteId:', clienteId);
           resetToDefaultPlan(profData as Profile);
           showToast('Creando plan nuevo por defecto.', 'info');
         }
