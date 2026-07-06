@@ -14,6 +14,7 @@ import { idbGet, __resetIndexedDbConnectionForTests } from '../indexedDbStore';
 // Mock Supabase
 const mockHistorialInsert = vi.fn();
 const mockEjerciciosInsert = vi.fn();
+const mockSyncHealthInsert = vi.fn();
 // Resultado configurable del insert de ejercicios, para simular una falla a mitad de sync
 const mockEjerciciosInsertResult = vi.fn(() => ({ error: null as Error | null }));
 // Lista que "el servidor" devuelve cuando se llama a fetchAthleteSessions (select + order)
@@ -46,6 +47,10 @@ vi.mock('../supabaseClient', () => {
           if (table === 'sesiones_ejercicios') {
             mockEjerciciosInsert(arg);
             return Promise.resolve(mockEjerciciosInsertResult());
+          }
+          if (table === 'sync_health_reports') {
+            mockSyncHealthInsert(arg);
+            return Promise.resolve({ error: null });
           }
           return Promise.resolve({ error: null });
         });
@@ -84,6 +89,7 @@ beforeEach(async () => {
 
   mockHistorialInsert.mockClear();
   mockEjerciciosInsert.mockClear();
+  mockSyncHealthInsert.mockClear();
   mockEjerciciosInsertResult.mockReset();
   mockEjerciciosInsertResult.mockReturnValue({ error: null });
   mockServerSessionsRows = [];
@@ -276,6 +282,38 @@ describe('Offline Session Synchronization and Cache Preservation', () => {
 });
 
 describe('Persistencia real en IndexedDB (Fase 4)', () => {
+  it('reporta el estado de sync (sync_health_reports) cuando quedan sesiones sin sincronizar', async () => {
+    // La sesión falla a mitad de camino (mismo escenario que el test BUG REGRESSION de arriba)
+    mockEjerciciosInsertResult.mockReturnValueOnce({ error: new Error('network blip') });
+    mockServerSessionsRows = [];
+    seedCache([
+      { id: 1, fecha: '2026-01-01', notas_sesion: 'sigue sin subir', ejercicios: [] }
+    ]);
+
+    await loadAthleteSessions('test-user');
+
+    expect(mockSyncHealthInsert).toHaveBeenCalledTimes(1);
+    expect(mockSyncHealthInsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        user_id: 'test-user',
+        unsynced_count: 1,
+        oldest_unsynced_fecha: '2026-01-01'
+      })
+    );
+  });
+
+  it('NO reporta el estado de sync cuando todo se sincronizó correctamente', async () => {
+    mockEjerciciosInsertResult.mockReturnValueOnce({ error: null });
+    mockServerSessionsRows = [];
+    seedCache([
+      { id: 1, fecha: '2026-01-01', notas_sesion: 'esta sí sincroniza', ejercicios: [] }
+    ]);
+
+    await loadAthleteSessions('test-user');
+
+    expect(mockSyncHealthInsert).not.toHaveBeenCalled();
+  });
+
   it('writeSessionsToCache persiste en IndexedDB, no solo en memoria', async () => {
     const session = {
       id: 'uuid-1',

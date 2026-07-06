@@ -270,6 +270,21 @@ export async function loadAthleteSessions(userId: string): Promise<LocalSesion[]
     const stillUnsynced = readSessionsFromCache().filter(
       (s) => typeof s.id === 'number'
     );
+    
+    // Si quedan sesiones sin sincronizar, reportar el estado de salud a la base de datos
+    if (stillUnsynced.length > 0) {
+      const dates = stillUnsynced.map((s) => s.fecha).sort();
+      const oldestDate = dates[0];
+      
+      await supabase
+        .from('sync_health_reports')
+        .insert({
+          user_id: userId,
+          unsynced_count: stillUnsynced.length,
+          oldest_unsynced_fecha: oldestDate
+        });
+    }
+
     const merged = [...sessions, ...stillUnsynced];
     writeSessionsToCache(merged);
     return merged;
