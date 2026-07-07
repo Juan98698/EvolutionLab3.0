@@ -1,5 +1,18 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, LineElement, PointElement, BarController, LineController, Tooltip, Legend } from 'chart.js';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  LineElement,
+  PointElement,
+  BarController,
+  LineController,
+  ArcElement,
+  DoughnutController,
+  Tooltip,
+  Legend
+} from 'chart.js';
 import { Chart } from 'react-chartjs-2';
 import { useSupabase } from '../../context/SupabaseContext';
 import { LocalSesion } from '../../types/database.types';
@@ -16,6 +29,8 @@ ChartJS.register(
   PointElement,
   BarController,
   LineController,
+  ArcElement,
+  DoughnutController,
   Tooltip,
   Legend
 );
@@ -153,6 +168,186 @@ export const Analytics: React.FC = () => {
 
     return { labels, volumes, rms };
   }, [sesiones, selectedEx]);
+
+  // Cálculo 1: Distribución de Series por Grupo Muscular en los Últimos 7 Días (Doughnut)
+  const weeklyMuscleGroupSeries = useMemo(() => {
+    const nowMs = Date.now();
+    const sevenDaysAgoStr = new Date(nowMs - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+    const counts: Record<string, number> = {};
+
+    const recentSessions = sesiones.filter(s => s.fecha >= sevenDaysAgoStr);
+
+    recentSessions.forEach(s => {
+      s.ejercicios.forEach(e => {
+        const group = e.grupo || 'Otros';
+        const seriesCount = e.repsArray?.length || 0;
+        if (seriesCount > 0) {
+          counts[group] = (counts[group] || 0) + seriesCount;
+        }
+      });
+    });
+
+    return counts;
+  }, [sesiones]);
+
+  // Configuración de Datos para el Gráfico de Dona
+  const doughnutData = useMemo(() => {
+    const labels = Object.keys(weeklyMuscleGroupSeries);
+    const data = Object.values(weeklyMuscleGroupSeries);
+
+    const colors = [
+      '#00d4ff', // Cyan
+      '#7b2ff7', // Purple
+      '#ff0055', // Red/Pink
+      '#eab308', // Gold/Yellow
+      '#10b981', // Green
+      '#f97316', // Orange
+      '#3b82f6', // Blue
+      '#a855f7', // Light Purple
+      '#64748b'  // Slate
+    ];
+
+    return {
+      labels,
+      datasets: [
+        {
+          label: 'Series completadas',
+          data,
+          backgroundColor: colors.slice(0, labels.length),
+          borderColor: 'rgba(15, 23, 42, 0.85)',
+          borderWidth: 2,
+        }
+      ]
+    };
+  }, [weeklyMuscleGroupSeries]);
+
+  const doughnutOptions = useMemo(() => {
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: true,
+          position: 'right' as const,
+          labels: {
+            color: '#94a3b8',
+            font: {
+              size: 10,
+              family: "'Orbitron', sans-serif"
+            },
+            boxWidth: 12
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: (ctx: any) => ` ${ctx.label}: ${ctx.parsed} series`
+          }
+        }
+      }
+    };
+  }, []);
+
+  // Cálculo 2: Frecuencia Mensual de Entrenamientos (Últimos 6 meses)
+  const monthlyFrequencies = useMemo(() => {
+    const monthCounts: Record<string, number> = {};
+    const monthLabels: string[] = [];
+
+    const date = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(date.getFullYear(), date.getMonth() - i, 1);
+      const label = d.toLocaleString('es-ES', { month: 'short', year: '2-digit' });
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+      monthLabels.push(label);
+      monthCounts[key] = 0;
+    }
+
+    sesiones.forEach(s => {
+      if (!s.fecha) return;
+      const key = s.fecha.substring(0, 7);
+      if (monthCounts[key] !== undefined) {
+        monthCounts[key]++;
+      }
+    });
+
+    const data = Object.keys(monthCounts).map(k => monthCounts[k]);
+
+    return {
+      labels: monthLabels,
+      data
+    };
+  }, [sesiones]);
+
+  // Configuración de Datos para el Gráfico de Barras de Frecuencia
+  const frequencyChartData = useMemo(() => {
+    return {
+      labels: monthlyFrequencies.labels,
+      datasets: [
+        {
+          label: 'Entrenamientos',
+          data: monthlyFrequencies.data,
+          backgroundColor: themeColors.primaryGlow,
+          borderColor: themeColors.primary,
+          borderWidth: 1.5,
+          borderRadius: 6
+        }
+      ]
+    };
+  }, [monthlyFrequencies, themeColors]);
+
+  const frequencyChartOptions = useMemo(() => {
+    const gridColor = 'rgba(255, 255, 255, 0.06)';
+    const labelColor = '#94a3b8';
+
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false
+        },
+        tooltip: {
+          callbacks: {
+            label: (ctx: any) => ` ${ctx.parsed.y} entrenamientos`
+          }
+        }
+      },
+      scales: {
+        x: {
+          ticks: {
+            color: labelColor,
+            font: {
+              size: 10
+            }
+          },
+          grid: {
+            color: gridColor
+          }
+        },
+        y: {
+          title: {
+            display: true,
+            text: 'Sesiones',
+            color: themeColors.primary,
+            font: {
+              size: 11,
+              weight: 'bold' as const
+            }
+          },
+          ticks: {
+            color: labelColor,
+            stepSize: 1,
+            font: {
+              size: 10
+            }
+          },
+          grid: {
+            color: gridColor
+          }
+        }
+      }
+    };
+  }, [themeColors]);
 
   // Configuración de Datos del Gráfico
   const chartData = useMemo(() => {
@@ -331,7 +526,62 @@ export const Analytics: React.FC = () => {
               />
             </div>
           )}
+        </div>
 
+        {/* CONTENEDOR GRID PARA LAS DOS NUEVAS MÉTRICAS */}
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
+          gap: '24px',
+          marginTop: '24px'
+        }}>
+          {/* Tarjeta 1: Distribución de Volumen Semanal (Doughnut) */}
+          <div className="chart-card" style={{ background: 'rgba(15, 23, 42, 0.45)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '16px', padding: '24px', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ fontSize: '13px', color: 'white', fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '16px' }}>
+              Distribución de Volumen (Últimos 7 Días)
+            </div>
+            {loading ? (
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '220px' }}>
+                <div className="spinner" style={{ display: 'block', width: '30px', height: '30px' }} />
+              </div>
+            ) : Object.keys(weeklyMuscleGroupSeries).length === 0 ? (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '220px', color: 'rgba(255,255,255,0.4)', fontSize: '12px' }}>
+                Sin series registradas esta semana.
+              </div>
+            ) : (
+              <div style={{ position: 'relative', width: '100%', height: '220px' }}>
+                <Chart
+                  type="doughnut"
+                  data={doughnutData}
+                  options={doughnutOptions as any}
+                />
+              </div>
+            )}
+          </div>
+
+          {/* Tarjeta 2: Consistencia y Frecuencia Mensual (Bar Chart) */}
+          <div className="chart-card" style={{ background: 'rgba(15, 23, 42, 0.45)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '16px', padding: '24px', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ fontSize: '13px', color: 'white', fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '16px' }}>
+              Frecuencia Mensual (Entrenamientos)
+            </div>
+            {loading ? (
+              <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '220px' }}>
+                <div className="spinner" style={{ display: 'block', width: '30px', height: '30px' }} />
+              </div>
+            ) : monthlyFrequencies.labels.length === 0 ? (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '220px', color: 'rgba(255,255,255,0.4)', fontSize: '12px' }}>
+                Sin sesiones registradas en el historial.
+              </div>
+            ) : (
+              <div style={{ position: 'relative', width: '100%', height: '220px' }}>
+                <Chart
+                  type="bar"
+                  data={frequencyChartData}
+                  options={frequencyChartOptions as any}
+                />
+              </div>
+            )}
+          </div>
         </div>
 
       </div>
