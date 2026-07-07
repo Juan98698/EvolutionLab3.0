@@ -37,6 +37,23 @@ export const ShareableProgressCard: React.FC<ShareableProgressCardProps> = ({
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [downloadUrl, setDownloadUrl] = useState<string>('');
   const [fontsLoaded, setFontsLoaded] = useState<boolean>(false);
+  const [canShareFiles, setCanShareFiles] = useState<boolean>(false);
+  const [sharing, setSharing] = useState<boolean>(false);
+
+  // Detectar soporte para compartir archivos nativamente (Instagram Stories / WhatsApp)
+  useEffect(() => {
+    if (typeof navigator !== 'undefined' && navigator.canShare) {
+      try {
+        const dummyBlob = new Blob([''], { type: 'image/png' });
+        const dummyFile = new File([dummyBlob], 'd.png', { type: 'image/png' });
+        if (navigator.canShare({ files: [dummyFile] })) {
+          setCanShareFiles(true);
+        }
+      } catch (e) {
+        console.warn('[WebShare] Comprobación no soportada:', e);
+      }
+    }
+  }, []);
 
   // Esperar a que las fuentes estén cargadas para que el canvas use Orbitron/Inter
   useEffect(() => {
@@ -379,6 +396,42 @@ export const ShareableProgressCard: React.FC<ShareableProgressCardProps> = ({
     setDownloadUrl(canvas.toDataURL('image/png'));
   }, [athleteName, themeColor, themeSecondaryColor, metrics, sesiones, rol, suscripcionPlan, fontsLoaded]);
 
+  // Manejar el compartido nativo mediante la Web Share API (archivos binarios)
+  const handleShare = async () => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    setSharing(true);
+    try {
+      canvas.toBlob(async (blob) => {
+        if (!blob) {
+          throw new Error('No se pudo generar el blob de la imagen.');
+        }
+
+        const file = new File(
+          [blob],
+          `EvolutionLab_Progreso_${athleteName.replace(/\s+/g, '_')}.png`,
+          { type: 'image/png' }
+        );
+
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({
+            files: [file],
+            title: 'Mi Progreso de Entrenamiento ⚡',
+            text: '¡Mira mis estadísticas de esta semana en EvolutionLab 3.0! 🧬🏋️'
+          });
+        } else {
+          throw new Error('El navegador no soporta compartir este tipo de archivos.');
+        }
+      }, 'image/png');
+    } catch (error: any) {
+      console.error('[WebShare] Error al compartir:', error);
+      // Fallback silencioso o fallback a descarga directa
+    } finally {
+      setSharing(false);
+    }
+  };
+
   return (
     <div style={{
       position: 'fixed',
@@ -442,54 +495,102 @@ export const ShareableProgressCard: React.FC<ShareableProgressCardProps> = ({
         </div>
 
         <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', lineHeight: '1.5', margin: 0 }}>
-          Descarga esta tarjeta en alta definición (1080x1920) y compártela en tus Instagram o WhatsApp Stories.
+          {canShareFiles 
+            ? 'Comparte esta tarjeta directamente en tus Instagram Stories o WhatsApp.'
+            : 'Descarga esta tarjeta en alta definición (1080x1920) y compártela en tus Instagram o WhatsApp Stories.'}
         </p>
 
         {/* Actions */}
-        <div style={{ display: 'flex', gap: '10px', width: '100%' }}>
-          <button
-            onClick={onClose}
-            style={{
-              flex: 1,
-              background: 'transparent',
-              border: '1px solid rgba(255,255,255,0.1)',
-              color: 'rgba(255,255,255,0.6)',
-              borderRadius: '12px',
-              padding: '12px',
-              fontSize: '11px',
-              fontFamily: "'Orbitron', sans-serif",
-              fontWeight: 700,
-              cursor: 'pointer',
-              transition: 'all 0.2s'
-            }}
-          >
-            LUEGO
-          </button>
-          <a
-            href={downloadUrl}
-            download={`EvolutionLab_Progreso_${athleteName}.png`}
-            style={{
-              flex: 1,
-              background: 'var(--theme-btn-gradient)',
-              color: 'white',
-              borderRadius: '12px',
-              padding: '12px',
-              fontSize: '11px',
-              fontFamily: "'Orbitron', sans-serif",
-              fontWeight: 700,
-              textDecoration: 'none',
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              boxShadow: '0 4px 15px var(--theme-btn-glow)',
-              cursor: 'pointer',
-              transition: 'all 0.2s',
-              pointerEvents: downloadUrl ? 'auto' : 'none',
-              opacity: downloadUrl ? 1 : 0.6
-            }}
-          >
-            DESCARGAR 📥
-          </a>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: '10px', width: '100%' }}>
+            <button
+              onClick={onClose}
+              style={{
+                flex: 1,
+                background: 'transparent',
+                border: '1px solid rgba(255,255,255,0.1)',
+                color: 'rgba(255,255,255,0.6)',
+                borderRadius: '12px',
+                padding: '12px',
+                fontSize: '11px',
+                fontFamily: "'Orbitron', sans-serif",
+                fontWeight: 700,
+                cursor: 'pointer',
+                transition: 'all 0.2s'
+              }}
+            >
+              LUEGO
+            </button>
+            {canShareFiles ? (
+              <button
+                onClick={handleShare}
+                disabled={sharing || !downloadUrl}
+                style={{
+                  flex: 1.5,
+                  background: 'var(--theme-btn-gradient)',
+                  color: 'white',
+                  borderRadius: '12px',
+                  padding: '12px',
+                  fontSize: '11px',
+                  fontFamily: "'Orbitron', sans-serif",
+                  fontWeight: 700,
+                  border: 'none',
+                  boxShadow: '0 4px 15px var(--theme-btn-glow)',
+                  cursor: 'pointer',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  transition: 'all 0.2s',
+                  opacity: sharing || !downloadUrl ? 0.6 : 1,
+                  pointerEvents: sharing || !downloadUrl ? 'none' : 'auto'
+                }}
+              >
+                {sharing ? 'PREPARANDO...' : 'COMPARTIR 📸'}
+              </button>
+            ) : (
+              <a
+                href={downloadUrl}
+                download={`EvolutionLab_Progreso_${athleteName}.png`}
+                style={{
+                  flex: 1.5,
+                  background: 'var(--theme-btn-gradient)',
+                  color: 'white',
+                  borderRadius: '12px',
+                  padding: '12px',
+                  fontSize: '11px',
+                  fontFamily: "'Orbitron', sans-serif",
+                  fontWeight: 700,
+                  textDecoration: 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 4px 15px var(--theme-btn-glow)',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  pointerEvents: downloadUrl ? 'auto' : 'none',
+                  opacity: downloadUrl ? 1 : 0.6
+                }}
+              >
+                DESCARGAR 📥
+              </a>
+            )}
+          </div>
+          {canShareFiles && downloadUrl && (
+            <a
+              href={downloadUrl}
+              download={`EvolutionLab_Progreso_${athleteName}.png`}
+              style={{
+                fontSize: '11px',
+                color: 'rgba(255, 255, 255, 0.4)',
+                textDecoration: 'underline',
+                cursor: 'pointer',
+                marginTop: '4px'
+              }}
+            >
+              o descargar imagen localmente
+            </a>
+          )}
         </div>
       </div>
     </div>
