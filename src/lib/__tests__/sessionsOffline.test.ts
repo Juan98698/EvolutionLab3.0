@@ -340,6 +340,8 @@ describe('Persistencia real en IndexedDB (Fase 4)', () => {
 
     // Reimportar el módulo para forzar que vuelva a correr la semilla síncrona
     // + la hidratación/migración asíncrona desde cero, como en un arranque real.
+    // NOTA: resetModules primero, luego resetIndexedDb para que el módulo recién
+    // importado reciba la conexión limpia (evita race condition en CI / Node 24).
     vi.resetModules();
     await __resetIndexedDbConnectionForTests();
     const sessionsModule = await import('../sessions');
@@ -348,7 +350,9 @@ describe('Persistencia real en IndexedDB (Fase 4)', () => {
     expect(sessionsModule.readSessionsFromCache()[0].notas_sesion).toBe('dato viejo en localStorage');
 
     // Tras la hidratación asíncrona, ese dato debe haber quedado migrado a IndexedDB.
-    await new Promise((r) => setTimeout(r, 0));
+    // Se usa 100ms en lugar de setTimeout(0) porque en los runners de CI (Node 24 / Linux)
+    // la apertura de la conexión IDB de fake-indexeddb toma más de un tick.
+    await new Promise((r) => setTimeout(r, 100));
     const stored = await idbGet<any[]>(SESSIONS_CACHE_KEY);
     expect(stored).toHaveLength(1);
     expect(stored?.[0].notas_sesion).toBe('dato viejo en localStorage');
