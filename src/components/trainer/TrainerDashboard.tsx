@@ -86,6 +86,14 @@ export const TrainerDashboard: React.FC = () => {
     fetchAuditoria();
   }, [fetchClientes, fetchAuditoria]);
 
+  // Si el usuario navega a la pestaña Auditoría y no hay datos (p. ej. el fetch
+  // de mount falló porque profile era null), reintenta con force=true.
+  useEffect(() => {
+    if (activeSubTab === 'auditoria' && actividades.length === 0 && !loadingAuditoria) {
+      fetchAuditoria(true);
+    }
+  }, [activeSubTab, actividades.length, loadingAuditoria, fetchAuditoria]);
+
   useEffect(() => {
     const handleThemeChange = (e: Event) => {
       const detail = (e as CustomEvent).detail;
@@ -94,6 +102,7 @@ export const TrainerDashboard: React.FC = () => {
     window.addEventListener('pwa-theme-changed', handleThemeChange);
     return () => window.removeEventListener('pwa-theme-changed', handleThemeChange);
   }, []);
+
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
