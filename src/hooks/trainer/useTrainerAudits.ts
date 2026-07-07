@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useRef, useEffect } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { Profile } from '../../types/database.types';
 import { analizarSobrecargaProgresiva, Session, Notification } from '../../lib/overload';
@@ -18,9 +18,19 @@ export const useTrainerAudits = (
   const [auditViewMode, setAuditViewMode] = useState<'cronologica' | 'ejercicio'>('cronologica');
   const [expandedActividades, setExpandedActividades] = useState<Record<string, boolean>>({});
 
+  // Ref estable para showToast: evita que fetchAuditoria cambie de identidad
+  // cada render (mismo patrón aplicado en useTrainerClients).
+  const showToastRef = useRef(showToast);
+  useEffect(() => { showToastRef.current = showToast; });
+
+  // Ref para rastrear si ya cargamos datos sin incluirlo en las deps del useCallback.
+  const hasLoadedRef = useRef(false);
+
   const fetchAuditoria = useCallback(async (force = false) => {
     if (!profile) return;
-    if (actividades.length > 0 && !force) return;
+    // Guard usando ref en lugar de actividades.length como dep — evita que
+    // fetchAuditoria cambie de identidad cada vez que llegan datos.
+    if (hasLoadedRef.current && !force) return;
 
     setLoadingAuditoria(true);
     try {
@@ -42,6 +52,8 @@ export const useTrainerAudits = (
 
       const actList = sesiones || [];
       setActividades(actList);
+      // Marcar como cargado para que futuros renders no re-fetcheen
+      if (actList.length > 0) hasLoadedRef.current = true;
 
       const clientIds = Array.from(new Set(actList.map((s: any) => s.cliente_id)));
 
@@ -128,11 +140,13 @@ export const useTrainerAudits = (
       }
     } catch (err: any) {
       console.error('Error al cargar auditoría:', err);
-      showToast('Error al cargar la actividad: ' + err.message, 'error');
+      showToastRef.current('Error al cargar la actividad: ' + err.message, 'error');
     } finally {
       setLoadingAuditoria(false);
     }
-  }, [profile, actividades.length, showToast]);
+  // profile es la única dep real: nueva identidad solo cuando cambia el trainer logueado.
+  // showToast y actividades.length se manejan via refs.
+  }, [profile]);
 
   const mostRecentSessionIds = useMemo(() => {
     const seenClients = new Set<string>();
