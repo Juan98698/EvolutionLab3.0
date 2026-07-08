@@ -403,29 +403,43 @@ export const ShareableProgressCard: React.FC<ShareableProgressCardProps> = ({
 
     setSharing(true);
     try {
-      canvas.toBlob(async (blob) => {
-        if (!blob) {
-          throw new Error('No se pudo generar el blob de la imagen.');
-        }
+      // canvas.toBlob es una API basada en callback, no en promesas. Sin
+      // envolverla así, el try/catch/finally de afuera no esperaba nada real:
+      // el finally corría casi al instante (justo después de LLAMAR a
+      // toBlob, no después de que el callback terminara), lo que hacía que
+      // el botón volviera a "COMPARTIR" mientras la imagen todavía se
+      // estaba generando y el share nativo ni había abierto — y un toque
+      // doble en esa ventana podía disparar dos navigator.share() a la vez.
+      const blob = await new Promise<Blob | null>((resolve) => {
+        canvas.toBlob(resolve, 'image/png');
+      });
 
-        const file = new File(
-          [blob],
-          `EvolutionLab_Progreso_${athleteName.replace(/\s+/g, '_')}.png`,
-          { type: 'image/png' }
-        );
+      if (!blob) {
+        throw new Error('No se pudo generar el blob de la imagen.');
+      }
 
-        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-          await navigator.share({
-            files: [file],
-            title: 'Mi Progreso de Entrenamiento ⚡',
-            text: '¡Mira mis estadísticas de esta semana en EvolutionLab 3.0! 🧬🏋️'
-          });
-        } else {
-          throw new Error('El navegador no soporta compartir este tipo de archivos.');
-        }
-      }, 'image/png');
+      const file = new File(
+        [blob],
+        `EvolutionLab_Progreso_${athleteName.replace(/\s+/g, '_')}.png`,
+        { type: 'image/png' }
+      );
+
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: 'Mi Progreso de Entrenamiento ⚡',
+          text: '¡Mira mis estadísticas de esta semana en EvolutionLab 3.0! 🧬🏋️'
+        });
+      } else {
+        throw new Error('El navegador no soporta compartir este tipo de archivos.');
+      }
     } catch (error: any) {
-      console.error('[WebShare] Error al compartir:', error);
+      // Cancelar el cuadro de compartir nativo (tocar "atrás"/afuera) también
+      // dispara este catch como AbortError — no es un error real del usuario,
+      // así que no lo tratamos como uno en consola.
+      if (error?.name !== 'AbortError') {
+        console.error('[WebShare] Error al compartir:', error);
+      }
       // Fallback silencioso o fallback a descarga directa
     } finally {
       setSharing(false);
