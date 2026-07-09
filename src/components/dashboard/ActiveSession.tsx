@@ -5,6 +5,7 @@ import { PlanData } from '../../types/database.types';
 import { writeSessionsToCache, readSessionsFromCache } from '../../lib/sessions';
 import { autoRegulatePlanForNextWeek } from '../../lib/periodizationEngine';
 import { ErrorBoundary } from '../common/ErrorBoundary';
+import { useModalA11y } from '../../hooks/useModalA11y';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -89,6 +90,14 @@ const ActiveSession: React.FC = () => {
   const [sessionNotes, setSessionNotes] = useState('');
   const [showFullImage, setShowFullImage] = useState(false);
   const [showGuideModal, setShowGuideModal] = useState(false);
+  const fullImageDialogRef = useModalA11y<HTMLDivElement>({
+    isOpen: showFullImage,
+    onClose: () => setShowFullImage(false),
+  });
+  const guideDialogRef = useModalA11y<HTMLDivElement>({
+    isOpen: showGuideModal,
+    onClose: () => setShowGuideModal(false),
+  });
   const [showFeedbackGuide, setShowFeedbackGuide] = useState(false);
 
   // ─── Rest timer ──────────────────────────────────────────────────────────
@@ -890,10 +899,18 @@ const ActiveSession: React.FC = () => {
 
       {/* ── Full Screen Image Modal ── */}
       {showFullImage && (currentExercise.image_url || currentExercise.gif_url) && (
-        // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- backdrop de modal: cierra al hacer click afuera; el cierre por teclado (Escape) y el foco atrapado se implementan en la Fase 3 junto con role="dialog"
+        // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- backdrop de modal: cierra al hacer click afuera (conveniencia de mouse); el diálogo de abajo ya tiene cierre con Escape y foco atrapado vía useModalA11y
         <div className="active-session-image-overlay" onClick={() => setShowFullImage(false)}>
-          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- solo evita que el click se propague al backdrop; no es un control interactivo en sí mismo */}
-          <div className="active-session-image-modal-content" onClick={e => e.stopPropagation()}>
+          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events -- ya tiene role="dialog" + Escape/foco atrapado vía useModalA11y; este onClick solo evita que el click se propague al backdrop */}
+          <div
+            ref={fullImageDialogRef}
+            className="active-session-image-modal-content"
+            role="dialog"
+            aria-modal="true"
+            aria-label={currentExercise.nombre}
+            tabIndex={-1}
+            onClick={e => e.stopPropagation()}
+          >
             <button className="active-session-image-close" onClick={() => setShowFullImage(false)}>✕</button>
             <img
               src={currentExercise.image_url || currentExercise.gif_url}
@@ -907,12 +924,20 @@ const ActiveSession: React.FC = () => {
 
       {/* ── Execution Guide Modal Overlay ── */}
       {showGuideModal && currentExercise.description && (
-        // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- backdrop de modal: cierra al hacer click afuera; el cierre por teclado (Escape) y el foco atrapado se implementan en la Fase 3 junto con role="dialog"
+        // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- backdrop de modal: cierra al hacer click afuera (conveniencia de mouse); el diálogo de abajo ya tiene cierre con Escape y foco atrapado vía useModalA11y
         <div className="active-session-modal-overlay" onClick={() => setShowGuideModal(false)}>
-          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- solo evita que el click se propague al backdrop; no es un control interactivo en sí mismo */}
-          <div className="active-session-guide-modal-box" onClick={e => e.stopPropagation()}>
+          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events -- ya tiene role="dialog" + Escape/foco atrapado vía useModalA11y; este onClick solo evita que el click se propague al backdrop */}
+          <div
+            ref={guideDialogRef}
+            className="active-session-guide-modal-box"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="active-session-guide-modal-title"
+            tabIndex={-1}
+            onClick={e => e.stopPropagation()}
+          >
             <div className="active-session-guide-modal-header">
-              <h3 className="active-session-guide-modal-title">
+              <h3 className="active-session-guide-modal-title" id="active-session-guide-modal-title">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '8px', verticalAlign: '-1px' }}>
                   <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
                   <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />

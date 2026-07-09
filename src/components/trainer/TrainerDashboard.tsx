@@ -759,7 +759,7 @@ export const TrainerDashboard: React.FC = () => {
               color: 'inherit'
             }}
           >
-            <span className="philosophy-toggle-title" style={{ fontWeight: 700, fontSize: '13px', fontFamily: "'Orbitron', sans-serif", color: 'var(--theme-primary)', letterSpacing: '0.5px', textTransform: 'uppercase', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+            <span className="philosophy-toggle-title" style={{ fontWeight: 'var(--text-section-weight)', fontSize: 'var(--text-section-size)', fontFamily: 'var(--text-section-family)', color: 'var(--theme-primary)', letterSpacing: 'var(--text-section-spacing)', textTransform: 'var(--text-section-transform)', display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg> Nuestra Filosofía de Entrenamiento
             </span>
             <span className="philosophy-toggle-icon" style={{ fontSize: '12px', color: 'var(--theme-primary)', transition: 'transform 0.3s ease' }}>

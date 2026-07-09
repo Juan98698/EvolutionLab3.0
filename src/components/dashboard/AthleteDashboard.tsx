@@ -2122,7 +2122,7 @@ export const AthleteDashboard: React.FC = () => {
             <form onSubmit={handleCalculate1RM} className="modal-1rm-form">
               {/* Unit Switcher */}
               <div className="modal-1rm-group full-width" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '15px' }}>
-                <label style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.5)', fontFamily: "'Orbitron', sans-serif" }}>UNIDAD DE MEDIDA</label>
+                <label style={{ fontSize: 'var(--text-label-size)', fontWeight: 'var(--text-label-weight)', color: 'var(--text-label-color)', fontFamily: 'var(--text-label-family)', letterSpacing: 'var(--text-label-spacing)', textTransform: 'var(--text-label-transform)' }}>UNIDAD DE MEDIDA</label>
                 <div style={{ display: 'flex', gap: '8px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--theme-border)', borderRadius: '10px', padding: '4px', maxWidth: '160px' }}>
                   <button
                     type="button"

@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useSupabase } from '../../context/SupabaseContext';
 import { supabase } from '../../lib/supabaseClient';
 import { readSessionsFromCache, SESSIONS_UPDATED_EVENT } from '../../lib/sessions';
+import { useModalA11y } from '../../hooks/useModalA11y';
 import Toast from './Toast';
 
 export const AthleteNavbar: React.FC = () => {
@@ -19,6 +20,10 @@ export const AthleteNavbar: React.FC = () => {
 
   const [themeOpen, setThemeOpen] = useState(false);
   const [showPlanInfoModal, setShowPlanInfoModal] = useState(false);
+  const planInfoDialogRef = useModalA11y<HTMLDivElement>({
+    isOpen: showPlanInfoModal,
+    onClose: () => setShowPlanInfoModal(false),
+  });
   const [trainerProfile, setTrainerProfile] = useState<any>(() => {
       if (profile?.entrenador_id) {
         try {
@@ -673,7 +678,7 @@ export const AthleteNavbar: React.FC = () => {
 
       {/* Modal de Información del Plan */}
       {showPlanInfoModal && (
-        // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- backdrop de modal: cierra al hacer click afuera; el cierre por teclado (Escape) y el foco atrapado se implementan en la Fase 3 junto con role="dialog"
+        // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- backdrop de modal: cierra al hacer click afuera (conveniencia de mouse); el diálogo de abajo ya tiene cierre con Escape y foco atrapado vía useModalA11y
         <div style={{
           position: 'fixed',
           top: 0,
@@ -689,8 +694,14 @@ export const AthleteNavbar: React.FC = () => {
           zIndex: 9999,
           padding: '20px'
         }} onClick={() => setShowPlanInfoModal(false)}>
-          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- solo evita que el click se propague al backdrop; no es un control interactivo en sí mismo */}
-          <div style={{
+          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events -- ya tiene role="dialog" + Escape/foco atrapado vía useModalA11y; este onClick solo evita que el click se propague al backdrop */}
+          <div
+            ref={planInfoDialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="athlete-navbar-plan-info-title"
+            tabIndex={-1}
+            style={{
             background: 'var(--theme-card-bg, #0f172a)',
             border: '1px solid var(--theme-border, rgba(255, 255, 255, 0.1))',
             borderRadius: '20px',
@@ -718,7 +729,7 @@ export const AthleteNavbar: React.FC = () => {
             >
               ✕
             </button>
-            <h3 style={{ fontSize: '13px', color: 'var(--theme-primary)', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '16px', marginTop: 0 }}>
+            <h3 id="athlete-navbar-plan-info-title" style={{ fontSize: '13px', color: 'var(--theme-primary)', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '16px', marginTop: 0 }}>
               Detalles de tu Plan
             </h3>
             

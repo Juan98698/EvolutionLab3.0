@@ -2169,7 +2169,7 @@ export const PlanPlanner: React.FC = () => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '12px' }}>
-            <h2 style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '16px', fontWeight: 800, margin: 0 }}>DÍAS DE ENTRENAMIENTO PROGRAMADOS</h2>
+            <h2 style={{ fontFamily: 'var(--text-title-family)', fontSize: 'var(--text-title-size)', fontWeight: 'var(--text-title-weight)', letterSpacing: 'var(--text-title-spacing)', textTransform: 'var(--text-title-transform)', margin: 0, color: 'var(--theme-primary)' }}>DÍAS DE ENTRENAMIENTO PROGRAMADOS</h2>
             <button
               type="button"
               className="btn btn-ghost"
@@ -2646,7 +2646,7 @@ export const PlanPlanner: React.FC = () => {
 
                           {/* Grupo Muscular selector */}
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '4px', marginBottom: '4px', flexWrap: 'wrap' }}>
-                            <label htmlFor={`select-muscle-${day.id}-${ex.id}`} style={{ fontSize: '9px', fontWeight: 700, color: 'rgba(255,255,255,0.4)', fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.3px', whiteSpace: 'nowrap', cursor: 'pointer' }}>GRUPO MUSC.</label>
+                            <label htmlFor={`select-muscle-${day.id}-${ex.id}`} style={{ fontSize: 'var(--text-label-size)', fontWeight: 'var(--text-label-weight)', color: 'var(--text-label-color)', fontFamily: 'var(--text-label-family)', letterSpacing: 'var(--text-label-spacing)', whiteSpace: 'nowrap', cursor: 'pointer' }}>GRUPO MUSC.</label>
                             <select
                               id={`select-muscle-${day.id}-${ex.id}`}
                               value={(ex as any).grupo_muscular || ''}
@@ -3223,7 +3223,7 @@ export const PlanPlanner: React.FC = () => {
             {/* Unit Switcher & Formula Selector */}
             <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 2fr', gap: '14px', marginBottom: '18px', textAlign: 'left' }}>
               <div>
-                <label style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(255,255,255,0.5)', fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.5px', display: 'block', marginBottom: '8px' }}>
+                <label style={{ fontSize: 'var(--text-label-size)', fontWeight: 'var(--text-label-weight)', color: 'var(--text-label-color)', fontFamily: 'var(--text-label-family)', letterSpacing: 'var(--text-label-spacing)', textTransform: 'var(--text-label-transform)', display: 'block', marginBottom: '8px' }}>
                   UNIDAD
                 </label>
                 <div style={{ display: 'flex', gap: '4px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', padding: '3px' }}>
@@ -3255,7 +3255,7 @@ export const PlanPlanner: React.FC = () => {
               </div>
 
               <div>
-                <label style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(255,255,255,0.5)', fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.5px', display: 'block', marginBottom: '8px' }}>
+                <label style={{ fontSize: 'var(--text-label-size)', fontWeight: 'var(--text-label-weight)', color: 'var(--text-label-color)', fontFamily: 'var(--text-label-family)', letterSpacing: 'var(--text-label-spacing)', textTransform: 'var(--text-label-transform)', display: 'block', marginBottom: '8px' }}>
                   FÓRMULA DE ESTIMACIÓN
                 </label>
                 <select
