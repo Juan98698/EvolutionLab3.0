@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { Logro } from '../../types/database.types';
 import { Session } from '../../lib/overload';
 import confetti from 'canvas-confetti';
+import { useModalA11y } from '../../hooks/useModalA11y';
 
 export interface CustomBadgeDef {
   id?: string;
@@ -123,6 +124,10 @@ export const GamificacionPanel: React.FC<GamificacionPanelProps> = ({ sesiones, 
   const [savedLogros, setSavedLogros] = useState<Logro[]>([]);
   const [loadingLogros, setLoadingLogros] = useState<boolean>(true);
   const [celebratingBadge, setCelebratingBadge] = useState<any | null>(null);
+  const celebrationDialogRef = useModalA11y<HTMLDivElement>({
+    isOpen: !!celebratingBadge,
+    onClose: () => setCelebratingBadge(null),
+  });
 
   // Load saved achievements
   useEffect(() => {
@@ -591,15 +596,21 @@ export const GamificacionPanel: React.FC<GamificacionPanelProps> = ({ sesiones, 
 
       {/* CELEBRATION FULLSCREEN MODAL */}
       {celebratingBadge && (
-        // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- backdrop de modal: cierra al hacer click afuera; el cierre por teclado (Escape) y el foco atrapado se implementan en la Fase 3 junto con role="dialog"
+        // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- backdrop de modal: cierra al hacer click afuera (conveniencia de mouse); el diálogo de abajo ya tiene cierre con Escape y foco atrapado vía useModalA11y
         <div style={{
           position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
           background: 'rgba(5, 7, 12, 0.92)', backdropFilter: 'blur(12px)',
           display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center',
           zIndex: 999999, padding: '20px'
         }} onClick={() => setCelebratingBadge(null)}>
-          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- solo evita que el click se propague al backdrop; no es un control interactivo en sí mismo */}
-          <div style={{
+          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events -- ya tiene role="dialog" + Escape/foco atrapado vía useModalA11y; este onClick solo evita que el click se propague al backdrop */}
+          <div
+            ref={celebrationDialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="badge-celebration-title"
+            tabIndex={-1}
+            style={{
             background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(10, 15, 28, 0.95))',
             border: '1px solid rgba(0, 212, 255, 0.3)',
             borderRadius: '24px', padding: '40px 24px', maxWidth: '400px', width: '100%',
@@ -631,7 +642,7 @@ export const GamificacionPanel: React.FC<GamificacionPanelProps> = ({ sesiones, 
               <span style={{ fontSize: '10px', color: 'var(--theme-primary, #00d4ff)', fontWeight: 800, letterSpacing: '2px', fontFamily: "'Orbitron', sans-serif" }}>
                 ¡LOGRO DESBLOQUEADO!
               </span>
-              <h2 style={{ fontSize: '24px', fontWeight: 800, color: 'white', fontFamily: "'Orbitron', sans-serif", margin: '6px 0 10px' }}>
+              <h2 id="badge-celebration-title" style={{ fontSize: '24px', fontWeight: 800, color: 'white', fontFamily: "'Orbitron', sans-serif", margin: '6px 0 10px' }}>
                 {celebratingBadge.titulo}
               </h2>
               <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)', lineHeight: '1.6', margin: 0 }}>

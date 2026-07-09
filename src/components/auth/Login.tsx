@@ -3,6 +3,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { useSupabase } from '../../context/SupabaseContext';
 import { supabase } from '../../lib/supabaseClient';
 import { isRealEmailDomain } from '../../lib/validations';
+import { useModalA11y } from '../../hooks/useModalA11y';
 
 function LoginAccordion({
   title,
@@ -1081,6 +1082,10 @@ export const Login: React.FC = () => {
   const [saberMasOpen, setSaberMasOpen] = useState(false);
   const [activeAudience, setActiveAudience] = useState<'trainer' | 'solo' | 'guided'>('trainer');
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
+  const videoDialogRef = useModalA11y<HTMLDivElement>({
+    isOpen: isVideoModalOpen,
+    onClose: () => setIsVideoModalOpen(false),
+  });
   const [carouselIndex, setCarouselIndex] = useState(0);
 
   // Estados de Registro
@@ -2810,12 +2815,20 @@ export const Login: React.FC = () => {
 
       {/* ═══ Video Modal ═══ */}
       {isVideoModalOpen && (
-        // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- backdrop de modal: cierra al hacer click afuera; el cierre por teclado (Escape) y el foco atrapado se implementan en la Fase 3 junto con role="dialog"
+        // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- backdrop de modal: cierra al hacer click afuera (conveniencia de mouse); el diálogo de abajo ya tiene cierre con Escape y foco atrapado vía useModalA11y
         <div className="video-modal-overlay" onClick={() => setIsVideoModalOpen(false)}>
-          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- solo evita que el click se propague al backdrop; no es un control interactivo en sí mismo */}
-          <div className="video-modal-container" onClick={(e) => e.stopPropagation()}>
+          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events -- ya tiene role="dialog" + Escape/foco atrapado vía useModalA11y; este onClick solo evita que el click se propague al backdrop */}
+          <div
+            ref={videoDialogRef}
+            className="video-modal-container"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="video-modal-title"
+            tabIndex={-1}
+            onClick={(e) => e.stopPropagation()}
+          >
             <button className="video-modal-close" onClick={() => setIsVideoModalOpen(false)}>✕</button>
-            <h3 style={{ fontFamily: 'Orbitron, sans-serif', fontSize: '13px', fontWeight: 800, color: 'white', marginBottom: '16px', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
+            <h3 id="video-modal-title" style={{ fontFamily: 'Orbitron, sans-serif', fontSize: '13px', fontWeight: 800, color: 'white', marginBottom: '16px', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
               Presentación: Evolution Lab para {activeAudience === 'trainer' ? 'Entrenadores' : activeAudience === 'solo' ? 'Lifters Autónomos' : 'Clientes'}
             </h3>
             <div className="video-player-mock">

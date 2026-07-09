@@ -33,6 +33,7 @@ import AddSesion from './AddSesion'; // Renders manual session logging if tab=ad
 import PreWorkoutPrompt from './PreWorkoutPrompt';
 import GamificacionPanel from './GamificacionPanel';
 import { OnboardingModal } from '../common/OnboardingModal';
+import { useModalA11y } from '../../hooks/useModalA11y';
 import { ShareableProgressCard } from './ShareableProgressCard';
 import { InitialPeriodizationEvaluation } from './InitialPeriodizationEvaluation';
 import { subscribirNotificacionesPush, verificarSuscripcionPushActiva } from '../../lib/pushNotifications';
@@ -232,6 +233,10 @@ export const AthleteDashboard: React.FC = () => {
   const [philosophyOpen, setPhilosophyOpen] = useState<boolean>(false);
   const [guideModal, setGuideModal] = useState<{ open: boolean; title: string; content: string }>({ open: false, title: '', content: '' });
   const [is1RMModalOpen, setIs1RMModalOpen] = useState<boolean>(false);
+  const rmCalcDialogRef = useModalA11y<HTMLDivElement>({
+    isOpen: is1RMModalOpen,
+    onClose: () => { setIs1RMModalOpen(false); setRmResult(null); },
+  });
   const [showSmartCoach, setShowSmartCoach] = useState<boolean>(false);
   const [showUpdateModal, setShowUpdateModal] = useState<boolean>(false);
 
@@ -2089,9 +2094,16 @@ export const AthleteDashboard: React.FC = () => {
 
       {/* 1RM CALCULATOR MODAL OVERLAY */}
       {is1RMModalOpen && (
-        // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- backdrop de modal: cierra al hacer click afuera; el cierre por teclado (Escape) y el foco atrapado se implementan en la Fase 3 junto con role="dialog"
+        // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- backdrop de modal: cierra al hacer click afuera (conveniencia de mouse); el diálogo de abajo ya tiene cierre con Escape y foco atrapado vía useModalA11y
         <div id="modal-1rm" className={is1RMModalOpen ? 'open' : ''} style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', display: is1RMModalOpen ? 'flex' : 'none', justifyContent: 'center', alignItems: 'center', background: 'rgba(0,0,0,0.6)', zIndex: 99999 }} onClick={(e) => { if (e.target === e.currentTarget) { setIs1RMModalOpen(false); setRmResult(null); } }}>
-          <div className="modal-1rm-box">
+          <div
+            ref={rmCalcDialogRef}
+            className="modal-1rm-box"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="athlete-rm-calc-title"
+            tabIndex={-1}
+          >
             <div className="modal-1rm-header">
               <div style={{ display: 'flex', alignItems: 'center' }}>
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '8px', color: 'var(--theme-primary)' }}>
@@ -2102,7 +2114,7 @@ export const AthleteDashboard: React.FC = () => {
                   <line x1="9" y1="12" x2="15" y2="12" />
                   <line x1="9" y1="8" x2="15" y2="8" />
                 </svg>
-                <span className="modal-1rm-title">CALCULADORA 1RM</span>
+                <span className="modal-1rm-title" id="athlete-rm-calc-title">CALCULADORA 1RM</span>
               </div>
               <button className="modal-1rm-close" onClick={() => { setIs1RMModalOpen(false); setRmResult(null); }}>&times;</button>
             </div>

@@ -8,6 +8,7 @@ import TrainerAlertsHub from './TrainerAlertsHub';
 import OnboardingModal from '../common/OnboardingModal';
 
 import { useTrainerClients } from '../../hooks/trainer/useTrainerClients';
+import { useModalA11y } from '../../hooks/useModalA11y';
 import { useTrainerAudits } from '../../hooks/trainer/useTrainerAudits';
 import { useTrainerSubscription } from '../../hooks/trainer/useTrainerSubscription';
 
@@ -76,6 +77,10 @@ export const TrainerDashboard: React.FC = () => {
   const [themeOpen, setThemeOpen] = useState<boolean>(false);
   const [philosophyOpen, setPhilosophyOpen] = useState<boolean>(false);
   const [showPlanInfoModal, setShowPlanInfoModal] = useState<boolean>(false);
+  const planInfoDialogRef = useModalA11y<HTMLDivElement>({
+    isOpen: showPlanInfoModal,
+    onClose: () => setShowPlanInfoModal(false),
+  });
   const [showWelcomeGuide, setShowWelcomeGuide] = useState<boolean>(false);
   const [highlightSandbox, setHighlightSandbox] = useState<boolean>(false);
 
@@ -560,7 +565,7 @@ export const TrainerDashboard: React.FC = () => {
 
       {/* Modal de Información del Plan del Entrenador */}
       {showPlanInfoModal && (
-        // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- backdrop de modal: cierra al hacer click afuera; el cierre por teclado (Escape) y el foco atrapado se implementan en la Fase 3 junto con role="dialog"
+        // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- backdrop de modal: cierra al hacer click afuera (conveniencia de mouse); el diálogo de abajo ya tiene cierre con Escape y foco atrapado vía useModalA11y
         <div style={{
           position: 'fixed',
           top: 0,
@@ -576,8 +581,14 @@ export const TrainerDashboard: React.FC = () => {
           zIndex: 9999,
           padding: '20px'
         }} onClick={() => setShowPlanInfoModal(false)}>
-          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- solo evita que el click se propague al backdrop; no es un control interactivo en sí mismo */}
-          <div style={{
+          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events -- ya tiene role="dialog" + Escape/foco atrapado vía useModalA11y; este onClick solo evita que el click se propague al backdrop */}
+          <div
+            ref={planInfoDialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="trainer-plan-info-title"
+            tabIndex={-1}
+            style={{
             background: 'var(--theme-card-bg, #0f172a)',
             border: '1px solid var(--theme-border, rgba(255, 255, 255, 0.1))',
             borderRadius: '20px',
@@ -605,7 +616,7 @@ export const TrainerDashboard: React.FC = () => {
             >
               ✕
             </button>
-            <h3 style={{ fontSize: '13px', color: 'var(--theme-primary, #00d4ff)', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '16px', marginTop: 0 }}>
+            <h3 id="trainer-plan-info-title" style={{ fontSize: '13px', color: 'var(--theme-primary, #00d4ff)', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '16px', marginTop: 0 }}>
               Detalles de Suscripción Coach
             </h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '13px', color: 'rgba(255,255,255,0.7)', marginBottom: '20px' }}>

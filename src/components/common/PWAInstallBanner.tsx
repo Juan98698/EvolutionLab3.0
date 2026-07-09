@@ -1,10 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import { useModalA11y } from '../../hooks/useModalA11y';
 
 export const PWAInstallBanner: React.FC = () => {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [showBanner, setShowBanner] = useState<boolean>(false);
   const [isIOS, setIsIOS] = useState<boolean>(false);
   const [showiOSModal, setShowiOSModal] = useState<boolean>(false);
+  const iosModalDialogRef = useModalA11y<HTMLDivElement>({
+    isOpen: showiOSModal,
+    onClose: () => setShowiOSModal(false),
+  });
 
   useEffect(() => {
     // 1. Verificar si ya se está ejecutando como PWA (standalone)
@@ -195,7 +200,7 @@ export const PWAInstallBanner: React.FC = () => {
 
       {/* ═══ iOS Instructions Modal ═══ */}
       {showiOSModal && (
-        // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- backdrop de modal: cierra al hacer click afuera; el cierre por teclado (Escape) y el foco atrapado se implementan en la Fase 3 junto con role="dialog"
+        // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- backdrop de modal: cierra al hacer click afuera (conveniencia de mouse); el diálogo de abajo ya tiene cierre con Escape y foco atrapado vía useModalA11y
         <div 
           className="ios-modal-overlay"
           style={{
@@ -219,6 +224,11 @@ export const PWAInstallBanner: React.FC = () => {
           }}
         >
           <div 
+            ref={iosModalDialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="ios-install-modal-title"
+            tabIndex={-1}
             style={{
               background: 'rgba(15, 23, 42, 0.95)',
               border: '1px solid rgba(0, 212, 255, 0.25)',
@@ -265,7 +275,7 @@ export const PWAInstallBanner: React.FC = () => {
               </svg>
             </div>
 
-            <h3 style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '18px', fontWeight: 800, color: '#00d4ff', marginBottom: '8px', letterSpacing: '0.5px' }}>
+            <h3 id="ios-install-modal-title" style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '18px', fontWeight: 800, color: '#00d4ff', marginBottom: '8px', letterSpacing: '0.5px' }}>
               Instalar en iPhone / iPad
             </h3>
             <p style={{ fontSize: '12px', color: '#94a3b8', lineHeight: 1.5, marginBottom: '24px' }}>

@@ -7,6 +7,7 @@ import { Profile } from '../../types/database.types';
 import Toast from '../common/Toast';
 import { isRealEmailDomain } from '../../lib/validations';
 import { useConfirm } from '../../context/ConfirmDialogContext';
+import { useModalA11y } from '../../hooks/useModalA11y';
 
 type RolOption = 'admin' | 'entrenador' | 'cliente';
 
@@ -56,6 +57,10 @@ export const AdminDashboard: React.FC = () => {
   const [editSuscripcionExpiraAt, setEditSuscripcionExpiraAt] = useState('');
   const [savingEdit, setSavingEdit] = useState(false);
   const [showPlanInfoModal, setShowPlanInfoModal] = useState<boolean>(false);
+  const planInfoDialogRef = useModalA11y<HTMLDivElement>({
+    isOpen: showPlanInfoModal,
+    onClose: () => setShowPlanInfoModal(false),
+  });
 
   // Toast State
   const [toastState, setToastState] = useState<{ visible: boolean; message: string; type: 'success' | 'error' | 'info' }>({
@@ -410,7 +415,7 @@ export const AdminDashboard: React.FC = () => {
 
       {/* Modal de Información del Plan del Administrador */}
       {showPlanInfoModal && (
-        // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- backdrop de modal: cierra al hacer click afuera; el cierre por teclado (Escape) y el foco atrapado se implementan en la Fase 3 junto con role="dialog"
+        // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- backdrop de modal: cierra al hacer click afuera (conveniencia de mouse); el diálogo de abajo ya tiene cierre con Escape y foco atrapado vía useModalA11y
         <div style={{
           position: 'fixed',
           top: 0,
@@ -426,8 +431,14 @@ export const AdminDashboard: React.FC = () => {
           zIndex: 9999,
           padding: '20px'
         }} onClick={() => setShowPlanInfoModal(false)}>
-          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- solo evita que el click se propague al backdrop; no es un control interactivo en sí mismo */}
-          <div style={{
+          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events -- ya tiene role="dialog" + Escape/foco atrapado vía useModalA11y; este onClick solo evita que el click se propague al backdrop */}
+          <div
+            ref={planInfoDialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="admin-plan-info-title"
+            tabIndex={-1}
+            style={{
             background: 'var(--theme-card-bg, #0f172a)',
             border: '1px solid var(--theme-border, rgba(255, 255, 255, 0.1))',
             borderRadius: '20px',
@@ -455,7 +466,7 @@ export const AdminDashboard: React.FC = () => {
             >
               ✕
             </button>
-            <h3 style={{ fontSize: '13px', color: '#ef4444', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '16px', marginTop: 0 }}>
+            <h3 id="admin-plan-info-title" style={{ fontSize: '13px', color: '#ef4444', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '16px', marginTop: 0 }}>
               Detalles del Plan Admin
             </h3>
             <div>

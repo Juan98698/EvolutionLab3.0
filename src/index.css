@@ -37,6 +37,57 @@ button {
   --font-primary: 'Orbitron', sans-serif;
   --font-fallback: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
 
+  /* ═══ Escala tipográfica — jerarquía visual ═══
+     El problema que resuelve: Orbitron + mayúsculas + negrita se usaba para
+     TODO (títulos de sección, labels de formulario, badges) casi al mismo
+     tamaño (10-13px), así que nada se distinguía de nada — todo "grita" al
+     mismo volumen. Esta escala reserva Orbitron para títulos reales y usa
+     tipografía de sistema, más chica y más tenue, para lo secundario
+     (labels de formulario, texto de ayuda). No varía por tema — el tema
+     solo cambia colores, no jerarquía. */
+
+  /* Nivel 1 — Título de pantalla/card principal. Máximo uno por vista. */
+  --text-title-size: 19px;
+  --text-title-weight: 800;
+  --text-title-family: var(--font-primary);
+  --text-title-spacing: 0.5px;
+  --text-title-transform: uppercase;
+
+  /* Nivel 2 — Título de sección dentro de una pantalla (ej: "AJUSTES DEL BLOQUE") */
+  --text-section-size: 13px;
+  --text-section-weight: 700;
+  --text-section-family: var(--font-primary);
+  --text-section-spacing: 0.5px;
+  --text-section-transform: uppercase;
+
+  /* Nivel 3 — Título de card/subsección (ej: "RIR AUTOMÁTICO") */
+  --text-card-size: 11px;
+  --text-card-weight: 700;
+  --text-card-family: var(--font-primary);
+  --text-card-spacing: 0.5px;
+  --text-card-transform: uppercase;
+
+  /* Nivel 4 — Label de campo de formulario. Es lo que más se repite en
+     cada pantalla — por eso ya NO usa Orbitron: antes competía visualmente
+     con los títulos reales de sección/card. */
+  --text-label-size: 10px;
+  --text-label-weight: 600;
+  --text-label-family: var(--font-fallback);
+  --text-label-spacing: 0.3px;
+  --text-label-transform: uppercase;
+  --text-label-color: rgba(255, 255, 255, 0.45);
+
+  /* Nivel 5 — Texto de cuerpo / valores reales */
+  --text-body-size: 13px;
+  --text-body-weight: 400;
+  --text-body-family: var(--font-fallback);
+
+  /* Nivel 6 — Texto meta / ayuda / notas pequeñas */
+  --text-meta-size: 11px;
+  --text-meta-weight: 400;
+  --text-meta-family: var(--font-fallback);
+  --text-meta-color: rgba(255, 255, 255, 0.35);
+
   /* Default Theme: Evolution Cyan */
   --theme-primary: #00d4ff;
   --theme-secondary: #7b2ff7;

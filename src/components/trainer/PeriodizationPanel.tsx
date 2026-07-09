@@ -244,7 +244,7 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
       {config && (
   <div data-testid="periodization-card" style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '16px', padding: '20px', marginBottom: '24px', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', boxShadow: '0 8px 32px 0 var(--theme-glow)' }}>
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-      <h3 style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '13px', color: 'var(--theme-primary)', letterSpacing: '0.5px', margin: 0, display: 'flex', alignItems: 'center' }}>
+      <h3 style={{ fontFamily: 'var(--text-title-family)', fontSize: 'var(--text-title-size)', fontWeight: 'var(--text-title-weight)', color: 'var(--theme-primary)', letterSpacing: 'var(--text-title-spacing)', textTransform: 'var(--text-title-transform)', margin: 0, display: 'flex', alignItems: 'center' }}>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px' }}><polygon points="6 2 18 2 18 6 6 6 6 2"/><rect x="3" y="6" width="18" height="16" rx="2"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
         PERIODIZACIÓN CIENTÍFICA Y AUTORREGULACIÓN RIR
         <InfoTooltip title="Periodización Científica RIR" body="Activa la autorregulación automatizada de volumen y cargas (fórmulas RP e intensidad basada en 1RM) para optimizar el progreso del atleta y ahorrar tiempo de planificación." />
@@ -331,7 +331,7 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
         
         {/* Ajustes del Bloque */}
         <div>
-          <h4 style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '11px', color: 'var(--theme-primary)', letterSpacing: '0.5px', marginBottom: '12px', marginTop: 0, textTransform: 'uppercase', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+          <h4 style={{ fontFamily: 'var(--text-section-family)', fontSize: 'var(--text-section-size)', fontWeight: 'var(--text-section-weight)', color: 'var(--theme-primary)', letterSpacing: 'var(--text-section-spacing)', marginBottom: '12px', marginTop: 0, textTransform: 'uppercase', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
             Ajustes del Bloque de Entrenamiento
             <InfoTooltip title="Bloque de Entrenamiento (Mesociclo)" body="Un bloque o mesociclo es un período de entrenamiento de varias semanas (típicamente 4-6). El volumen empieza bajo y sube gradualmente cada semana hasta llegar a una descarga automática al final. Así evitas el sobreentrenamiento y maximizas las ganancias." />
             <button
@@ -702,7 +702,7 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
 
         {/* Diagnóstico Inicial */}
         <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '20px' }}>
-          <h4 style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '11px', color: 'var(--theme-primary)', letterSpacing: '0.5px', marginBottom: '12px', marginTop: 0, textTransform: 'uppercase', display: 'flex', alignItems: 'center' }}>
+          <h4 style={{ fontFamily: 'var(--text-section-family)', fontSize: 'var(--text-section-size)', fontWeight: 'var(--text-section-weight)', color: 'var(--theme-primary)', letterSpacing: 'var(--text-section-spacing)', marginBottom: '12px', marginTop: 0, textTransform: 'uppercase', display: 'flex', alignItems: 'center' }}>
             Diagnóstico Inicial del Atleta (Trainer Overrides)
             <InfoTooltip title="Sobreescritura del Entrenador" body="Estos valores los puede completar el atleta en su evaluación inicial, PERO si tú los editas aquí, tus valores prevalecen. Usa esta sección para pre-configurar atletas que ya conoces bien, o para corregir datos incorrectos sin que el atleta tenga que repetir el diagnóstico." />
           </h4>
@@ -907,7 +907,7 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
                           {isBaseLift && (
                             <span style={{ position: 'absolute', top: '4px', right: '6px', fontSize: '7px', color: 'var(--theme-primary)', fontFamily: "'Orbitron', sans-serif", opacity: 0.5 }}>BASE</span>
                           )}
-                          <label htmlFor={`1rm-${lift}`} style={{ display: 'block', fontSize: '9px', fontWeight: 700, color: isBaseLift ? 'var(--theme-primary)' : 'rgba(255,255,255,0.6)', marginBottom: '4px', textTransform: 'uppercase', fontFamily: "'Orbitron', sans-serif", whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{lift}</label>
+                          <label htmlFor={`1rm-${lift}`} style={{ display: 'block', fontSize: 'var(--text-label-size)', fontWeight: 'var(--text-label-weight)', color: isBaseLift ? 'var(--theme-primary)' : 'var(--text-label-color)', marginBottom: '4px', textTransform: 'var(--text-label-transform)', letterSpacing: 'var(--text-label-spacing)', fontFamily: 'var(--text-label-family)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{lift}</label>
                           <input
                             id={`1rm-${lift}`}
                             type="number"
@@ -949,7 +949,7 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
               
               {/* Sentadilla */}
               <div style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '10px', padding: '10px' }}>
-                <label htmlFor="weak-squat" style={{ display: 'block', fontSize: '9px', fontWeight: 700, color: 'var(--theme-primary)', marginBottom: '4px', textTransform: 'uppercase', fontFamily: "'Orbitron', sans-serif" }}>Sentadilla</label>
+                <label htmlFor="weak-squat" style={{ display: 'block', fontSize: 'var(--text-label-size)', fontWeight: 'var(--text-label-weight)', color: 'var(--text-label-color)', marginBottom: '4px', textTransform: 'var(--text-label-transform)', letterSpacing: 'var(--text-label-spacing)', fontFamily: 'var(--text-label-family)' }}>Sentadilla</label>
                 <select
                   id="weak-squat"
                   value={config.puntos_debiles?.sentadilla || 'abajo'}
@@ -971,7 +971,7 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
 
               {/* Press de Banca */}
               <div style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '10px', padding: '10px' }}>
-                <label htmlFor="weak-bench" style={{ display: 'block', fontSize: '9px', fontWeight: 700, color: 'var(--theme-primary)', marginBottom: '4px', textTransform: 'uppercase', fontFamily: "'Orbitron', sans-serif" }}>Press de Banca</label>
+                <label htmlFor="weak-bench" style={{ display: 'block', fontSize: 'var(--text-label-size)', fontWeight: 'var(--text-label-weight)', color: 'var(--text-label-color)', marginBottom: '4px', textTransform: 'var(--text-label-transform)', letterSpacing: 'var(--text-label-spacing)', fontFamily: 'var(--text-label-family)' }}>Press de Banca</label>
                 <select
                   id="weak-bench"
                   value={config.puntos_debiles?.banca || 'pecho'}
@@ -993,7 +993,7 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
 
               {/* Peso Muerto */}
               <div style={{ background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '10px', padding: '10px' }}>
-                <label htmlFor="weak-deadlift" style={{ display: 'block', fontSize: '9px', fontWeight: 700, color: 'var(--theme-primary)', marginBottom: '4px', textTransform: 'uppercase', fontFamily: "'Orbitron', sans-serif" }}>Peso Muerto</label>
+                <label htmlFor="weak-deadlift" style={{ display: 'block', fontSize: 'var(--text-label-size)', fontWeight: 'var(--text-label-weight)', color: 'var(--text-label-color)', marginBottom: '4px', textTransform: 'var(--text-label-transform)', letterSpacing: 'var(--text-label-spacing)', fontFamily: 'var(--text-label-family)' }}>Peso Muerto</label>
                 <select
                   id="weak-deadlift"
                   value={config.puntos_debiles?.peso_muerto || 'despegue'}
@@ -1149,7 +1149,7 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
 
         {/* PANEL DE AUDITORÍA DE VOLUMEN MRV */}
         <div className="weekly-volume-audit-panel" style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '20px', marginTop: '10px' }}>
-          <h4 style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '11px', color: 'var(--theme-primary)', letterSpacing: '0.5px', marginBottom: '12px', marginTop: 0, textTransform: 'uppercase', display: 'flex', alignItems: 'center' }}>
+          <h4 style={{ fontFamily: 'var(--text-section-family)', fontSize: 'var(--text-section-size)', fontWeight: 'var(--text-section-weight)', color: 'var(--theme-primary)', letterSpacing: 'var(--text-section-spacing)', marginBottom: '12px', marginTop: 0, textTransform: 'uppercase', display: 'flex', alignItems: 'center' }}>
             {config?.objetivo === 'fuerza' ? 'Auditoría de Volumen de Fuerza Semanal (Patrones RP)' : 'Auditoría de Volumen Semanal (Periodización RP)'}
             <InfoTooltip 
               title={config?.objetivo === 'fuerza' ? 'Auditoría de Fuerza' : 'Auditoría MRV'} 
