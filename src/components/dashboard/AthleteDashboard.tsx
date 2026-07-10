@@ -880,7 +880,7 @@ export const AthleteDashboard: React.FC = () => {
               margin: '0 auto 24px auto',
               boxShadow: '0 0 20px rgba(239, 68, 68, 0.2)',
             }}>
-              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--color-danger)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                 <path d="M7 11V7a5 5 0 0 1 10 0v4" />
               </svg>
@@ -930,7 +930,7 @@ export const AthleteDashboard: React.FC = () => {
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                 <span style={{ color: 'rgba(255, 255, 255, 0.5)' }}>Vigencia del Plan:</span>
-                <span style={{ fontWeight: 600, color: '#ef4444' }}>{vigencia} días (Expirado)</span>
+                <span style={{ fontWeight: 600, color: 'var(--color-danger)' }}>{vigencia} días (Expirado)</span>
               </div>
             </div>
 
@@ -1019,7 +1019,7 @@ export const AthleteDashboard: React.FC = () => {
               margin: '0 auto 24px auto',
               boxShadow: '0 0 20px rgba(239, 68, 68, 0.2)',
             }}>
-              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--color-danger)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                 <path d="M7 11V7a5 5 0 0 1 10 0v4" />
               </svg>
@@ -1180,13 +1180,13 @@ export const AthleteDashboard: React.FC = () => {
             display: 'flex',
             alignItems: 'center',
             gap: '10px',
-            background: 'rgba(245, 158, 11, 0.1)',
+            background: 'var(--color-warning-light)',
             border: '1px solid rgba(245, 158, 11, 0.4)',
             borderRadius: '12px',
             padding: '10px 16px',
             marginBottom: '16px',
             fontSize: '12px',
-            color: '#f59e0b',
+            color: 'var(--color-warning)',
             fontWeight: 600
           }}>
             <span style={{ fontSize: '16px' }}>🔄</span>
@@ -1999,7 +1999,7 @@ export const AthleteDashboard: React.FC = () => {
                     transition: 'all 0.2s'
                   }}
                 >
-                  {isPast && <span style={{ color: '#10b981' }}>✅</span>}
+                  {isPast && <span style={{ color: 'var(--color-success)' }}>✅</span>}
                   {isFuture && <span>🔒</span>}
                   Semana {weekNum}
                 </button>

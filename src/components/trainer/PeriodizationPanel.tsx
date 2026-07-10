@@ -1185,7 +1185,7 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
                   });
                   const isDanger  = status === 'danger';
                   const isOptimal = status === 'optimal';
-                  const color = isDanger ? '#ef4444' : isOptimal ? '#22c55e' : '#eab308';
+                  const color = isDanger ? 'var(--color-danger)' : isOptimal ? 'var(--color-success)' : 'var(--color-warning)';
 
                   return (
                     <div key={pattern} style={{
@@ -1249,7 +1249,7 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
                   });
                   const isDanger  = status === 'danger';
                   const isOptimal = status === 'optimal';
-                  const color = isDanger ? '#ef4444' : isOptimal ? '#22c55e' : '#eab308';
+                  const color = isDanger ? 'var(--color-danger)' : isOptimal ? 'var(--color-success)' : 'var(--color-warning)';
 
                   return (
                     <div key={gm} style={{

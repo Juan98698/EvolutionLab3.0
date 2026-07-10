@@ -2100,7 +2100,7 @@ export const PlanPlanner: React.FC = () => {
                     <button
                       type="button"
                       onClick={() => handleRemoveGlobalVar(v.id)}
-                      style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '12px', cursor: 'pointer', marginLeft: '8px' }}
+                      style={{ background: 'none', border: 'none', color: 'var(--color-danger)', fontSize: '12px', cursor: 'pointer', marginLeft: '8px' }}
                     >
                       ✕
                     </button>
@@ -2511,7 +2511,7 @@ export const PlanPlanner: React.FC = () => {
                                     type="button"
                                     onClick={() => handleExerciseChange(day.id, ex.id, 'nombre_original' as any, '')}
                                     title="Desvincular del ejercicio global"
-                                    style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '11px', cursor: 'pointer', padding: '0 4px', display: 'flex', alignItems: 'center', fontFamily: "'Orbitron', sans-serif", fontWeight: 'bold' }}
+                                    style={{ background: 'none', border: 'none', color: 'var(--color-danger)', fontSize: '11px', cursor: 'pointer', padding: '0 4px', display: 'flex', alignItems: 'center', fontFamily: "'Orbitron', sans-serif", fontWeight: 'bold' }}
                                   >
                                     ✕ Desvincular
                                   </button>
@@ -2689,9 +2689,9 @@ export const PlanPlanner: React.FC = () => {
                                 const { status } = evalDetailed;
 
                                 let badgeColor = '';
-                                if (status === 'danger') badgeColor = '#ef4444';
-                                else if (status === 'optimal') badgeColor = '#10b981';
-                                else if (status === 'warning') badgeColor = '#f97316';
+                                if (status === 'danger') badgeColor = 'var(--color-danger)';
+                                else if (status === 'optimal') badgeColor = 'var(--color-success)';
+                                else if (status === 'warning') badgeColor = 'var(--color-warning)';
                                 else if (status === 'building') badgeColor = '#facc15';
                                 else badgeColor = '#94a3b8';
 
@@ -2747,13 +2747,13 @@ export const PlanPlanner: React.FC = () => {
                                     badgeColor = '#fbbf24';
                                   } else if (currentTotal === customTarget) {
                                     indicator = `Objetivo Alcanzado (${customTarget})`;
-                                    badgeColor = '#10b981';
+                                    badgeColor = 'var(--color-success)';
                                   } else if (currentTotal > customTarget && currentTotal < thresholds.mrv) {
                                     indicator = `Superó Objetivo, cerca de MRV (${thresholds.mrv})`;
-                                    badgeColor = '#f97316';
+                                    badgeColor = 'var(--color-warning)';
                                   } else {
                                     indicator = `Límite MRV superado (${thresholds.mrv})`;
-                                    badgeColor = '#ef4444';
+                                    badgeColor = 'var(--color-danger)';
                                   }
                                 } else {
                                   if (currentTotal < thresholds.mev) {
@@ -2764,13 +2764,13 @@ export const PlanPlanner: React.FC = () => {
                                     badgeColor = '#34d399';
                                   } else if (currentTotal >= thresholds.mavMin && currentTotal <= thresholds.mavMax) {
                                     indicator = `Óptimo en MAV (${thresholds.mavMin}-${thresholds.mavMax})`;
-                                    badgeColor = '#10b981';
+                                    badgeColor = 'var(--color-success)';
                                   } else if (currentTotal > thresholds.mavMax && currentTotal < thresholds.mrv) {
                                     indicator = `Cerca de MRV (${thresholds.mrv})`;
-                                    badgeColor = '#f97316';
+                                    badgeColor = 'var(--color-warning)';
                                   } else {
                                     indicator = `¡Peligro! MRV (${thresholds.mrv}) superado.`;
-                                    badgeColor = '#ef4444';
+                                    badgeColor = 'var(--color-danger)';
                                   }
                                 }
 
@@ -2942,9 +2942,9 @@ export const PlanPlanner: React.FC = () => {
                                   style={{
                                     display: 'inline-flex', alignItems: 'center', gap: '4px',
                                     padding: '6px 12px', borderRadius: '8px',
-                                    background: 'rgba(239, 68, 68, 0.1)',
+                                    background: 'var(--color-danger-light)',
                                     border: '1px solid rgba(239, 68, 68, 0.35)',
-                                    color: '#ef4444',
+                                    color: 'var(--color-danger)',
                                     fontSize: '10px', fontWeight: 700, fontFamily: "'Orbitron', sans-serif",
                                     cursor: 'pointer', transition: 'all 0.2s', textTransform: 'uppercase', letterSpacing: '0.3px'
                                   }}

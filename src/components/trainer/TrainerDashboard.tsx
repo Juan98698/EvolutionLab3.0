@@ -534,7 +534,7 @@ export const TrainerDashboard: React.FC = () => {
           width: '6px',
           height: '6px',
           borderRadius: '50%',
-          background: trainerSubscription?.estado === 'activo' ? 'var(--theme-primary)' : '#ef4444'
+          background: trainerSubscription?.estado === 'activo' ? 'var(--theme-primary)' : 'var(--color-danger)'
         }} />
         <span>
           Plan {
@@ -628,7 +628,7 @@ export const TrainerDashboard: React.FC = () => {
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '6px' }}>
                 <span>Estado:</span>
-                <strong style={{ color: trainerSubscription?.estado === 'activo' ? '#10b981' : '#ef4444', textTransform: 'uppercase' }}>
+                <strong style={{ color: trainerSubscription?.estado === 'activo' ? 'var(--color-success)' : 'var(--color-danger)', textTransform: 'uppercase' }}>
                   {trainerSubscription?.estado || 'Activo'}
                 </strong>
               </div>
