@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+﻿import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import NotificationCard from './NotificationCard';
 import NotificationsEmptyState from './NotificationsEmptyState';
@@ -1222,6 +1222,221 @@ export const AthleteDashboard: React.FC = () => {
              Visible on mobile when activeMobileTab === 'hoy'
              Always visible on desktop (≥ 768px)
         ════════════════════════════════════════════ */}
+        {/* ════════════════════════════════════════════
+             MOBILE TAB: PLAN (continued)
+             cover-page: filosofia, datos atleta, semanas
+             HOY tab continues below with week/day tabs + WorkoutCard
+        ════════════════════════════════════════════ */}
+        <div className={`mobile-tab-panel${activeMobileTab === 'plan' ? ' mobile-tab-panel--active' : ''}`} data-tab="plan">
+
+        <div className="cover-page" style={{ position: 'relative', marginTop: '20px' }}>
+          
+          {/* Central Title */}
+          <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+            <h1 className="theme-text-gradient" style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '1.9rem', fontWeight: 800, borderBottom: '4px solid var(--theme-primary)', display: 'inline-block', paddingBottom: '8px', letterSpacing: '1px' }}>
+              PLAN DE ENTRENAMIENTO PERSONALIZADO
+            </h1>
+            <p style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '0.95rem', color: 'var(--text2)', marginTop: '12px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              Estrategia inteligente, ejecución impecable
+            </p>
+          </div>
+
+          {/* Philosophy Collapsible */}
+          <div style={{ marginBottom: '25px' }}>
+            <button
+              type="button"
+              className={`philosophy-toggle${philosophyOpen ? ' open' : ''}`}
+              onClick={() => setPhilosophyOpen(!philosophyOpen)}
+              aria-expanded={philosophyOpen}
+              style={{
+                background: 'rgba(255, 255, 255, 0.04)',
+                border: '1px solid rgba(255, 255, 255, 0.06)',
+                borderRadius: '12px',
+                padding: '16px',
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                cursor: 'pointer',
+                transition: 'all 0.3s ease',
+                width: '100%',
+                textAlign: 'left',
+                font: 'inherit',
+                color: 'inherit'
+              }}
+            >
+              <span className="philosophy-toggle-title" style={{ fontWeight: 700, fontSize: '13px', fontFamily: "'Orbitron', sans-serif", color: 'var(--theme-primary)', letterSpacing: '0.5px', textTransform: 'uppercase', display: 'flex', alignItems: 'center' }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px' }}>
+                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
+                </svg>
+                Nuestra Filosofía de Entrenamiento
+              </span>
+              <span className="philosophy-toggle-icon" style={{ fontSize: '12px', color: 'var(--theme-primary)', transition: 'transform 0.3s ease' }}>
+                {philosophyOpen ? '▲' : '▼'}
+              </span>
+            </button>
+
+            <div
+              className="philosophy-collapsible"
+              style={{
+                maxHeight: philosophyOpen ? '3000px' : '0px',
+                overflow: 'hidden',
+                transition: 'max-height 0.6s cubic-bezier(0.4, 0, 0.2, 1)'
+              }}
+            >
+              <div className="philosophy-section">
+                <h2 className="philosophy-title">SISTEMA DE ENTRENAMIENTO</h2>
+                <p className="philosophy-author">
+                  Por <span id="trainerNameDisplay">{trainerProfile?.marca?.nombre_display || portada.trainerName || 'Evolution Lab'}</span>
+                </p>
+
+                <div className="philosophy-quote">
+                  <p style={{ whiteSpace: 'pre-line' }}>
+                    {trainerProfile?.marca?.eslogan || portada?.trainerEslogan || 'NO NECESITAS ENTRENAR MÁS.\nNECESITAS ENTRENAR MEJOR.'}
+                  </p>
+                </div>
+
+                <p className="philosophy-description">
+                  Este sistema fue diseñado para maximizar resultados a través de estímulo inteligente, técnica eficiente y progresión estructurada.
+                </p>
+
+                <h3 className="philosophy-subtitle">¿QUÉ HACE DIFERENTE ESTE MÉTODO?</h3>
+
+                <div className="philosophy-grid">
+                  {trainerProfile?.filosofia && trainerProfile.filosofia.length > 0 ? (
+                    trainerProfile.filosofia.map((pilar, i) => (
+                      <div key={pilar.id} className={`philosophy-card${i === (trainerProfile.filosofia!.length - 1) && trainerProfile.filosofia!.length % 2 !== 0 ? ' full-width' : ''}`}>
+                        <span className="pillar-number">{pilar.icono} Pilar {String(i + 1).padStart(2, '0')}</span>
+                        <strong>{pilar.titulo}</strong>
+                        <p>{pilar.descripcion}</p>
+                      </div>
+                    ))
+                  ) : (
+                    <>
+                      <div className="philosophy-card">
+                        <span className="pillar-number">Pilar 01</span>
+                        <strong>ENTRENAMIENTO BASADO EN ESTÍMULO REAL</strong>
+                        <p>Cada ejercicio tiene una función específica dentro del programa. Nada está puesto al azar.</p>
+                      </div>
+                      <div className="philosophy-card">
+                        <span className="pillar-number">Pilar 02</span>
+                        <strong>INTENSIDAD CONTROLADA</strong>
+                        <p>No buscamos agotarte. Buscamos generar adaptación. La intensidad se utiliza estratégicamente para progresar sin destruir la recuperación.</p>
+                      </div>
+                      <div className="philosophy-card">
+                        <span className="pillar-number">Pilar 03</span>
+                        <strong>TÉCNICA COMO PRIORIDAD</strong>
+                        <p>La ejecución determina qué músculo trabaja realmente. Menos ego. Más control. Más resultados.</p>
+                      </div>
+                      <div className="philosophy-card">
+                        <span className="pillar-number">Pilar 04</span>
+                        <strong>PROGRESIÓN MEDIBLE</strong>
+                        <p>El objetivo es mejorar rendimiento, composición corporal y capacidad física semana tras semana.</p>
+                      </div>
+                      <div className="philosophy-card full-width">
+                        <span className="pillar-number">Pilar 05</span>
+                        <strong>RECUPERACIÓN PLANIFICADA</strong>
+                        <p>Dormir, recuperarse y manejar la fatiga también hacen parte del progreso.</p>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                <div className="philosophy-footer">
+                  <p>AQUÍ NO SE ENTRENA POR MOTIVACIÓN.<br />SE ENTRENA CON ESTRUCTURA, PROPÓSITO Y DIRECCIÓN.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Cover Info Grid & Global Notes */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', marginBottom: '25px' }}>
+            {/* Athlete metadata */}
+            <div className="perfil-atleta-panel" style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
+              <h4 style={{ margin: 0, fontSize: '13px', fontFamily: "'Orbitron', sans-serif", color: 'var(--theme-primary)', letterSpacing: '0.5px' }}>DATOS DEL ATLETA</h4>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '12px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--theme-border)', paddingBottom: '6px' }}>
+                  <span style={{ color: 'rgba(255,255,255,0.5)' }}>Nombre</span>
+                  <span style={{ fontWeight: 600 }}>{portada.userName || profile?.nombre || '-'}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--theme-border)', paddingBottom: '6px' }}>
+                  <span style={{ color: 'rgba(255,255,255,0.5)' }}>Objetivo</span>
+                  <span style={{ fontWeight: 600, color: 'var(--theme-secondary)' }}>{portada.userGoal || profile?.objetivo || '-'}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--theme-border)', paddingBottom: '6px' }}>
+                  <span style={{ color: 'rgba(255,255,255,0.5)' }}>Fecha inicio</span>
+                  <span style={{ fontWeight: 600 }}>{portada.startDate || profile?.fecha_inicio || '-'}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <span style={{ color: 'rgba(255,255,255,0.5)' }}>Vigencia</span>
+                  <span style={{ fontWeight: 600 }}>{portada.planVigenciaPlan || profile?.vigencia_dias || '28'} días</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Planificación Activa */}
+            <div style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '14px', boxShadow: '0 8px 32px 0 var(--theme-glow)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
+              <div style={{ color: 'var(--theme-primary)', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontFamily: "'Orbitron', sans-serif", fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase' }}>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="18" y1="20" x2="18" y2="10" />
+                  <line x1="12" y1="20" x2="12" y2="4" />
+                  <line x1="6" y1="20" x2="6" y2="14" />
+                </svg>
+                Planificación Activa
+              </div>
+              <div style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '28px', fontWeight: 800, color: 'white', letterSpacing: '0.5px' }}>
+                {Object.values(weekdayMapping).filter(v => Number(v) !== -1).length || trainingDays.length || 7} Días / Sem
+              </div>
+            </div>
+
+            {/* Global notes & Trainer socials */}
+            <div style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', boxShadow: '0 8px 32px 0 var(--theme-glow)', borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '14px', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
+              <div>
+                <h4 style={{ margin: '0 0 8px 0', fontSize: '13px', fontFamily: "'Orbitron', sans-serif", color: 'var(--theme-secondary)', letterSpacing: '0.5px' }}>INDICACIONES GENERALES</h4>
+                <p className="desc-text" style={{ margin: 0, fontSize: '12px', lineHeight: 1.5, color: '#94a3b8', fontStyle: 'italic' }}>
+                  "{portada.globalNote || 'Entrena duro, controla tus ejecuciones y descansa lo necesario para lograr el máximo estímulo progresivo.'}"
+                </p>
+              </div>
+
+              {/* Redes Entrenador */}
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                {wsHref && (
+                  <a href={wsHref} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(37, 211, 102, 0.12)', border: '1px solid rgba(37, 211, 102, 0.35)', color: '#4ade80', textDecoration: 'none', padding: '6px 12px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, fontFamily: "'Orbitron', sans-serif" }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '2px' }}>
+                      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+                    </svg>
+                    WhatsApp Entrenador
+                  </a>
+                )}
+                {igHref && (
+                  <a href={igHref} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(251, 113, 133, 0.12)', border: '1px solid rgba(251, 113, 133, 0.35)', color: '#fda4af', textDecoration: 'none', padding: '6px 12px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, fontFamily: "'Orbitron', sans-serif" }}>
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '2px' }}>
+                      <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
+                      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
+                      <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
+                    </svg>
+                    Instagram Entrenador
+                  </a>
+                )}
+                <button
+                  onClick={() => setIs1RMModalOpen(true)}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'var(--theme-badge-bg)', border: '1px solid var(--theme-border)', color: 'var(--theme-primary)', padding: '6px 12px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, fontFamily: "'Orbitron', sans-serif", cursor: 'pointer' }}
+                >
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '2px' }}>
+                    <rect x="4" y="2" width="16" height="20" rx="2" ry="2" />
+                    <line x1="9" y1="22" x2="9" y2="16" />
+                    <line x1="15" y1="22" x2="15" y2="16" />
+                    <line x1="9" y1="16" x2="15" y2="16" />
+                    <line x1="9" y1="12" x2="15" y2="12" />
+                    <line x1="9" y1="8" x2="15" y2="8" />
+                  </svg>
+                  Calculadora 1RM
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        </div>{/* /mobile-tab-panel plan — cover-page + semanas (unified) */}
         <div className={`mobile-tab-panel${activeMobileTab === 'hoy' ? ' mobile-tab-panel--active' : ''}`} data-tab="hoy">
 
         {/* Banner de invitación a activar notificaciones Push */}
@@ -1889,221 +2104,6 @@ export const AthleteDashboard: React.FC = () => {
 
         </div>{/* /mobile-tab-panel progreso */}
 
-        {/* ════════════════════════════════════════════
-             MOBILE TAB: PLAN (continued)
-             cover-page: filosofia, datos atleta, semanas
-             HOY tab continues below with week/day tabs + WorkoutCard
-        ════════════════════════════════════════════ */}
-        <div className={`mobile-tab-panel${activeMobileTab === 'plan' ? ' mobile-tab-panel--active' : ''}`} data-tab="plan">
-
-        <div className="cover-page" style={{ position: 'relative', marginTop: '20px' }}>
-          
-          {/* Central Title */}
-          <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-            <h1 className="theme-text-gradient" style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '1.9rem', fontWeight: 800, borderBottom: '4px solid var(--theme-primary)', display: 'inline-block', paddingBottom: '8px', letterSpacing: '1px' }}>
-              PLAN DE ENTRENAMIENTO PERSONALIZADO
-            </h1>
-            <p style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '0.95rem', color: 'var(--text2)', marginTop: '12px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              Estrategia inteligente, ejecución impecable
-            </p>
-          </div>
-
-          {/* Philosophy Collapsible */}
-          <div style={{ marginBottom: '25px' }}>
-            <button
-              type="button"
-              className={`philosophy-toggle${philosophyOpen ? ' open' : ''}`}
-              onClick={() => setPhilosophyOpen(!philosophyOpen)}
-              aria-expanded={philosophyOpen}
-              style={{
-                background: 'rgba(255, 255, 255, 0.04)',
-                border: '1px solid rgba(255, 255, 255, 0.06)',
-                borderRadius: '12px',
-                padding: '16px',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                cursor: 'pointer',
-                transition: 'all 0.3s ease',
-                width: '100%',
-                textAlign: 'left',
-                font: 'inherit',
-                color: 'inherit'
-              }}
-            >
-              <span className="philosophy-toggle-title" style={{ fontWeight: 700, fontSize: '13px', fontFamily: "'Orbitron', sans-serif", color: 'var(--theme-primary)', letterSpacing: '0.5px', textTransform: 'uppercase', display: 'flex', alignItems: 'center' }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px' }}>
-                  <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-                </svg>
-                Nuestra Filosofía de Entrenamiento
-              </span>
-              <span className="philosophy-toggle-icon" style={{ fontSize: '12px', color: 'var(--theme-primary)', transition: 'transform 0.3s ease' }}>
-                {philosophyOpen ? '▲' : '▼'}
-              </span>
-            </button>
-
-            <div
-              className="philosophy-collapsible"
-              style={{
-                maxHeight: philosophyOpen ? '3000px' : '0px',
-                overflow: 'hidden',
-                transition: 'max-height 0.6s cubic-bezier(0.4, 0, 0.2, 1)'
-              }}
-            >
-              <div className="philosophy-section">
-                <h2 className="philosophy-title">SISTEMA DE ENTRENAMIENTO</h2>
-                <p className="philosophy-author">
-                  Por <span id="trainerNameDisplay">{trainerProfile?.marca?.nombre_display || portada.trainerName || 'Evolution Lab'}</span>
-                </p>
-
-                <div className="philosophy-quote">
-                  <p style={{ whiteSpace: 'pre-line' }}>
-                    {trainerProfile?.marca?.eslogan || portada?.trainerEslogan || 'NO NECESITAS ENTRENAR MÁS.\nNECESITAS ENTRENAR MEJOR.'}
-                  </p>
-                </div>
-
-                <p className="philosophy-description">
-                  Este sistema fue diseñado para maximizar resultados a través de estímulo inteligente, técnica eficiente y progresión estructurada.
-                </p>
-
-                <h3 className="philosophy-subtitle">¿QUÉ HACE DIFERENTE ESTE MÉTODO?</h3>
-
-                <div className="philosophy-grid">
-                  {trainerProfile?.filosofia && trainerProfile.filosofia.length > 0 ? (
-                    trainerProfile.filosofia.map((pilar, i) => (
-                      <div key={pilar.id} className={`philosophy-card${i === (trainerProfile.filosofia!.length - 1) && trainerProfile.filosofia!.length % 2 !== 0 ? ' full-width' : ''}`}>
-                        <span className="pillar-number">{pilar.icono} Pilar {String(i + 1).padStart(2, '0')}</span>
-                        <strong>{pilar.titulo}</strong>
-                        <p>{pilar.descripcion}</p>
-                      </div>
-                    ))
-                  ) : (
-                    <>
-                      <div className="philosophy-card">
-                        <span className="pillar-number">Pilar 01</span>
-                        <strong>ENTRENAMIENTO BASADO EN ESTÍMULO REAL</strong>
-                        <p>Cada ejercicio tiene una función específica dentro del programa. Nada está puesto al azar.</p>
-                      </div>
-                      <div className="philosophy-card">
-                        <span className="pillar-number">Pilar 02</span>
-                        <strong>INTENSIDAD CONTROLADA</strong>
-                        <p>No buscamos agotarte. Buscamos generar adaptación. La intensidad se utiliza estratégicamente para progresar sin destruir la recuperación.</p>
-                      </div>
-                      <div className="philosophy-card">
-                        <span className="pillar-number">Pilar 03</span>
-                        <strong>TÉCNICA COMO PRIORIDAD</strong>
-                        <p>La ejecución determina qué músculo trabaja realmente. Menos ego. Más control. Más resultados.</p>
-                      </div>
-                      <div className="philosophy-card">
-                        <span className="pillar-number">Pilar 04</span>
-                        <strong>PROGRESIÓN MEDIBLE</strong>
-                        <p>El objetivo es mejorar rendimiento, composición corporal y capacidad física semana tras semana.</p>
-                      </div>
-                      <div className="philosophy-card full-width">
-                        <span className="pillar-number">Pilar 05</span>
-                        <strong>RECUPERACIÓN PLANIFICADA</strong>
-                        <p>Dormir, recuperarse y manejar la fatiga también hacen parte del progreso.</p>
-                      </div>
-                    </>
-                  )}
-                </div>
-
-                <div className="philosophy-footer">
-                  <p>AQUÍ NO SE ENTRENA POR MOTIVACIÓN.<br />SE ENTRENA CON ESTRUCTURA, PROPÓSITO Y DIRECCIÓN.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Cover Info Grid & Global Notes */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', marginBottom: '25px' }}>
-            {/* Athlete metadata */}
-            <div className="perfil-atleta-panel" style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
-              <h4 style={{ margin: 0, fontSize: '13px', fontFamily: "'Orbitron', sans-serif", color: 'var(--theme-primary)', letterSpacing: '0.5px' }}>DATOS DEL ATLETA</h4>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '12px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--theme-border)', paddingBottom: '6px' }}>
-                  <span style={{ color: 'rgba(255,255,255,0.5)' }}>Nombre</span>
-                  <span style={{ fontWeight: 600 }}>{portada.userName || profile?.nombre || '-'}</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--theme-border)', paddingBottom: '6px' }}>
-                  <span style={{ color: 'rgba(255,255,255,0.5)' }}>Objetivo</span>
-                  <span style={{ fontWeight: 600, color: 'var(--theme-secondary)' }}>{portada.userGoal || profile?.objetivo || '-'}</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--theme-border)', paddingBottom: '6px' }}>
-                  <span style={{ color: 'rgba(255,255,255,0.5)' }}>Fecha inicio</span>
-                  <span style={{ fontWeight: 600 }}>{portada.startDate || profile?.fecha_inicio || '-'}</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: 'rgba(255,255,255,0.5)' }}>Vigencia</span>
-                  <span style={{ fontWeight: 600 }}>{portada.planVigenciaPlan || profile?.vigencia_dias || '28'} días</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Planificación Activa */}
-            <div style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '14px', boxShadow: '0 8px 32px 0 var(--theme-glow)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
-              <div style={{ color: 'var(--theme-primary)', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontFamily: "'Orbitron', sans-serif", fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase' }}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <line x1="18" y1="20" x2="18" y2="10" />
-                  <line x1="12" y1="20" x2="12" y2="4" />
-                  <line x1="6" y1="20" x2="6" y2="14" />
-                </svg>
-                Planificación Activa
-              </div>
-              <div style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '28px', fontWeight: 800, color: 'white', letterSpacing: '0.5px' }}>
-                {Object.values(weekdayMapping).filter(v => Number(v) !== -1).length || trainingDays.length || 7} Días / Sem
-              </div>
-            </div>
-
-            {/* Global notes & Trainer socials */}
-            <div style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', boxShadow: '0 8px 32px 0 var(--theme-glow)', borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '14px', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
-              <div>
-                <h4 style={{ margin: '0 0 8px 0', fontSize: '13px', fontFamily: "'Orbitron', sans-serif", color: 'var(--theme-secondary)', letterSpacing: '0.5px' }}>INDICACIONES GENERALES</h4>
-                <p className="desc-text" style={{ margin: 0, fontSize: '12px', lineHeight: 1.5, color: '#94a3b8', fontStyle: 'italic' }}>
-                  "{portada.globalNote || 'Entrena duro, controla tus ejecuciones y descansa lo necesario para lograr el máximo estímulo progresivo.'}"
-                </p>
-              </div>
-
-              {/* Redes Entrenador */}
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                {wsHref && (
-                  <a href={wsHref} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(37, 211, 102, 0.12)', border: '1px solid rgba(37, 211, 102, 0.35)', color: '#4ade80', textDecoration: 'none', padding: '6px 12px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, fontFamily: "'Orbitron', sans-serif" }}>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '2px' }}>
-                      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
-                    </svg>
-                    WhatsApp Entrenador
-                  </a>
-                )}
-                {igHref && (
-                  <a href={igHref} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(251, 113, 133, 0.12)', border: '1px solid rgba(251, 113, 133, 0.35)', color: '#fda4af', textDecoration: 'none', padding: '6px 12px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, fontFamily: "'Orbitron', sans-serif" }}>
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '2px' }}>
-                      <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
-                      <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
-                      <line x1="17.5" y1="6.5" x2="17.51" y2="6.5" />
-                    </svg>
-                    Instagram Entrenador
-                  </a>
-                )}
-                <button
-                  onClick={() => setIs1RMModalOpen(true)}
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'var(--theme-badge-bg)', border: '1px solid var(--theme-border)', color: 'var(--theme-primary)', padding: '6px 12px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, fontFamily: "'Orbitron', sans-serif", cursor: 'pointer' }}
-                >
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '2px' }}>
-                    <rect x="4" y="2" width="16" height="20" rx="2" ry="2" />
-                    <line x1="9" y1="22" x2="9" y2="16" />
-                    <line x1="15" y1="22" x2="15" y2="16" />
-                    <line x1="9" y1="16" x2="15" y2="16" />
-                    <line x1="9" y1="12" x2="15" y2="12" />
-                    <line x1="9" y1="8" x2="15" y2="8" />
-                  </svg>
-                  Calculadora 1RM
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        </div>{/* /mobile-tab-panel plan — cover-page + semanas (unified) */}
 
         {/* Floating Action Button (FAB) for 1RM calculator */}
         <button
