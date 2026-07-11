@@ -1847,7 +1847,7 @@ export const AthleteDashboard: React.FC = () => {
         ════════════════════════════════════════════ */}
         <div className={`mobile-tab-panel${activeMobileTab === 'progreso' ? ' mobile-tab-panel--active' : ''}`} data-tab="progreso">
 
-        {/* GAMIFICACION */}
+        {/* GAMIFICACION — cuando ya hay sesiones registradas */}
         {!planExpiration.expired && overloadSessions.length > 0 && (
           <div style={{ marginTop: '20px', marginBottom: '4px' }}>
             <div style={{
