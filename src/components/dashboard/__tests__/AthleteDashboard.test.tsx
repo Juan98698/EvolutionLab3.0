@@ -1,6 +1,6 @@
 ﻿// @vitest-environment happy-dom
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, act } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { render, screen, act, fireEvent, cleanup } from '@testing-library/react';
 
 // ─── Mock: react-router-dom ────────────────────────────────────────────────
 vi.mock('react-router-dom', () => ({
@@ -102,6 +102,10 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
+afterEach(() => {
+  cleanup();
+});
+
 // ─── Tests ────────────────────────────────────────────────────────────────
 describe('AthleteDashboard — smoke tests', () => {
 
@@ -132,6 +136,57 @@ describe('AthleteDashboard — smoke tests', () => {
     await act(async () => { render(<AthleteDashboard />, { wrapper: Wrapper }); });
     expect(document.body).toBeTruthy();
     expect(screen.queryByText(/error inesperado/i)).toBeNull();
+  });
+
+});
+
+describe('AthleteDashboard — navegación por tabs móviles', () => {
+
+  it('arranca en el tab "Hoy" cuando no hay tab guardado en localStorage', async () => {
+    localStorage.setItem('pwa_client_plan', JSON.stringify(PLAN));
+    await act(async () => { render(<AthleteDashboard />, { wrapper: Wrapper }); });
+
+    expect(screen.getByRole('button', { name: 'Hoy' }).getAttribute('aria-current')).toBe('page');
+    expect(screen.getByRole('button', { name: 'Plan' }).getAttribute('aria-current')).toBeNull();
+  });
+
+  it('restaura el tab guardado en localStorage al montar', async () => {
+    localStorage.setItem('pwa_client_plan', JSON.stringify(PLAN));
+    localStorage.setItem('pwa_active_mobile_tab', 'progreso');
+    await act(async () => { render(<AthleteDashboard />, { wrapper: Wrapper }); });
+
+    expect(screen.getByRole('button', { name: 'Progreso' }).getAttribute('aria-current')).toBe('page');
+    expect(screen.getByRole('button', { name: 'Hoy' }).getAttribute('aria-current')).toBeNull();
+  });
+
+  it('ignora un valor inválido en localStorage y cae al tab "Hoy" por defecto', async () => {
+    localStorage.setItem('pwa_client_plan', JSON.stringify(PLAN));
+    localStorage.setItem('pwa_active_mobile_tab', 'un-tab-que-no-existe');
+    await act(async () => { render(<AthleteDashboard />, { wrapper: Wrapper }); });
+
+    expect(screen.getByRole('button', { name: 'Hoy' }).getAttribute('aria-current')).toBe('page');
+  });
+
+  it('al clickear un tab, se actualiza el tab activo y se persiste en localStorage', async () => {
+    localStorage.setItem('pwa_client_plan', JSON.stringify(PLAN));
+    await act(async () => { render(<AthleteDashboard />, { wrapper: Wrapper }); });
+
+    expect(screen.getByRole('button', { name: 'Hoy' }).getAttribute('aria-current')).toBe('page');
+
+    await act(async () => {
+      fireEvent.click(screen.getByRole('button', { name: 'Plan' }));
+    });
+
+    expect(screen.getByRole('button', { name: 'Plan' }).getAttribute('aria-current')).toBe('page');
+    expect(screen.getByRole('button', { name: 'Hoy' }).getAttribute('aria-current')).toBeNull();
+    expect(localStorage.getItem('pwa_active_mobile_tab')).toBe('plan');
+  });
+
+  it('no muestra badge de notificaciones en el tab Alertas cuando no hay notificaciones visibles', async () => {
+    localStorage.setItem('pwa_client_plan', JSON.stringify(PLAN));
+    await act(async () => { render(<AthleteDashboard />, { wrapper: Wrapper }); });
+
+    expect(screen.queryByLabelText(/^\d+ alertas$/i)).toBeNull();
   });
 
 });
