@@ -38,6 +38,7 @@ import { ShareableProgressCard } from './ShareableProgressCard';
 import { InitialPeriodizationEvaluation } from './InitialPeriodizationEvaluation';
 import { subscribirNotificacionesPush, verificarSuscripcionPushActiva } from '../../lib/pushNotifications';
 import { loadBrandFonts } from '../../lib/dynamicFonts';
+import BottomTabBar, { MobileTab } from '../common/BottomTabBar';
 
 export const AthleteDashboard: React.FC = () => {
   const location = useLocation();
@@ -218,6 +219,9 @@ export const AthleteDashboard: React.FC = () => {
 
   const [localSesiones, setLocalSesiones] = useState<LocalSesion[]>(() => readSessionsFromCache());
   const [activeTab, setActiveTab] = useState<number>(0);
+
+  // ── Mobile bottom tab navigation (only affects < 768px layout) ──
+  const [activeMobileTab, setActiveMobileTab] = useState<MobileTab>('hoy');
   
   // Extraemos la semana actual configurada y el historial de microciclos
   const currentWeekNum = plan?.periodizationConfig?.semana_actual || 1;
@@ -1148,6 +1152,9 @@ export const AthleteDashboard: React.FC = () => {
     
   const weekdayMapping: Record<string, number> = plan?.weekdayMapping || { '0': -1, '1': -1, '2': -1, '3': -1, '4': -1, '5': -1, '6': -1 };
 
+  // ── Compute notification badge count for BottomTabBar ──
+  const notificationBadgeCount = visibleNotificaciones.length;
+
   return (
     <div style={{ background: 'transparent', minHeight: '100vh', color: 'white', paddingBottom: '60px' }}>
       {currentTheme === 'cyan' && trainerProfile?.marca && (
@@ -1173,6 +1180,7 @@ export const AthleteDashboard: React.FC = () => {
       <AthleteNavbar />
 
       <div className="container stagger-3" style={{ padding: '0 20px', maxWidth: '1200px', margin: '0 auto' }}>
+        {/* On mobile the bottom tab bar (≈68px + safe-area) is compensated via .container.stagger-3 CSS padding-bottom */}
 
         {/* Indicador persistente: sesiones offline aún sin subir al servidor */}
         {pendingSyncCount > 0 && (
@@ -1199,6 +1207,13 @@ export const AthleteDashboard: React.FC = () => {
           </div>
         )}
         
+        {/* ════════════════════════════════════════════
+             MOBILE TAB: HOY
+             Visible on mobile when activeMobileTab === 'hoy'
+             Always visible on desktop (≥ 768px)
+        ════════════════════════════════════════════ */}
+        <div className={`mobile-tab-panel${activeMobileTab === 'hoy' ? ' mobile-tab-panel--active' : ''}`} data-tab="hoy">
+
         {/* Banner de invitación a activar notificaciones Push */}
         {showPushPrompt && !planExpiration.expired && (
           <div style={{
@@ -1379,6 +1394,15 @@ export const AthleteDashboard: React.FC = () => {
             </button>
           </div>
         )}
+
+        {/* ════════════════════════════════════════════
+             MOBILE TAB: PLAN
+             Solo Lifter tools + Directorio + cover-page
+             Visible on mobile when activeMobileTab === 'plan'
+             Always visible on desktop (≥ 768px)
+        ════════════════════════════════════════════ */}
+        <div className={`mobile-tab-panel${activeMobileTab === 'plan' ? ' mobile-tab-panel--active' : ''}`} data-tab="plan">
+
 
         {/* SOLO LIFTER — Quick Start CTA (cuando no hay plan) */}
         {!planExpiration.expired && isSoloClient && !plan && (
@@ -1690,6 +1714,16 @@ export const AthleteDashboard: React.FC = () => {
           </div>
         )}
 
+        </div>{/* /mobile-tab-panel plan — Solo Lifter + Directorio */}
+
+        {/* ════════════════════════════════════════════
+             MOBILE TAB: NOTIFICACIONES
+             Only overload notifications
+             Visible on mobile when activeMobileTab === 'notificaciones'
+             Always visible on desktop (≥ 768px)
+        ════════════════════════════════════════════ */}
+        <div className={`mobile-tab-panel${activeMobileTab === 'notificaciones' ? ' mobile-tab-panel--active' : ''}`} data-tab="notificaciones">
+
         {/* NOTIFICACIONES DE SOBRECARGA */}
         {!planExpiration.expired && plan && showNotificationsPanel && (
           <div className="sp-notif-container" style={{ marginTop: '20px' }}>
@@ -1709,6 +1743,15 @@ export const AthleteDashboard: React.FC = () => {
             )}
           </div>
         )}
+
+        </div>{/* /mobile-tab-panel notificaciones */}
+
+        {/* ════════════════════════════════════════════
+             MOBILE TAB: PROGRESO
+             Visible on mobile when activeMobileTab === 'progreso'
+             Always visible on desktop (≥ 768px)
+        ════════════════════════════════════════════ */}
+        <div className={`mobile-tab-panel${activeMobileTab === 'progreso' ? ' mobile-tab-panel--active' : ''}`} data-tab="progreso">
 
         {/* GAMIFICACION */}
         {!planExpiration.expired && overloadSessions.length > 0 && (
@@ -1749,6 +1792,15 @@ export const AthleteDashboard: React.FC = () => {
             </div>
           </div>
         )}
+
+        </div>{/* /mobile-tab-panel progreso */}
+
+        {/* ════════════════════════════════════════════
+             MOBILE TAB: PLAN (continued)
+             cover-page: filosofia, datos atleta, semanas
+             HOY tab continues below with week/day tabs + WorkoutCard
+        ════════════════════════════════════════════ */}
+        <div className={`mobile-tab-panel${activeMobileTab === 'plan' ? ' mobile-tab-panel--active' : ''}`} data-tab="plan">
 
         <div className="cover-page" style={{ position: 'relative', marginTop: '20px' }}>
           
@@ -2055,6 +2107,15 @@ export const AthleteDashboard: React.FC = () => {
           )}
         </div>
 
+        </div>{/* /mobile-tab-panel plan — cover-page */}
+
+        {/* ════════════════════════════════════════════
+             HOY tab closes HERE — after WorkoutCard
+             Week tabs + Day tabs + WorkoutCard are
+             part of the HOY tab on mobile
+        ════════════════════════════════════════════ */}
+        </div>{/* /mobile-tab-panel hoy */}
+
         {/* Floating Action Button (FAB) for 1RM calculator */}
         <button
           id="fab1RMBtn"
@@ -2091,6 +2152,13 @@ export const AthleteDashboard: React.FC = () => {
         </button>
 
       </div>
+
+      {/* ── Mobile Bottom Tab Bar — only rendered on mobile via CSS ── */}
+      <BottomTabBar
+        activeTab={activeMobileTab}
+        onTabChange={setActiveMobileTab}
+        notificationCount={notificationBadgeCount}
+      />
 
       {/* 1RM CALCULATOR MODAL OVERLAY */}
       {is1RMModalOpen && (
