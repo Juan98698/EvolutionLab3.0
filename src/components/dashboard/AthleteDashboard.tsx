@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import NotificationCard from './NotificationCard';
 import NotificationsEmptyState from './NotificationsEmptyState';
@@ -1227,7 +1227,7 @@ export const AthleteDashboard: React.FC = () => {
              cover-page: filosofia, datos atleta, semanas
              HOY tab continues below with week/day tabs + WorkoutCard
         ════════════════════════════════════════════ */}
-        <div className={`mobile-tab-panel${activeMobileTab === 'plan' ? ' mobile-tab-panel--active' : ''}`} data-tab="plan">
+        <div className={`mobile-tab-panel${activeMobileTab === 'plan' ? ' mobile-tab-panel--active' : ''}`} data-tab="plan" style={{ display: activeMobileTab === 'plan' ? 'block' : 'none' }}>
 
         <div className="cover-page" style={{ position: 'relative', marginTop: '20px' }}>
           
@@ -1437,7 +1437,7 @@ export const AthleteDashboard: React.FC = () => {
         </div>
 
         </div>{/* /mobile-tab-panel plan — cover-page + semanas (unified) */}
-        <div className={`mobile-tab-panel${activeMobileTab === 'hoy' ? ' mobile-tab-panel--active' : ''}`} data-tab="hoy">
+        <div className={`mobile-tab-panel${activeMobileTab === 'hoy' ? ' mobile-tab-panel--active' : ''}`} data-tab="hoy" style={{ display: activeMobileTab === 'hoy' ? 'block' : 'none' }}>
 
         {/* Banner de invitación a activar notificaciones Push */}
         {showPushPrompt && !planExpiration.expired && (
@@ -1710,7 +1710,7 @@ export const AthleteDashboard: React.FC = () => {
              Visible on mobile when activeMobileTab === 'plan'
              Always visible on desktop (≥ 768px)
         ════════════════════════════════════════════ */}
-        <div className={`mobile-tab-panel${activeMobileTab === 'plan' ? ' mobile-tab-panel--active' : ''}`} data-tab="plan">
+        <div className={`mobile-tab-panel${activeMobileTab === 'plan' ? ' mobile-tab-panel--active' : ''}`} data-tab="plan" style={{ display: activeMobileTab === 'plan' ? 'block' : 'none' }}>
 
 
         {/* SOLO LIFTER — Quick Start CTA (cuando no hay plan) */}
@@ -2031,7 +2031,7 @@ export const AthleteDashboard: React.FC = () => {
              Visible on mobile when activeMobileTab === 'notificaciones'
              Always visible on desktop (≥ 768px)
         ════════════════════════════════════════════ */}
-        <div className={`mobile-tab-panel${activeMobileTab === 'notificaciones' ? ' mobile-tab-panel--active' : ''}`} data-tab="notificaciones">
+        <div className={`mobile-tab-panel${activeMobileTab === 'notificaciones' ? ' mobile-tab-panel--active' : ''}`} data-tab="notificaciones" style={{ display: activeMobileTab === 'notificaciones' ? 'block' : 'none' }}>
 
         {/* NOTIFICACIONES DE SOBRECARGA */}
         {!planExpiration.expired && plan && showNotificationsPanel && (
@@ -2060,7 +2060,7 @@ export const AthleteDashboard: React.FC = () => {
              Visible on mobile when activeMobileTab === 'progreso'
              Always visible on desktop (≥ 768px)
         ════════════════════════════════════════════ */}
-        <div className={`mobile-tab-panel${activeMobileTab === 'progreso' ? ' mobile-tab-panel--active' : ''}`} data-tab="progreso">
+        <div className={`mobile-tab-panel${activeMobileTab === 'progreso' ? ' mobile-tab-panel--active' : ''}`} data-tab="progreso" style={{ display: activeMobileTab === 'progreso' ? 'block' : 'none' }}>
 
         {/* GAMIFICACION — cuando ya hay sesiones registradas */}
         {!planExpiration.expired && overloadSessions.length > 0 && (
