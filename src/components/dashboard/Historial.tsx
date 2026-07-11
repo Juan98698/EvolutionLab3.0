@@ -473,7 +473,7 @@ export const Historial: React.FC = () => {
             <div className="mcard-value" style={{ color: 'white', fontSize: '24px', fontWeight: 800, fontFamily: "'Orbitron', sans-serif", display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
               {metrics.ultimoVolumen > 0 ? metrics.ultimoVolumen.toLocaleString() : '-'} <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.6)' }}>kg</span>
               {metrics.trendHtml && (
-                <span style={{ color: metrics.trendHtml.includes('↑') ? '#10b981' : '#ef4444', fontSize: '11px', fontWeight: 700, marginLeft: '4px' }}>
+                <span style={{ color: metrics.trendHtml.includes('↑') ? 'var(--color-success)' : 'var(--color-danger)', fontSize: '11px', fontWeight: 700, marginLeft: '4px' }}>
                   {metrics.trendHtml}
                 </span>
               )}
@@ -546,8 +546,8 @@ export const Historial: React.FC = () => {
             return isNew;
           });
 
-          const pointBackgroundColors = isPR.map(pr => pr ? '#fbbf24' : 'rgba(0, 212, 255, 0.8)');
-          const pointBorderColors = isPR.map(pr => pr ? '#f59e0b' : 'rgba(0, 212, 255, 0.5)');
+          const pointBackgroundColors = isPR.map(pr => pr ? 'var(--color-highlight)' : 'rgba(0, 212, 255, 0.8)');
+          const pointBorderColors = isPR.map(pr => pr ? 'var(--color-highlight-deep)' : 'rgba(0, 212, 255, 0.5)');
           const pointRadii = isPR.map(pr => pr ? 6 : 3);
 
           return (
@@ -564,7 +564,7 @@ export const Historial: React.FC = () => {
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '10px', color: 'rgba(255,255,255,0.5)' }}>
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#fbbf24', display: 'inline-block' }} />
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--color-highlight)', display: 'inline-block' }} />
                     PR
                   </span>
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
@@ -782,10 +782,10 @@ export const Historial: React.FC = () => {
                               onClick={() => handleSaveEdit(f.id_sesion, f.id_ej)}
                               title="Guardar cambios"
                               style={{
-                                background: 'rgba(16, 185, 129, 0.15)',
+                                background: 'var(--color-success-light)',
                                 border: '1px solid rgba(16, 185, 129, 0.4)',
                                 borderRadius: '6px',
-                                color: '#10b981',
+                                color: 'var(--color-success)',
                                 padding: '6px',
                                 marginRight: '6px',
                                 cursor: 'pointer',
@@ -803,10 +803,10 @@ export const Historial: React.FC = () => {
                               onClick={handleCancelEdit}
                               title="Cancelar edición"
                               style={{
-                                background: 'rgba(239, 68, 68, 0.15)',
+                                background: 'var(--color-danger-light)',
                                 border: '1px solid rgba(239, 68, 68, 0.4)',
                                 borderRadius: '6px',
-                                color: '#ef4444',
+                                color: 'var(--color-danger)',
                                 padding: '6px',
                                 cursor: 'pointer',
                                 display: 'inline-flex',
@@ -842,8 +842,8 @@ export const Historial: React.FC = () => {
                         <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 600 }}>{f.volumen.toLocaleString()}</td>
                         <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 600, color: 'var(--theme-primary)' }}>{f.rm.toFixed(1)}</td>
                         <td style={{ padding: '12px 16px', textAlign: 'center' }}>
-                          {f.deltaType === 'up' && <span style={{ color: '#10b981', fontWeight: 700 }}>{f.deltaHtml}</span>}
-                          {f.deltaType === 'dn' && <span style={{ color: '#ef4444', fontWeight: 700 }}>{f.deltaHtml}</span>}
+                          {f.deltaType === 'up' && <span style={{ color: 'var(--color-success)', fontWeight: 700 }}>{f.deltaHtml}</span>}
+                          {f.deltaType === 'dn' && <span style={{ color: 'var(--color-danger)', fontWeight: 700 }}>{f.deltaHtml}</span>}
                           {f.deltaType === 'eq' && <span style={{ color: 'rgba(255,255,255,0.4)' }}>{f.deltaHtml}</span>}
                         </td>
                         <td style={{ padding: '12px 16px', maxWidth: '160px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={f.notas_ej}>
@@ -877,10 +877,10 @@ export const Historial: React.FC = () => {
                             onClick={() => handleDeleteRow(f.id_sesion, f.id_ej)}
                             title="Eliminar registro"
                             style={{
-                              background: 'rgba(239, 68, 68, 0.1)',
+                              background: 'var(--color-danger-light)',
                               border: '1px solid rgba(239, 68, 68, 0.3)',
                               borderRadius: '6px',
-                              color: '#ef4444',
+                              color: 'var(--color-danger)',
                               padding: '5px',
                               cursor: 'pointer',
                               display: 'inline-flex',

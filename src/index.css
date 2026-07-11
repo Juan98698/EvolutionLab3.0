@@ -58,6 +58,7 @@ button {
   --color-warning-light: rgba(245, 158, 11, 0.12);
   --color-highlight: #fbbf24;
   --color-highlight-light: rgba(251, 191, 36, 0.12);
+  --color-highlight-deep: #f59e0b;
 
   /* Pares "profundos" para degradados (ej: linear-gradient(135deg, var(--color-danger), var(--color-danger-deep))).
      Uso: solo cuando el segundo color acompaña al primero en un degradé —
