@@ -97,6 +97,7 @@ test.describe('Evolution Lab 3.0 E2E Workflows', () => {
       window.localStorage.setItem(`sb-${projectRef}-auth-token`, JSON.stringify(mockSession));
       window.localStorage.setItem('evolution_guided_plan_v1_test-client-id', 'true');
       window.localStorage.setItem('evolution_guided_plan_v1_test-trainer-id', 'true');
+      window.localStorage.setItem('evolution_onboarded_v1', 'true');
       
       window.localStorage.setItem('pwa_user_profile', JSON.stringify({
         id: 'test-client-id',
@@ -130,6 +131,12 @@ test.describe('Evolution Lab 3.0 E2E Workflows', () => {
     // Verify athlete header greeting and calendar cards load successfully (using a 30s assertion timeout)
     const topBar = page.locator('.top-bar');
     await expect(topBar).toContainText('Hola, Juan Perez', { timeout: 30000 });
+
+    // On mobile, the gamification panel resides inside the "Progreso" tab. Switch to it if the tab bar is visible.
+    const progresoTab = page.locator('button[aria-label="Progreso"]');
+    if (await progresoTab.isVisible()) {
+      await progresoTab.click();
+    }
 
     const calendarTitle = page.locator('text=CONSISTENCIA SEMANAL');
     // Scroll element into view before asserting visibility on mobile layouts
