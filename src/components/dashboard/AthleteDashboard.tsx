@@ -2102,6 +2102,103 @@ export const AthleteDashboard: React.FC = () => {
           </div>
         )}
 
+        {/* PROGRESO — Empty State cuando aún no hay sesiones registradas */}
+        {!planExpiration.expired && overloadSessions.length === 0 && (
+          <div style={{ marginTop: '32px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '24px', textAlign: 'center', padding: '0 8px' }}>
+
+            {/* Ícono con glow pulsante */}
+            <div style={{
+              width: '88px', height: '88px', borderRadius: '50%',
+              background: 'var(--theme-badge-bg)',
+              border: '1px solid var(--theme-border)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              boxShadow: '0 0 32px var(--theme-glow)',
+              animation: 'pulse-glow 2.5s ease-in-out infinite'
+            }}>
+              <svg width="40" height="40" viewBox="0 0 24 24" fill="none"
+                stroke="var(--theme-primary)" strokeWidth="1.8"
+                strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="20" x2="18" y2="10"/>
+                <line x1="12" y1="20" x2="12" y2="4"/>
+                <line x1="6" y1="20" x2="6" y2="14"/>
+              </svg>
+            </div>
+
+            {/* Texto principal */}
+            <div>
+              <h3 style={{
+                margin: '0 0 10px 0',
+                fontFamily: "'Orbitron', sans-serif",
+                fontSize: '15px', fontWeight: 800,
+                color: 'white', letterSpacing: '0.5px'
+              }}>
+                AÚN SIN PROGRESO REGISTRADO
+              </h3>
+              <p style={{
+                margin: 0, fontSize: '13px',
+                color: 'rgba(255,255,255,0.55)',
+                lineHeight: 1.6,
+                fontFamily: 'Inter, sans-serif',
+                maxWidth: '280px'
+              }}>
+                Completa tu primer entrenamiento para comenzar a ver tus logros, racha de sesiones y evolución semana a semana.
+              </p>
+            </div>
+
+            {/* Pasos para empezar */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', width: '100%', maxWidth: '300px' }}>
+              {[
+                { step: '01', text: 'Ve al tab HOY',               icon: '🏋️' },
+                { step: '02', text: 'Pulsa ENTRENAR AHORA',         icon: '▶️'  },
+                { step: '03', text: 'Registra tus series y pesos',  icon: '📝' },
+              ].map(({ step, text, icon }) => (
+                <div key={step} style={{
+                  display: 'flex', alignItems: 'center', gap: '14px',
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid rgba(255,255,255,0.06)',
+                  borderRadius: '12px', padding: '12px 16px'
+                }}>
+                  <span style={{
+                    fontFamily: "'Orbitron', sans-serif",
+                    fontSize: '10px', fontWeight: 800,
+                    color: 'var(--theme-primary)', minWidth: '22px'
+                  }}>{step}</span>
+                  <span style={{ fontSize: '16px' }}>{icon}</span>
+                  <span style={{
+                    fontSize: '12px', color: 'rgba(255,255,255,0.7)',
+                    fontFamily: 'Inter, sans-serif', fontWeight: 500
+                  }}>{text}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* CTA — solo si tiene plan y no está expirado */}
+            {trainingDays.length > 0 && (
+              <button
+                onClick={() => {
+                  handleMobileTabChange('hoy');
+                  navigate('/session/preview');
+                }}
+                style={{
+                  background: 'var(--theme-btn-gradient)',
+                  color: 'white', border: 'none',
+                  padding: '14px 32px', borderRadius: '30px',
+                  fontSize: '12px', fontWeight: 700,
+                  fontFamily: "'Orbitron', sans-serif",
+                  cursor: 'pointer', letterSpacing: '1px',
+                  boxShadow: '0 4px 20px var(--theme-btn-glow)',
+                  transition: 'all 0.3s ease',
+                  display: 'inline-flex', alignItems: 'center', gap: '8px',
+                  WebkitTapHighlightColor: 'transparent'
+                }}
+              >
+                <span style={{ fontSize: '16px' }}>🏋️</span>
+                EMPEZAR MI PRIMER ENTRENAMIENTO
+              </button>
+            )}
+          </div>
+        )}
+
         </div>{/* /mobile-tab-panel progreso */}
 
 
