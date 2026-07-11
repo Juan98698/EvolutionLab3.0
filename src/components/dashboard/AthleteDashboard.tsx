@@ -221,7 +221,17 @@ export const AthleteDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState<number>(0);
 
   // ── Mobile bottom tab navigation (only affects < 768px layout) ──
-  const [activeMobileTab, setActiveMobileTab] = useState<MobileTab>('hoy');
+  // Persists last active tab across sessions
+  const [activeMobileTab, setActiveMobileTab] = useState<MobileTab>(() => {
+    const saved = localStorage.getItem('pwa_active_mobile_tab') as MobileTab | null;
+    const valid: MobileTab[] = ['hoy', 'plan', 'progreso', 'notificaciones'];
+    return (saved && valid.includes(saved)) ? saved : 'hoy';
+  });
+
+  const handleMobileTabChange = (tab: MobileTab) => {
+    setActiveMobileTab(tab);
+    localStorage.setItem('pwa_active_mobile_tab', tab);
+  };
   
   // Extraemos la semana actual configurada y el historial de microciclos
   const currentWeekNum = plan?.periodizationConfig?.semana_actual || 1;
@@ -1395,9 +1405,93 @@ export const AthleteDashboard: React.FC = () => {
           </div>
         )}
 
+        {/* WEEK TABS BAR (CALENDAR VIEW) — inside HOY tab */}
+        {plan?.periodizationConfig?.enabled && (
+          <div className="week-tabs-bar" style={{ display: 'flex', gap: '8px', marginBottom: '16px', overflowX: 'auto', paddingBottom: '4px' }}>
+            {Array.from({ length: plan.periodizationConfig.total_semanas || 4 }).map((_, i) => {
+              const weekNum = i + 1;
+              const isPast = weekNum < currentWeekNum;
+              const isFuture = weekNum > currentWeekNum;
+              let bgColor = 'var(--theme-card-bg)';
+              let textColor = 'rgba(255,255,255,0.7)';
+              let border = '1px solid var(--theme-border)';
+              if (activeWeekNum === weekNum) {
+                bgColor = 'rgba(14, 165, 233, 0.15)';
+                textColor = '#0ea5e9';
+                border = '1px solid #0ea5e9';
+              }
+              return (
+                <button
+                  key={`week-${weekNum}`}
+                  onClick={() => { if (!isFuture) setActiveWeekNum(weekNum); }}
+                  title={isFuture ? 'Esta semana será generada cuando termines la anterior.' : ''}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: '6px',
+                    padding: '8px 16px', borderRadius: '8px',
+                    background: bgColor, color: textColor, border,
+                    fontSize: '12px', fontWeight: 700,
+                    cursor: isFuture ? 'not-allowed' : 'pointer',
+                    opacity: isFuture ? 0.5 : 1,
+                    whiteSpace: 'nowrap', transition: 'all 0.2s'
+                  }}
+                >
+                  {isPast && <span style={{ color: 'var(--color-success)' }}>✅</span>}
+                  {isFuture && <span>🔒</span>}
+                  Semana {weekNum}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* DAY TABS BAR — inside HOY tab */}
+        {trainingDays.length > 1 && (
+          <div className="day-tabs-bar" style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '20px', padding: '4px', background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '12px', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
+            {trainingDays.map((day, idx) => {
+              const dayName = (day.name || `Día ${idx + 1}`).trim();
+              const shortName = dayName.length > 28 ? dayName.substring(0, 25) + '…' : dayName;
+              return (
+                <button
+                  key={day.id}
+                  className={`day-tab-btn${activeTab === idx ? ' active' : ''}`}
+                  onClick={() => setActiveTab(idx)}
+                  style={{
+                    fontFamily: "'Orbitron',sans-serif",
+                    fontSize: '10px', fontWeight: 600,
+                    padding: '8px 16px', borderRadius: '8px',
+                    border: 'none', transition: 'all 0.2s', cursor: 'pointer'
+                  }}
+                >
+                  {shortName}
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        {/* WORKOUT CARD SECTION — inside HOY tab */}
+        <div id="workoutCardSection" key={`tab-${activeTab}`} className="tab-content-enter" style={{ contentVisibility: 'auto' }}>
+          {trainingDays.length > 0 ? (
+            <WorkoutCard
+              day={trainingDays[activeTab] || trainingDays[0]}
+              globalVariables={globalVariables}
+              variableDefinitions={variableDefinitions}
+              checkedExerciseIds={checkedIds}
+              onToggleCheck={handleToggleCheck}
+              onShowGuide={(title, content) => setGuideModal({ open: true, title, content })}
+            />
+          ) : (
+            <div style={{ textAlign: 'center', padding: '40px', background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', boxShadow: '0 8px 32px 0 var(--theme-glow)', borderRadius: '16px' }}>
+              <p style={{ color: 'var(--text2)' }}>Cargando ejercicios de tu plan...</p>
+            </div>
+          )}
+        </div>
+
+        </div>{/* /mobile-tab-panel hoy — properly closed before sibling panels */}
+
         {/* ════════════════════════════════════════════
-             MOBILE TAB: PLAN
-             Solo Lifter tools + Directorio + cover-page
+             MOBILE TAB: PLAN — Solo Lifter tools + Directorio + cover-page
+             TRUE SIBLING of HOY. All panels are siblings.
              Visible on mobile when activeMobileTab === 'plan'
              Always visible on desktop (≥ 768px)
         ════════════════════════════════════════════ */}
@@ -2009,112 +2103,7 @@ export const AthleteDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* WEEK TABS BAR (CALENDAR VIEW) */}
-        {plan?.periodizationConfig?.enabled && (
-          <div className="week-tabs-bar" style={{ display: 'flex', gap: '8px', marginBottom: '16px', overflowX: 'auto', paddingBottom: '4px' }}>
-            {Array.from({ length: plan.periodizationConfig.total_semanas || 4 }).map((_, i) => {
-              const weekNum = i + 1;
-              const isPast = weekNum < currentWeekNum;
-              const isFuture = weekNum > currentWeekNum;
-              
-              let bgColor = 'var(--theme-card-bg)';
-              let textColor = 'rgba(255,255,255,0.7)';
-              let border = '1px solid var(--theme-border)';
-              
-              if (activeWeekNum === weekNum) {
-                bgColor = 'rgba(14, 165, 233, 0.15)';
-                textColor = '#0ea5e9';
-                border = '1px solid #0ea5e9';
-              }
-              
-              return (
-                <button
-                  key={`week-${weekNum}`}
-                  onClick={() => {
-                    if (!isFuture) setActiveWeekNum(weekNum);
-                  }}
-                  title={isFuture ? "Esta semana será generada cuando termines la anterior." : ""}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    padding: '8px 16px',
-                    borderRadius: '8px',
-                    background: bgColor,
-                    color: textColor,
-                    border: border,
-                    fontSize: '12px',
-                    fontWeight: 700,
-                    cursor: isFuture ? 'not-allowed' : 'pointer',
-                    opacity: isFuture ? 0.5 : 1,
-                    whiteSpace: 'nowrap',
-                    transition: 'all 0.2s'
-                  }}
-                >
-                  {isPast && <span style={{ color: 'var(--color-success)' }}>✅</span>}
-                  {isFuture && <span>🔒</span>}
-                  Semana {weekNum}
-                </button>
-              );
-            })}
-          </div>
-        )}
-
-        {/* DAY TABS BAR */}
-        {trainingDays.length > 1 && (
-          <div className="day-tabs-bar" style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '20px', padding: '4px', background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '12px', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
-            {trainingDays.map((day, idx) => {
-              const dayName = (day.name || `Día ${idx + 1}`).trim();
-              const shortName = dayName.length > 28 ? dayName.substring(0, 25) + '…' : dayName;
-              return (
-                <button
-                  key={day.id}
-                  className={`day-tab-btn${activeTab === idx ? ' active' : ''}`}
-                  onClick={() => setActiveTab(idx)}
-                  style={{
-                    fontFamily: "'Orbitron',sans-serif",
-                    fontSize: '10px',
-                    fontWeight: 600,
-                    padding: '8px 16px',
-                    borderRadius: '8px',
-                    border: 'none',
-                    transition: 'all 0.2s',
-                    cursor: 'pointer'
-                  }}
-                >
-                  {shortName}
-                </button>
-              );
-            })}
-          </div>
-        )}
-
-        {/* WORKOUT CARD SECTION */}
-        <div id="workoutCardSection" key={`tab-${activeTab}`} className="tab-content-enter" style={{ contentVisibility: 'auto' }}>
-          {trainingDays.length > 0 ? (
-            <WorkoutCard
-              day={trainingDays[activeTab] || trainingDays[0]}
-              globalVariables={globalVariables}
-              variableDefinitions={variableDefinitions}
-              checkedExerciseIds={checkedIds}
-              onToggleCheck={handleToggleCheck}
-              onShowGuide={(title, content) => setGuideModal({ open: true, title, content })}
-            />
-          ) : (
-            <div style={{ textAlign: 'center', padding: '40px', background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', boxShadow: '0 8px 32px 0 var(--theme-glow)', borderRadius: '16px' }}>
-              <p style={{ color: 'var(--text2)' }}>Cargando ejercicios de tu plan...</p>
-            </div>
-          )}
-        </div>
-
-        </div>{/* /mobile-tab-panel plan — cover-page */}
-
-        {/* ════════════════════════════════════════════
-             HOY tab closes HERE — after WorkoutCard
-             Week tabs + Day tabs + WorkoutCard are
-             part of the HOY tab on mobile
-        ════════════════════════════════════════════ */}
-        </div>{/* /mobile-tab-panel hoy */}
+        </div>{/* /mobile-tab-panel plan — cover-page + semanas (unified) */}
 
         {/* Floating Action Button (FAB) for 1RM calculator */}
         <button
@@ -2156,7 +2145,7 @@ export const AthleteDashboard: React.FC = () => {
       {/* ── Mobile Bottom Tab Bar — only rendered on mobile via CSS ── */}
       <BottomTabBar
         activeTab={activeMobileTab}
-        onTabChange={setActiveMobileTab}
+        onTabChange={handleMobileTabChange}
         notificationCount={notificationBadgeCount}
       />
 
