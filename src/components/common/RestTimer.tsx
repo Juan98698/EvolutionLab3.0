@@ -1,5 +1,6 @@
 import React, { useCallback, useRef, useEffect } from 'react';
 import { useRestTimer } from '../../hooks/useRestTimer';
+import { useWakeLock } from '../../hooks/useWakeLock';
 
 interface RestTimerProps {
   /** Duración del descanso en minutos (tal como viene de la variable del plan) */
@@ -40,6 +41,9 @@ export const RestTimer: React.FC<RestTimerProps> = ({ descansoMinutos, onFinish 
 
   const timer = useRestTimer(playFinishSound);
   const timerRef = useRef<HTMLDivElement>(null);
+
+  // Prevent screen suspension during active rest countdown
+  useWakeLock(timer.isRunning);
 
   // Hacer scroll suave al timer cuando se inicia
   useEffect(() => {

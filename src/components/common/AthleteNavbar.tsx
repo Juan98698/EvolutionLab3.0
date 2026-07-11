@@ -36,6 +36,33 @@ export const AthleteNavbar: React.FC = () => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [streakWeeks, setStreakWeeks] = useState<number>(0);
 
+  // PWA custom install prompt states
+  const [installPrompt, setInstallPrompt] = useState<any>(null);
+  const [isStandalone, setIsStandalone] = useState<boolean>(true);
+
+  useEffect(() => {
+    const checkStandalone = window.matchMedia('(display-mode: standalone)').matches || 
+                           (window.navigator as any).standalone === true;
+    setIsStandalone(checkStandalone);
+
+    if (checkStandalone) return;
+
+    if ((window as any).deferredPWAInstallPrompt) {
+      setInstallPrompt((window as any).deferredPWAInstallPrompt);
+    }
+
+    const handlePrompt = (e: any) => {
+      setInstallPrompt((window as any).deferredPWAInstallPrompt || e.detail);
+    };
+
+    window.addEventListener('pwa-prompt-available', handlePrompt as EventListener);
+    window.addEventListener('beforeinstallprompt', handlePrompt);
+    return () => {
+      window.removeEventListener('pwa-prompt-available', handlePrompt as EventListener);
+      window.removeEventListener('beforeinstallprompt', handlePrompt);
+    };
+  }, []);
+
   // Estados del modal de pago global Solo Lifter
   const [paymentLoading, setPaymentLoading] = useState<boolean>(false);
   const [showSoloUpgradeModal, setShowSoloUpgradeModal] = useState<boolean>(false);
@@ -597,6 +624,40 @@ export const AthleteNavbar: React.FC = () => {
               </>
             )}
   
+            {!isStandalone && installPrompt && (
+              <button
+                onClick={async () => {
+                  if (installPrompt) {
+                    installPrompt.prompt();
+                    const { outcome } = await installPrompt.userChoice;
+                    if (outcome === 'accepted') {
+                      setInstallPrompt(null);
+                    }
+                  }
+                }}
+                style={{
+                  fontSize: '11px',
+                  fontFamily: "'Orbitron', sans-serif",
+                  fontWeight: 700,
+                  background: 'rgba(0, 212, 255, 0.12)',
+                  border: '1px solid rgba(0, 212, 255, 0.35)',
+                  borderRadius: '10px',
+                  color: 'var(--theme-primary)',
+                  padding: '8px 14px',
+                  cursor: 'pointer',
+                  marginLeft: '10px',
+                  transition: 'all 0.2s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  height: '32px',
+                  boxSizing: 'border-box'
+                }}
+              >
+                📥 Instalar App
+              </button>
+            )}
+
             <button
               onClick={handleLogout}
               style={{

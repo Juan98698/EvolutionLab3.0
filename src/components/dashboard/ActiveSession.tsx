@@ -6,6 +6,7 @@ import { writeSessionsToCache, readSessionsFromCache } from '../../lib/sessions'
 import { autoRegulatePlanForNextWeek } from '../../lib/periodizationEngine';
 import { ErrorBoundary } from '../common/ErrorBoundary';
 import { useModalA11y } from '../../hooks/useModalA11y';
+import { useWakeLock } from '../../hooks/useWakeLock';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -80,6 +81,9 @@ const parseDescanso = (val: string | undefined): number => {
 const ActiveSession: React.FC = () => {
   const { dayIndex } = useParams<{ dayIndex: string }>();
   const navigate = useNavigate();
+
+  // Prevent screen suspension during the active workout session
+  useWakeLock(true);
 
   // ─── Plan data ───────────────────────────────────────────────────────────
   const [plan, setPlan] = useState<PlanData | null>(null);
