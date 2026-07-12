@@ -9,6 +9,7 @@ import OnboardingModal from '../common/OnboardingModal';
 
 import { useTrainerClients } from '../../hooks/trainer/useTrainerClients';
 import { useModalA11y } from '../../hooks/useModalA11y';
+import { ErrorBoundary } from '../common/ErrorBoundary';
 import { useTrainerAudits } from '../../hooks/trainer/useTrainerAudits';
 import { useTrainerSubscription } from '../../hooks/trainer/useTrainerSubscription';
 
@@ -679,7 +680,9 @@ export const TrainerDashboard: React.FC = () => {
       {/* Main Content */}
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '0 20px' }}>
         
-        <TrainerAlertsHub visible={showAlertsHub} onClose={() => setShowAlertsHub(false)} />
+        <ErrorBoundary label="Central de Alertas">
+          <TrainerAlertsHub visible={showAlertsHub} onClose={() => setShowAlertsHub(false)} />
+        </ErrorBoundary>
 
         {/* MI ENTRENAMIENTO PERSONAL CARD */}
         {profile && (
@@ -834,42 +837,46 @@ export const TrainerDashboard: React.FC = () => {
         </div>
 
         {activeSubTab === 'atletas' ? (
-          <TrainerClientsTab
-            searchQuery={searchQuery}
-            setSearchQuery={setSearchQuery}
-            filterModalidad={filterModalidad}
-            setFilterModalidad={setFilterModalidad}
-            setRegisterOpen={setRegisterOpen}
-            loading={loading}
-            filteredClientes={finalFilteredClientes}
-            updatingVigenciaId={updatingVigenciaId}
-            handleVigenciaLocalChange={handleVigenciaLocalChange}
-            handleVigenciaSave={handleVigenciaSave}
-            clientesRachas={clientesRachas}
-            clientesLogros={clientesLogros}
-            navigate={navigate}
-            handleOpenRegisterSessionModal={handleOpenRegisterSessionModal}
-            handleOpenEvolutionModal={handleOpenEvolutionModal}
-          />
+          <ErrorBoundary label="Tab Atletas">
+            <TrainerClientsTab
+              searchQuery={searchQuery}
+              setSearchQuery={setSearchQuery}
+              filterModalidad={filterModalidad}
+              setFilterModalidad={setFilterModalidad}
+              setRegisterOpen={setRegisterOpen}
+              loading={loading}
+              filteredClientes={finalFilteredClientes}
+              updatingVigenciaId={updatingVigenciaId}
+              handleVigenciaLocalChange={handleVigenciaLocalChange}
+              handleVigenciaSave={handleVigenciaSave}
+              clientesRachas={clientesRachas}
+              clientesLogros={clientesLogros}
+              navigate={navigate}
+              handleOpenRegisterSessionModal={handleOpenRegisterSessionModal}
+              handleOpenEvolutionModal={handleOpenEvolutionModal}
+            />
+          </ErrorBoundary>
         ) : (
-          <TrainerAuditsTab
-            actividades={actividades}
-            alertasClientes={alertasClientes}
-            loadingAuditoria={loadingAuditoria}
-            fetchAuditoria={fetchAuditoria}
-            mostRecentSessionIds={mostRecentSessionIds}
-            availableExercisesForFilter={availableExercisesForFilter}
-            filasFiltradasProgresion={filasFiltradasProgresion}
-            selectedAnalysisClient={selectedAnalysisClient}
-            setSelectedAnalysisClient={setSelectedAnalysisClient}
-            selectedAnalysisExercise={selectedAnalysisExercise}
-            setSelectedAnalysisExercise={setSelectedAnalysisExercise}
-            auditViewMode={auditViewMode}
-            setAuditViewMode={setAuditViewMode}
-            expandedActividades={expandedActividades}
-            setExpandedActividades={setExpandedActividades}
-            clientes={clientes}
-          />
+          <ErrorBoundary label="Tab Auditoría">
+            <TrainerAuditsTab
+              actividades={actividades}
+              alertasClientes={alertasClientes}
+              loadingAuditoria={loadingAuditoria}
+              fetchAuditoria={fetchAuditoria}
+              mostRecentSessionIds={mostRecentSessionIds}
+              availableExercisesForFilter={availableExercisesForFilter}
+              filasFiltradasProgresion={filasFiltradasProgresion}
+              selectedAnalysisClient={selectedAnalysisClient}
+              setSelectedAnalysisClient={setSelectedAnalysisClient}
+              selectedAnalysisExercise={selectedAnalysisExercise}
+              setSelectedAnalysisExercise={setSelectedAnalysisExercise}
+              auditViewMode={auditViewMode}
+              setAuditViewMode={setAuditViewMode}
+              expandedActividades={expandedActividades}
+              setExpandedActividades={setExpandedActividades}
+              clientes={clientes}
+            />
+          </ErrorBoundary>
         )}
       </div>
 

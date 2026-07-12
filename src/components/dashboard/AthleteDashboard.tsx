@@ -34,6 +34,7 @@ import PreWorkoutPrompt from './PreWorkoutPrompt';
 import GamificacionPanel from './GamificacionPanel';
 import { OnboardingModal } from '../common/OnboardingModal';
 import { useModalA11y } from '../../hooks/useModalA11y';
+import { ErrorBoundary } from '../common/ErrorBoundary';
 import { ShareableProgressCard } from './ShareableProgressCard';
 import { InitialPeriodizationEvaluation } from './InitialPeriodizationEvaluation';
 import { subscribirNotificacionesPush, verificarSuscripcionPushActiva } from '../../lib/pushNotifications';
@@ -231,7 +232,6 @@ export const AthleteDashboard: React.FC = () => {
   const handleMobileTabChange = (tab: MobileTab) => {
     setActiveMobileTab(tab);
     localStorage.setItem('pwa_active_mobile_tab', tab);
-    window.scrollTo(0, 0);
   };
   
   // Extraemos la semana actual configurada y el historial de microciclos
@@ -1229,6 +1229,7 @@ export const AthleteDashboard: React.FC = () => {
              HOY tab continues below with week/day tabs + WorkoutCard
         ════════════════════════════════════════════ */}
         <div className={`mobile-tab-panel${activeMobileTab === 'plan' ? ' mobile-tab-panel--active' : ''}`} data-tab="plan" style={{ display: activeMobileTab === 'plan' ? 'block' : 'none' }}>
+        <ErrorBoundary label="Tab Plan (coach)">
 
         <div className="cover-page" style={{ position: 'relative', marginTop: '20px' }}>
           
@@ -1437,8 +1438,10 @@ export const AthleteDashboard: React.FC = () => {
           </div>
         </div>
 
+        </ErrorBoundary>
         </div>{/* /mobile-tab-panel plan — cover-page + semanas (unified) */}
         <div className={`mobile-tab-panel${activeMobileTab === 'hoy' ? ' mobile-tab-panel--active' : ''}`} data-tab="hoy" style={{ display: activeMobileTab === 'hoy' ? 'block' : 'none' }}>
+        <ErrorBoundary label="Tab Hoy">
 
         {/* Banner de invitación a activar notificaciones Push */}
         {showPushPrompt && !planExpiration.expired && (
@@ -1688,14 +1691,16 @@ export const AthleteDashboard: React.FC = () => {
         {/* WORKOUT CARD SECTION — inside HOY tab */}
         <div id="workoutCardSection" key={`tab-${activeTab}`} className="tab-content-enter" style={{ contentVisibility: 'auto' }}>
           {trainingDays.length > 0 ? (
-            <WorkoutCard
-              day={trainingDays[activeTab] || trainingDays[0]}
-              globalVariables={globalVariables}
-              variableDefinitions={variableDefinitions}
-              checkedExerciseIds={checkedIds}
-              onToggleCheck={handleToggleCheck}
-              onShowGuide={(title, content) => setGuideModal({ open: true, title, content })}
-            />
+            <ErrorBoundary label="Entrenamiento de hoy">
+              <WorkoutCard
+                day={trainingDays[activeTab] || trainingDays[0]}
+                globalVariables={globalVariables}
+                variableDefinitions={variableDefinitions}
+                checkedExerciseIds={checkedIds}
+                onToggleCheck={handleToggleCheck}
+                onShowGuide={(title, content) => setGuideModal({ open: true, title, content })}
+              />
+            </ErrorBoundary>
           ) : (
             <div style={{ textAlign: 'center', padding: '40px', background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', boxShadow: '0 8px 32px 0 var(--theme-glow)', borderRadius: '16px' }}>
               <p style={{ color: 'var(--text2)' }}>Cargando ejercicios de tu plan...</p>
@@ -1703,6 +1708,7 @@ export const AthleteDashboard: React.FC = () => {
           )}
         </div>
 
+        </ErrorBoundary>
         </div>{/* /mobile-tab-panel hoy — properly closed before sibling panels */}
 
         {/* ════════════════════════════════════════════
@@ -1712,6 +1718,7 @@ export const AthleteDashboard: React.FC = () => {
              Always visible on desktop (≥ 768px)
         ════════════════════════════════════════════ */}
         <div className={`mobile-tab-panel${activeMobileTab === 'plan' ? ' mobile-tab-panel--active' : ''}`} data-tab="plan" style={{ display: activeMobileTab === 'plan' ? 'block' : 'none' }}>
+        <ErrorBoundary label="Tab Plan (solo lifter)">
 
 
         {/* SOLO LIFTER — Quick Start CTA (cuando no hay plan) */}
@@ -2024,6 +2031,7 @@ export const AthleteDashboard: React.FC = () => {
           </div>
         )}
 
+        </ErrorBoundary>
         </div>{/* /mobile-tab-panel plan — Solo Lifter + Directorio */}
 
         {/* ════════════════════════════════════════════
@@ -2033,6 +2041,7 @@ export const AthleteDashboard: React.FC = () => {
              Always visible on desktop (≥ 768px)
         ════════════════════════════════════════════ */}
         <div className={`mobile-tab-panel${activeMobileTab === 'notificaciones' ? ' mobile-tab-panel--active' : ''}`} data-tab="notificaciones" style={{ display: activeMobileTab === 'notificaciones' ? 'block' : 'none' }}>
+        <ErrorBoundary label="Tab Alertas">
 
         {/* NOTIFICACIONES DE SOBRECARGA */}
         {!planExpiration.expired && plan && showNotificationsPanel && (
@@ -2054,6 +2063,7 @@ export const AthleteDashboard: React.FC = () => {
           </div>
         )}
 
+        </ErrorBoundary>
         </div>{/* /mobile-tab-panel notificaciones */}
 
         {/* ════════════════════════════════════════════
@@ -2062,6 +2072,7 @@ export const AthleteDashboard: React.FC = () => {
              Always visible on desktop (≥ 768px)
         ════════════════════════════════════════════ */}
         <div className={`mobile-tab-panel${activeMobileTab === 'progreso' ? ' mobile-tab-panel--active' : ''}`} data-tab="progreso" style={{ display: activeMobileTab === 'progreso' ? 'block' : 'none' }}>
+        <ErrorBoundary label="Tab Progreso">
 
         {/* GAMIFICACION — cuando ya hay sesiones registradas */}
         {!planExpiration.expired && overloadSessions.length > 0 && (
@@ -2098,7 +2109,9 @@ export const AthleteDashboard: React.FC = () => {
                   COMPARTIR 📸
                 </button>
               </div>
-              <GamificacionPanel sesiones={overloadSessions} customBadges={trainerProfile?.insignias_custom || []} />
+              <ErrorBoundary label="Panel de gamificación">
+                <GamificacionPanel sesiones={overloadSessions} customBadges={trainerProfile?.insignias_custom || []} />
+              </ErrorBoundary>
             </div>
           </div>
         )}
@@ -2200,6 +2213,7 @@ export const AthleteDashboard: React.FC = () => {
           </div>
         )}
 
+        </ErrorBoundary>
         </div>{/* /mobile-tab-panel progreso */}
 
 
