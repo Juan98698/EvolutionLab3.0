@@ -40,7 +40,7 @@ vi.mock('../../../lib/supabaseClient', () => {
         tableChain.eq = vi.fn().mockReturnValue(tableChain);
         tableChain.order = vi.fn().mockReturnValue(tableChain);
 
-        tableChain.limit = vi.fn().mockImplementation((num) => {
+        tableChain.limit = vi.fn().mockImplementation((_num) => {
           return new Promise((resolve) => {
             setTimeout(() => {
               if (table === 'planes') {
