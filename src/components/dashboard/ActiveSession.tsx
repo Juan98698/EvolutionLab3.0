@@ -186,6 +186,32 @@ const ActiveSession: React.FC = () => {
     }
   }, [currentIdx, exercises]);
 
+  // Cargar dinámicamente el gif_url del catálogo global si no viene en el plan
+  useEffect(() => {
+    const fetchGlobalGif = async () => {
+      const curEx = exercises[currentIdx];
+      if (curEx && !curEx.gif_url) {
+        try {
+          const { data } = await supabase
+            .from('ejercicios_globales')
+            .select('gif_url')
+            .ilike('nombre', curEx.nombre.trim())
+            .maybeSingle();
+
+          if (data && data.gif_url) {
+            setExercises(prev => prev.map((ex, idx) => 
+              idx === currentIdx ? { ...ex, gif_url: data.gif_url } : ex
+            ));
+          }
+        } catch (e) {
+          console.warn('Error fetching global gif_url:', e);
+        }
+      }
+    };
+    fetchGlobalGif();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentIdx]);
+
   // ─── Rest timer logic ─────────────────────────────────────────────────────
   const startRestTimer = useCallback((seconds: number) => {
     if (restIntervalRef.current) clearInterval(restIntervalRef.current);
