@@ -130,7 +130,7 @@ export const InitialPeriodizationEvaluation: React.FC<InitialPeriodizationEvalua
       padding: '30px 24px',
       maxWidth: '520px',
       width: '100%',
-      margin: '0 auto',
+      margin: '40px auto',
       boxShadow: '0 20px 50px rgba(0, 0, 0, 0.5)',
       backdropFilter: 'blur(20px)',
       color: 'white',

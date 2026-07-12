@@ -836,26 +836,14 @@ export const AthleteDashboard: React.FC = () => {
         // Bucle asíncrono silencioso
         for (const url of uniqueUrls) {
           try {
-            // Primer intento: con CORS
+            // Pre-cargar solo si soporta CORS para evitar envenenar la caché del SW con respuestas opacas (status 0)
             const response = await fetch(url, { mode: 'cors' });
-            if (response.ok || response.status === 0) {
+            if (response.ok) {
               await cache.put(url, response);
-            } else {
-              throw new Error('CORS disabled, falling back to no-cors');
             }
           } catch (err) {
-            // Segundo intento: sin CORS (respuesta opaca)
-            try {
-              const fallbackRes = await fetch(url, { mode: 'no-cors' });
-              await cache.put(url, fallbackRes);
-            } catch (e2) {
-              console.warn('⚡ PWA: Error al pre-cargar recurso:', url, e2);
-            }
+            console.warn('⚡ PWA: El recurso no soporta pre-carga CORS offline:', url);
           }
-          
-          // Pre-carga clásica en paralelo para renderizado instantáneo
-          const img = new Image();
-          img.src = url;
         }
         console.log('⚡ PWA: Todos los recursos multimedia han sido cacheados silenciosamente.');
       } catch (e) {
@@ -2598,11 +2586,11 @@ export const AthleteDashboard: React.FC = () => {
           height: '100vh',
           display: 'flex',
           justifyContent: 'center',
-          alignItems: 'center',
+          alignItems: 'flex-start',
           background: 'rgba(0,0,0,0.85)',
           backdropFilter: 'blur(10px)',
           zIndex: 999999,
-          padding: '20px',
+          padding: '20px 10px',
           boxSizing: 'border-box',
           overflowY: 'auto'
         }}>
