@@ -728,12 +728,15 @@ const ActiveSession: React.FC = () => {
                 <button
                   type="button"
                   className="active-session-guide-thumbnail-container"
-                  onClick={() => setShowFullImage(true)}
+                  onClick={() => {
+                    setActiveMediaType('image');
+                    setShowFullImage(true);
+                  }}
                   aria-label={`Ver imagen completa de ${currentExercise.nombre}`}
                   style={{ padding: 0 }}
                 >
                   <img
-                    src={activeMediaType === 'image' ? (currentExercise.image_url || currentExercise.gif_url) : (currentExercise.gif_url || currentExercise.image_url)}
+                    src={currentExercise.image_url || currentExercise.gif_url || ''}
                     alt={currentExercise.nombre}
                     className="active-session-guide-thumbnail"
                   />
@@ -746,18 +749,24 @@ const ActiveSession: React.FC = () => {
                 <span className="active-session-guide-title">Guía de ejecución</span>
                 
                 <div className="active-session-guide-actions">
-                  {currentExercise.image_url && currentExercise.gif_url && (
+                  {currentExercise.gif_url && (
                     <button
                       type="button"
                       className="active-session-guide-btn"
-                      onClick={() => setActiveMediaType(prev => prev === 'image' ? 'gif' : 'image')}
+                      onClick={() => {
+                        setActiveMediaType('gif');
+                        setShowFullImage(true);
+                      }}
                       style={{
                         background: 'rgba(0, 212, 255, 0.1)',
                         border: '1px solid rgba(0, 212, 255, 0.25)',
                         color: 'var(--theme-primary)'
                       }}
                     >
-                      {activeMediaType === 'image' ? '🎬 Ver GIF' : '🖼️ Ver Foto'}
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '4px' }}>
+                        <polygon points="5 3 19 12 5 21 5 3"></polygon>
+                      </svg>
+                      Ver GIF
                     </button>
                   )}
 
