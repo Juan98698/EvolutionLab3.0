@@ -247,6 +247,28 @@ export const AthleteDashboard: React.FC = () => {
     }
   }, [plan?.periodizationConfig?.semana_actual]);
 
+  // Limpiar cachés corruptas/opacas (status 0) acumuladas en ejecuciones anteriores
+  useEffect(() => {
+    const cleanOpaqueCaches = async () => {
+      try {
+        if ('caches' in window) {
+          const cache = await caches.open('supabase-storage-cache');
+          const keys = await cache.keys();
+          for (const request of keys) {
+            const response = await cache.match(request);
+            if (response && response.status === 0) {
+              await cache.delete(request);
+              console.log('⚡ PWA Cache Cleanup: Deleted opaque response for:', request.url);
+            }
+          }
+        }
+      } catch (e) {
+        console.warn('⚡ PWA Cache Cleanup error:', e);
+      }
+    };
+    cleanOpaqueCaches();
+  }, []);
+
   const [philosophyOpen, setPhilosophyOpen] = useState<boolean>(false);
   const [guideModal, setGuideModal] = useState<{ open: boolean; title: string; content: string }>({ open: false, title: '', content: '' });
   const [is1RMModalOpen, setIs1RMModalOpen] = useState<boolean>(false);
@@ -2582,15 +2604,15 @@ export const AthleteDashboard: React.FC = () => {
           position: 'fixed',
           top: 0,
           left: 0,
-          width: '100vw',
-          height: '100vh',
+          right: 0,
+          bottom: 0,
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'flex-start',
           background: 'rgba(0,0,0,0.85)',
           backdropFilter: 'blur(10px)',
           zIndex: 999999,
-          padding: '20px 10px',
+          padding: '20px 10px 100px 10px',
           boxSizing: 'border-box',
           overflowY: 'auto'
         }}>
