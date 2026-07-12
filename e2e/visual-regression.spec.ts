@@ -10,7 +10,7 @@ import { test, expect } from '@playwright/test';
 //   SUPABASE_PROJECT_REF=szqitksfxiuuiljftlrl  (opcional, si se quiere valor explícito)
 const PROJECT_REF = process.env['SUPABASE_PROJECT_REF']
   || process.env['VITE_SUPABASE_URL']?.split('//')[1]?.split('.')[0]
-  || '';
+  || 'placeholder-project';
 
 test.describe('Evolution Lab 3.0 Visual Regression Tests', () => {
   

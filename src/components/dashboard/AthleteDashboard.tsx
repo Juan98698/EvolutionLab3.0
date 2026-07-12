@@ -232,6 +232,7 @@ export const AthleteDashboard: React.FC = () => {
   const handleMobileTabChange = (tab: MobileTab) => {
     setActiveMobileTab(tab);
     localStorage.setItem('pwa_active_mobile_tab', tab);
+    window.scrollTo(0, 0);
   };
   
   // Extraemos la semana actual configurada y el historial de microciclos

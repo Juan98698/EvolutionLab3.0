@@ -1,6 +1,8 @@
 import { test, expect } from '@playwright/test';
 
-const PROJECT_REF = 'szqitksfxiuuiljftlrl';
+const PROJECT_REF = process.env['SUPABASE_PROJECT_REF']
+  || process.env['VITE_SUPABASE_URL']?.split('//')[1]?.split('.')[0]
+  || 'placeholder-project';
 
 test.describe('Evolution Lab 3.0 E2E Workflows', () => {
   test.beforeEach(async ({ page }) => {
