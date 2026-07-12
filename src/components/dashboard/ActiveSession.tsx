@@ -89,6 +89,7 @@ const ActiveSession: React.FC = () => {
   const [plan, setPlan] = useState<PlanData | null>(null);
   const [exercises, setExercises] = useState<ActiveExercise[]>([]);
   const [currentIdx, setCurrentIdx] = useState(0);
+  const [activeMediaType, setActiveMediaType] = useState<'image' | 'gif'>('image');
   const [saving, setSaving] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [sessionNotes, setSessionNotes] = useState('');
@@ -165,7 +166,8 @@ const ActiveSession: React.FC = () => {
           feedback_estimulo: 'good',
           feedback_recuperacion: 'recovered',
           video_url: ex.video_url || '',
-          image_url: ex.image_url || ex.gif_url || '',
+          image_url: ex.image_url || '',
+          gif_url: ex.gif_url || '',
           description: ex.description || '',
         };
       });
@@ -175,6 +177,14 @@ const ActiveSession: React.FC = () => {
       console.error('Error loading plan for ActiveSession:', e);
     }
   }, [dayIndex]);
+
+  // Set initial active media type based on what is available when selected exercise changes
+  useEffect(() => {
+    const curEx = exercises[currentIdx];
+    if (curEx) {
+      setActiveMediaType(curEx.image_url ? 'image' : 'gif');
+    }
+  }, [currentIdx, exercises]);
 
   // ─── Rest timer logic ─────────────────────────────────────────────────────
   const startRestTimer = useCallback((seconds: number) => {
@@ -697,7 +707,7 @@ const ActiveSession: React.FC = () => {
                   style={{ padding: 0 }}
                 >
                   <img
-                    src={currentExercise.image_url || currentExercise.gif_url}
+                    src={activeMediaType === 'image' ? (currentExercise.image_url || currentExercise.gif_url) : (currentExercise.gif_url || currentExercise.image_url)}
                     alt={currentExercise.nombre}
                     className="active-session-guide-thumbnail"
                   />
@@ -710,6 +720,21 @@ const ActiveSession: React.FC = () => {
                 <span className="active-session-guide-title">Guía de ejecución</span>
                 
                 <div className="active-session-guide-actions">
+                  {currentExercise.image_url && currentExercise.gif_url && (
+                    <button
+                      type="button"
+                      className="active-session-guide-btn"
+                      onClick={() => setActiveMediaType(prev => prev === 'image' ? 'gif' : 'image')}
+                      style={{
+                        background: 'rgba(0, 212, 255, 0.1)',
+                        border: '1px solid rgba(0, 212, 255, 0.25)',
+                        color: 'var(--theme-primary)'
+                      }}
+                    >
+                      {activeMediaType === 'image' ? '🎬 Ver GIF' : '🖼️ Ver Foto'}
+                    </button>
+                  )}
+
                   {currentExercise.video_url && (
                     <a
                       href={currentExercise.video_url}
@@ -917,10 +942,34 @@ const ActiveSession: React.FC = () => {
           >
             <button className="active-session-image-close" onClick={() => setShowFullImage(false)}>✕</button>
             <img
-              src={currentExercise.image_url || currentExercise.gif_url}
+              src={activeMediaType === 'image' ? (currentExercise.image_url || currentExercise.gif_url) : (currentExercise.gif_url || currentExercise.image_url)}
               alt={currentExercise.nombre}
               className="active-session-image-large"
             />
+            {currentExercise.image_url && currentExercise.gif_url && (
+              <button
+                type="button"
+                onClick={() => setActiveMediaType(prev => prev === 'image' ? 'gif' : 'image')}
+                style={{
+                  position: 'absolute',
+                  bottom: '16px',
+                  right: '16px',
+                  background: 'rgba(0, 0, 0, 0.75)',
+                  border: '1px solid var(--theme-border, rgba(255,255,255,0.15))',
+                  color: 'var(--theme-primary, #00d4ff)',
+                  borderRadius: '20px',
+                  padding: '6px 14px',
+                  fontSize: '11px',
+                  fontFamily: "'Orbitron', sans-serif",
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  zIndex: 10,
+                  boxShadow: '0 0 10px rgba(0, 212, 255, 0.3)'
+                }}
+              >
+                {activeMediaType === 'image' ? '🎬 Ver GIF' : '🖼️ Ver Foto'}
+              </button>
+            )}
             <p className="active-session-image-caption">{currentExercise.nombre}</p>
           </div>
         </div>

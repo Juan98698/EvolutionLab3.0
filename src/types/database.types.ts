@@ -305,6 +305,7 @@ export interface EjercicioGlobal {
   imagen_url?: string | null;
   descripcion?: string | null;
   video_url?: string | null;
+  gif_url?: string | null;
   created_at?: string;
 }
 

@@ -381,7 +381,7 @@ export const PlanPlanner: React.FC = () => {
       try {
         const { data, error } = await supabase
           .from('ejercicios_globales')
-          .select('nombre, grupo_muscular, imagen_url, video_url, descripcion')
+          .select('nombre, grupo_muscular, imagen_url, video_url, descripcion, gif_url')
           .order('nombre');
         if (!error && data) {
           const normalized = (data as any[]).map((e: any) => ({
@@ -805,15 +805,17 @@ export const PlanPlanner: React.FC = () => {
         // serie, ahora van en paralelo.
         const [profResult, planResult] = await Promise.all([
           supabase.from('profiles').select('*').eq('id', clienteId).single(),
-          supabase.from('planes').select('*').eq('cliente_id', clienteId).eq('activo', true).maybeSingle()
+          supabase.from('planes').select('*').eq('cliente_id', clienteId).eq('activo', true).order('created_at', { ascending: false }).limit(1)
         ]);
 
         const { data: profData, error: profError } = profResult;
         if (profError) throw profError;
         setClientProfile(profData as Profile);
 
-        const { data: planData, error: planError } = planResult;
+        const { data: planDataList, error: planError } = planResult;
         if (planError) throw planError;
+
+        const planData = planDataList && planDataList.length > 0 ? planDataList[0] : null;
 
         if (planData && planData.datos_plan) {
           setExistingPlanId(planData.id);
@@ -1102,8 +1104,8 @@ export const PlanPlanner: React.FC = () => {
                     if (foundLocal || foundGlobal) {
                       // Priorizar valores locales (historial) pero con fallback a valores globales si los locales están vacíos
                       nextImageUrl = (foundLocal?.imageData) || (foundGlobal?.imagen_url) || '';
-                      nextGifUrl = (foundLocal?.gifData) || '';
-                      nextVideoUrl = (foundLocal?.videoUrl) || '';
+                      nextGifUrl = (foundLocal?.gifData) || (foundGlobal?.gif_url) || '';
+                      nextVideoUrl = (foundLocal?.videoUrl) || (foundGlobal?.video_url) || '';
                       nextDescription = (foundLocal?.description) || (foundGlobal?.descripcion) || '';
                       nextNombreOriginal = (foundGlobal?.nombre) || (foundLocal?.nombreOriginal) || '';
                       nextGrupoMuscular = (foundGlobal?.grupo_muscular) || (foundLocal?.grupoMuscular) || '';
@@ -1113,10 +1115,10 @@ export const PlanPlanner: React.FC = () => {
                       } else if (foundLocal) {
                         showToast(`✨ ¡Auto-rellenado personalizado para "${val}"!`, 'info');
                       } else {
-                        if (foundGlobal?.imagen_url) {
+                        if (foundGlobal?.imagen_url || foundGlobal?.gif_url) {
                           showToast(`✨ ¡Auto-rellenado global para "${val}"!`, 'info');
                         } else {
-                          showToast(`ℹ️ "${val}" no tiene imagen. ¡Sube una para ayudar a otros!`, 'info');
+                          showToast(`ℹ️ "${val}" no tiene imagen ni GIF. ¡Sube una para ayudar a otros!`, 'info');
                         }
                       }
                     } else {
@@ -1130,8 +1132,8 @@ export const PlanPlanner: React.FC = () => {
                         
                         if (!isCustomUpload) {
                           nextImageUrl = ex.image_url || (linkedLocal?.imageData) || (linkedGlobal?.imagen_url) || '';
-                          nextGifUrl = ex.gif_url || (linkedLocal?.gifData) || '';
-                          nextVideoUrl = ex.video_url || (linkedLocal?.videoUrl) || '';
+                          nextGifUrl = ex.gif_url || (linkedLocal?.gifData) || (linkedGlobal?.gif_url) || '';
+                          nextVideoUrl = ex.video_url || (linkedLocal?.videoUrl) || (linkedGlobal?.video_url) || '';
                           nextDescription = (ex as any).description || (linkedLocal?.description) || (linkedGlobal?.descripcion) || '';
                           nextGrupoMuscular = ex.grupo_muscular || (linkedGlobal?.grupo_muscular) || (linkedLocal?.grupoMuscular) || '';
                         }
@@ -1314,7 +1316,7 @@ export const PlanPlanner: React.FC = () => {
           // Recargar catálogo global en el estado
           const { data: updatedCatalog } = await supabase
             .from('ejercicios_globales')
-            .select('nombre, grupo_muscular, imagen_url, video_url, descripcion')
+            .select('nombre, grupo_muscular, imagen_url, video_url, descripcion, gif_url')
             .order('nombre');
           if (updatedCatalog) {
             setGlobalCatalog(updatedCatalog as EjercicioGlobal[]);
