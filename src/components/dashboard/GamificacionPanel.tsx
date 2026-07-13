@@ -155,19 +155,26 @@ export const GamificacionPanel: React.FC<GamificacionPanelProps> = ({ sesiones, 
   const totalSesiones = useMemo(() => uniqueDates(sesiones).length, [sesiones]);
   const prCount = useMemo(() => countPRs(sesiones), [sesiones]);
 
-  // Merge default badges and trainer custom badges
+  // Merge default badges and trainer custom badges.
+  //
+  // ANTES: si `customBadges` tenía al menos 1 elemento, REEMPLAZABA
+  // por completo los 9 logros por defecto — un entrenador que agregaba
+  // una sola insignia personalizada (ej. "Reto de Verano") le borraba sin
+  // saberlo "Primera Sesión", "Cazador de PRs", etc. a todos sus atletas.
+  // La pantalla donde se cargan (TrainerBranding.tsx) tampoco avisa de
+  // este comportamiento, así que era un efecto silencioso e inesperado.
+  //
+  // AHORA: las insignias personalizadas se SUMAN a las 9 por defecto.
   const badgesList = useMemo(() => {
-    if (customBadges && customBadges.length > 0) {
-      return customBadges.map((cb, idx) => ({
-        id: cb.id || `custom_${idx}`,
-        titulo: cb.titulo,
-        desc: cb.descripcion,
-        icono: cb.icono,
-        tipo: cb.tipo,
-        condition: (s: Session[]) => evaluateCustomBadge(cb, s, racha.actual)
-      }));
-    }
-    return INSIGNIAS_DEFS;
+    const customMapped = (customBadges ?? []).map((cb, idx) => ({
+      id: cb.id || `custom_${idx}`,
+      titulo: cb.titulo,
+      desc: cb.descripcion,
+      icono: cb.icono,
+      tipo: cb.tipo,
+      condition: (s: Session[]) => evaluateCustomBadge(cb, s, racha.actual)
+    }));
+    return [...INSIGNIAS_DEFS, ...customMapped];
   }, [customBadges, racha.actual]);
 
   // Calculate earned badges

@@ -766,7 +766,7 @@ export const TrainerBranding: React.FC = () => {
                   Logros & Insignias Personalizadas para tus Clientes
                 </div>
                 <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)' }}>
-                  Configura insignias gamificadas que tus atletas vinculados desbloquearán automáticamente al cumplir las condiciones de entrenamiento.
+                  Configura insignias gamificadas que tus atletas vinculados desbloquearán automáticamente al cumplir las condiciones de entrenamiento. Se suman a los 9 logros que la app ya trae por defecto — no los reemplazan.
                 </div>
               </div>
             </div>
