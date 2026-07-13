@@ -293,8 +293,8 @@ test.describe('Evolution Lab 3.0 Visual Regression Tests', () => {
       timeout: 15000
     });
 
-    // 2. Locate and toggle RIR manual override button
-    const rirToggleButton = periodizationCard.locator('text=/RIR AUTOMÁTICO|RIR MANUAL ACTIVO/').first();
+    // 2. Locate and toggle RIR manual override button using stable aria-label selector
+    const rirToggleButton = periodizationCard.locator('button[aria-label="Activar control manual de RIR"]').first();
     await rirToggleButton.click();
 
     // Wait 250ms for color change transitions
