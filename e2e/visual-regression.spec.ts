@@ -24,9 +24,7 @@ test.describe('Evolution Lab 3.0 Visual Regression Tests', () => {
     });
 
     page.on('request', req => {              
-      if (req.url().includes('supabase.co') && !req.url().includes('/auth/')) {
-        console.log(`[REQUEST]: ${req.method()} ${req.url()}`);
-      }
+      console.log(`[REQUEST]: ${req.method()} ${req.url()}`);
     });
   });
 
@@ -144,6 +142,7 @@ test.describe('Evolution Lab 3.0 Visual Regression Tests', () => {
     // Intercept planes query. Since postgrest .maybeSingle() expects a JSON array that the client-side library
     // unpacks as data[0] (to avoid HTTP 406 errors on empty), we must return a JSON array containing the plan.
     await page.route('**/rest/v1/planes*', async route => {
+      console.log('MOCK PLANES ROUTE CALLED:', route.request().url());
       const config = {
         enabled: true,
         nivel_atleta: 'avanzado',

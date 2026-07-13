@@ -31,7 +31,71 @@ if (typeof window !== 'undefined') {
   const isE2E = navigator.userAgent.includes('Headless') || (window as any)._playwright_test === true || window.location.search.includes('e2e=true');
   console.log('⚡ Supabase Client Init - isE2E:', isE2E, 'userAgent:', navigator.userAgent, '_playwright_test:', (window as any)._playwright_test);
 
+  let mockPlanObj: any = null;
+
   if (isE2E) {
+    mockPlanObj = {
+      id: 'test-plan-id',
+      cliente_id: 'test-client-id',
+      creador_id: 'test-trainer-id',
+      activo: true,
+      periodizationConfig: {
+        enabled: true,
+        nivel_atleta: 'avanzado',
+        objetivo: 'hipertrofia',
+        semana_actual: 1,
+        total_semanas: 4,
+        rir_inicial: 4,
+        rir_progresion: 'normal',
+        rir_override_manual: false,
+        muscle_groups_in_focus: ['cuadriceps']
+      },
+      datos_plan: {
+        portada: {
+          userName: 'Juan Perez',
+          userGoal: 'Hipertrofia',
+          startDate: '2026-06-30',
+          planVigenciaPlan: '28',
+          trainerName: 'Coach Juan',
+          whatsappLink: '',
+          instagramLink: '',
+          globalNote: 'Ejecuta con cuidado'
+        },
+        periodizationConfig: {
+          enabled: true,
+          nivel_atleta: 'avanzado',
+          objetivo: 'hipertrofia',
+          semana_actual: 1,
+          total_semanas: 4,
+          rir_inicial: 4,
+          rir_progresion: 'normal',
+          rir_override_manual: false,
+          muscle_groups_in_focus: ['cuadriceps']
+        },
+        globalVariables: [
+          { id: 'series de trabajo', label: 'SERIES DE TRABAJO', type: 'text', defaultValue: '3' },
+          { id: 'repeticiones', label: 'REPETICIONES', type: 'text', defaultValue: '10' }
+        ],
+        trainingDays: [
+          {
+            id: 'day_1',
+            name: 'Lunes: Pecho',
+            exercises: [
+              {
+                id: 'ex-1',
+                nombre: 'Press de banca',
+                grupo_muscular: 'Pecho',
+                variables: {
+                  'series de trabajo': '3',
+                  'repeticiones': '10'
+                }
+              }
+            ]
+          }
+        ]
+      }
+    };
+
     (supabase as any).auth = {
       getSession: () => {
         const activeProfile = window.localStorage.getItem('pwa_user_profile');
@@ -126,45 +190,7 @@ if (typeof window !== 'undefined') {
         }
         if (table === 'planes') {
           return Promise.resolve({
-            data: {
-              id: 'test-plan-id',
-              cliente_id: 'test-client-id',
-              creador_id: 'test-trainer-id',
-              activo: true,
-              datos_plan: {
-                portada: {
-                  userName: 'Juan Perez',
-                  userGoal: 'Hipertrofia',
-                  startDate: '2026-06-30',
-                  planVigenciaPlan: '28',
-                  trainerName: 'Coach Juan',
-                  whatsappLink: '',
-                  instagramLink: '',
-                  globalNote: 'Ejecuta con cuidado'
-                },
-                globalVariables: [
-                  { id: 'series de trabajo', label: 'SERIES DE TRABAJO', type: 'text', defaultValue: '3' },
-                  { id: 'repeticiones', label: 'REPETICIONES', type: 'text', defaultValue: '10' }
-                ],
-                trainingDays: [
-                  {
-                    id: 'day-1',
-                    name: 'Lunes: Pecho',
-                    exercises: [
-                      {
-                        id: 'ex-1',
-                        nombre: 'Press de banca',
-                        grupo_muscular: 'Pecho',
-                        variables: {
-                          'series de trabajo': '3',
-                          'repeticiones': '10'
-                        }
-                      }
-                    ]
-                  }
-                ]
-              }
-            },
+            data: mockPlanObj,
             error: null
           });
         }
@@ -196,6 +222,9 @@ if (typeof window !== 'undefined') {
             }
           ];
           return Promise.resolve({ data: sessions, error: null }).then(onfulfilled);
+        }
+        if (table === 'planes') {
+          return Promise.resolve({ data: [mockPlanObj], error: null }).then(onfulfilled);
         }
         return Promise.resolve({ data: [], error: null }).then(onfulfilled);
       }
