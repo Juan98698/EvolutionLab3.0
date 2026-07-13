@@ -1,4 +1,4 @@
-﻿/**
+/**
  * gamificationUtils.ts
  *
  * Fuente unica de verdad para las funciones de gamificacion compartidas
@@ -44,43 +44,43 @@ export function calcularRachaSemanas(
 
   const sessionWeeks = new Set(
     sessions.map(function(s) {
-      var parts = s.fecha.split('-').map(Number);
-      var year = parts[0], month = parts[1], day = parts[2];
+      const parts = s.fecha.split('-').map(Number);
+      const year = parts[0], month = parts[1], day = parts[2];
       return getISOWeekString(new Date(year, month - 1, day));
     })
   );
 
   function getOffsetWeekString(weeksAgo: number): string {
-    var d = new Date(now.getTime());
+    const d = new Date(now.getTime());
     d.setDate(d.getDate() - 7 * weeksAgo);
     return getISOWeekString(d);
   }
 
-  var currentWeek = getOffsetWeekString(0);
-  var lastWeek = getOffsetWeekString(1);
-  var hasCurrent = sessionWeeks.has(currentWeek);
-  var hasLast = sessionWeeks.has(lastWeek);
+  const currentWeek = getOffsetWeekString(0);
+  const lastWeek = getOffsetWeekString(1);
+  const hasCurrent = sessionWeeks.has(currentWeek);
+  const hasLast = sessionWeeks.has(lastWeek);
 
-  var actual = 0;
+  let actual = 0;
   if (hasCurrent || hasLast) {
-    var weeksAgo = hasCurrent ? 0 : 1;
+    let weeksAgo = hasCurrent ? 0 : 1;
     while (sessionWeeks.has(getOffsetWeekString(weeksAgo))) {
       actual++;
       weeksAgo++;
     }
   }
 
-  var sortedWeeks = Array.from(sessionWeeks).sort();
-  var maxima = 0;
+  const sortedWeeks = Array.from(sessionWeeks).sort();
+  let maxima = 0;
 
   if (sortedWeeks.length > 0) {
-    var currentMax = 1;
+    let currentMax = 1;
     maxima = 1;
-    for (var i = 1; i < sortedWeeks.length; i++) {
-      var prev = sortedWeeks[i - 1].split('-W').map(Number);
-      var curr = sortedWeeks[i].split('-W').map(Number);
-      var y1 = prev[0], w1 = prev[1], y2 = curr[0], w2 = curr[1];
-      var isConsecutive = false;
+    for (let i = 1; i < sortedWeeks.length; i++) {
+      const prev = sortedWeeks[i - 1].split('-W').map(Number);
+      const curr = sortedWeeks[i].split('-W').map(Number);
+      const y1 = prev[0], w1 = prev[1], y2 = curr[0], w2 = curr[1];
+      let isConsecutive = false;
       if (y1 === y2 && w2 === w1 + 1) {
         isConsecutive = true;
       } else if (y2 === y1 + 1 && (w1 === 52 || w1 === 53) && w2 === 1) {
@@ -114,10 +114,10 @@ export function calcularLevelProgress(
   totalPoints: number,
   currentLevel: number
 ): { pointsGained: number; pointsNeeded: number; pct: number } {
-  var currentLvlPoints = Math.pow(currentLevel - 1, 2) * 250;
-  var nextLvlPoints = Math.pow(currentLevel, 2) * 250;
-  var pointsGained = totalPoints - currentLvlPoints;
-  var pointsNeeded = nextLvlPoints - currentLvlPoints;
-  var pct = pointsNeeded > 0 ? Math.min((pointsGained / pointsNeeded) * 100, 100) : 100;
-  return { pointsGained: pointsGained, pointsNeeded: pointsNeeded, pct: pct };
+  const currentLvlPoints = Math.pow(currentLevel - 1, 2) * 250;
+  const nextLvlPoints = Math.pow(currentLevel, 2) * 250;
+  const pointsGained = totalPoints - currentLvlPoints;
+  const pointsNeeded = nextLvlPoints - currentLvlPoints;
+  const pct = pointsNeeded > 0 ? Math.min((pointsGained / pointsNeeded) * 100, 100) : 100;
+  return { pointsGained, pointsNeeded, pct };
 }
