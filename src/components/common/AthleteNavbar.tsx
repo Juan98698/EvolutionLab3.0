@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { readSessionsFromCache, SESSIONS_UPDATED_EVENT } from '../../lib/sessions';
 import { useModalA11y } from '../../hooks/useModalA11y';
 import Toast from './Toast';
+import { calcularRachaSemanas } from '../../lib/gamificationUtils';
 
 export const AthleteNavbar: React.FC = () => {
   const navigate = useNavigate();
@@ -141,41 +142,7 @@ export const AthleteNavbar: React.FC = () => {
       try {
         const parsed = readSessionsFromCache();
         if (Array.isArray(parsed) && parsed.length > 0) {
-          const getISOWeek = (date: Date): string => {
-            const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-            const dayNum = d.getUTCDay() || 7;
-            d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-            const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-            const weekNo = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
-            return `${d.getUTCFullYear()}-W${weekNo.toString().padStart(2, '0')}`;
-          };
-
-          const sessionWeeks = new Set(parsed.map((s: any) => {
-            if (!s.fecha) return '';
-            const [year, month, day] = s.fecha.split('-').map(Number);
-            return getISOWeek(new Date(year, month - 1, day));
-          }).filter(Boolean));
-
-          const getOffsetWeek = (weeksAgo: number): string => {
-            const d = new Date();
-            d.setDate(d.getDate() - 7 * weeksAgo);
-            return getISOWeek(d);
-          };
-
-          let actual = 0;
-          const currentWeek = getOffsetWeek(0);
-          const lastWeek = getOffsetWeek(1);
-
-          const hasCurrent = sessionWeeks.has(currentWeek);
-          const hasLast = sessionWeeks.has(lastWeek);
-
-          if (hasCurrent || hasLast) {
-            let weeksAgo = hasCurrent ? 0 : 1;
-            while (sessionWeeks.has(getOffsetWeek(weeksAgo))) {
-              actual++;
-              weeksAgo++;
-            }
-          }
+          const { actual } = calcularRachaSemanas(parsed);
           setStreakWeeks(actual);
         } else {
           setStreakWeeks(0);

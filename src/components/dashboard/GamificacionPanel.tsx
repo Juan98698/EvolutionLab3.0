@@ -1,10 +1,11 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useSupabase } from '../../context/SupabaseContext';
 import { supabase } from '../../lib/supabaseClient';
 import { Logro } from '../../types/database.types';
 import { Session } from '../../lib/overload';
 import confetti from 'canvas-confetti';
 import { useModalA11y } from '../../hooks/useModalA11y';
+import { calcularRachaSemanas, calcularNivel, calcularLevelProgress } from '../../lib/gamificationUtils';
 
 export interface CustomBadgeDef {
   id?: string;
@@ -124,10 +125,17 @@ export const GamificacionPanel: React.FC<GamificacionPanelProps> = ({ sesiones, 
   const [savedLogros, setSavedLogros] = useState<Logro[]>([]);
   const [loadingLogros, setLoadingLogros] = useState<boolean>(true);
   const [celebratingBadge, setCelebratingBadge] = useState<any | null>(null);
+  const [celebratingLevelUp, setCelebratingLevelUp] = useState<{ newLevel: number; prevLevel: number } | null>(null);
   const celebrationDialogRef = useModalA11y<HTMLDivElement>({
     isOpen: !!celebratingBadge,
     onClose: () => setCelebratingBadge(null),
   });
+  const levelUpDialogRef = useModalA11y<HTMLDivElement>({
+    isOpen: !!celebratingLevelUp,
+    onClose: () => setCelebratingLevelUp(null),
+  });
+  // Ref para evitar que el efecto de detección de nivel se dispare en el primer render
+  const isFirstLevelCheckRef = useRef(true);
 
   // Load saved achievements
   useEffect(() => {
@@ -232,28 +240,60 @@ export const GamificacionPanel: React.FC<GamificacionPanelProps> = ({ sesiones, 
     }
   }, [loadingLogros, earnedBadges, savedLogros, user]);
 
-  // Score and Level Calculations
+  // Score and Level Calculations (usando utilidades compartidas de gamificationUtils.ts)
   const totalPoints = useMemo(() => {
     return (totalSesiones * 50) + (earnedBadges.length * 200) + (racha.actual * 25) + (rachaSemanas.actual * 100) + (prCount * 100);
   }, [totalSesiones, earnedBadges.length, racha.actual, rachaSemanas.actual, prCount]);
 
-  const currentLevel = useMemo(() => {
-    return Math.floor(Math.sqrt(totalPoints / 250)) + 1;
-  }, [totalPoints]);
+  const currentLevel = useMemo(() => calcularNivel(totalPoints), [totalPoints]);
 
-  const levelProgress = useMemo(() => {
-    const nextLvl = currentLevel;
-    const currentLvl = currentLevel - 1;
-    const currentLvlPoints = Math.pow(currentLvl, 2) * 250;
-    const nextLvlPoints = Math.pow(nextLvl, 2) * 250;
-    const ptsGained = totalPoints - currentLvlPoints;
-    const ptsNeeded = nextLvlPoints - currentLvlPoints;
-    return {
-      pointsGained: ptsGained,
-      pointsNeeded: ptsNeeded,
-      pct: ptsNeeded > 0 ? (ptsGained / ptsNeeded) * 100 : 100
-    };
-  }, [totalPoints, currentLevel]);
+  const levelProgress = useMemo(() => calcularLevelProgress(totalPoints, currentLevel), [totalPoints, currentLevel]);
+
+  // ─── Detección de subida de nivel ────────────────────────────────────────
+  // Persiste el nivel en localStorage para que la comparación sobreviva
+  // cierres y reaperturas de la app.
+  useEffect(() => {
+    if (!user || loadingLogros) return;
+
+    const storageKey = `evolution_prev_level_${user.id}`;
+    const stored = localStorage.getItem(storageKey);
+    const prevLevel = stored ? parseInt(stored, 10) : null;
+
+    if (isFirstLevelCheckRef.current) {
+      // Primera carga: guardamos el nivel actual sin celebrar para que
+      // la próxima vez que suba haya un valor de comparación.
+      isFirstLevelCheckRef.current = false;
+      localStorage.setItem(storageKey, String(currentLevel));
+      return;
+    }
+
+    if (prevLevel !== null && currentLevel > prevLevel) {
+      // El atleta acaba de cruzar un umbral de nivel → celebrar
+      setCelebratingLevelUp({ newLevel: currentLevel, prevLevel });
+      localStorage.setItem(storageKey, String(currentLevel));
+
+      // Confetti doble desde ambos laterales (más espectacular que el de logros)
+      confetti({
+        particleCount: 100,
+        angle: 60,
+        spread: 55,
+        origin: { x: 0, y: 0.65 },
+        colors: ['#00d4ff', '#fbbf24', '#a5b4fc', '#34d399'],
+      });
+      setTimeout(() => {
+        confetti({
+          particleCount: 100,
+          angle: 120,
+          spread: 55,
+          origin: { x: 1, y: 0.65 },
+          colors: ['#00d4ff', '#fbbf24', '#a5b4fc', '#34d399'],
+        });
+      }, 150);
+    } else if (prevLevel === null) {
+      localStorage.setItem(storageKey, String(currentLevel));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentLevel, user, loadingLogros]);
 
   // Weekly historical comparison (Tú vs Tú)
   const weeklyComparison = useMemo(() => {
@@ -601,8 +641,94 @@ export const GamificacionPanel: React.FC<GamificacionPanelProps> = ({ sesiones, 
         </div>
       )}
 
-      {/* CELEBRATION FULLSCREEN MODAL */}
-      {celebratingBadge && (
+      {/* MODAL DE SUBIDA DE NIVEL — prioridad sobre el modal de logros */}
+      {celebratingLevelUp && (
+        // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+        <div style={{
+          position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
+          background: 'rgba(5, 7, 12, 0.94)', backdropFilter: 'blur(14px)',
+          display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center',
+          zIndex: 1000000, padding: '20px'
+        }} onClick={() => setCelebratingLevelUp(null)}>
+          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events */}
+          <div
+            ref={levelUpDialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="levelup-celebration-title"
+            tabIndex={-1}
+            style={{
+              background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.97), rgba(10, 15, 28, 0.97))',
+              border: '1px solid rgba(251, 191, 36, 0.45)',
+              borderRadius: '24px', padding: '40px 24px', maxWidth: '400px', width: '100%',
+              textAlign: 'center', boxShadow: '0 20px 60px rgba(251, 191, 36, 0.2)',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px',
+              position: 'relative'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              onClick={() => setCelebratingLevelUp(null)}
+              style={{
+                position: 'absolute', top: '15px', right: '15px',
+                background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)',
+                fontSize: '18px', cursor: 'pointer'
+              }}
+            >
+              ✕
+            </button>
+            {/* Icono de rayo con anillo dorado */}
+            <div style={{
+              width: '90px', height: '90px', borderRadius: '50%',
+              background: 'radial-gradient(circle, rgba(251, 191, 36, 0.2) 0%, rgba(251, 191, 36, 0.05) 70%)',
+              border: '2px solid rgba(251, 191, 36, 0.6)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '48px',
+              boxShadow: '0 0 30px rgba(251, 191, 36, 0.3), 0 0 60px rgba(251, 191, 36, 0.1)',
+              animation: 'pulse 1.5s infinite'
+            }}>
+              ⚡
+            </div>
+            <div>
+              <span style={{ fontSize: '10px', color: '#fbbf24', fontWeight: 800, letterSpacing: '2px', fontFamily: "'Orbitron', sans-serif" }}>
+                ¡SUBISTE DE NIVEL!
+              </span>
+              <h2
+                id="levelup-celebration-title"
+                style={{ fontSize: '26px', fontWeight: 800, color: 'white', fontFamily: "'Orbitron', sans-serif", margin: '8px 0 6px' }}
+              >
+                LVL {celebratingLevelUp.newLevel} ALCANZADO
+              </h2>
+              <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.6)', margin: 0 }}>
+                Has subido del nivel {celebratingLevelUp.prevLevel} al nivel {celebratingLevelUp.newLevel}.<br />
+                ¡Sigue entrenando, campeón!
+              </p>
+            </div>
+            <div style={{
+              background: 'rgba(251, 191, 36, 0.07)',
+              border: '1px solid rgba(251, 191, 36, 0.2)',
+              borderRadius: '12px', padding: '12px 20px', fontSize: '11px',
+              color: '#fbbf24', fontWeight: 700, fontFamily: "'Orbitron', sans-serif"
+            }}>
+              ⚡ NIVEL {celebratingLevelUp.newLevel} DESBLOQUEADO
+            </div>
+            <button
+              onClick={() => setCelebratingLevelUp(null)}
+              style={{
+                background: 'linear-gradient(135deg, #fbbf24, #d97706)',
+                border: 'none', color: '#0a0f1c', padding: '12px 28px', borderRadius: '12px',
+                fontSize: '11px', fontWeight: 800, fontFamily: "'Orbitron', sans-serif",
+                cursor: 'pointer', boxShadow: '0 4px 20px rgba(251, 191, 36, 0.4)', width: '100%'
+              }}
+            >
+              ¡A SEGUIR SUBIENDO!
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* CELEBRATION FULLSCREEN MODAL — logros individuales */}
+      {!celebratingLevelUp && celebratingBadge && (
         // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- backdrop de modal: cierra al hacer click afuera (conveniencia de mouse); el diálogo de abajo ya tiene cierre con Escape y foco atrapado vía useModalA11y
         <div style={{
           position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
@@ -682,75 +808,5 @@ export const GamificacionPanel: React.FC<GamificacionPanelProps> = ({ sesiones, 
     </div>
   );
 };
-
-function getISOWeekString(date: Date): string {
-  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-  const dayNum = d.getUTCDay() || 7;
-  d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  const weekNo = Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1) / 7);
-  return `${d.getUTCFullYear()}-W${weekNo.toString().padStart(2, '0')}`;
-}
-
-function calcularRachaSemanas(sessions: Session[]): { actual: number; maxima: number } {
-  if (sessions.length === 0) return { actual: 0, maxima: 0 };
-
-  const sessionWeeks = new Set(sessions.map(s => {
-    const [year, month, day] = s.fecha.split('-').map(Number);
-    return getISOWeekString(new Date(year, month - 1, day));
-  }));
-
-  const getOffsetWeekString = (weeksAgo: number): string => {
-    const d = new Date();
-    d.setDate(d.getDate() - 7 * weeksAgo);
-    return getISOWeekString(d);
-  };
-
-  let actual = 0;
-  const currentWeek = getOffsetWeekString(0);
-  const lastWeek = getOffsetWeekString(1);
-
-  const hasCurrent = sessionWeeks.has(currentWeek);
-  const hasLast = sessionWeeks.has(lastWeek);
-
-  if (hasCurrent || hasLast) {
-    let weeksAgo = hasCurrent ? 0 : 1;
-    while (sessionWeeks.has(getOffsetWeekString(weeksAgo))) {
-      actual++;
-      weeksAgo++;
-    }
-  }
-
-  const sortedWeeks = Array.from(sessionWeeks).sort();
-  let maxima = 0;
-  if (sortedWeeks.length > 0) {
-    let currentMax = 1;
-    maxima = 1;
-
-    for (let i = 1; i < sortedWeeks.length; i++) {
-      const [y1, w1] = sortedWeeks[i - 1].split('-W').map(Number);
-      const [y2, w2] = sortedWeeks[i].split('-W').map(Number);
-
-      let isConsecutive = false;
-      if (y1 === y2 && w2 === w1 + 1) {
-        isConsecutive = true;
-      } else if (y2 === y1 + 1) {
-        if ((w1 === 52 || w1 === 53) && w2 === 1) {
-          isConsecutive = true;
-        }
-      }
-
-      if (isConsecutive) {
-        currentMax++;
-      } else {
-        maxima = Math.max(maxima, currentMax);
-        currentMax = 1;
-      }
-    }
-    maxima = Math.max(maxima, currentMax);
-  }
-
-  return { actual, maxima };
-}
 
 export default GamificacionPanel;
