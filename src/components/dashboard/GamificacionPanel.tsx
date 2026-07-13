@@ -292,7 +292,6 @@ export const GamificacionPanel: React.FC<GamificacionPanelProps> = ({ sesiones, 
     } else if (prevLevel === null) {
       localStorage.setItem(storageKey, String(currentLevel));
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentLevel, user, loadingLogros]);
 
   // Weekly historical comparison (Tú vs Tú)
