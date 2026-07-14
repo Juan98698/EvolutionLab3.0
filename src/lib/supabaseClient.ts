@@ -48,7 +48,9 @@ if (typeof window !== 'undefined') {
         rir_inicial: 4,
         rir_progresion: 'normal',
         rir_override_manual: false,
-        muscle_groups_in_focus: ['cuadriceps']
+        muscle_groups_in_focus: ['cuadriceps'],
+        marcas_1rm: { 'press de banca': 100 },
+        fecha_evaluacion: '2026-06-30'
       },
       datos_plan: {
         portada: {
@@ -70,7 +72,9 @@ if (typeof window !== 'undefined') {
           rir_inicial: 4,
           rir_progresion: 'normal',
           rir_override_manual: false,
-          muscle_groups_in_focus: ['cuadriceps']
+          muscle_groups_in_focus: ['cuadriceps'],
+          marcas_1rm: { 'press de banca': 100 },
+          fecha_evaluacion: '2026-06-30'
         },
         globalVariables: [
           { id: 'series de trabajo', label: 'SERIES DE TRABAJO', type: 'text', defaultValue: '3' },

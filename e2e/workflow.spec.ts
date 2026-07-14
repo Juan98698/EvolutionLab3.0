@@ -100,6 +100,8 @@ test.describe('Evolution Lab 3.0 E2E Workflows', () => {
       window.localStorage.setItem('evolution_guided_plan_v1_test-client-id', 'true');
       window.localStorage.setItem('evolution_guided_plan_v1_test-trainer-id', 'true');
       window.localStorage.setItem('evolution_onboarded_v1', 'true');
+      window.localStorage.setItem('pwa_install_dismissed', 'true');
+      window.localStorage.setItem('pwa_push_prompt_dismissed_test-client-id', 'true');
       
       window.localStorage.setItem('pwa_user_profile', JSON.stringify({
         id: 'test-client-id',

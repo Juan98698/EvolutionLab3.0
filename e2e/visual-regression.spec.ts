@@ -67,6 +67,8 @@ test.describe('Evolution Lab 3.0 Visual Regression Tests', () => {
       window.localStorage.setItem(`sb-${projectRef}-auth-token`, JSON.stringify(mockSession));
       window.localStorage.setItem('evolution_trainer_onboarded_v1_test-trainer-id', 'true');
       window.localStorage.setItem('evolution_guided_plan_v1_test-trainer-id', 'true');
+      window.localStorage.setItem('pwa_install_dismissed', 'true');
+      window.localStorage.setItem('pwa_push_prompt_dismissed_test-trainer-id', 'true');
       
       window.localStorage.setItem('pwa_user_profile', JSON.stringify({
         id: 'test-trainer-id',
@@ -212,6 +214,8 @@ test.describe('Evolution Lab 3.0 Visual Regression Tests', () => {
       window.localStorage.setItem('evolution_trainer_onboarded_v1_test-client-id', 'true');
       window.localStorage.setItem('evolution_guided_plan_v1_test-client-id', 'true');
       window.localStorage.setItem('evolution_guided_plan_v1_test-trainer-id', 'true');
+      window.localStorage.setItem('pwa_install_dismissed', 'true');
+      window.localStorage.setItem('pwa_push_prompt_dismissed_test-trainer-id', 'true');
       
       window.localStorage.setItem('pwa_user_profile', JSON.stringify({
         id: 'test-trainer-id',
@@ -449,6 +453,7 @@ test.describe('Evolution Lab 3.0 Visual Regression Tests', () => {
       window.localStorage.setItem('evolution_trainer_onboarded_v1_test-client-id', 'true');
       window.localStorage.setItem('evolution_guided_plan_v1_test-client-id', 'true');
       window.localStorage.setItem('evolution_onboarded_v1', 'true');
+      window.localStorage.setItem('pwa_install_dismissed', 'true');
       window.localStorage.setItem('pwa_push_prompt_dismissed_test-client-id', 'true');
       window.localStorage.setItem('pwa_user_profile', JSON.stringify({
         id: 'test-client-id',
