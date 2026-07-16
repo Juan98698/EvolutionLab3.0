@@ -1,4 +1,4 @@
-/**
+﻿/**
  * gamificationUtils.ts
  *
  * Fuente unica de verdad para las funciones de gamificacion compartidas
@@ -119,5 +119,5 @@ export function calcularLevelProgress(
   const pointsGained = totalPoints - currentLvlPoints;
   const pointsNeeded = nextLvlPoints - currentLvlPoints;
   const pct = pointsNeeded > 0 ? Math.min((pointsGained / pointsNeeded) * 100, 100) : 100;
-  return { pointsGained, pointsNeeded, pct };
+  return { pointsGained: pointsGained, pointsNeeded: pointsNeeded, pct: pct };
 }

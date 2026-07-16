@@ -22,28 +22,20 @@ function monday(isoDate: string): Date {
 // getISOWeekString
 // ---------------------------------------------------------------------------
 describe('getISOWeekString', () => {
-  // IMPORTANTE: usar new Date(YYYY, MM-1, DD) — NO new Date('YYYY-MM-DD').
-  // La forma con string es UTC midnight, y en zonas UTC-N cambia de día,
-  // produciendo resultados distintos según el entorno. El constructor numérico
-  // crea medianoche LOCAL, que es lo mismo que usa calcularRachaSemanas.
-
-  it('2025-12-29 (lunes) es la primera semana de 2026 — W01-2026', () => {
-    // Dic 29 contiene el jueves Jan 1 2026 → ISO atribuye al año 2026
-    expect(getISOWeekString(new Date(2025, 11, 29))).toBe('2026-W01');
+  it('2025-12-29 es la semana 1 de 2026 (ISO) — 1° de enero 2026 es jueves, la semana 1 arranca el lunes anterior', () => {
+    expect(getISOWeekString(new Date('2025-12-29'))).toBe('2026-W01');
   });
 
-  it('2026-01-05 (lunes) es la segunda semana de 2026 — W02-2026', () => {
-    expect(getISOWeekString(new Date(2026, 0, 5))).toBe('2026-W02');
+  it('2026-01-05 es la semana 2 de 2026 (ISO)', () => {
+    expect(getISOWeekString(new Date('2026-01-05'))).toBe('2026-W02');
   });
 
-  it('2025-12-28 (domingo) es la última semana de 2025 — W52-2025', () => {
-    // El jueves de esa semana es Dic 25 2025 → pertenece a 2025
-    expect(getISOWeekString(new Date(2025, 11, 28))).toBe('2025-W52');
+  it('2025-12-28 es la ultima semana de 2025 (W52)', () => {
+    expect(getISOWeekString(new Date('2025-12-28'))).toBe('2025-W52');
   });
 
-  it('2026-12-28 (lunes) es la semana 53 de 2026 — W53-2026', () => {
-    // 2026 tiene 53 semanas ISO; Dic 28 está en la semana que contiene Dic 31 (jueves)
-    expect(getISOWeekString(new Date(2026, 11, 28))).toBe('2026-W53');
+  it('2026-12-28 es la semana 53 de 2026 (2026 SI tiene semana 53: 1° de enero es jueves)', () => {
+    expect(getISOWeekString(new Date('2026-12-28'))).toBe('2026-W53');
   });
 });
 
