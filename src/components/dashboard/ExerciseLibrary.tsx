@@ -4,6 +4,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { EjercicioGlobal, Profile } from '../../types/database.types';
 import BodyMuscleMap from '../common/BodyMuscleMap';
 import AthleteNavbar from '../common/AthleteNavbar';
+import { useModalA11y } from '../../hooks/useModalA11y';
 
 const normalizeText = (str: string) => {
   return str
@@ -21,6 +22,21 @@ export const ExerciseLibrary: React.FC = () => {
   const [selectedMuscle, setSelectedMuscle] = useState<string | null>(null);
   const [trainerProfile, setTrainerProfile] = useState<Profile | null>(null);
   const [visibleCount, setVisibleCount] = useState(12);
+
+  // GIF Viewer state
+  const [gifViewerExercise, setGifViewerExercise] = useState<EjercicioGlobal | null>(null);
+  const [gifViewerMediaType, setGifViewerMediaType] = useState<'image' | 'gif'>('gif');
+  const isGifViewerOpen = gifViewerExercise !== null;
+
+  const gifModalRef = useModalA11y<HTMLDivElement>({
+    isOpen: isGifViewerOpen,
+    onClose: () => setGifViewerExercise(null),
+  });
+
+  const openGifViewer = (exercise: EjercicioGlobal, startWith: 'image' | 'gif' = 'gif') => {
+    setGifViewerMediaType(startWith);
+    setGifViewerExercise(exercise);
+  };
 
   // Resetear paginación al cambiar filtros o búsquedas
   useEffect(() => {
@@ -184,6 +200,7 @@ export const ExerciseLibrary: React.FC = () => {
   const brandName = trainerProfile?.marca?.nombre_display || 'EVOLUTION LAB';
 
   return (
+    <>
     <div style={{ background: 'transparent', minHeight: '100vh', color: 'white', paddingBottom: '50px' }}>
       <AthleteNavbar />
 
@@ -534,37 +551,78 @@ export const ExerciseLibrary: React.FC = () => {
                               {exercise.descripcion || 'Sin descripción disponible para este ejercicio.'}
                             </p>
 
-                            {/* Botón Video */}
-                            {exercise.video_url && (
-                              <a
-                                href={exercise.video_url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style={{
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  gap: '6px',
-                                  background: 'rgba(255, 255, 255, 0.05)',
-                                  border: '1px solid rgba(255, 255, 255, 0.08)',
-                                  borderRadius: '8px',
-                                  padding: '8px 12px',
-                                  fontSize: '11px',
-                                  fontWeight: 800,
-                                  color: 'white',
-                                  textDecoration: 'none',
-                                  fontFamily: "'Orbitron', sans-serif",
-                                  transition: 'background 0.2s ease'
-                                }}
-                                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'}
-                                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'}
-                              >
-                                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--theme-primary, #00d4ff)" strokeWidth="2.5">
-                                  <polygon points="5 3 19 12 5 21 5 3" />
-                                </svg>
-                                VER VIDEO GUÍA
-                              </a>
-                            )}
+                            {/* Botones de acción: GIF + Video */}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                              {/* Botón Ver GIF */}
+                              {exercise.gif_url && (
+                                <button
+                                  type="button"
+                                  onClick={() => openGifViewer(exercise, 'gif')}
+                                  style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '6px',
+                                    background: 'rgba(0, 212, 255, 0.08)',
+                                    border: '1px solid rgba(0, 212, 255, 0.25)',
+                                    borderRadius: '8px',
+                                    padding: '8px 12px',
+                                    fontSize: '11px',
+                                    fontWeight: 800,
+                                    color: 'var(--theme-primary, #00d4ff)',
+                                    fontFamily: "'Orbitron', sans-serif",
+                                    cursor: 'pointer',
+                                    transition: 'background 0.2s ease, box-shadow 0.2s ease',
+                                    width: '100%',
+                                  }}
+                                  onMouseEnter={(e) => {
+                                    e.currentTarget.style.background = 'rgba(0, 212, 255, 0.15)';
+                                    e.currentTarget.style.boxShadow = '0 0 12px rgba(0, 212, 255, 0.2)';
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    e.currentTarget.style.background = 'rgba(0, 212, 255, 0.08)';
+                                    e.currentTarget.style.boxShadow = 'none';
+                                  }}
+                                >
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                                    <polygon points="5 3 19 12 5 21 5 3" />
+                                  </svg>
+                                  VER GIF
+                                </button>
+                              )}
+
+                              {/* Botón Ver Video */}
+                              {exercise.video_url && (
+                                <a
+                                  href={exercise.video_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    gap: '6px',
+                                    background: 'rgba(255, 255, 255, 0.05)',
+                                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                                    borderRadius: '8px',
+                                    padding: '8px 12px',
+                                    fontSize: '11px',
+                                    fontWeight: 800,
+                                    color: 'white',
+                                    textDecoration: 'none',
+                                    fontFamily: "'Orbitron', sans-serif",
+                                    transition: 'background 0.2s ease'
+                                  }}
+                                  onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'}
+                                  onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'}
+                                >
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--theme-primary, #00d4ff)" strokeWidth="2.5">
+                                    <polygon points="5 3 19 12 5 21 5 3" />
+                                  </svg>
+                                  VER VIDEO GUÍA
+                                </a>
+                              )}
+                            </div>
                           </div>
                         </div>
                       ))}
@@ -608,6 +666,149 @@ export const ExerciseLibrary: React.FC = () => {
         )}
       </div>
     </div>
+
+    {/* ═══ MODAL VISOR DE GIF / IMAGEN ═══ */}
+    {isGifViewerOpen && gifViewerExercise && (
+      // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- backdrop de modal: cierra al hacer click afuera; el diálogo tiene Escape y foco atrapado vía useModalA11y
+      <div
+        onClick={() => setGifViewerExercise(null)}
+        style={{
+          position: 'fixed',
+          inset: 0,
+          background: 'rgba(0, 0, 0, 0.88)',
+          backdropFilter: 'blur(8px)',
+          zIndex: 9999,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '16px',
+        }}
+      >
+        {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events -- role="dialog" + Escape/foco atrapado vía useModalA11y; este onClick solo evita que el click se propague al backdrop */}
+        <div
+          ref={gifModalRef}
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="gif-viewer-title"
+          tabIndex={-1}
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            position: 'relative',
+            background: '#04070e',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '20px',
+            overflow: 'hidden',
+            maxWidth: '600px',
+            width: '100%',
+            maxHeight: '90vh',
+            display: 'flex',
+            flexDirection: 'column',
+            boxShadow: '0 0 60px rgba(0, 212, 255, 0.15)',
+          }}
+        >
+          {/* Botón cerrar */}
+          <button
+            type="button"
+            onClick={() => setGifViewerExercise(null)}
+            aria-label="Cerrar visor"
+            style={{
+              position: 'absolute',
+              top: '12px',
+              right: '12px',
+              zIndex: 10,
+              background: 'rgba(0, 0, 0, 0.6)',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              borderRadius: '50%',
+              width: '32px',
+              height: '32px',
+              color: 'white',
+              cursor: 'pointer',
+              fontSize: '14px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backdropFilter: 'blur(4px)',
+            }}
+          >
+            ✕
+          </button>
+
+          {/* Media: imagen o GIF */}
+          <div style={{ width: '100%', background: '#04070e', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '280px', flex: 1, overflow: 'hidden' }}>
+            <img
+              src={
+                gifViewerMediaType === 'gif'
+                  ? (gifViewerExercise.gif_url || gifViewerExercise.imagen_url || '')
+                  : (gifViewerExercise.imagen_url || gifViewerExercise.gif_url || '')
+              }
+              alt={gifViewerExercise.nombre}
+              style={{
+                maxWidth: '100%',
+                maxHeight: '60vh',
+                objectFit: 'contain',
+                display: 'block',
+              }}
+            />
+          </div>
+
+          {/* Footer: nombre + toggle */}
+          <div style={{
+            padding: '16px 20px',
+            borderTop: '1px solid rgba(255, 255, 255, 0.06)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '12px',
+            flexWrap: 'wrap',
+          }}>
+            <div>
+              <p
+                id="gif-viewer-title"
+                style={{
+                  margin: 0,
+                  fontFamily: "'Orbitron', sans-serif",
+                  fontSize: '12px',
+                  fontWeight: 800,
+                  color: 'white',
+                  letterSpacing: '0.5px',
+                }}
+              >
+                {gifViewerExercise.nombre}
+              </p>
+              <p style={{ margin: '4px 0 0 0', fontSize: '10px', color: 'rgba(255,255,255,0.4)', fontFamily: 'sans-serif', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                {gifViewerExercise.grupo_muscular}
+              </p>
+            </div>
+
+            {/* Botón toggle imagen ↔ GIF (solo si tiene ambos) */}
+            {gifViewerExercise.imagen_url && gifViewerExercise.gif_url && (
+              <button
+                type="button"
+                onClick={() => setGifViewerMediaType((prev) => (prev === 'gif' ? 'image' : 'gif'))}
+                style={{
+                  background: 'rgba(0, 212, 255, 0.1)',
+                  border: '1px solid rgba(0, 212, 255, 0.3)',
+                  borderRadius: '20px',
+                  padding: '6px 16px',
+                  fontSize: '11px',
+                  fontFamily: "'Orbitron', sans-serif",
+                  fontWeight: 700,
+                  color: 'var(--theme-primary, #00d4ff)',
+                  cursor: 'pointer',
+                  transition: 'background 0.2s ease',
+                  whiteSpace: 'nowrap',
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(0, 212, 255, 0.2)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(0, 212, 255, 0.1)'}
+              >
+                {gifViewerMediaType === 'gif' ? '🖼️ Ver Foto' : '🎬 Ver GIF'}
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    )}
+    </>
   );
 };
 
