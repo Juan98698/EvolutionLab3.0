@@ -23,19 +23,19 @@ function monday(isoDate: string): Date {
 // ---------------------------------------------------------------------------
 describe('getISOWeekString', () => {
   it('2025-12-29 es la semana 1 de 2026 (ISO) — 1° de enero 2026 es jueves, la semana 1 arranca el lunes anterior', () => {
-    expect(getISOWeekString(new Date('2025-12-29'))).toBe('2026-W01');
+    expect(getISOWeekString(new Date(2025, 11, 29))).toBe('2026-W01');
   });
 
   it('2026-01-05 es la semana 2 de 2026 (ISO)', () => {
-    expect(getISOWeekString(new Date('2026-01-05'))).toBe('2026-W02');
+    expect(getISOWeekString(new Date(2026, 0, 5))).toBe('2026-W02');
   });
 
   it('2025-12-28 es la ultima semana de 2025 (W52)', () => {
-    expect(getISOWeekString(new Date('2025-12-28'))).toBe('2025-W52');
+    expect(getISOWeekString(new Date(2025, 11, 28))).toBe('2025-W52');
   });
 
   it('2026-12-28 es la semana 53 de 2026 (2026 SI tiene semana 53: 1° de enero es jueves)', () => {
-    expect(getISOWeekString(new Date('2026-12-28'))).toBe('2026-W53');
+    expect(getISOWeekString(new Date(2026, 11, 28))).toBe('2026-W53');
   });
 });
 
