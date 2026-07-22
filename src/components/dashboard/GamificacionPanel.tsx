@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useSupabase } from '../../context/SupabaseContext';
 import { supabase } from '../../lib/supabaseClient';
 import { Logro } from '../../types/database.types';
@@ -134,8 +134,6 @@ export const GamificacionPanel: React.FC<GamificacionPanelProps> = ({ sesiones, 
     isOpen: !!celebratingLevelUp,
     onClose: () => setCelebratingLevelUp(null),
   });
-  // Ref para evitar que el efecto de detección de nivel se dispare en el primer render
-  const isFirstLevelCheckRef = useRef(true);
 
   // Load saved achievements
   useEffect(() => {
@@ -251,21 +249,15 @@ export const GamificacionPanel: React.FC<GamificacionPanelProps> = ({ sesiones, 
 
   // ─── Detección de subida de nivel ────────────────────────────────────────
   // Persiste el nivel en localStorage para que la comparación sobreviva
-  // cierres y reaperturas de la app.
+  // cierres, reaperturas de la app, y remounts del componente (navegar a
+  // /historial o /progresion y volver a /dashboard desmonta y remonta este
+  // panel, ya que son rutas separadas — ver App.tsx).
   useEffect(() => {
     if (!user || loadingLogros) return;
 
     const storageKey = `evolution_prev_level_${user.id}`;
     const stored = localStorage.getItem(storageKey);
     const prevLevel = stored ? parseInt(stored, 10) : null;
-
-    if (isFirstLevelCheckRef.current) {
-      // Primera carga: guardamos el nivel actual sin celebrar para que
-      // la próxima vez que suba haya un valor de comparación.
-      isFirstLevelCheckRef.current = false;
-      localStorage.setItem(storageKey, String(currentLevel));
-      return;
-    }
 
     if (prevLevel !== null && currentLevel > prevLevel) {
       // El atleta acaba de cruzar un umbral de nivel → celebrar
@@ -289,7 +281,10 @@ export const GamificacionPanel: React.FC<GamificacionPanelProps> = ({ sesiones, 
           colors: ['#00d4ff', '#fbbf24', '#a5b4fc', '#34d399'],
         });
       }, 150);
-    } else if (prevLevel === null) {
+    } else if (prevLevel === null || currentLevel < prevLevel) {
+      // Primera vez que se guarda un nivel (usuario nuevo), o el nivel
+      // guardado quedó desactualizado por algún motivo (ej. se recalculó
+      // hacia abajo) — en ningún caso corresponde celebrar, solo sincronizar.
       localStorage.setItem(storageKey, String(currentLevel));
     }
   }, [currentLevel, user, loadingLogros]);

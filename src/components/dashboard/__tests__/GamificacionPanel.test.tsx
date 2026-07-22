@@ -150,3 +150,56 @@ describe('GamificacionPanel — insignias personalizadas (fix: se suman, no reem
     });
   });
 });
+
+describe('GamificacionPanel — detección de subida de nivel (BUG: remount silenciaba la celebración)', () => {
+  // Suficientes sesiones para calcular un total de puntos que dé un nivel
+  // conocido: totalPoints = sesiones*50 + badges*200 + racha.actual*25 +
+  // rachaSemanas.actual*100 + prCount*100. Con 5 sesiones en fechas
+  // distintas (sin PRs, sin badges extra) totalPoints=250 -> nivel 2.
+  const cincoSesiones: Session[] = [
+    sesion({ id: 's1', fecha: '2026-01-01' }),
+    sesion({ id: 's2', fecha: '2026-01-02' }),
+    sesion({ id: 's3', fecha: '2026-01-03' }),
+    sesion({ id: 's4', fecha: '2026-01-04' }),
+    sesion({ id: 's5', fecha: '2026-01-05' }),
+  ];
+
+  afterEach(() => {
+    localStorage.clear();
+  });
+
+  it('NO celebra en la primera vez que se usa la app (sin nivel guardado todavía)', async () => {
+    render(<GamificacionPanel sesiones={cincoSesiones} />);
+
+    await waitFor(() => {
+      expect(localStorage.getItem('evolution_prev_level_test-user')).toBe('2');
+    });
+    expect(screen.queryByText(/Has subido del nivel/)).toBeNull();
+  });
+
+  it('BUG REGRESIÓN: SÍ celebra un nivel que subió en una sesión anterior de la app (remount con nivel guardado más bajo)', async () => {
+    // Simula que ayer el atleta estaba en nivel 1 y hoy, al abrir la app
+    // de nuevo (o al navegar de /historial de vuelta a /dashboard, lo cual
+    // desmonta y remonta este panel), ya está en nivel 2.
+    localStorage.setItem('evolution_prev_level_test-user', '1');
+
+    render(<GamificacionPanel sesiones={cincoSesiones} />);
+
+    await waitFor(() => {
+      expect(screen.getByText(/Has subido del nivel/)).toBeTruthy();
+    });
+    expect(screen.getByText(/nivel 1 al nivel 2/)).toBeTruthy();
+    expect(localStorage.getItem('evolution_prev_level_test-user')).toBe('2');
+  });
+
+  it('NO celebra si el nivel guardado ya coincide con el nivel actual (nada cambió)', async () => {
+    localStorage.setItem('evolution_prev_level_test-user', '2');
+
+    render(<GamificacionPanel sesiones={cincoSesiones} />);
+
+    await waitFor(() => {
+      expect(screen.getByText('Primera Sesión')).toBeTruthy();
+    });
+    expect(screen.queryByText(/Has subido del nivel/)).toBeNull();
+  });
+});
