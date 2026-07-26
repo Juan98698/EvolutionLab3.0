@@ -134,6 +134,7 @@ export default defineConfig({
     })
   ],
   test: {
-    exclude: ['**/e2e/**', 'node_modules', 'dist', '.vercel']
+    exclude: ['**/e2e/**', 'node_modules', 'dist', '.vercel'],
+    setupFiles: ['./src/test-setup.ts']
   }
 });
