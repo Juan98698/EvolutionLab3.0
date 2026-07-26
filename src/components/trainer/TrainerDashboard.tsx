@@ -12,6 +12,7 @@ import { useModalA11y } from '../../hooks/useModalA11y';
 import { ErrorBoundary } from '../common/ErrorBoundary';
 import { useTrainerAudits } from '../../hooks/trainer/useTrainerAudits';
 import { useTrainerSubscription } from '../../hooks/trainer/useTrainerSubscription';
+import { useConfirm } from '../../context/ConfirmDialogContext';
 
 import TrainerClientsTab from './tabs/TrainerClientsTab';
 import TrainerAuditsTab from './tabs/TrainerAuditsTab';
@@ -26,6 +27,7 @@ export const TrainerDashboard: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { profile, signOut, refreshProfile } = useSupabase();
+  const confirm = useConfirm();
 
   const [currentTheme, setCurrentTheme] = useState<string>(() => {
     return localStorage.getItem('pwa_login_theme') || 'cyan';
@@ -150,9 +152,12 @@ export const TrainerDashboard: React.FC = () => {
 
 
   const handleLogout = async () => {
+    if (!(await confirm('¿Seguro que deseas cerrar la sesión?', { title: 'Cerrar sesión', confirmText: 'Cerrar sesión' }))) {
+      return;
+    }
     try {
       await signOut();
-      navigate('/');
+      navigate('/login');
     } catch (error) {
       console.error('Error closing session:', error);
     }
