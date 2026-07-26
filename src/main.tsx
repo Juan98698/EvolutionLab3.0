@@ -4,6 +4,7 @@ import App from './App.tsx';
 import { SupabaseProvider } from './context/SupabaseContext.tsx';
 import { ErrorBoundary } from './components/common/ErrorBoundary.tsx';
 import { inject } from '@vercel/analytics';
+import { initErrorTracking } from './lib/errorTracking.ts';
 import './index.css';
 
 // Auto-recuperación de "Failed to fetch dynamically imported module": pasa
@@ -74,6 +75,10 @@ const purgeOldServiceWorkersAndCaches = async (): Promise<boolean> => {
 // Esto garantiza que nunca se re-registra un SW viejo/corrupto antes de purgarlo.
 purgeOldServiceWorkersAndCaches().then((wasPurged) => {
   if (wasPurged) return; // La recarga ya está en curso, no inicializar nada.
+
+  // Inicializar el servicio de error tracking ANTES de montar React, para
+  // que cualquier error en la inicialización del árbol ya sea capturado.
+  initErrorTracking();
 
   // Inicializar analíticas de Vercel
   inject();

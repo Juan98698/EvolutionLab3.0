@@ -1,4 +1,5 @@
 import React from 'react';
+import { captureException } from '../../lib/errorTracking';
 
 interface ErrorBoundaryProps {
   children: React.ReactNode;
@@ -45,9 +46,12 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
   }
 
   componentDidCatch(error: Error, info: React.ErrorInfo) {
-    // Punto único donde, en el futuro, se puede enganchar un servicio de
-    // error tracking (Sentry, LogRocket, etc.) sin tocar cada boundary.
-    console.error(`[ErrorBoundary${this.props.label ? ` · ${this.props.label}` : ''}]`, error, info.componentStack);
+    // Punto único de reporte: captureException maneja el log local Y el
+    // envío al servicio de error tracking configurado (ver errorTracking.ts).
+    captureException(error, {
+      label: this.props.label,
+      componentStack: info.componentStack,
+    });
     this.props.onError?.(error, info);
   }
 

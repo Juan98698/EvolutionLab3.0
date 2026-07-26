@@ -3,6 +3,16 @@ import { describe, it, expect, vi, afterEach, beforeEach } from 'vitest';
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
 import { ErrorBoundary } from '../ErrorBoundary';
 
+// ---------------------------------------------------------------------------
+// Mock de errorTracking — interceptamos captureException para verificar que
+// ErrorBoundary lo llama correctamente, sin necesidad de un SDK real.
+// ---------------------------------------------------------------------------
+const mockCaptureException = vi.fn();
+
+vi.mock('../../../lib/errorTracking', () => ({
+  captureException: (...args: unknown[]) => mockCaptureException(...args),
+}));
+
 afterEach(() => {
   cleanup();
   vi.restoreAllMocks();
@@ -22,6 +32,7 @@ describe('ErrorBoundary', () => {
     // propósito cuando atrapan un error — es el comportamiento esperado en
     // estos tests, no algo que deba ensuciar la salida del test runner.
     vi.spyOn(console, 'error').mockImplementation(() => {});
+    mockCaptureException.mockClear();
   });
 
   it('renderiza los hijos normalmente cuando no hay error', () => {
@@ -56,6 +67,50 @@ describe('ErrorBoundary', () => {
     expect(onError).toHaveBeenCalledTimes(1);
     expect(onError.mock.calls[0][0].message).toBe('boom de prueba');
   });
+
+  // ── NUEVO: integración con errorTracking ──────────────────────────────────
+
+  it('llama a captureException cuando un hijo lanza un error', () => {
+    render(
+      <ErrorBoundary label="Sección monitoreada">
+        <Bomb shouldThrow={true} />
+      </ErrorBoundary>
+    );
+
+    expect(mockCaptureException).toHaveBeenCalledTimes(1);
+
+    const [error, context] = mockCaptureException.mock.calls[0];
+    expect(error).toBeInstanceOf(Error);
+    expect(error.message).toBe('boom de prueba');
+    expect(context).toMatchObject({ label: 'Sección monitoreada' });
+    // componentStack puede ser null/string dependiendo de la versión de React en test
+    expect('componentStack' in context).toBe(true);
+  });
+
+  it('NO llama a captureException cuando no hay error', () => {
+    render(
+      <ErrorBoundary>
+        <Bomb shouldThrow={false} />
+      </ErrorBoundary>
+    );
+
+    expect(mockCaptureException).not.toHaveBeenCalled();
+  });
+
+  it('llama a captureException SIN label cuando el boundary no tiene etiqueta', () => {
+    render(
+      <ErrorBoundary>
+        <Bomb shouldThrow={true} />
+      </ErrorBoundary>
+    );
+
+    expect(mockCaptureException).toHaveBeenCalledTimes(1);
+    const [, context] = mockCaptureException.mock.calls[0];
+    // Cuando no se pasa label, el context.label debe ser undefined
+    expect(context.label).toBeUndefined();
+  });
+
+  // ── Resto de los tests originales ─────────────────────────────────────────
 
   it('el botón "Reintentar" vuelve a intentar renderizar los hijos', () => {
     let shouldThrow = true;
@@ -119,5 +174,9 @@ describe('ErrorBoundary', () => {
     expect(screen.getByText(/Sección A/)).toBeTruthy();
     // ...pero la sección B sigue funcionando normalmente.
     expect(screen.getByText('todo bien')).toBeTruthy();
+
+    // Solo se reportó el error de A, no el de B (que no lanzó nada).
+    expect(mockCaptureException).toHaveBeenCalledTimes(1);
+    expect(mockCaptureException.mock.calls[0][1]).toMatchObject({ label: 'Sección A' });
   });
 });
