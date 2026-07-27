@@ -29,11 +29,35 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
   const [saving, setSaving] = useState(false);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
 
+  // Handlers para permitir borrar inputs completamente sin que quede un '0' colgado
+  const handleNumInput = (val: string, setter: (n: any) => void) => {
+    if (val === '' || val === '-') {
+      setter('');
+    } else {
+      const parsed = Number(val);
+      setter(isNaN(parsed) ? '' : parsed);
+    }
+  };
+
+  const handleNestedNumInput = (
+    field: string,
+    val: string,
+    stateObj: Record<string, any>,
+    setter: (newObj: any) => void
+  ) => {
+    if (val === '' || val === '-') {
+      setter({ ...stateObj, [field]: '' });
+    } else {
+      const parsed = Number(val);
+      setter({ ...stateObj, [field]: isNaN(parsed) ? '' : parsed });
+    }
+  };
+
   // Datos básicos
-  const [peso, setPeso] = useState<number>(70);
-  const [estatura, setEstatura] = useState<number>(170);
-  const [estaturaSentado, setEstaturaSentado] = useState<number>(90);
-  const [edad, setEdad] = useState<number>(25);
+  const [peso, setPeso] = useState<number | ''>(70);
+  const [estatura, setEstatura] = useState<number | ''>(170);
+  const [estaturaSentado, setEstaturaSentado] = useState<number | ''>(90);
+  const [edad, setEdad] = useState<number | ''>(25);
   const [genero, setGenero] = useState<'masculino' | 'femenino'>(atleta?.sexo || 'masculino');
   const getAjusteDefault = (obj: string): number => {
     if (!obj) return 0;
@@ -54,7 +78,7 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
   };
 
   // Pliegues (mm)
-  const [pliegues, setPliegues] = useState({
+  const [pliegues, setPliegues] = useState<Record<string, number | ''>>({
     triceps: 12,
     subescapular: 14,
     suprailiaco: 15,
@@ -66,7 +90,7 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
   });
 
   // Perímetros (cm)
-  const [perimetros, setPerimetros] = useState({
+  const [perimetros, setPerimetros] = useState<Record<string, number | ''>>({
     brazo: 32,
     brazo_contraido: 34,
     torax: 95,
@@ -78,7 +102,7 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
   });
 
   // Diámetros (cm)
-  const [diametros, setDiametros] = useState({
+  const [diametros, setDiametros] = useState<Record<string, number | ''>>({
     codo: 6.8,
     rodilla: 9.5,
     biiliocrestal: 28,
@@ -89,9 +113,9 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
   });
 
   // Balance y Macros
-  const [ajusteCaloricoPct, setAjusteCaloricoPct] = useState<number>(() => getAjusteDefault(atleta?.objetivo || 'Recomposición Corporal'));
-  const [gProteinaKg, setGProteinaKg] = useState<number>(2.0);
-  const [gGrasaKg, setGGrasaKg] = useState<number>(1.0);
+  const [ajusteCaloricoPct, setAjusteCaloricoPct] = useState<number | ''>(() => getAjusteDefault(atleta?.objetivo || 'Recomposición Corporal'));
+  const [gProteinaKg, setGProteinaKg] = useState<number | ''>(2.0);
+  const [gGrasaKg, setGGrasaKg] = useState<number | ''>(1.0);
 
   useEffect(() => {
     if (isOpen && atleta) {
@@ -114,19 +138,19 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
     cliente_id: atleta.id,
     entrenador_id: trainerProfile?.id,
     fecha: new Date().toISOString().split('T')[0],
-    edad,
-    peso,
-    estatura,
-    estatura_sentado: metodo === 'ISAK' ? estaturaSentado : undefined,
+    edad: Number(edad) || 0,
+    peso: Number(peso) || 0,
+    estatura: Number(estatura) || 0,
+    estatura_sentado: metodo === 'ISAK' ? (Number(estaturaSentado) || 0) : undefined,
     metodo,
     objetivo,
     frecuencia_entreno: frecuenciaEntreno,
-    pliegues,
-    perimetros,
-    diametros,
-    ajuste_calorico_pct: ajusteCaloricoPct,
-    g_proteina_kg: gProteinaKg,
-    g_grasa_kg: gGrasaKg,
+    pliegues: Object.fromEntries(Object.entries(pliegues).map(([k, v]) => [k, Number(v) || 0])),
+    perimetros: Object.fromEntries(Object.entries(perimetros).map(([k, v]) => [k, Number(v) || 0])),
+    diametros: Object.fromEntries(Object.entries(diametros).map(([k, v]) => [k, Number(v) || 0])),
+    ajuste_calorico_pct: ajusteCaloricoPct === '' ? 0 : Number(ajusteCaloricoPct),
+    g_proteina_kg: Number(gProteinaKg) || 0,
+    g_grasa_kg: Number(gGrasaKg) || 0,
     genero,
   });
 
@@ -265,15 +289,15 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px' }}>
               <div>
                 <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)', display: 'block', marginBottom: '4px' }}>PESO (KG)</label>
-                <input type="number" value={peso} onChange={(e) => setPeso(Number(e.target.value))} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '8px', boxSizing: 'border-box' }} />
+                <input type="number" value={peso} onChange={(e) => handleNumInput(e.target.value, setPeso)} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '8px', boxSizing: 'border-box' }} />
               </div>
               <div>
                 <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)', display: 'block', marginBottom: '4px' }}>ESTATURA (CM)</label>
-                <input type="number" value={estatura} onChange={(e) => setEstatura(Number(e.target.value))} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '8px', boxSizing: 'border-box' }} />
+                <input type="number" value={estatura} onChange={(e) => handleNumInput(e.target.value, setEstatura)} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '8px', boxSizing: 'border-box' }} />
               </div>
               <div>
                 <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)', display: 'block', marginBottom: '4px' }}>EDAD</label>
-                <input type="number" value={edad} onChange={(e) => setEdad(Number(e.target.value))} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '8px', boxSizing: 'border-box' }} />
+                <input type="number" value={edad} onChange={(e) => handleNumInput(e.target.value, setEdad)} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '8px', boxSizing: 'border-box' }} />
               </div>
               <div>
                 <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)', display: 'block', marginBottom: '4px' }}>SEXO / GÉNERO</label>
@@ -304,7 +328,7 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
               {metodo === 'ISAK' && (
                 <div>
                   <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)', display: 'block', marginBottom: '4px' }}>ESTATURA SENTADO (CM)</label>
-                  <input type="number" value={estaturaSentado} onChange={(e) => setEstaturaSentado(Number(e.target.value))} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '8px', boxSizing: 'border-box' }} />
+                  <input type="number" value={estaturaSentado} onChange={(e) => handleNumInput(e.target.value, setEstaturaSentado)} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '8px', boxSizing: 'border-box' }} />
                 </div>
               )}
             </div>
@@ -315,37 +339,37 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px' }}>
                 <div>
                   <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Tríceps</label>
-                  <input type="number" value={pliegues.triceps} onChange={(e) => setPliegues({ ...pliegues, triceps: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
+                  <input type="number" value={pliegues.triceps} onChange={(e) => handleNestedNumInput('triceps', e.target.value, pliegues, setPliegues)} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
                 </div>
                 <div>
                   <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Subescapular</label>
-                  <input type="number" value={pliegues.subescapular} onChange={(e) => setPliegues({ ...pliegues, subescapular: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
+                  <input type="number" value={pliegues.subescapular} onChange={(e) => handleNestedNumInput('subescapular', e.target.value, pliegues, setPliegues)} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
                 </div>
                 <div>
                   <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Suprailíaco</label>
-                  <input type="number" value={pliegues.suprailiaco} onChange={(e) => setPliegues({ ...pliegues, suprailiaco: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
+                  <input type="number" value={pliegues.suprailiaco} onChange={(e) => handleNestedNumInput('suprailiaco', e.target.value, pliegues, setPliegues)} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
                 </div>
                 <div>
                   <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Abdominal</label>
-                  <input type="number" value={pliegues.abdominal} onChange={(e) => setPliegues({ ...pliegues, abdominal: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
+                  <input type="number" value={pliegues.abdominal} onChange={(e) => handleNestedNumInput('abdominal', e.target.value, pliegues, setPliegues)} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
                 </div>
                 <div>
                   <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Muslo</label>
-                  <input type="number" value={pliegues.muslo} onChange={(e) => setPliegues({ ...pliegues, muslo: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
+                  <input type="number" value={pliegues.muslo} onChange={(e) => handleNestedNumInput('muslo', e.target.value, pliegues, setPliegues)} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
                 </div>
                 <div>
                   <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Pantorrilla</label>
-                  <input type="number" value={pliegues.pantorrilla} onChange={(e) => setPliegues({ ...pliegues, pantorrilla: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
+                  <input type="number" value={pliegues.pantorrilla} onChange={(e) => handleNestedNumInput('pantorrilla', e.target.value, pliegues, setPliegues)} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
                 </div>
                 {metodo === 'ISAK' && (
                   <>
                     <div>
                       <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Antebrazo</label>
-                      <input type="number" value={pliegues.antebrazo} onChange={(e) => setPliegues({ ...pliegues, antebrazo: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
+                      <input type="number" value={pliegues.antebrazo} onChange={(e) => handleNestedNumInput('antebrazo', e.target.value, pliegues, setPliegues)} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
                     </div>
                     <div>
                       <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Supraespinal</label>
-                      <input type="number" value={pliegues.supraespinal} onChange={(e) => setPliegues({ ...pliegues, supraespinal: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
+                      <input type="number" value={pliegues.supraespinal} onChange={(e) => handleNestedNumInput('supraespinal', e.target.value, pliegues, setPliegues)} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
                     </div>
                   </>
                 )}
@@ -358,36 +382,36 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px' }}>
                 <div>
                   <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Brazo</label>
-                  <input type="number" value={perimetros.brazo} onChange={(e) => setPerimetros({ ...perimetros, brazo: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
+                  <input type="number" value={perimetros.brazo} onChange={(e) => handleNestedNumInput('brazo', e.target.value, perimetros, setPerimetros)} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
                 </div>
                 <div>
                   <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Brazo Contraído</label>
-                  <input type="number" value={perimetros.brazo_contraido} onChange={(e) => setPerimetros({ ...perimetros, brazo_contraido: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
+                  <input type="number" value={perimetros.brazo_contraido} onChange={(e) => handleNestedNumInput('brazo_contraido', e.target.value, perimetros, setPerimetros)} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
                 </div>
                 <div>
                   <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Tórax</label>
-                  <input type="number" value={perimetros.torax} onChange={(e) => setPerimetros({ ...perimetros, torax: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
+                  <input type="number" value={perimetros.torax} onChange={(e) => handleNestedNumInput('torax', e.target.value, perimetros, setPerimetros)} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
                 </div>
                 <div>
                   <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Cintura</label>
-                  <input type="number" value={perimetros.cintura} onChange={(e) => setPerimetros({ ...perimetros, cintura: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
+                  <input type="number" value={perimetros.cintura} onChange={(e) => handleNestedNumInput('cintura', e.target.value, perimetros, setPerimetros)} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
                 </div>
                 <div>
                   <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Cadera</label>
-                  <input type="number" value={perimetros.cadera} onChange={(e) => setPerimetros({ ...perimetros, cadera: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
+                  <input type="number" value={perimetros.cadera} onChange={(e) => handleNestedNumInput('cadera', e.target.value, perimetros, setPerimetros)} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
                 </div>
                 <div>
                   <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Muslo</label>
-                  <input type="number" value={perimetros.muslo} onChange={(e) => setPerimetros({ ...perimetros, muslo: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
+                  <input type="number" value={perimetros.muslo} onChange={(e) => handleNestedNumInput('muslo', e.target.value, perimetros, setPerimetros)} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
                 </div>
                 <div>
                   <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Pantorrilla</label>
-                  <input type="number" value={perimetros.pantorrilla} onChange={(e) => setPerimetros({ ...perimetros, pantorrilla: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
+                  <input type="number" value={perimetros.pantorrilla} onChange={(e) => handleNestedNumInput('pantorrilla', e.target.value, perimetros, setPerimetros)} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
                 </div>
                 {metodo === 'ISAK' && (
                   <div>
                     <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Perímetro Cefálico</label>
-                    <input type="number" value={perimetros.cefalico} onChange={(e) => setPerimetros({ ...perimetros, cefalico: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
+                    <input type="number" value={perimetros.cefalico} onChange={(e) => handleNestedNumInput('cefalico', e.target.value, perimetros, setPerimetros)} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
                   </div>
                 )}
               </div>
@@ -399,29 +423,33 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px' }}>
                 <div>
                   <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Codo</label>
-                  <input type="number" step="0.1" value={diametros.codo} onChange={(e) => setDiametros({ ...diametros, codo: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
+                  <input type="number" step="0.1" value={diametros.codo} onChange={(e) => handleNestedNumInput('codo', e.target.value, diametros, setDiametros)} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
                 </div>
                 <div>
                   <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Rodilla</label>
-                  <input type="number" step="0.1" value={diametros.rodilla} onChange={(e) => setDiametros({ ...diametros, rodilla: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
+                  <input type="number" step="0.1" value={diametros.rodilla} onChange={(e) => handleNestedNumInput('rodilla', e.target.value, diametros, setDiametros)} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
                 </div>
                 <div>
                   <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Anteroposterior (Muñeca)</label>
-                  <input type="number" step="0.1" value={diametros.anteroposterior} onChange={(e) => setDiametros({ ...diametros, anteroposterior: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
+                  <input type="number" step="0.1" value={diametros.anteroposterior} onChange={(e) => handleNestedNumInput('anteroposterior', e.target.value, diametros, setDiametros)} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
                 </div>
                 {metodo === 'ISAK' && (
                   <>
                     <div>
                       <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Biiliocrestal</label>
-                      <input type="number" step="0.1" value={diametros.biiliocrestal || diametros.biliocrestal} onChange={(e) => setDiametros({ ...diametros, biiliocrestal: Number(e.target.value), biliocrestal: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
+                      <input type="number" step="0.1" value={diametros.biiliocrestal || diametros.biliocrestal} onChange={(e) => {
+                        handleNestedNumInput('biiliocrestal', e.target.value, diametros, (newD) => {
+                          setDiametros({ ...newD, biliocrestal: newD.biiliocrestal });
+                        });
+                      }} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
                     </div>
                     <div>
                       <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Biacromial</label>
-                      <input type="number" step="0.1" value={diametros.biacromial} onChange={(e) => setDiametros({ ...diametros, biacromial: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
+                      <input type="number" step="0.1" value={diametros.biacromial} onChange={(e) => handleNestedNumInput('biacromial', e.target.value, diametros, setDiametros)} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
                     </div>
                     <div>
                       <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Transversal</label>
-                      <input type="number" step="0.1" value={diametros.transversal} onChange={(e) => setDiametros({ ...diametros, transversal: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
+                      <input type="number" step="0.1" value={diametros.transversal} onChange={(e) => handleNestedNumInput('transversal', e.target.value, diametros, setDiametros)} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
                     </div>
                   </>
                 )}
@@ -447,7 +475,7 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
                 <input
                   type="number"
                   value={ajusteCaloricoPct}
-                  onChange={(e) => setAjusteCaloricoPct(Number(e.target.value))}
+                  onChange={(e) => handleNumInput(e.target.value, setAjusteCaloricoPct)}
                   style={{ width: '100%', background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px', color: 'white', padding: '4px 8px', marginTop: '4px' }}
                 />
               </div>
@@ -456,12 +484,12 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
               <div>
                 <label style={{ fontSize: '11px', color: '#3b82f6', fontWeight: 800 }}>PROTEÍNA (G / KG PESO)</label>
-                <input type="number" step="0.1" value={gProteinaKg} onChange={(e) => setGProteinaKg(Number(e.target.value))} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '8px' }} />
+                <input type="number" step="0.1" value={gProteinaKg} onChange={(e) => handleNumInput(e.target.value, setGProteinaKg)} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '8px' }} />
                 <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)' }}>Total: {computed.macros?.proteina.grams}g ({computed.macros?.proteina.calories} kcal)</span>
               </div>
               <div>
                 <label style={{ fontSize: '11px', color: '#f59e0b', fontWeight: 800 }}>GRASA (G / KG PESO)</label>
-                <input type="number" step="0.1" value={gGrasaKg} onChange={(e) => setGGrasaKg(Number(e.target.value))} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '8px' }} />
+                <input type="number" step="0.1" value={gGrasaKg} onChange={(e) => handleNumInput(e.target.value, setGGrasaKg)} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '8px' }} />
                 <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)' }}>Total: {computed.macros?.grasa.grams}g ({computed.macros?.grasa.calories} kcal)</span>
               </div>
               <div>
