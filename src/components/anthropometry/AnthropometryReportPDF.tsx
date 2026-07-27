@@ -58,7 +58,7 @@ export const AnthropometryReportPDF: React.FC<AnthropometryReportPDFProps> = ({
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #0f172a', paddingBottom: '14px', marginBottom: '20px' }}>
           <div>
             {trainerProfile?.logo_url ? (
-              <img src={trainerProfile.logo_url} alt={brandName} style={{ height: '70px', maxHeight: '80px', maxWidth: '280px', objectFit: 'contain' }} />
+              <img src={trainerProfile.logo_url} alt={brandName} style={{ height: '115px', maxHeight: '130px', maxWidth: '380px', objectFit: 'contain' }} />
             ) : (
               <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 900, letterSpacing: '1px', color: '#0f172a', fontFamily: 'Orbitron, sans-serif' }}>
                 {brandName}
