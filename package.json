@@ -13,6 +13,7 @@
     "test:e2e:update": "playwright test --update-snapshots"
   },
   "dependencies": {
+    "@sentry/react": "^10.68.0",
     "@supabase/supabase-js": "^2.39.8",
     "@vercel/analytics": "^2.0.1",
     "canvas-confetti": "^1.9.2",
