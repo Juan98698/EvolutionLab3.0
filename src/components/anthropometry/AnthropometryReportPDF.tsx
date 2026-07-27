@@ -263,7 +263,9 @@ export const AnthropometryReportPDF: React.FC<AnthropometryReportPDFProps> = ({
                 { cat: 'Obesidad grado II', range: '35.0 – 39.9', min: 35.0, max: 39.99 },
                 { cat: 'Obesidad grado III', range: '≥ 40.0', min: 40.0, max: 999 },
               ].map((row, i) => {
-                const isMatch = imc >= row.min && imc <= row.max;
+                const isMatch = valoracion.clasificacion_imc
+                  ? row.cat.toLowerCase() === valoracion.clasificacion_imc.toLowerCase()
+                  : imc >= row.min && imc <= row.max;
                 return (
                   <tr key={i} style={{ background: isMatch ? '#e0f2fe' : 'transparent', fontWeight: isMatch ? 800 : 400, borderBottom: '1px solid #e2e8f0' }}>
                     <td style={{ padding: '4px 8px' }}>{row.cat}</td>
@@ -291,7 +293,9 @@ export const AnthropometryReportPDF: React.FC<AnthropometryReportPDFProps> = ({
             </thead>
             <tbody>
               {fatRows.map((row, i) => {
-                const isMatch = (valoracion.clasificacion_grasa && valoracion.clasificacion_grasa.toLowerCase().includes(row.cat.toLowerCase())) || (pctGrasa >= row.min && pctGrasa <= row.max);
+                const isMatch = valoracion.clasificacion_grasa
+                  ? row.cat.toLowerCase() === valoracion.clasificacion_grasa.toLowerCase()
+                  : pctGrasa >= row.min && pctGrasa <= row.max;
                 return (
                   <tr key={i} style={{ background: isMatch ? '#fef3c7' : 'transparent', fontWeight: isMatch ? 800 : 400, borderBottom: '1px solid #e2e8f0' }}>
                     <td style={{ padding: '4px 8px' }}>{row.cat}</td>
@@ -319,7 +323,9 @@ export const AnthropometryReportPDF: React.FC<AnthropometryReportPDFProps> = ({
             </thead>
             <tbody>
               {muscleRows.map((row, i) => {
-                const isMatch = (valoracion.clasificacion_musculo && valoracion.clasificacion_musculo.toLowerCase().includes(row.cat.toLowerCase())) || (pctMusculo >= row.min && pctMusculo <= row.max);
+                const isMatch = valoracion.clasificacion_musculo
+                  ? row.cat.toLowerCase() === valoracion.clasificacion_musculo.toLowerCase()
+                  : pctMusculo >= row.min && pctMusculo <= row.max;
                 return (
                   <tr key={i} style={{ background: isMatch ? '#dcfce7' : 'transparent', fontWeight: isMatch ? 800 : 400, borderBottom: '1px solid #e2e8f0' }}>
                     <td style={{ padding: '4px 8px' }}>{row.cat}</td>
@@ -346,7 +352,11 @@ export const AnthropometryReportPDF: React.FC<AnthropometryReportPDFProps> = ({
           </div>
           <div style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '10px' }}>
             <span style={{ fontSize: '10px', color: '#64748b', fontWeight: 700 }}>Ajuste Calórico (%)</span>
-            <h3 style={{ margin: '4px 0 0', color: '#0f172a', fontSize: '16px', fontWeight: 900 }}>{valoracion.ajuste_calorico_pct || -15}%</h3>
+            <h3 style={{ margin: '4px 0 0', color: '#0f172a', fontSize: '16px', fontWeight: 900 }}>
+              {valoracion.ajuste_calorico_pct !== undefined && valoracion.ajuste_calorico_pct > 0
+                ? `+${valoracion.ajuste_calorico_pct}`
+                : (valoracion.ajuste_calorico_pct ?? 0)}%
+            </h3>
           </div>
         </div>
 
