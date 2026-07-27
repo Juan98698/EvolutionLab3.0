@@ -284,46 +284,54 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
               </div>
             </div>
 
-            {/* Perímetros e Diámetros para ISAK */}
-            {metodo === 'ISAK' && (
-              <>
+            {/* Perímetros e Diámetros Corporales */}
+            <div>
+              <h4 style={{ fontSize: '11px', fontFamily: 'Orbitron, sans-serif', color: '#00d4ff', margin: '12px 0 8px' }}>PERÍMETROS CORPORALES (CM)</h4>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px' }}>
                 <div>
-                  <h4 style={{ fontSize: '11px', fontFamily: 'Orbitron, sans-serif', color: '#00d4ff', margin: '12px 0 8px' }}>PERÍMETROS CORPORALES (CM)</h4>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px' }}>
-                    <div>
-                      <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Brazo Relajado</label>
-                      <input type="number" value={perimetros.brazo} onChange={(e) => setPerimetros({ ...perimetros, brazo: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
-                    </div>
-                    <div>
-                      <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Brazo Contraído</label>
-                      <input type="number" value={perimetros.brazo_contraido} onChange={(e) => setPerimetros({ ...perimetros, brazo_contraido: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
-                    </div>
-                    <div>
-                      <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Cintura</label>
-                      <input type="number" value={perimetros.cintura} onChange={(e) => setPerimetros({ ...perimetros, cintura: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
-                    </div>
-                    <div>
-                      <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Cadera</label>
-                      <input type="number" value={perimetros.cadera} onChange={(e) => setPerimetros({ ...perimetros, cadera: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
-                    </div>
-                  </div>
+                  <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Brazo</label>
+                  <input type="number" value={perimetros.brazo} onChange={(e) => setPerimetros({ ...perimetros, brazo: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
                 </div>
+                <div>
+                  <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Brazo Contraído</label>
+                  <input type="number" value={perimetros.brazo_contraido} onChange={(e) => setPerimetros({ ...perimetros, brazo_contraido: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Tórax</label>
+                  <input type="number" value={perimetros.torax} onChange={(e) => setPerimetros({ ...perimetros, torax: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Cintura</label>
+                  <input type="number" value={perimetros.cintura} onChange={(e) => setPerimetros({ ...perimetros, cintura: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Cadera</label>
+                  <input type="number" value={perimetros.cadera} onChange={(e) => setPerimetros({ ...perimetros, cadera: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Muslo</label>
+                  <input type="number" value={perimetros.muslo} onChange={(e) => setPerimetros({ ...perimetros, muslo: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Pantorrilla</label>
+                  <input type="number" value={perimetros.pantorrilla} onChange={(e) => setPerimetros({ ...perimetros, pantorrilla: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
+                </div>
+              </div>
+            </div>
 
+            <div>
+              <h4 style={{ fontSize: '11px', fontFamily: 'Orbitron, sans-serif', color: '#00d4ff', margin: '12px 0 8px' }}>DIÁMETROS ÓSEOS (CM)</h4>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px' }}>
                 <div>
-                  <h4 style={{ fontSize: '11px', fontFamily: 'Orbitron, sans-serif', color: '#00d4ff', margin: '12px 0 8px' }}>DIÁMETROS ÓSEOS (CM)</h4>
-                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px' }}>
-                    <div>
-                      <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Diámetro Codo</label>
-                      <input type="number" step="0.1" value={diametros.codo} onChange={(e) => setDiametros({ ...diametros, codo: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
-                    </div>
-                    <div>
-                      <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Diámetro Rodilla</label>
-                      <input type="number" step="0.1" value={diametros.rodilla} onChange={(e) => setDiametros({ ...diametros, rodilla: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
-                    </div>
-                  </div>
+                  <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Diámetro Codo</label>
+                  <input type="number" step="0.1" value={diametros.codo} onChange={(e) => setDiametros({ ...diametros, codo: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
                 </div>
-              </>
-            )}
+                <div>
+                  <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Diámetro Rodilla</label>
+                  <input type="number" step="0.1" value={diametros.rodilla} onChange={(e) => setDiametros({ ...diametros, rodilla: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
+                </div>
+              </div>
+            </div>
           </div>
         )}
 

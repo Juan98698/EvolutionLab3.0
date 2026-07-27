@@ -61,49 +61,96 @@ export const AnthropometryReportPDF: React.FC<AnthropometryReportPDFProps> = ({
         <div style={{ gridColumn: 'span 2' }}><strong>Objetivo:</strong> {valoracion.objetivo || 'Recomposición Corporal'}</div>
       </div>
 
-      {/* Grid Central: Somatocarta + Composición 4 Masas */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
-        {/* Somatocarta */}
-        <div style={{ border: '1px solid #e2e8f0', borderRadius: '10px', padding: '12px', textAlign: 'center' }}>
-          <h4 style={{ margin: '0 0 10px', fontSize: '13px', fontWeight: 800, color: '#0f172a' }}>SOMATOCARTA HEATH-CARTER</h4>
-          <SomatochartCanvas
-            x={valoracion.somatotipo?.x || 0}
-            y={valoracion.somatotipo?.y || 0}
-            endo={valoracion.somatotipo?.endo || 0}
-            meso={valoracion.somatotipo?.meso || 0}
-            ecto={valoracion.somatotipo?.ecto || 0}
-            width={320}
-            height={240}
-          />
+      {/* Grid Superior: Tablas de Medidas Físicas (Pliegues, Perímetros, Diámetros) + Somatocarta & Masas */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1.3fr', gap: '16px', marginBottom: '20px' }}>
+        {/* Columna Izquierda: Tablas de Medidas Medidas Físicas */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {/* Pliegues Cutáneos */}
+          <div style={{ border: '1px solid #cbd5e1', borderRadius: '6px', overflow: 'hidden' }}>
+            <div style={{ background: '#f1f5f9', padding: '4px 8px', fontSize: '11px', fontWeight: 800, color: '#0f172a' }}>Pliegues Cutáneos (mm)</div>
+            <table style={{ width: '100%', fontSize: '10px', borderCollapse: 'collapse' }}>
+              <tbody>
+                <tr style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '3px 8px' }}>Tríceps:</td><td style={{ padding: '3px 8px', textAlign: 'right', fontWeight: 700 }}>{valoracion.pliegues?.triceps || 0} mm</td></tr>
+                <tr style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '3px 8px' }}>Subescapular:</td><td style={{ padding: '3px 8px', textAlign: 'right', fontWeight: 700 }}>{valoracion.pliegues?.subescapular || 0} mm</td></tr>
+                <tr style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '3px 8px' }}>Suprailíaco:</td><td style={{ padding: '3px 8px', textAlign: 'right', fontWeight: 700 }}>{valoracion.pliegues?.suprailiaco || 0} mm</td></tr>
+                <tr style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '3px 8px' }}>Abdominal:</td><td style={{ padding: '3px 8px', textAlign: 'right', fontWeight: 700 }}>{valoracion.pliegues?.abdominal || 0} mm</td></tr>
+                <tr style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '3px 8px' }}>Muslo:</td><td style={{ padding: '3px 8px', textAlign: 'right', fontWeight: 700 }}>{valoracion.pliegues?.muslo || 0} mm</td></tr>
+                <tr><td style={{ padding: '3px 8px' }}>Pantorrilla:</td><td style={{ padding: '3px 8px', textAlign: 'right', fontWeight: 700 }}>{valoracion.pliegues?.pantorrilla || 0} mm</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          {/* Perímetros Corporales */}
+          <div style={{ border: '1px solid #cbd5e1', borderRadius: '6px', overflow: 'hidden' }}>
+            <div style={{ background: '#f1f5f9', padding: '4px 8px', fontSize: '11px', fontWeight: 800, color: '#0f172a' }}>Perímetros (cm)</div>
+            <table style={{ width: '100%', fontSize: '10px', borderCollapse: 'collapse' }}>
+              <tbody>
+                <tr style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '3px 8px' }}>Brazo:</td><td style={{ padding: '3px 8px', textAlign: 'right', fontWeight: 700 }}>{valoracion.perimetros?.brazo || 0} cm</td></tr>
+                <tr style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '3px 8px' }}>Brazo Contraído:</td><td style={{ padding: '3px 8px', textAlign: 'right', fontWeight: 700 }}>{valoracion.perimetros?.brazo_contraido || 0} cm</td></tr>
+                <tr style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '3px 8px' }}>Tórax:</td><td style={{ padding: '3px 8px', textAlign: 'right', fontWeight: 700 }}>{valoracion.perimetros?.torax || 0} cm</td></tr>
+                <tr style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '3px 8px' }}>Cintura:</td><td style={{ padding: '3px 8px', textAlign: 'right', fontWeight: 700 }}>{valoracion.perimetros?.cintura || 0} cm</td></tr>
+                <tr style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '3px 8px' }}>Cadera:</td><td style={{ padding: '3px 8px', textAlign: 'right', fontWeight: 700 }}>{valoracion.perimetros?.cadera || 0} cm</td></tr>
+                <tr style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '3px 8px' }}>Muslo:</td><td style={{ padding: '3px 8px', textAlign: 'right', fontWeight: 700 }}>{valoracion.perimetros?.muslo || 0} cm</td></tr>
+                <tr><td style={{ padding: '3px 8px' }}>Pantorrilla:</td><td style={{ padding: '3px 8px', textAlign: 'right', fontWeight: 700 }}>{valoracion.perimetros?.pantorrilla || 0} cm</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          {/* Diámetros Óseos */}
+          <div style={{ border: '1px solid #cbd5e1', borderRadius: '6px', overflow: 'hidden' }}>
+            <div style={{ background: '#f1f5f9', padding: '4px 8px', fontSize: '11px', fontWeight: 800, color: '#0f172a' }}>Diámetros (cm)</div>
+            <table style={{ width: '100%', fontSize: '10px', borderCollapse: 'collapse' }}>
+              <tbody>
+                <tr style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '3px 8px' }}>Codo:</td><td style={{ padding: '3px 8px', textAlign: 'right', fontWeight: 700 }}>{valoracion.diametros?.codo || 0} cm</td></tr>
+                <tr style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '3px 8px' }}>Muñeca:</td><td style={{ padding: '3px 8px', textAlign: 'right', fontWeight: 700 }}>{valoracion.diametros?.anteroposterior || 5} cm</td></tr>
+                <tr><td style={{ padding: '3px 8px' }}>Rodilla:</td><td style={{ padding: '3px 8px', textAlign: 'right', fontWeight: 700 }}>{valoracion.diametros?.rodilla || 0} cm</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
 
-        {/* Desglose de 4 Masas */}
-        <div style={{ border: '1px solid #e2e8f0', borderRadius: '10px', padding: '12px' }}>
-          <h4 style={{ margin: '0 0 12px', fontSize: '13px', fontWeight: 800, color: '#0f172a' }}>COMPOSICIÓN CORPORAL (4 MASAS)</h4>
-          <table style={{ width: '100%', fontSize: '12px', borderCollapse: 'collapse' }}>
-            <tbody>
-              <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
-                <td style={{ padding: '6px 0', color: '#ef4444', fontWeight: 700 }}>Masa Muscular:</td>
-                <td style={{ padding: '6px 0', textAlign: 'right', fontWeight: 800 }}>{valoracion.kg_musculo} kg ({valoracion.pct_musculo}%)</td>
-              </tr>
-              <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
-                <td style={{ padding: '6px 0', color: '#d97706', fontWeight: 700 }}>Masa Grasa:</td>
-                <td style={{ padding: '6px 0', textAlign: 'right', fontWeight: 800 }}>{valoracion.kg_grasa} kg ({valoracion.pct_grasa}%)</td>
-              </tr>
-              <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
-                <td style={{ padding: '6px 0', color: '#854d0e', fontWeight: 700 }}>Masa Ósea:</td>
-                <td style={{ padding: '6px 0', textAlign: 'right', fontWeight: 800 }}>{valoracion.kg_oseo} kg ({valoracion.pct_oseo}%)</td>
-              </tr>
-              <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
-                <td style={{ padding: '6px 0', color: '#3b82f6', fontWeight: 700 }}>Masa Residual:</td>
-                <td style={{ padding: '6px 0', textAlign: 'right', fontWeight: 800 }}>{valoracion.kg_residual} kg ({valoracion.pct_residual}%)</td>
-              </tr>
-              <tr>
-                <td style={{ padding: '8px 0 0', fontWeight: 800, color: '#0f172a' }}>Ratio M/G:</td>
-                <td style={{ padding: '8px 0 0', textAlign: 'right', fontWeight: 900, color: '#2563eb' }}>{valoracion.ratio_musculo_grasa}</td>
-              </tr>
-            </tbody>
-          </table>
+        {/* Columna Derecha: Somatocarta + Composición 4 Masas */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+          <div style={{ border: '1px solid #e2e8f0', borderRadius: '10px', padding: '8px', textAlign: 'center' }}>
+            <h4 style={{ margin: '0 0 6px', fontSize: '12px', fontWeight: 800, color: '#0f172a' }}>SOMATOCARTA HEATH-CARTER</h4>
+            <SomatochartCanvas
+              x={valoracion.somatotipo?.x || 0}
+              y={valoracion.somatotipo?.y || 0}
+              endo={valoracion.somatotipo?.endo || 0}
+              meso={valoracion.somatotipo?.meso || 0}
+              ecto={valoracion.somatotipo?.ecto || 0}
+              width={300}
+              height={200}
+            />
+          </div>
+
+          <div style={{ border: '1px solid #e2e8f0', borderRadius: '10px', padding: '10px' }}>
+            <h4 style={{ margin: '0 0 8px', fontSize: '12px', fontWeight: 800, color: '#0f172a' }}>COMPOSICIÓN CORPORAL (4 MASAS)</h4>
+            <table style={{ width: '100%', fontSize: '11px', borderCollapse: 'collapse' }}>
+              <tbody>
+                <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
+                  <td style={{ padding: '4px 0', color: '#ef4444', fontWeight: 700 }}>Masa Muscular:</td>
+                  <td style={{ padding: '4px 0', textAlign: 'right', fontWeight: 800 }}>{valoracion.kg_musculo} kg ({valoracion.pct_musculo}%)</td>
+                </tr>
+                <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
+                  <td style={{ padding: '4px 0', color: '#d97706', fontWeight: 700 }}>Masa Grasa:</td>
+                  <td style={{ padding: '4px 0', textAlign: 'right', fontWeight: 800 }}>{valoracion.kg_grasa} kg ({valoracion.pct_grasa}%)</td>
+                </tr>
+                <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
+                  <td style={{ padding: '4px 0', color: '#854d0e', fontWeight: 700 }}>Masa Ósea:</td>
+                  <td style={{ padding: '4px 0', textAlign: 'right', fontWeight: 800 }}>{valoracion.kg_oseo} kg ({valoracion.pct_oseo}%)</td>
+                </tr>
+                <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
+                  <td style={{ padding: '4px 0', color: '#3b82f6', fontWeight: 700 }}>Masa Residual:</td>
+                  <td style={{ padding: '4px 0', textAlign: 'right', fontWeight: 800 }}>{valoracion.kg_residual} kg ({valoracion.pct_residual}%)</td>
+                </tr>
+                <tr>
+                  <td style={{ padding: '6px 0 0', fontWeight: 800, color: '#0f172a' }}>Ratio M/G:</td>
+                  <td style={{ padding: '6px 0 0', textAlign: 'right', fontWeight: 900, color: '#2563eb' }}>{valoracion.ratio_musculo_grasa}</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 
