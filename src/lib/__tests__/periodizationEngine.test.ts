@@ -106,7 +106,7 @@ describe('periodizationEngine Library', () => {
       const updatedPlan = autoRegulatePlanForNextWeek(mockPlan, loggedExercises);
 
       expect(updatedPlan).not.toBeNull();
-      expect(updatedPlan?.periodizationConfig?.semana_actual).toBe(1);
+      expect(updatedPlan?.periodizationConfig?.semana_actual).toBe(2);
     });
   });
 });
