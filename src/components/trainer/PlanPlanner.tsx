@@ -3055,7 +3055,7 @@ export const PlanPlanner: React.FC = () => {
                   return {
                     ...ex,
                     image_url: isGlobal ? (foundGlobal.imagen_url || ex.image_url) : (foundLocal.image_url || foundLocal.imageData || ex.image_url),
-                    gif_url: isGlobal ? ex.gif_url : (foundLocal.gif_url || foundLocal.gifData || ex.gif_url),
+                    gif_url: isGlobal ? (foundGlobal.gif_url || ex.gif_url) : (foundLocal.gif_url || foundLocal.gifData || ex.gif_url),
                     video_url: isGlobal ? (foundGlobal.video_url || ex.video_url) : (foundLocal.video_url || foundLocal.videoUrl || ex.video_url),
                     description: isGlobal ? (foundGlobal.descripcion || ex.description) : (foundLocal.description || ex.description),
                     nombre_original: isGlobal ? foundGlobal.nombre : (foundLocal.nombre_original || ex.nombre_original),

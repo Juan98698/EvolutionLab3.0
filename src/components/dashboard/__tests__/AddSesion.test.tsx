@@ -128,7 +128,8 @@ describe('AddSesion — registro de sesión', () => {
   it('renderiza el formulario con fecha de hoy pre-cargada', async () => {
     await act(async () => { renderAddSesion(); });
 
-    const today = new Date().toISOString().split('T')[0];
+    const d = new Date();
+    const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     const dateInput = document.getElementById('fecha-sesion') as HTMLInputElement;
     expect(dateInput).toBeTruthy();
     expect(dateInput.value).toBe(today);

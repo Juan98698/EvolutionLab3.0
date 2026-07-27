@@ -60,11 +60,11 @@ export function ProtocolSelectorModal({ isOpen, onClose, objective, level, onApp
     }
 
     // ── Paso 2: Buscar ejercicios reales en ejercicios_globales ─────────────
-    // Usa los nombres_real resueltos para traer imagen, video, descripcion
-    // y movement_pattern de una sola query.
-    const nombresReales = Object.values(aliasMap);
+    // Incluir tanto los nombres únicos del protocolo como los nombres_real resueltos por alias.
+    const nombresReales = [...new Set([...uniqueNames, ...Object.values(aliasMap)])];
     const globalMap: Record<string, {
       imagen_url?: string | null;
+      gif_url?: string | null;
       video_url?: string | null;
       descripcion?: string | null;
       movement_pattern?: string | null;
@@ -74,17 +74,20 @@ export function ProtocolSelectorModal({ isOpen, onClose, objective, level, onApp
       try {
         const { data: globalData } = await supabase
           .from('ejercicios_globales')
-          .select('nombre, imagen_url, video_url, descripcion, movement_pattern')
+          .select('nombre, imagen_url, gif_url, video_url, descripcion, movement_pattern')
           .in('nombre', nombresReales);
 
         if (globalData) {
           globalData.forEach((row: any) => {
-            globalMap[row.nombre.trim()] = {
+            const item = {
               imagen_url:       row.imagen_url,
+              gif_url:          row.gif_url,
               video_url:        row.video_url,
               descripcion:      row.descripcion,
               movement_pattern: row.movement_pattern,
             };
+            globalMap[row.nombre.trim()] = item;
+            globalMap[row.nombre.trim().toLowerCase()] = item;
           });
         }
       } catch (e) {
@@ -98,8 +101,9 @@ export function ProtocolSelectorModal({ isOpen, onClose, objective, level, onApp
       dayNumber: idx + 1,
       name: day.label,
       exercises: day.exercises.map(ex => {
-        const nombreReal = aliasMap[ex.name.trim()];
-        const global     = nombreReal ? globalMap[nombreReal] : undefined;
+        const nameClean  = ex.name.trim();
+        const nombreReal = aliasMap[nameClean] || nameClean;
+        const global     = globalMap[nombreReal] || globalMap[nombreReal.toLowerCase()] || globalMap[nameClean.toLowerCase()];
 
         // Patrón: primero desde la BD, luego detección por nombre como fallback
         const pattern = global?.movement_pattern
@@ -107,11 +111,12 @@ export function ProtocolSelectorModal({ isOpen, onClose, objective, level, onApp
 
         return {
           id:              crypto.randomUUID(),
-          nombre:          nombreReal || ex.name,  // nombre real si existe, genérico si no
+          nombre:          nombreReal,             // nombre real si existe, genérico si no
           nombre_original: ex.name,                // siempre guardamos el genérico como referencia
           grupo_muscular:  ex.muscle,
           ...(pattern             ? { movement_pattern: pattern }        : {}),
           ...(global?.imagen_url  ? { image_url: global.imagen_url }     : {}),
+          ...(global?.gif_url     ? { gif_url: global.gif_url }          : {}),
           ...(global?.video_url   ? { video_url: global.video_url }      : {}),
           ...(global?.descripcion ? { description: global.descripcion }  : {}),
           variables: {
