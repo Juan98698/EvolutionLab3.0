@@ -93,7 +93,16 @@ purgeOldServiceWorkersAndCaches().then((wasPurged) => {
     // abierta sin recargar, nunca se entera de un deploy nuevo hasta que
     // por casualidad falla algo. Revisamos manualmente al volver a la
     // pestaña y cada 30 minutos mientras sigue abierta.
-    const checkForUpdate = () => updateSW(false).catch(() => {});
+    const checkForUpdate = () => {
+      try {
+        const res = updateSW?.(false);
+        if (res && typeof (res as any).catch === 'function') {
+          (res as any).catch(() => {});
+        }
+      } catch (e) {
+        // Ignorar si el Service Worker no soporta verificación manual en este entorno
+      }
+    };
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible') checkForUpdate();
     });
