@@ -174,7 +174,8 @@ export function calculateFourMasses(
   estaturaCm: number,
   pctGrasa: number,
   diametros?: DiametrosOseos,
-  genero: 'masculino' | 'femenino' = 'masculino'
+  genero: 'masculino' | 'femenino' = 'masculino',
+  metodo: 'Yuhasz' | 'Faulkner' | 'ISAK' = 'Yuhasz'
 ): FourMassFractionation {
   if (pesoKg <= 0) {
     return {
@@ -185,16 +186,33 @@ export function calculateFourMasses(
 
   const kgGrasa = Math.round(pesoKg * (pctGrasa / 100) * 100) / 100;
 
-  // Masa Ósea (Rocha / von Döbeln si hay diámetros codo/rodilla, o estimada)
+  // Masa Ósea
   let kgOseo = 0;
-  if (diametros?.codo && diametros?.rodilla && estaturaCm > 0) {
+  if (metodo === 'ISAK' && diametros?.codo && diametros?.rodilla && estaturaCm > 0) {
+    // Método Avanzado ISAK (Kerr / Drinkwater-Ross ponderado con los 6 diámetros óseos)
+    const hM = estaturaCm / 100;
     const codoM = diametros.codo / 100;
     const rodillaM = diametros.rodilla / 100;
+    const munecaM = (diametros.anteroposterior || diametros.codo) / 100;
+    const biilioM = ((diametros.biiliocrestal || diametros.biliocrestal) || 28) / 100;
+    const biacroM = (diametros.biacromial || 38) / 100;
+
+    // Rocha ampliando componente apendicular y axial ISAK
+    const diamEfectivo = (codoM * 0.35 + rodillaM * 0.35 + munecaM * 0.15 + (biilioM + biacroM) * 0.075);
+    kgOseo = 3.02 * Math.pow(hM * hM * diamEfectivo * rodillaM * 400, 0.712);
+  } else if (diametros?.codo && diametros?.rodilla && estaturaCm > 0) {
+    // Rocha / von Döbeln clásico para Yuhasz y Faulkner (Codo, Rodilla y Muñeca)
+    const codoM = diametros.codo / 100;
+    const rodillaM = diametros.rodilla / 100;
+    const munecaM = (diametros.anteroposterior ? diametros.anteroposterior / 100 : codoM);
     const estaturaM = estaturaCm / 100;
-    kgOseo = 3.02 * Math.pow(estaturaM * estaturaM * codoM * rodillaM * 400, 0.712);
+    const diamApendicular = (codoM + munecaM) / 2;
+    kgOseo = 3.02 * Math.pow(estaturaM * estaturaM * diamApendicular * rodillaM * 400, 0.712);
   } else {
+    // Estimación de masa ósea estandarizada por sexo
     kgOseo = pesoKg * (genero === 'femenino' ? 0.12 : 0.14);
   }
+
   kgOseo = Math.round(kgOseo * 100) / 100;
   const pctOseo = Math.round((kgOseo / pesoKg) * 100 * 10) / 10;
 
@@ -413,7 +431,7 @@ export function processFullAnthropometry(input: {
   const fatInfo = classifyBodyFat(pctGrasa, genero);
 
   // 3. Masas
-  const masses = calculateFourMasses(input.peso, input.estatura, pctGrasa, diametros, genero);
+  const masses = calculateFourMasses(input.peso, input.estatura, pctGrasa, diametros, genero, input.metodo);
   const muscleInfo = classifyMuscleMass(masses.pctMusculo, genero);
 
   // 4. Somatotipo
