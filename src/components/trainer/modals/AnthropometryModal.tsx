@@ -125,7 +125,9 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
   const handleSave = async () => {
     setSaving(true);
     try {
-      const { error } = await supabase.from('valoraciones_antropometricas').insert([computed]);
+      // Extraer campos calculados dinámicamente que no corresponden a columnas de la base de datos
+      const { agua_recomendada_l, ...dbPayload } = computed;
+      const { error } = await supabase.from('valoraciones_antropometricas').insert([dbPayload]);
       if (error) throw error;
 
       // Persistir el sexo y objetivo del atleta en su perfil para sincronización global
