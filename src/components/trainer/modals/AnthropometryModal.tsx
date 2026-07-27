@@ -125,26 +125,29 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
   const handleDownloadPDF = async () => {
     setDownloadingPdf(true);
     try {
-      const reportElement = document.getElementById('anthropometry-pdf-report');
-      if (!reportElement) throw new Error('No se encontró el elemento del informe PDF.');
+      const page1Element = document.getElementById('anthropometry-pdf-page-1');
+      const page2Element = document.getElementById('anthropometry-pdf-page-2');
 
-      const canvas = await html2canvas(reportElement, { scale: 2, useCORS: true });
-      const imgData = canvas.toDataURL('image/png');
+      if (!page1Element || !page2Element) {
+        throw new Error('No se encontraron las páginas del informe PDF.');
+      }
 
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = pdf.internal.pageSize.getHeight();
 
-      const totalHeightMm = (canvas.height * pdfWidth) / canvas.width;
+      // Renderizar Página 1
+      const canvas1 = await html2canvas(page1Element, { scale: 2, useCORS: true });
+      const imgData1 = canvas1.toDataURL('image/png');
+      const height1 = (canvas1.height * pdfWidth) / canvas1.width;
+      pdf.addImage(imgData1, 'PNG', 0, 0, pdfWidth, Math.min(pdfHeight, height1));
 
-      // Página 1
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, totalHeightMm);
-
-      // Página 2 (si la altura del informe sobrepasa la primera página A4)
-      if (totalHeightMm > pdfHeight + 10) {
-        pdf.addPage();
-        pdf.addImage(imgData, 'PNG', 0, -pdfHeight, pdfWidth, totalHeightMm);
-      }
+      // Renderizar Página 2
+      pdf.addPage();
+      const canvas2 = await html2canvas(page2Element, { scale: 2, useCORS: true });
+      const imgData2 = canvas2.toDataURL('image/png');
+      const height2 = (canvas2.height * pdfWidth) / canvas2.width;
+      pdf.addImage(imgData2, 'PNG', 0, 0, pdfWidth, Math.min(pdfHeight, height2));
 
       pdf.save(`Valoracion_${atleta.nombre.replace(/\s+/g, '_')}_${computed.fecha}.pdf`);
 
@@ -333,7 +336,7 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
               </div>
             </div>
 
-            {/* Diámetros Óseos (6 Opciones completas de la captura de usuario) */}
+            {/* Diámetros Óseos */}
             <div>
               <h4 style={{ fontSize: '11px', fontFamily: 'Orbitron, sans-serif', color: '#00d4ff', margin: '12px 0 8px' }}>DIÁMETROS ÓSEOS (CM)</h4>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px' }}>
@@ -346,21 +349,25 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
                   <input type="number" step="0.1" value={diametros.rodilla} onChange={(e) => setDiametros({ ...diametros, rodilla: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
                 </div>
                 <div>
-                  <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Biiliocrestal</label>
-                  <input type="number" step="0.1" value={diametros.biiliocrestal || diametros.biliocrestal} onChange={(e) => setDiametros({ ...diametros, biiliocrestal: Number(e.target.value), biliocrestal: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
-                </div>
-                <div>
-                  <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Biacromial</label>
-                  <input type="number" step="0.1" value={diametros.biacromial} onChange={(e) => setDiametros({ ...diametros, biacromial: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
-                </div>
-                <div>
                   <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Anteroposterior (Muñeca)</label>
                   <input type="number" step="0.1" value={diametros.anteroposterior} onChange={(e) => setDiametros({ ...diametros, anteroposterior: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
                 </div>
-                <div>
-                  <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Transversal</label>
-                  <input type="number" step="0.1" value={diametros.transversal} onChange={(e) => setDiametros({ ...diametros, transversal: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
-                </div>
+                {metodo === 'ISAK' && (
+                  <>
+                    <div>
+                      <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Biiliocrestal</label>
+                      <input type="number" step="0.1" value={diametros.biiliocrestal || diametros.biliocrestal} onChange={(e) => setDiametros({ ...diametros, biiliocrestal: Number(e.target.value), biliocrestal: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Biacromial</label>
+                      <input type="number" step="0.1" value={diametros.biacromial} onChange={(e) => setDiametros({ ...diametros, biacromial: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Transversal</label>
+                      <input type="number" step="0.1" value={diametros.transversal} onChange={(e) => setDiametros({ ...diametros, transversal: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>
