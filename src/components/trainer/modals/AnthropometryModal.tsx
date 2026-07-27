@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { supabase } from '../../../lib/supabaseClient';
 import { Profile, ValoracionAntropometrica } from '../../../types/database.types';
 import { processFullAnthropometry, getSomatotypeDiagnostic } from '../../../lib/anthropometryEngine';
@@ -35,22 +35,22 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
   const [estaturaSentado, setEstaturaSentado] = useState<number>(90);
   const [edad, setEdad] = useState<number>(25);
   const [genero, setGenero] = useState<'masculino' | 'femenino'>(atleta?.sexo || 'masculino');
+  const getAjusteDefault = (obj: string): number => {
+    if (!obj) return 0;
+    if (obj.includes('Agresiva')) return -20;
+    if (obj.includes('Pérdida')) return -15;
+    if (obj.includes('Hipertrofia')) return 15;
+    if (obj.includes('Ganancia')) return 10;
+    if (obj.includes('Recomposición') || obj.includes('Recomposicion')) return 0;
+    return 0;
+  };
+
   const [objetivo, setObjetivo] = useState<string>(atleta?.objetivo || 'Recomposición Corporal');
   const [frecuenciaEntreno, setFrecuenciaEntreno] = useState<string>('3-4');
 
   const handleObjetivoChange = (newObj: string) => {
     setObjetivo(newObj);
-    if (newObj.includes('Pérdida de Grasa Agresiva')) {
-      setAjusteCaloricoPct(-20);
-    } else if (newObj.includes('Pérdida de Grasa')) {
-      setAjusteCaloricoPct(-15);
-    } else if (newObj.includes('Hipertrofia Avanzada')) {
-      setAjusteCaloricoPct(15);
-    } else if (newObj.includes('Ganancia Muscular')) {
-      setAjusteCaloricoPct(10);
-    } else if (newObj.includes('Recomposición')) {
-      setAjusteCaloricoPct(0);
-    }
+    setAjusteCaloricoPct(getAjusteDefault(newObj));
   };
 
   // Pliegues (mm)
@@ -89,9 +89,18 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
   });
 
   // Balance y Macros
-  const [ajusteCaloricoPct, setAjusteCaloricoPct] = useState<number>(-15);
+  const [ajusteCaloricoPct, setAjusteCaloricoPct] = useState<number>(() => getAjusteDefault(atleta?.objetivo || 'Recomposición Corporal'));
   const [gProteinaKg, setGProteinaKg] = useState<number>(2.0);
   const [gGrasaKg, setGGrasaKg] = useState<number>(1.0);
+
+  useEffect(() => {
+    if (isOpen && atleta) {
+      const initObj = atleta.objetivo || 'Recomposición Corporal';
+      setObjetivo(initObj);
+      setGenero(atleta.sexo || 'masculino');
+      setAjusteCaloricoPct(getAjusteDefault(initObj));
+    }
+  }, [isOpen, atleta]);
 
   const dialogRef = useModalA11y<HTMLDivElement>({
     isOpen,
