@@ -65,15 +65,20 @@ export const AnthropometryReportPDF: React.FC<AnthropometryReportPDFProps> = ({
           </div>
 
           {/* Datos del Valorado */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '12px', marginBottom: '24px', fontSize: '12px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '12px', marginBottom: '24px', fontSize: '11px' }}>
             <div><strong>Valorador:</strong> {trainerProfile?.nombre || brandName}</div>
             <div><strong>Atleta:</strong> {atletaNombre}</div>
             <div><strong>Edad:</strong> {valoracion.edad} años</div>
             <div><strong>Peso:</strong> {valoracion.peso} kg</div>
             <div><strong>Estatura:</strong> {valoracion.estatura} cm</div>
+            {valoracion.estatura_sentado ? (
+              <div><strong>Estatura Sentado:</strong> {valoracion.estatura_sentado} cm</div>
+            ) : null}
             <div><strong>IMC:</strong> {valoracion.imc} kg/m²</div>
             <div><strong>Método:</strong> {valoracion.metodo}</div>
-            <div><strong>Objetivo:</strong> {valoracion.objetivo || 'Recomposición Corporal'}</div>
+            <div style={{ gridColumn: 'span 2' }}>
+              <strong>Objetivo:</strong> {valoracion.objetivo || 'Recomposición Corporal'}
+            </div>
           </div>
 
           {/* Grid Principal Pág 1: Somatocarta vs Gráfico Circular */}
@@ -172,26 +177,30 @@ export const AnthropometryReportPDF: React.FC<AnthropometryReportPDFProps> = ({
               </table>
             </div>
 
-            {/* Diámetros Óseos (6 campos exactos como la captura) */}
+            {/* Diámetros Óseos */}
             <div style={{ border: '1px solid #cbd5e1', borderRadius: '8px', overflow: 'hidden' }}>
               <div style={{ background: '#334155', color: 'white', padding: '6px 10px', fontSize: '11px', fontWeight: 800 }}>DIÁMETROS (CM)</div>
               <table style={{ width: '100%', fontSize: '11px', borderCollapse: 'collapse' }}>
                 <tbody>
                   <tr style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '4px 8px' }}>Codo:</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{valoracion.diametros?.codo || 0} cm</td></tr>
                   <tr style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '4px 8px' }}>Rodilla:</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{valoracion.diametros?.rodilla || 0} cm</td></tr>
-                  <tr style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '4px 8px' }}>Biiliocrestal:</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{valoracion.diametros?.biiliocrestal || valoracion.diametros?.biliocrestal || 0} cm</td></tr>
-                  <tr style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '4px 8px' }}>Biacromial:</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{valoracion.diametros?.biacromial || 0} cm</td></tr>
-                  <tr style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '4px 8px' }}>Anteroposterior:</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{valoracion.diametros?.anteroposterior || 0} cm</td></tr>
-                  <tr><td style={{ padding: '4px 8px' }}>Transversal:</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{valoracion.diametros?.transversal || 0} cm</td></tr>
+                  <tr style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '4px 8px' }}>Anteroposterior (Muñeca):</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{valoracion.diametros?.anteroposterior || 0} cm</td></tr>
+                  {valoracion.metodo === 'ISAK' && (
+                    <>
+                      <tr style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '4px 8px' }}>Biiliocrestal:</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{valoracion.diametros?.biiliocrestal || valoracion.diametros?.biliocrestal || 0} cm</td></tr>
+                      <tr style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '4px 8px' }}>Biacromial:</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{valoracion.diametros?.biacromial || 0} cm</td></tr>
+                      <tr><td style={{ padding: '4px 8px' }}>Transversal:</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{valoracion.diametros?.transversal || 0} cm</td></tr>
+                    </>
+                  )}
                 </tbody>
               </table>
             </div>
           </div>
 
-          {/* ── TABLAS NORMATIVAS DE CLASIFICACIÓN ────────────────────────────────── */}
-          {/* Tabla 2.1 — IMC (OMS) */}
+          {/* ── TABLAS NORMATIVAS DE CLASIFICACIÓN (Sin números en el título) ─────────────── */}
+          {/* Tabla IMC (OMS) */}
           <div style={{ marginBottom: '18px' }}>
-            <h4 style={{ margin: '0 0 6px', fontSize: '12px', fontWeight: 800, color: '#0f172a' }}>2.1 Índice de Masa Corporal (IMC) — OMS</h4>
+            <h4 style={{ margin: '0 0 6px', fontSize: '12px', fontWeight: 800, color: '#0f172a' }}>Índice de Masa Corporal (IMC) — OMS</h4>
             <table style={{ width: '100%', fontSize: '11px', borderCollapse: 'collapse', border: '1px solid #cbd5e1' }}>
               <thead>
                 <tr style={{ background: '#334155', color: 'white' }}>
@@ -224,9 +233,9 @@ export const AnthropometryReportPDF: React.FC<AnthropometryReportPDFProps> = ({
             </table>
           </div>
 
-          {/* Tabla 2.2.1 — % Grasa (ACE) */}
+          {/* Tabla % Grasa (ACE) */}
           <div style={{ marginBottom: '18px' }}>
-            <h4 style={{ margin: '0 0 6px', fontSize: '12px', fontWeight: 800, color: '#0f172a' }}>2.2.1 Clasificación del % de Grasa Corporal — ACE</h4>
+            <h4 style={{ margin: '0 0 6px', fontSize: '12px', fontWeight: 800, color: '#0f172a' }}>Clasificación del % de Grasa Corporal — ACE</h4>
             <table style={{ width: '100%', fontSize: '11px', borderCollapse: 'collapse', border: '1px solid #cbd5e1' }}>
               <thead>
                 <tr style={{ background: '#334155', color: 'white' }}>
@@ -258,9 +267,9 @@ export const AnthropometryReportPDF: React.FC<AnthropometryReportPDFProps> = ({
             </table>
           </div>
 
-          {/* Tabla 2.2.2 — % Masa Muscular */}
+          {/* Tabla % Masa Muscular */}
           <div style={{ marginBottom: '20px' }}>
-            <h4 style={{ margin: '0 0 6px', fontSize: '12px', fontWeight: 800, color: '#0f172a' }}>2.2.2 Clasificación del % de Masa Muscular</h4>
+            <h4 style={{ margin: '0 0 6px', fontSize: '12px', fontWeight: 800, color: '#0f172a' }}>Clasificación del % de Masa Muscular</h4>
             <table style={{ width: '100%', fontSize: '11px', borderCollapse: 'collapse', border: '1px solid #cbd5e1' }}>
               <thead>
                 <tr style={{ background: '#334155', color: 'white' }}>
@@ -291,6 +300,22 @@ export const AnthropometryReportPDF: React.FC<AnthropometryReportPDFProps> = ({
             </table>
           </div>
 
+          {/* Bloque de Metabolismo (BMR, TDEE, Ajuste %) - Captura 1 del Usuario */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '16px' }}>
+            <div style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '10px' }}>
+              <span style={{ fontSize: '10px', color: '#64748b', fontWeight: 700 }}>BMR (Gasto Basal)</span>
+              <h3 style={{ margin: '4px 0 0', color: '#0284c7', fontSize: '16px', fontWeight: 900 }}>{valoracion.bmr || 0} kcal</h3>
+            </div>
+            <div style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '10px' }}>
+              <span style={{ fontSize: '10px', color: '#64748b', fontWeight: 700 }}>TDEE (Mantenimiento)</span>
+              <h3 style={{ margin: '4px 0 0', color: '#16a34a', fontSize: '16px', fontWeight: 900 }}>{valoracion.tdee || 0} kcal</h3>
+            </div>
+            <div style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '10px' }}>
+              <span style={{ fontSize: '10px', color: '#64748b', fontWeight: 700 }}>Ajuste Calórico (%)</span>
+              <h3 style={{ margin: '4px 0 0', color: '#0f172a', fontSize: '16px', fontWeight: 900 }}>{valoracion.ajuste_calorico_pct || -15}%</h3>
+            </div>
+          </div>
+
           {/* Tarjetas de Prescripción Macronutrientes */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '16px' }}>
             <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '8px', padding: '10px', textAlign: 'center' }}>
@@ -311,7 +336,7 @@ export const AnthropometryReportPDF: React.FC<AnthropometryReportPDFProps> = ({
           </div>
 
           <div style={{ textAlign: 'center', background: '#0f172a', color: 'white', borderRadius: '8px', padding: '8px', fontSize: '12px', fontWeight: 800 }}>
-            TARGET CALÓRICO DIARIO: {valoracion.target_calorias} kcal / día
+            OBJETIVO DE LA DIETA: {valoracion.target_calorias} KCAL / DÍA
           </div>
         </div>
 

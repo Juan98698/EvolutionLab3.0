@@ -468,11 +468,33 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
           </div>
         )}
 
-        {/* Acciones del Modal */}
+        {/* Plantilla PDF en segundo plano cuando no está en la pestaña 3 para garantizar que la descarga nunca falle */}
+        {activeTab !== 'resultados' && (
+          <div style={{ position: 'absolute', left: '-9999px', top: '-9999px', pointerEvents: 'none' }}>
+            <AnthropometryReportPDF valoracion={computed} atletaNombre={atleta.nombre} trainerProfile={trainerProfile} />
+          </div>
+        )}
+
+        {/* Acciones del Modal por Pestaña */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '20px', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '16px' }}>
-          <button onClick={handleDownloadPDF} disabled={downloadingPdf} style={{ padding: '10px 18px', borderRadius: '8px', border: '1px solid rgba(0,212,255,0.4)', background: 'rgba(0,212,255,0.1)', color: '#00d4ff', fontWeight: 800, cursor: 'pointer', fontFamily: 'Orbitron, sans-serif', fontSize: '11px' }}>
-            {downloadingPdf ? 'GENERANDO PDF...' : '📄 DESCARGAR PDF MARCA BLANCA'}
-          </button>
+          {activeTab === 'medidas' && (
+            <button onClick={() => setActiveTab('macros')} style={{ padding: '10px 18px', borderRadius: '8px', border: '1px solid rgba(0,212,255,0.4)', background: 'rgba(0,212,255,0.1)', color: '#00d4ff', fontWeight: 800, cursor: 'pointer', fontFamily: 'Orbitron, sans-serif', fontSize: '11px' }}>
+              SIGUIENTE: BALANCE Y MACROS ➔
+            </button>
+          )}
+
+          {activeTab === 'macros' && (
+            <button onClick={() => setActiveTab('resultados')} style={{ padding: '10px 18px', borderRadius: '8px', border: '1px solid rgba(0,212,255,0.4)', background: 'rgba(0,212,255,0.1)', color: '#00d4ff', fontWeight: 800, cursor: 'pointer', fontFamily: 'Orbitron, sans-serif', fontSize: '11px' }}>
+              SIGUIENTE: RESULTADOS & SOMATOCARTA ➔
+            </button>
+          )}
+
+          {activeTab === 'resultados' && (
+            <button onClick={handleDownloadPDF} disabled={downloadingPdf} style={{ padding: '10px 18px', borderRadius: '8px', border: '1px solid rgba(0,212,255,0.4)', background: 'rgba(0,212,255,0.1)', color: '#00d4ff', fontWeight: 800, cursor: 'pointer', fontFamily: 'Orbitron, sans-serif', fontSize: '11px' }}>
+              {downloadingPdf ? 'GENERANDO PDF...' : '📄 DESCARGAR PDF MARCA BLANCA'}
+            </button>
+          )}
+
           <button onClick={handleSave} disabled={saving} style={{ padding: '10px 20px', borderRadius: '8px', border: 'none', background: 'var(--theme-primary)', color: '#000', fontWeight: 900, cursor: 'pointer', fontFamily: 'Orbitron, sans-serif', fontSize: '11px' }}>
             {saving ? 'GUARDANDO...' : '💾 GUARDAR VALORACIÓN'}
           </button>

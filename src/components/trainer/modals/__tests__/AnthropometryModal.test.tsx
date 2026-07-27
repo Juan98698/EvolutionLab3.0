@@ -66,7 +66,7 @@ describe('AnthropometryModal Component', () => {
     );
 
     expect(screen.getByText(/VALORACIÓN ANTROPOMÉTRICA & MACROS/i)).toBeInTheDocument();
-    expect(screen.getByText(/Veronika Echeverri/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Veronika Echeverri/i)[0]).toBeInTheDocument();
   });
 
   it('permite cambiar de método antropométrico en el desplegable', () => {
@@ -87,7 +87,7 @@ describe('AnthropometryModal Component', () => {
     expect(select).toHaveValue('ISAK');
 
     // Al seleccionar ISAK debe mostrar los campos avanzados (Estatura sentado)
-    expect(screen.getByText(/ESTATURA SENTADO/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/ESTATURA SENTADO/i)[0]).toBeInTheDocument();
   });
 
   it('navega entre las pestañas (Medidas, Macros, Resultados)', () => {
@@ -103,7 +103,7 @@ describe('AnthropometryModal Component', () => {
 
     const btnMacros = screen.getAllByText(/2. BALANCE Y MACROS/i)[0];
     fireEvent.click(btnMacros);
-    expect(screen.getByText(/BMR \(Gasto Basal\)/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/BMR \(Gasto Basal\)/i)[0]).toBeInTheDocument();
 
     const btnResultados = screen.getAllByText(/3. RESULTADOS & SOMATOCARTA/i)[0];
     fireEvent.click(btnResultados);
