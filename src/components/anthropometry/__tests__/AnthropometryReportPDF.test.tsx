@@ -86,4 +86,21 @@ describe('AnthropometryReportPDF — tabla de % de masa muscular', () => {
       unmount();
     }
   });
+
+  it('renderiza las tarjetas destacadas de Ratio Músculo/Grasa y Requerimiento Hídrico en la página 1', () => {
+    const valoracion = buildValoracion({
+      peso: 70,
+      ratio_musculo_grasa: 1.57,
+      agua_recomendada_l: '2.7 – 3.0 L / día',
+      genero: 'femenino',
+    });
+    const { container } = render(
+      <AnthropometryReportPDF valoracion={valoracion} atletaNombre="Atleta Test" trainerProfile={null} />
+    );
+
+    expect(container.textContent).toContain('Ratio Músculo / Grasa');
+    expect(container.textContent).toContain('1.57');
+    expect(container.textContent).toContain('Requerimiento Hídrico');
+    expect(container.textContent).toContain('2.7 – 3.0 L / día');
+  });
 });

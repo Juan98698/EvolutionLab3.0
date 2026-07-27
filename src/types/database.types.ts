@@ -419,6 +419,7 @@ export interface ValoracionAntropometrica {
   pct_residual?: number;
   kg_residual?: number;
   ratio_musculo_grasa?: number;
+  agua_recomendada_l?: string;
 
   somatotipo?: SomatotipoResult;
 

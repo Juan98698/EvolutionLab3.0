@@ -390,7 +390,72 @@ export function calculateEnergyAndMacros(
 }
 
 // ---------------------------------------------------------------------------
-// 8. Evaluador Principal de Valoración Antropométrica Completa
+// 8. Requerimiento de Hidratación Diaria y Clasificación Ratio Músculo/Grasa
+// ---------------------------------------------------------------------------
+
+export interface WaterRequirement {
+  minL: number;
+  maxL: number;
+  rangoStr: string;
+}
+
+export function calculateWaterRequirement(pesoKg: number, frecuenciaEntreno: string = '3-4'): WaterRequirement {
+  if (pesoKg <= 0) return { minL: 0, maxL: 0, rangoStr: '0 L / día' };
+
+  let minMlPerKg = 38;
+  let maxMlPerKg = 43;
+
+  if (frecuenciaEntreno.includes('1-2') || frecuenciaEntreno.includes('baja')) {
+    minMlPerKg = 35;
+    maxMlPerKg = 40;
+  } else if (frecuenciaEntreno.includes('5-6') || frecuenciaEntreno.includes('alta') || frecuenciaEntreno.includes('diario') || frecuenciaEntreno.includes('atleta')) {
+    minMlPerKg = 42;
+    maxMlPerKg = 48;
+  }
+
+  const minL = Math.round((pesoKg * minMlPerKg / 1000) * 10) / 10;
+  const maxL = Math.round((pesoKg * maxMlPerKg / 1000) * 10) / 10;
+
+  return {
+    minL,
+    maxL,
+    rangoStr: `${minL} – ${maxL} L / día`,
+  };
+}
+
+export interface MuscleFatRatioClassification {
+  ratio: number;
+  nivel: string;
+  desc: string;
+  color: string;
+}
+
+export function classifyMuscleFatRatio(
+  ratio: number,
+  genero: 'masculino' | 'femenino' = 'masculino'
+): MuscleFatRatioClassification {
+  const r = Math.round(ratio * 100) / 100;
+  if (genero === 'femenino') {
+    if (r < 1.0) {
+      return { ratio: r, nivel: 'Inicial / Bajo', desc: 'Priorizar desarrollo muscular y reducción de grasa corporal.', color: '#d97706' };
+    } else if (r <= 1.5) {
+      return { ratio: r, nivel: 'Saludable / Atlético', desc: 'Buen balance entre masa magra y tejido adiposo.', color: '#16a34a' };
+    } else {
+      return { ratio: r, nivel: 'Composición Atlética Avanzada', desc: 'Excelente dominancia muscular con muy baja grasa relativa.', color: '#0284c7' };
+    }
+  } else {
+    if (r < 1.2) {
+      return { ratio: r, nivel: 'Inicial / Bajo', desc: 'Priorizar desarrollo muscular y reducción de grasa corporal.', color: '#d97706' };
+    } else if (r <= 2.0) {
+      return { ratio: r, nivel: 'Saludable / Atlético', desc: 'Buen balance entre masa magra y tejido adiposo.', color: '#16a34a' };
+    } else {
+      return { ratio: r, nivel: 'Composición Atlética Avanzada', desc: 'Excelente dominancia muscular con muy baja grasa relativa.', color: '#0284c7' };
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
+// 9. Evaluador Principal de Valoración Antropométrica Completa
 // ---------------------------------------------------------------------------
 
 export function processFullAnthropometry(input: {
@@ -445,6 +510,9 @@ export function processFullAnthropometry(input: {
     genero
   );
 
+  // 6. Hidratación
+  const water = calculateWaterRequirement(input.peso, input.frecuencia_entreno || '3-4');
+
   return {
     cliente_id: input.cliente_id,
     entrenador_id: input.entrenador_id,
@@ -473,6 +541,7 @@ export function processFullAnthropometry(input: {
     pct_residual: masses.pctResidual,
     kg_residual: masses.kgResidual,
     ratio_musculo_grasa: masses.ratioMusculoGrasa,
+    agua_recomendada_l: water.rangoStr,
     somatotipo: somato,
     bmr: energy.bmr,
     tdee: energy.tdee,

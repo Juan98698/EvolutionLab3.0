@@ -2,7 +2,7 @@ import React from 'react';
 import { ValoracionAntropometrica, Profile } from '../../types/database.types';
 import SomatochartCanvas from './SomatochartCanvas';
 import FourMassesPieChart from './FourMassesPieChart';
-import { getSomatotypeDiagnostic } from '../../lib/anthropometryEngine';
+import { getSomatotypeDiagnostic, classifyMuscleFatRatio, calculateWaterRequirement } from '../../lib/anthropometryEngine';
 
 interface AnthropometryReportPDFProps {
   valoracion: ValoracionAntropometrica;
@@ -23,6 +23,10 @@ export const AnthropometryReportPDF: React.FC<AnthropometryReportPDFProps> = ({
   const pctMusculo = valoracion.pct_musculo || 0;
   const isFemenino = valoracion.genero === 'femenino';
   const generoStr = isFemenino ? 'Mujeres' : 'Hombres';
+
+  const ratioVal = valoracion.ratio_musculo_grasa || 0;
+  const ratioInfo = classifyMuscleFatRatio(ratioVal, valoracion.genero || 'masculino');
+  const waterStr = valoracion.agua_recomendada_l || calculateWaterRequirement(valoracion.peso, valoracion.frecuencia_entreno || '3-4').rangoStr;
 
   const fatRows = isFemenino
     ? [
@@ -108,7 +112,7 @@ export const AnthropometryReportPDF: React.FC<AnthropometryReportPDFProps> = ({
         </div>
 
         {/* Datos del Valorado */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '12px', marginBottom: '20px', fontSize: '11px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '12px', marginBottom: '14px', fontSize: '11px' }}>
           <div><strong>Valorador:</strong> {trainerProfile?.nombre || brandName}</div>
           <div><strong>Atleta:</strong> {atletaNombre}</div>
           <div><strong>Edad:</strong> {valoracion.edad} años</div>
@@ -121,6 +125,33 @@ export const AnthropometryReportPDF: React.FC<AnthropometryReportPDFProps> = ({
           <div><strong>Método:</strong> {valoracion.metodo}</div>
           <div><strong>Frecuencia:</strong> {valoracion.frecuencia_entreno ? `${valoracion.frecuencia_entreno} días/sem` : '3-4 días/sem'}</div>
           <div><strong>Objetivo:</strong> {valoracion.objetivo || 'Recomposición Corporal'}</div>
+        </div>
+
+        {/* Destacados de Composición Corporal & Salud */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '20px' }}>
+          <div style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '10px', padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <span style={{ fontSize: '10px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>⚖️ Ratio Músculo / Grasa</span>
+              <div style={{ fontSize: '15px', fontWeight: 900, color: '#0f172a', marginTop: '2px' }}>
+                {ratioVal} <span style={{ fontSize: '11px', color: ratioInfo.color, fontWeight: 800 }}>({ratioInfo.nivel})</span>
+              </div>
+            </div>
+            <div style={{ fontSize: '10px', color: '#475569', textAlign: 'right', maxWidth: '150px', lineHeight: '1.3' }}>
+              {ratioInfo.desc}
+            </div>
+          </div>
+
+          <div style={{ background: '#f0f9ff', border: '1px solid #bae6fd', borderRadius: '10px', padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <span style={{ fontSize: '10px', color: '#0369a1', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.5px' }}>💧 Requerimiento Hídrico Diario</span>
+              <div style={{ fontSize: '15px', fontWeight: 900, color: '#0284c7', marginTop: '2px' }}>
+                {waterStr}
+              </div>
+            </div>
+            <div style={{ fontSize: '10px', color: '#0369a1', textAlign: 'right', maxWidth: '150px', lineHeight: '1.3' }}>
+              Estimado según {valoracion.peso} kg de peso y actividad física.
+            </div>
+          </div>
         </div>
 
         {/* Grid Principal Pág 1: Somatocarta vs Gráfico Circular */}

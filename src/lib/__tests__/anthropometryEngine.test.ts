@@ -10,6 +10,8 @@ import {
   calculateEnergyAndMacros,
   processFullAnthropometry,
   getSomatotypeDiagnostic,
+  calculateWaterRequirement,
+  classifyMuscleFatRatio,
 } from '../anthropometryEngine';
 
 describe('anthropometryEngine Library', () => {
@@ -197,6 +199,35 @@ describe('anthropometryEngine Library', () => {
       expect(resultMale.genero).toBe('masculino');
       expect(resultMale.clasificacion_grasa).toBeDefined();
       expect(resultMale.clasificacion_musculo).toBeDefined();
+    });
+  });
+
+  describe('calculateWaterRequirement', () => {
+    it('calcula el rango de agua según el peso y frecuencia de entrenamiento', () => {
+      const baja = calculateWaterRequirement(70, '1-2');
+      expect(baja.minL).toBe(2.5); // 70 * 35 / 1000
+      expect(baja.maxL).toBe(2.8); // 70 * 40 / 1000
+
+      const moderada = calculateWaterRequirement(70, '3-4');
+      expect(moderada.minL).toBe(2.7); // 70 * 38 / 1000
+      expect(moderada.maxL).toBe(3.0); // 70 * 43 / 1000
+
+      const alta = calculateWaterRequirement(80, '5-6');
+      expect(alta.minL).toBe(3.4); // 80 * 42 / 1000
+      expect(alta.maxL).toBe(3.8); // 80 * 48 / 1000
+    });
+  });
+
+  describe('classifyMuscleFatRatio', () => {
+    it('clasifica correctamente el ratio músculo/grasa diferenciado por sexo', () => {
+      const hombreBajo = classifyMuscleFatRatio(1.1, 'masculino');
+      expect(hombreBajo.nivel).toBe('Inicial / Bajo');
+
+      const hombreAvanzado = classifyMuscleFatRatio(2.2, 'masculino');
+      expect(hombreAvanzado.nivel).toBe('Composición Atlética Avanzada');
+
+      const mujerAvanzada = classifyMuscleFatRatio(1.8, 'femenino');
+      expect(mujerAvanzada.nivel).toBe('Composición Atlética Avanzada');
     });
   });
 });
