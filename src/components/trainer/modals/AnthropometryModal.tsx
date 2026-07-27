@@ -161,7 +161,7 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
 
       loadLatestValuation();
     }
-  }, [isOpen, atleta?.id]);
+  }, [isOpen, atleta?.id, atleta?.objetivo, atleta?.sexo]);
 
   const dialogRef = useModalA11y<HTMLDivElement>({
     isOpen,
@@ -207,7 +207,7 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
       const currentTrainerId = trainerProfile?.id || authData.user?.id || null;
 
       // Extraer campos calculados dinámicamente que no corresponden a columnas de la base de datos
-      const { agua_recomendada_l, ...dbPayload } = computed;
+      const { agua_recomendada_l: _agua_recomendada_l, ...dbPayload } = computed;
       if (!dbPayload.entrenador_id && currentTrainerId) {
         dbPayload.entrenador_id = currentTrainerId;
       }

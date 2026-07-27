@@ -399,6 +399,21 @@ export interface WaterRequirement {
   rangoStr: string;
 }
 
+/**
+ * Requerimiento de Hidratación Diaria en Atletas
+ * 
+ * Criterio & Referencia Científica:
+ * Basado en los rangos de reposición hídrica en nutrición y medicina deportiva del
+ * ACSM (American College of Sports Medicine) e ISSN (International Society of Sports Nutrition).
+ * 
+ * Método:
+ *   Volumen Hídrico (L/día) = [Peso Corporal (kg) × Tasa por Actividad (ml/kg)] / 1000
+ * 
+ * Rangos de cálculo según frecuencia semanal de entrenamiento:
+ *   - Actividad Moderada (1-2 días/sem):  35 – 40 ml / kg / día
+ *   - Actividad Estándar (3-4 días/sem):  38 – 43 ml / kg / día
+ *   - Alta Intensidad / Atleta (5-6+ días): 42 – 48 ml / kg / día
+ */
 export function calculateWaterRequirement(pesoKg: number, frecuenciaEntreno: string = '3-4'): WaterRequirement {
   if (pesoKg <= 0) return { minL: 0, maxL: 0, rangoStr: '0 L / día' };
 
@@ -430,6 +445,26 @@ export interface MuscleFatRatioClassification {
   color: string;
 }
 
+/**
+ * Clasificación Cineantropométrica del Ratio Músculo / Grasa
+ * 
+ * Criterio & Referencia Científica:
+ * Basado en los estándares de valoración cineantropométrica deportiva del GREC
+ * (Grupo Español de Cineantropometría) y normas de referencia ISAK.
+ * 
+ * Fórmula:
+ *   Ratio = Masa Muscular (kg) / Masa Grasa (kg)
+ * 
+ * Puntos de Corte y Criterio Clínico:
+ *   - Hombres:
+ *     - Ratio < 1.2: Inicial / Bajo (requiere recomposición)
+ *     - Ratio 1.2 – 2.0: Saludable / Atlético
+ *     - Ratio > 2.0: Composición Atlética Avanzada (alta dominancia magra)
+ *   - Mujeres:
+ *     - Ratio < 1.0: Inicial / Bajo
+ *     - Ratio 1.0 – 1.5: Saludable / Atlético
+ *     - Ratio > 1.5: Composición Atlética Avanzada
+ */
 export function classifyMuscleFatRatio(
   ratio: number,
   genero: 'masculino' | 'femenino' = 'masculino'
