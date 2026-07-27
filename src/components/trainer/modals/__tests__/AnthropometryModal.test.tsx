@@ -1,17 +1,33 @@
 // @vitest-environment happy-dom
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi } from 'vitest';
 import AnthropometryModal from '../AnthropometryModal';
 import { Profile } from '../../../../types/database.types';
 
 // Mock Supabase
-vi.mock('../../../../lib/supabaseClient', () => ({
-  supabase: {
-    from: vi.fn(() => ({
-      insert: vi.fn().mockResolvedValue({ error: null }),
-    })),
-  },
-}));
+vi.mock('../../../../lib/supabaseClient', () => {
+  const mockQuery = () => {
+    const obj: any = {};
+    obj.select = vi.fn().mockReturnValue(obj);
+    obj.eq = vi.fn().mockReturnValue(obj);
+    obj.order = vi.fn().mockReturnValue(obj);
+    obj.limit = vi.fn().mockReturnValue(obj);
+    obj.maybeSingle = vi.fn().mockResolvedValue({ data: null, error: null });
+    obj.update = vi.fn().mockReturnValue(obj);
+    obj.insert = vi.fn().mockImplementation(() => Promise.resolve({ error: null }));
+    obj.then = (resolve: any) => Promise.resolve({ data: null, error: null }).then(resolve);
+    return obj;
+  };
+
+  return {
+    supabase: {
+      auth: {
+        getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'trainer-1' } } }),
+      },
+      from: vi.fn(() => mockQuery()),
+    },
+  };
+});
 
 // Mock html2canvas y jspdf
 vi.mock('html2canvas', () => ({
@@ -108,5 +124,30 @@ describe('AnthropometryModal Component', () => {
     const btnResultados = screen.getAllByText(/3. RESULTADOS & SOMATOCARTA/i)[0];
     fireEvent.click(btnResultados);
     expect(screen.getAllByText(/SOMATOCARTA HEATH-CARTER/i)[0]).toBeInTheDocument();
+  });
+
+  it('guarda la valoración exitosamente manteniendo el modal abierto sin llamar a onClose', async () => {
+    const mockOnClose = vi.fn();
+    const mockShowToast = vi.fn();
+
+    render(
+      <AnthropometryModal
+        isOpen={true}
+        onClose={mockOnClose}
+        atleta={mockAthlete}
+        trainerProfile={mockTrainer}
+        showToast={mockShowToast}
+      />
+    );
+
+    const saveButtons = screen.getAllByText(/💾 GUARDAR VALORACIÓN/i);
+    const btnSave = saveButtons[saveButtons.length - 1];
+    fireEvent.click(btnSave);
+
+    await waitFor(() => {
+      expect(mockShowToast).toHaveBeenCalledWith(expect.stringContaining('guardada exitosamente'), 'success');
+    });
+
+    expect(mockOnClose).not.toHaveBeenCalled();
   });
 });
