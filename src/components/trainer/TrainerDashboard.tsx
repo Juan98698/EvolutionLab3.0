@@ -79,7 +79,16 @@ export const TrainerDashboard: React.FC = () => {
   const [isAnthropometryModalOpen, setIsAnthropometryModalOpen] = useState<boolean>(false);
   const [selectedAthleteForAnthropometry, setSelectedAthleteForAnthropometry] = useState<Profile | null>(null);
 
+  const isPaidTrainer = Boolean(
+    (trainerSubscription?.plan && trainerSubscription.plan !== 'free') ||
+    (profile?.suscripcion_plan && profile.suscripcion_plan !== 'free')
+  );
+
   const handleOpenAnthropometryModal = (atleta: Profile) => {
+    if (!isPaidTrainer) {
+      showToast('🔒 La valoración antropométrica y macros es una funcionalidad exclusiva para entrenadores con membresía de pago. ¡Actualiza tu plan para desbloquearla!', 'info');
+      return;
+    }
     setSelectedAthleteForAnthropometry(atleta);
     setIsAnthropometryModalOpen(true);
   };
@@ -869,6 +878,9 @@ export const TrainerDashboard: React.FC = () => {
               handleOpenRegisterSessionModal={handleOpenRegisterSessionModal}
               handleOpenEvolutionModal={handleOpenEvolutionModal}
               handleOpenAnthropometryModal={handleOpenAnthropometryModal}
+              trainerSubscription={trainerSubscription}
+              trainerProfile={profile}
+              showToast={showToast}
             />
           </ErrorBoundary>
         ) : (

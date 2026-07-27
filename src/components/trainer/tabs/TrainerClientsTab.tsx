@@ -18,6 +18,9 @@ interface TrainerClientsTabProps {
   handleOpenRegisterSessionModal: (atleta: Profile) => void;
   handleOpenEvolutionModal: (atleta: Profile) => void;
   handleOpenAnthropometryModal?: (atleta: Profile) => void;
+  trainerSubscription?: { plan: string; estado: string; expira_at: string | null } | null;
+  trainerProfile?: Profile | null;
+  showToast?: (msg: string, type: 'success' | 'error' | 'info') => void;
 }
 
 const TrainerClientsTab: React.FC<TrainerClientsTabProps> = ({
@@ -36,8 +39,15 @@ const TrainerClientsTab: React.FC<TrainerClientsTabProps> = ({
   navigate,
   handleOpenRegisterSessionModal,
   handleOpenEvolutionModal,
-  handleOpenAnthropometryModal
+  handleOpenAnthropometryModal,
+  trainerSubscription,
+  trainerProfile,
+  showToast
 }) => {
+  const isPaidTrainer = Boolean(
+    (trainerSubscription?.plan && trainerSubscription.plan !== 'free') ||
+    (trainerProfile?.suscripcion_plan && trainerProfile.suscripcion_plan !== 'free')
+  );
   return (
     <>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '25px', flexWrap: 'wrap', gap: '15px' }}>
@@ -279,7 +289,18 @@ const TrainerClientsTab: React.FC<TrainerClientsTabProps> = ({
                   {handleOpenAnthropometryModal && (
                     <button
                       className="btn"
-                      onClick={() => handleOpenAnthropometryModal(atleta)}
+                      onClick={() => {
+                        if (!isPaidTrainer) {
+                          showToast?.('🔒 La valoración antropométrica y macros es una funcionalidad exclusiva para entrenadores con membresía de pago. ¡Actualiza tu plan para desbloquearla!', 'info');
+                        } else {
+                          handleOpenAnthropometryModal(atleta);
+                        }
+                      }}
+                      title={
+                        isPaidTrainer
+                          ? 'Realizar o consultar valoración antropométrica y macros'
+                          : 'Funcionalidad exclusiva para entrenadores con membresía de pago (Iniciación, Intermedio, Profesional, Premium)'
+                      }
                       style={{
                         width: '100%',
                         padding: '10px 0',
@@ -288,17 +309,19 @@ const TrainerClientsTab: React.FC<TrainerClientsTabProps> = ({
                         justifyContent: 'center',
                         alignItems: 'center',
                         gap: '6px',
-                        background: 'rgba(147, 51, 234, 0.12)',
-                        border: '1px solid rgba(168, 85, 247, 0.35)',
+                        background: isPaidTrainer ? 'rgba(147, 51, 234, 0.12)' : 'rgba(255, 255, 255, 0.03)',
+                        border: isPaidTrainer ? '1px solid rgba(168, 85, 247, 0.35)' : '1px dashed rgba(255, 255, 255, 0.18)',
                         borderRadius: '8px',
-                        color: '#c084fc',
-                        cursor: 'pointer',
+                        color: isPaidTrainer ? '#c084fc' : 'rgba(255, 255, 255, 0.45)',
+                        cursor: isPaidTrainer ? 'pointer' : 'not-allowed',
                         fontFamily: "'Orbitron', sans-serif",
                         fontWeight: 800,
-                        boxShadow: '0 4px 12px rgba(147, 51, 234, 0.15)',
+                        boxShadow: isPaidTrainer ? '0 4px 12px rgba(147, 51, 234, 0.15)' : 'none',
+                        opacity: isPaidTrainer ? 1 : 0.65,
+                        transition: 'all 0.2s ease',
                       }}
                     >
-                      📐 Antropometría & Macros
+                      {isPaidTrainer ? '📐 Antropometría & Macros' : '🔒 Antropometría & Macros (Solo Plan de Pago)'}
                     </button>
                   )}
                 </div>
