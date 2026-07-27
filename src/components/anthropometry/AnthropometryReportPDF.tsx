@@ -79,7 +79,7 @@ export const AnthropometryReportPDF: React.FC<AnthropometryReportPDFProps> = ({
           <div><strong>Edad:</strong> {valoracion.edad} años</div>
           <div><strong>Peso:</strong> {valoracion.peso} kg</div>
           <div><strong>Estatura:</strong> {valoracion.estatura} cm</div>
-          {valoracion.estatura_sentado ? (
+          {valoracion.metodo === 'ISAK' && valoracion.estatura_sentado ? (
             <div><strong>Estatura Sentado:</strong> {valoracion.estatura_sentado} cm</div>
           ) : null}
           <div><strong>IMC:</strong> {valoracion.imc} kg/m²</div>

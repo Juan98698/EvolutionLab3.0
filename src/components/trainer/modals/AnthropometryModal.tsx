@@ -93,7 +93,7 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
     edad,
     peso,
     estatura,
-    estatura_sentado: estaturaSentado,
+    estatura_sentado: metodo === 'ISAK' ? estaturaSentado : undefined,
     metodo,
     objetivo,
     frecuencia_entreno: frecuenciaEntreno,
