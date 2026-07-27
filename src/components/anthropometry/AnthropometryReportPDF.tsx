@@ -249,7 +249,7 @@ export const AnthropometryReportPDF: React.FC<AnthropometryReportPDFProps> = ({
                 <tr style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '4px 8px' }}>Cadera:</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{valoracion.perimetros?.cadera || 0} cm</td></tr>
                 <tr style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '4px 8px' }}>Muslo:</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{valoracion.perimetros?.muslo || 0} cm</td></tr>
                 <tr style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '4px 8px' }}>Pantorrilla:</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{valoracion.perimetros?.pantorrilla || 0} cm</td></tr>
-                {valoracion.perimetros?.cefalico ? (
+                {valoracion.metodo === 'ISAK' && valoracion.perimetros?.cefalico ? (
                   <tr><td style={{ padding: '4px 8px' }}>Cefálico:</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{valoracion.perimetros?.cefalico} cm</td></tr>
                 ) : null}
               </tbody>

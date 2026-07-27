@@ -133,6 +133,13 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
 
   if (!isOpen) return null;
 
+  // Filtrar perímetros para excluir cefálico si el método no es ISAK
+  const cleanPerimetros = Object.fromEntries(
+    Object.entries(perimetros)
+      .filter(([k]) => metodo === 'ISAK' || k !== 'cefalico')
+      .map(([k, v]) => [k, Number(v) || 0])
+  );
+
   // Cálculo en tiempo real de la valoración completa
   const computed: ValoracionAntropometrica = processFullAnthropometry({
     cliente_id: atleta.id,
@@ -146,7 +153,7 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
     objetivo,
     frecuencia_entreno: frecuenciaEntreno,
     pliegues: Object.fromEntries(Object.entries(pliegues).map(([k, v]) => [k, Number(v) || 0])),
-    perimetros: Object.fromEntries(Object.entries(perimetros).map(([k, v]) => [k, Number(v) || 0])),
+    perimetros: cleanPerimetros,
     diametros: Object.fromEntries(Object.entries(diametros).map(([k, v]) => [k, Number(v) || 0])),
     ajuste_calorico_pct: ajusteCaloricoPct === '' ? 0 : Number(ajusteCaloricoPct),
     g_proteina_kg: Number(gProteinaKg) || 0,
@@ -158,8 +165,16 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
   const handleSave = async () => {
     setSaving(true);
     try {
+      // Garantizar que entrenador_id esté poblado si trainerProfile.id venía nulo
+      const { data: authData } = await supabase.auth.getUser();
+      const currentTrainerId = trainerProfile?.id || authData.user?.id || null;
+
       // Extraer campos calculados dinámicamente que no corresponden a columnas de la base de datos
       const { agua_recomendada_l, ...dbPayload } = computed;
+      if (!dbPayload.entrenador_id && currentTrainerId) {
+        dbPayload.entrenador_id = currentTrainerId;
+      }
+
       const { error } = await supabase.from('valoraciones_antropometricas').insert([dbPayload]);
       if (error) throw error;
 
