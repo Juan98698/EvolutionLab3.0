@@ -1,0 +1,429 @@
+import React, { useState } from 'react';
+import { supabase } from '../../../lib/supabaseClient';
+import { Profile, ValoracionAntropometrica } from '../../../types/database.types';
+import { processFullAnthropometry } from '../../../lib/anthropometryEngine';
+import SomatochartCanvas from '../../anthropometry/SomatochartCanvas';
+import AnthropometryReportPDF from '../../anthropometry/AnthropometryReportPDF';
+import { useModalA11y } from '../../../hooks/useModalA11y';
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
+
+interface AnthropometryModalProps {
+  isOpen: boolean;
+  onClose: () => void;
+  atleta: Profile;
+  trainerProfile: Profile | null;
+  showToast: (msg: string, type: 'success' | 'error' | 'info') => void;
+}
+
+export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
+  isOpen,
+  onClose,
+  atleta,
+  trainerProfile,
+  showToast,
+}) => {
+  const [activeTab, setActiveTab] = useState<'medidas' | 'macros' | 'resultados'>('medidas');
+  const [metodo, setMetodo] = useState<'Yuhasz' | 'Faulkner' | 'ISAK'>('Yuhasz');
+  const [saving, setSaving] = useState(false);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
+
+  // Datos básicos
+  const [peso, setPeso] = useState<number>(70);
+  const [estatura, setEstatura] = useState<number>(170);
+  const [estaturaSentado, setEstaturaSentado] = useState<number>(90);
+  const [edad, setEdad] = useState<number>(25);
+  const [genero, setGenero] = useState<'masculino' | 'femenino'>(atleta?.sexo || 'masculino');
+  const [objetivo] = useState<string>(atleta?.objetivo || 'Recomposición Corporal');
+  const [frecuenciaEntreno] = useState<string>('3-4');
+
+  // Pliegues (mm)
+  const [pliegues, setPliegues] = useState({
+    triceps: 12,
+    subescapular: 14,
+    suprailiaco: 15,
+    abdominal: 18,
+    muslo: 20,
+    pantorrilla: 16,
+    antebrazo: 10,
+    supraespinal: 12,
+  });
+
+  // Perímetros (cm)
+  const [perimetros, setPerimetros] = useState({
+    brazo: 32,
+    brazo_contraido: 34,
+    torax: 95,
+    cintura: 80,
+    cadera: 98,
+    muslo: 58,
+    pantorrilla: 37,
+    cefalico: 56,
+  });
+
+  // Diámetros (cm)
+  const [diametros, setDiametros] = useState({
+    codo: 6.8,
+    rodilla: 9.5,
+    biliocrestal: 28,
+    biacromial: 38,
+    anteroposterior: 20,
+    transversal: 30,
+  });
+
+  // Balance y Macros
+  const [ajusteCaloricoPct, setAjusteCaloricoPct] = useState<number>(-15);
+  const [gProteinaKg, setGProteinaKg] = useState<number>(2.0);
+  const [gGrasaKg, setGGrasaKg] = useState<number>(1.0);
+
+  const dialogRef = useModalA11y<HTMLDivElement>({
+    isOpen,
+    onClose,
+  });
+
+  if (!isOpen) return null;
+
+  // Cálculo en tiempo real de la valoración completa
+  const computed: ValoracionAntropometrica = processFullAnthropometry({
+    cliente_id: atleta.id,
+    entrenador_id: trainerProfile?.id,
+    fecha: new Date().toISOString().split('T')[0],
+    edad,
+    peso,
+    estatura,
+    estatura_sentado: estaturaSentado,
+    metodo,
+    objetivo,
+    frecuencia_entreno: frecuenciaEntreno,
+    pliegues,
+    perimetros,
+    diametros,
+    ajuste_calorico_pct: ajusteCaloricoPct,
+    g_proteina_kg: gProteinaKg,
+    g_grasa_kg: gGrasaKg,
+    genero,
+  });
+
+  // Guardar en Supabase
+  const handleSave = async () => {
+    setSaving(true);
+    try {
+      const { error } = await supabase.from('valoraciones_antropometricas').insert([computed]);
+      if (error) throw error;
+      showToast('🎉 ¡Valoración antropométrica guardada exitosamente!', 'success');
+      onClose();
+    } catch (err: any) {
+      showToast('Error al guardar valoración: ' + (err.message || err), 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Generar y Descargar PDF Nativo en 1 clic
+  const handleDownloadPDF = async () => {
+    setDownloadingPdf(true);
+    try {
+      const reportElement = document.getElementById('anthropometry-pdf-report');
+      if (!reportElement) throw new Error('No se encontró el elemento del informe PDF.');
+
+      const canvas = await html2canvas(reportElement, { scale: 2, useCORS: true });
+      const imgData = canvas.toDataURL('image/png');
+
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pdfWidth = pdf.internal.pageSize.getWidth();
+      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      pdf.save(`Valoracion_${atleta.nombre.replace(/\s+/g, '_')}_${computed.fecha}.pdf`);
+
+      showToast('📄 PDF descargado correctamente con tu Marca Blanca', 'success');
+    } catch (err: any) {
+      showToast('Error al generar PDF: ' + (err.message || err), 'error');
+    } finally {
+      setDownloadingPdf(false);
+    }
+  };
+
+  return (
+    <div className="modal-overlay modal-overlay-enter open" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 99999 }}>
+      <div
+        ref={dialogRef}
+        className="modal-box modal-enter"
+        style={{ maxWidth: '850px', width: '95%', maxHeight: '90vh', overflowY: 'auto', border: '1px solid var(--theme-border)', boxShadow: '0 20px 50px var(--theme-glow)', background: '#0b0f19' }}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="anthropometry-title"
+        tabIndex={-1}
+      >
+        {/* Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '14px', marginBottom: '16px' }}>
+          <div>
+            <h3 id="anthropometry-title" style={{ margin: 0, fontFamily: "'Orbitron', sans-serif", color: 'var(--theme-primary)', fontSize: '1.1rem', letterSpacing: '0.5px' }}>
+              📐 VALORACIÓN ANTROPOMÉTRICA & MACROS
+            </h3>
+            <p style={{ margin: '4px 0 0', fontSize: '11px', color: 'rgba(255,255,255,0.6)' }}>
+              Atleta: <strong style={{ color: 'white' }}>{atleta.nombre}</strong> ({atleta.email})
+            </p>
+          </div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '24px', cursor: 'pointer' }}>&times;</button>
+        </div>
+
+        {/* Desplegable de Método Antropométrico */}
+        <div style={{ marginBottom: '16px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', padding: '12px' }}>
+          <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, fontFamily: 'Orbitron, sans-serif', color: '#00d4ff', marginBottom: '6px' }}>
+            SELECCIONA EL MÉTODO DE EVALUACIÓN:
+          </label>
+          <select
+            value={metodo}
+            onChange={(e) => setMetodo(e.target.value as any)}
+            style={{ width: '100%', background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(0,212,255,0.3)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '13px', fontFamily: 'Inter, sans-serif' }}
+          >
+            <option value="Yuhasz">Rose Guimares (YUHASZ) — 6 Pliegues (Estándar Deportivo)</option>
+            <option value="Faulkner">Rose Guimares (FAULKNER) — 4 Pliegues</option>
+            <option value="ISAK">Método Avanzado (ISAK 5 Componentes / Pliegues + Perímetros + Diámetros)</option>
+          </select>
+        </div>
+
+        {/* Navegación por pestañas */}
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '8px' }}>
+          <button
+            onClick={() => setActiveTab('medidas')}
+            style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', background: activeTab === 'medidas' ? 'var(--theme-primary)' : 'transparent', color: activeTab === 'medidas' ? '#000' : '#fff', fontWeight: 800, fontFamily: 'Orbitron, sans-serif', fontSize: '11px', cursor: 'pointer' }}
+          >
+            1. MEDIDAS Y PLIEGUES
+          </button>
+          <button
+            onClick={() => setActiveTab('macros')}
+            style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', background: activeTab === 'macros' ? 'var(--theme-primary)' : 'transparent', color: activeTab === 'macros' ? '#000' : '#fff', fontWeight: 800, fontFamily: 'Orbitron, sans-serif', fontSize: '11px', cursor: 'pointer' }}
+          >
+            2. BALANCE Y MACROS
+          </button>
+          <button
+            onClick={() => setActiveTab('resultados')}
+            style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', background: activeTab === 'resultados' ? 'var(--theme-primary)' : 'transparent', color: activeTab === 'resultados' ? '#000' : '#fff', fontWeight: 800, fontFamily: 'Orbitron, sans-serif', fontSize: '11px', cursor: 'pointer' }}
+          >
+            3. RESULTADOS & SOMATOCARTA
+          </button>
+        </div>
+
+        {/* PESTAÑA 1: MEDIDAS Y PLIEGUES */}
+        {activeTab === 'medidas' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px' }}>
+              <div>
+                <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)', display: 'block', marginBottom: '4px' }}>PESO (KG)</label>
+                <input type="number" value={peso} onChange={(e) => setPeso(Number(e.target.value))} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '8px', boxSizing: 'border-box' }} />
+              </div>
+              <div>
+                <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)', display: 'block', marginBottom: '4px' }}>ESTATURA (CM)</label>
+                <input type="number" value={estatura} onChange={(e) => setEstatura(Number(e.target.value))} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '8px', boxSizing: 'border-box' }} />
+              </div>
+              <div>
+                <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)', display: 'block', marginBottom: '4px' }}>EDAD</label>
+                <input type="number" value={edad} onChange={(e) => setEdad(Number(e.target.value))} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '8px', boxSizing: 'border-box' }} />
+              </div>
+              <div>
+                <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)', display: 'block', marginBottom: '4px' }}>SEXO / GÉNERO</label>
+                <select value={genero} onChange={(e) => setGenero(e.target.value as any)} style={{ width: '100%', background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '8px', boxSizing: 'border-box' }}>
+                  <option value="masculino">Masculino</option>
+                  <option value="femenino">Femenino</option>
+                </select>
+              </div>
+              {metodo === 'ISAK' && (
+                <div>
+                  <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)', display: 'block', marginBottom: '4px' }}>ESTATURA SENTADO (CM)</label>
+                  <input type="number" value={estaturaSentado} onChange={(e) => setEstaturaSentado(Number(e.target.value))} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '8px', boxSizing: 'border-box' }} />
+                </div>
+              )}
+            </div>
+
+            {/* Pliegues Cutáneos */}
+            <div>
+              <h4 style={{ fontSize: '11px', fontFamily: 'Orbitron, sans-serif', color: '#00d4ff', margin: '12px 0 8px' }}>PLIEGUES CUTÁNEOS (MM)</h4>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px' }}>
+                <div>
+                  <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Tríceps</label>
+                  <input type="number" value={pliegues.triceps} onChange={(e) => setPliegues({ ...pliegues, triceps: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Subescapular</label>
+                  <input type="number" value={pliegues.subescapular} onChange={(e) => setPliegues({ ...pliegues, subescapular: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Suprailíaco</label>
+                  <input type="number" value={pliegues.suprailiaco} onChange={(e) => setPliegues({ ...pliegues, suprailiaco: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Abdominal</label>
+                  <input type="number" value={pliegues.abdominal} onChange={(e) => setPliegues({ ...pliegues, abdominal: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
+                </div>
+                {metodo !== 'Faulkner' && (
+                  <>
+                    <div>
+                      <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Muslo</label>
+                      <input type="number" value={pliegues.muslo} onChange={(e) => setPliegues({ ...pliegues, muslo: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Pantorrilla</label>
+                      <input type="number" value={pliegues.pantorrilla} onChange={(e) => setPliegues({ ...pliegues, pantorrilla: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
+                    </div>
+                  </>
+                )}
+                {metodo === 'ISAK' && (
+                  <>
+                    <div>
+                      <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Antebrazo</label>
+                      <input type="number" value={pliegues.antebrazo} onChange={(e) => setPliegues({ ...pliegues, antebrazo: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Supraespinal</label>
+                      <input type="number" value={pliegues.supraespinal} onChange={(e) => setPliegues({ ...pliegues, supraespinal: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Perímetros e Diámetros para ISAK */}
+            {metodo === 'ISAK' && (
+              <>
+                <div>
+                  <h4 style={{ fontSize: '11px', fontFamily: 'Orbitron, sans-serif', color: '#00d4ff', margin: '12px 0 8px' }}>PERÍMETROS CORPORALES (CM)</h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px' }}>
+                    <div>
+                      <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Brazo Relajado</label>
+                      <input type="number" value={perimetros.brazo} onChange={(e) => setPerimetros({ ...perimetros, brazo: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Brazo Contraído</label>
+                      <input type="number" value={perimetros.brazo_contraido} onChange={(e) => setPerimetros({ ...perimetros, brazo_contraido: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Cintura</label>
+                      <input type="number" value={perimetros.cintura} onChange={(e) => setPerimetros({ ...perimetros, cintura: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Cadera</label>
+                      <input type="number" value={perimetros.cadera} onChange={(e) => setPerimetros({ ...perimetros, cadera: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 style={{ fontSize: '11px', fontFamily: 'Orbitron, sans-serif', color: '#00d4ff', margin: '12px 0 8px' }}>DIÁMETROS ÓSEOS (CM)</h4>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px' }}>
+                    <div>
+                      <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Diámetro Codo</label>
+                      <input type="number" step="0.1" value={diametros.codo} onChange={(e) => setDiametros({ ...diametros, codo: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Diámetro Rodilla</label>
+                      <input type="number" step="0.1" value={diametros.rodilla} onChange={(e) => setDiametros({ ...diametros, rodilla: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
+        {/* PESTAÑA 2: BALANCE Y MACROS */}
+        {activeTab === 'macros' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px' }}>
+              <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', padding: '10px', borderRadius: '8px' }}>
+                <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>BMR (Gasto Basal)</span>
+                <h4 style={{ margin: '4px 0 0', fontSize: '16px', color: '#00d4ff' }}>{computed.bmr} kcal</h4>
+              </div>
+              <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', padding: '10px', borderRadius: '8px' }}>
+                <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>TDEE (Mantenimiento)</span>
+                <h4 style={{ margin: '4px 0 0', fontSize: '16px', color: '#00ff99' }}>{computed.tdee} kcal</h4>
+              </div>
+              <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', padding: '10px', borderRadius: '8px' }}>
+                <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Ajuste Calórico (%)</span>
+                <input
+                  type="number"
+                  value={ajusteCaloricoPct}
+                  onChange={(e) => setAjusteCaloricoPct(Number(e.target.value))}
+                  style={{ width: '100%', background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px', color: 'white', padding: '4px 8px', marginTop: '4px' }}
+                />
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
+              <div>
+                <label style={{ fontSize: '11px', color: '#3b82f6', fontWeight: 800 }}>PROTEÍNA (G / KG PESO)</label>
+                <input type="number" step="0.1" value={gProteinaKg} onChange={(e) => setGProteinaKg(Number(e.target.value))} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '8px' }} />
+                <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)' }}>Total: {computed.macros?.proteina.grams}g ({computed.macros?.proteina.calories} kcal)</span>
+              </div>
+              <div>
+                <label style={{ fontSize: '11px', color: '#f59e0b', fontWeight: 800 }}>GRASA (G / KG PESO)</label>
+                <input type="number" step="0.1" value={gGrasaKg} onChange={(e) => setGGrasaKg(Number(e.target.value))} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '8px' }} />
+                <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)' }}>Total: {computed.macros?.grasa.grams}g ({computed.macros?.grasa.calories} kcal)</span>
+              </div>
+              <div>
+                <label style={{ fontSize: '11px', color: '#10b981', fontWeight: 800 }}>CARBOHIDRATOS (RESTANTE)</label>
+                <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: '#10b981', padding: '8px', fontWeight: 800 }}>
+                  {computed.macros?.carbohidratos.gPerKg} g/kg ({computed.macros?.carbohidratos.grams}g)
+                </div>
+                <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)' }}>Total: {computed.macros?.carbohidratos.calories} kcal ({computed.macros?.carbohidratos.percentage}%)</span>
+              </div>
+            </div>
+
+            <div style={{ background: 'rgba(0,212,255,0.08)', border: '1px solid rgba(0,212,255,0.2)', padding: '12px', borderRadius: '8px', textAlign: 'center', fontFamily: 'Orbitron, sans-serif' }}>
+              <span style={{ fontSize: '12px', color: '#00d4ff', fontWeight: 800 }}>OBJETIVO DE LA DIETA: {computed.target_calorias} KCAL / DÍA</span>
+            </div>
+          </div>
+        )}
+
+        {/* PESTAÑA 3: RESULTADOS Y SOMATOCARTA */}
+        {activeTab === 'resultados' && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+              <div>
+                <SomatochartCanvas
+                  x={computed.somatotipo?.x || 0}
+                  y={computed.somatotipo?.y || 0}
+                  endo={computed.somatotipo?.endo || 0}
+                  meso={computed.somatotipo?.meso || 0}
+                  ecto={computed.somatotipo?.ecto || 0}
+                />
+              </div>
+
+              <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '16px' }}>
+                <h4 style={{ margin: '0 0 12px', fontFamily: 'Orbitron, sans-serif', fontSize: '12px', color: '#00d4ff' }}>RESULTADOS CLAVE</h4>
+                <div style={{ fontSize: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div><strong>IMC:</strong> {computed.imc} kg/m² ({computed.clasificacion_imc})</div>
+                  <div><strong>% Grasa:</strong> {computed.pct_grasa}% ({computed.clasificacion_grasa})</div>
+                  <div><strong>Masa Muscular:</strong> {computed.kg_musculo} kg ({computed.pct_musculo}%)</div>
+                  <div><strong>Masa Grasa:</strong> {computed.kg_grasa} kg</div>
+                  <div><strong>Masa Ósea:</strong> {computed.kg_oseo} kg</div>
+                  <div><strong>Masa Residual:</strong> {computed.kg_residual} kg</div>
+                  <div><strong>Ratio M/G:</strong> {computed.ratio_musculo_grasa}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Previsualización del PDF en vivo */}
+            <div style={{ overflowX: 'auto', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '16px', background: '#334155' }}>
+              <span style={{ fontSize: '11px', color: '#cbd5e1', fontWeight: 800, display: 'block', marginBottom: '10px' }}>PREVISUALIZACIÓN DEL INFORME PDF MARCA BLANCA:</span>
+              <AnthropometryReportPDF valoracion={computed} atletaNombre={atleta.nombre} trainerProfile={trainerProfile} />
+            </div>
+          </div>
+        )}
+
+        {/* Acciones del Modal */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '20px', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '16px' }}>
+          <button onClick={handleDownloadPDF} disabled={downloadingPdf} style={{ padding: '10px 18px', borderRadius: '8px', border: '1px solid rgba(0,212,255,0.4)', background: 'rgba(0,212,255,0.1)', color: '#00d4ff', fontWeight: 800, cursor: 'pointer', fontFamily: 'Orbitron, sans-serif', fontSize: '11px' }}>
+            {downloadingPdf ? 'GENERANDO PDF...' : '📄 DESCARGAR PDF MARCA BLANCA'}
+          </button>
+          <button onClick={handleSave} disabled={saving} style={{ padding: '10px 20px', borderRadius: '8px', border: 'none', background: 'var(--theme-primary)', color: '#000', fontWeight: 900, cursor: 'pointer', fontFamily: 'Orbitron, sans-serif', fontSize: '11px' }}>
+            {saving ? 'GUARDANDO...' : '💾 GUARDAR VALORACIÓN'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default AnthropometryModal;

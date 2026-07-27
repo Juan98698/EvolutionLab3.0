@@ -17,6 +17,7 @@ interface TrainerClientsTabProps {
   navigate: (path: string) => void;
   handleOpenRegisterSessionModal: (atleta: Profile) => void;
   handleOpenEvolutionModal: (atleta: Profile) => void;
+  handleOpenAnthropometryModal?: (atleta: Profile) => void;
 }
 
 const TrainerClientsTab: React.FC<TrainerClientsTabProps> = ({
@@ -34,7 +35,8 @@ const TrainerClientsTab: React.FC<TrainerClientsTabProps> = ({
   clientesLogros,
   navigate,
   handleOpenRegisterSessionModal,
-  handleOpenEvolutionModal
+  handleOpenEvolutionModal,
+  handleOpenAnthropometryModal
 }) => {
   return (
     <>
@@ -274,6 +276,31 @@ const TrainerClientsTab: React.FC<TrainerClientsTabProps> = ({
                       📈 Evolución / PDF
                     </button>
                   </div>
+                  {handleOpenAnthropometryModal && (
+                    <button
+                      className="btn"
+                      onClick={() => handleOpenAnthropometryModal(atleta)}
+                      style={{
+                        width: '100%',
+                        padding: '10px 0',
+                        fontSize: '11px',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        gap: '6px',
+                        background: 'rgba(147, 51, 234, 0.12)',
+                        border: '1px solid rgba(168, 85, 247, 0.35)',
+                        borderRadius: '8px',
+                        color: '#c084fc',
+                        cursor: 'pointer',
+                        fontFamily: "'Orbitron', sans-serif",
+                        fontWeight: 800,
+                        boxShadow: '0 4px 12px rgba(147, 51, 234, 0.15)',
+                      }}
+                    >
+                      📐 Antropometría & Macros
+                    </button>
+                  )}
                 </div>
 
               </div>

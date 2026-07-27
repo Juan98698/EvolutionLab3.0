@@ -22,6 +22,7 @@ const RegisterClientModal = lazy(() => import('./modals/RegisterClientModal'));
 const RegisterSessionModal = lazy(() => import('./modals/RegisterSessionModal'));
 const EvolutionModal = lazy(() => import('./modals/EvolutionModal'));
 const RMCalculatorModal = lazy(() => import('./modals/RMCalculatorModal'));
+const AnthropometryModal = lazy(() => import('./modals/AnthropometryModal'));
 
 export const TrainerDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -74,6 +75,14 @@ export const TrainerDashboard: React.FC = () => {
   const [selectedAthleteForSession, setSelectedAthleteForSession] = useState<Profile | null>(null);
 
   const [is1RMModalOpen, setIs1RMModalOpen] = useState<boolean>(false);
+
+  const [isAnthropometryModalOpen, setIsAnthropometryModalOpen] = useState<boolean>(false);
+  const [selectedAthleteForAnthropometry, setSelectedAthleteForAnthropometry] = useState<Profile | null>(null);
+
+  const handleOpenAnthropometryModal = (atleta: Profile) => {
+    setSelectedAthleteForAnthropometry(atleta);
+    setIsAnthropometryModalOpen(true);
+  };
 
   const [showOnboarding, setShowOnboarding] = useState<boolean>(false);
   const [showAlertsHub, setShowAlertsHub] = useState<boolean>(false);
@@ -859,6 +868,7 @@ export const TrainerDashboard: React.FC = () => {
               navigate={navigate}
               handleOpenRegisterSessionModal={handleOpenRegisterSessionModal}
               handleOpenEvolutionModal={handleOpenEvolutionModal}
+              handleOpenAnthropometryModal={handleOpenAnthropometryModal}
             />
           </ErrorBoundary>
         ) : (
@@ -931,6 +941,16 @@ export const TrainerDashboard: React.FC = () => {
           onClose={() => setIs1RMModalOpen(false)}
           showToast={showToast}
         />
+
+        {isAnthropometryModalOpen && selectedAthleteForAnthropometry && (
+          <AnthropometryModal
+            isOpen={isAnthropometryModalOpen}
+            onClose={() => setIsAnthropometryModalOpen(false)}
+            atleta={selectedAthleteForAnthropometry}
+            trainerProfile={profile}
+            showToast={showToast}
+          />
+        )}
       </Suspense>
 
       {/* Sandbox Guide Modal */}

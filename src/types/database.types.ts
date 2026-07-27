@@ -18,6 +18,7 @@ export interface Profile {
   suscripcion_expira_at?: string | null;
   insignias_custom?: any[] | null;
   modalidad?: 'remoto' | 'presencial';
+  sexo?: 'masculino' | 'femenino';
 }
 
 export interface FilosofiaPilar {
@@ -339,3 +340,98 @@ export interface Suscripcion {
   fecha_expiracion?: string | null;
   created_at?: string;
 }
+
+export interface PlieguesCutaneos {
+  triceps?: number;
+  subescapular?: number;
+  suprailiaco?: number;
+  supraespinal?: number;
+  abdominal?: number;
+  muslo?: number;
+  pantorrilla?: number;
+  antebrazo?: number;
+}
+
+export interface PerimetrosCorporales {
+  brazo?: number;
+  brazo_contraido?: number;
+  torax?: number;
+  cintura?: number;
+  cadera?: number;
+  muslo?: number;
+  pantorrilla?: number;
+  cefalico?: number;
+}
+
+export interface DiametrosOseos {
+  codo?: number;
+  rodilla?: number;
+  biliocrestal?: number;
+  biacromial?: number;
+  anteroposterior?: number;
+  transversal?: number;
+}
+
+export interface SomatotipoResult {
+  endo: number;
+  meso: number;
+  ecto: number;
+  x: number;
+  y: number;
+}
+
+export interface MacroDistribution {
+  gPerKg: number;
+  grams: number;
+  calories: number;
+  percentage: number;
+}
+
+export interface ValoracionAntropometrica {
+  id?: string;
+  cliente_id: string;
+  entrenador_id?: string | null;
+  fecha: string;
+  edad: number;
+  peso: number;
+  estatura: number;
+  estatura_sentado?: number | null;
+  metodo: 'Yuhasz' | 'Faulkner' | 'ISAK';
+  objetivo?: string | null;
+  frecuencia_entreno?: string | null;
+
+  pliegues?: PlieguesCutaneos;
+  perimetros?: PerimetrosCorporales;
+  diametros?: DiametrosOseos;
+
+  imc?: number;
+  clasificacion_imc?: string;
+  pct_grasa?: number;
+  clasificacion_grasa?: string;
+  kg_grasa?: number;
+  pct_musculo?: number;
+  clasificacion_musculo?: string;
+  kg_musculo?: number;
+  pct_oseo?: number;
+  kg_oseo?: number;
+  pct_residual?: number;
+  kg_residual?: number;
+  ratio_musculo_grasa?: number;
+
+  somatotipo?: SomatotipoResult;
+
+  bmr?: number;
+  tdee?: number;
+  target_calorias?: number;
+  ajuste_calorico_pct?: number;
+
+  macros?: {
+    proteina: MacroDistribution;
+    grasa: MacroDistribution;
+    carbohidratos: MacroDistribution;
+  };
+
+  notas?: string | null;
+  created_at?: string;
+}
+
