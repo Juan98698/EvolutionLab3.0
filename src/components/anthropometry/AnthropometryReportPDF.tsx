@@ -40,18 +40,21 @@ export const AnthropometryReportPDF: React.FC<AnthropometryReportPDFProps> = ({
         { cat: 'Obesidad', range: '≥ 25 %', min: 25, max: 999 },
       ];
 
+  // Los rangos numéricos (min/max) están alineados exactamente con los límites de
+  // classifyMuscleMass en anthropometryEngine.ts (rounded <= X) para que ninguna fila se
+  // solape con la siguiente — de lo contrario, un valor en el borde resalta dos filas a la vez.
   const muscleRows = isFemenino
     ? [
-        { cat: 'Bajo', range: '< 28 %', min: 0, max: 27.99 },
-        { cat: 'Promedio', range: '28 – 34 %', min: 28, max: 34.99 },
-        { cat: 'Bueno', range: '34 – 38 %', min: 34, max: 38.99 },
-        { cat: 'Alto', range: '> 38 %', min: 39, max: 999 },
+        { cat: 'Bajo', range: '< 28 %', min: 0, max: 27.9 },
+        { cat: 'Promedio', range: '28 – 34 %', min: 28, max: 34.0 },
+        { cat: 'Bueno', range: '34 – 38 %', min: 34.1, max: 38.0 },
+        { cat: 'Alto', range: '> 38 %', min: 38.1, max: 999 },
       ]
     : [
-        { cat: 'Bajo', range: '< 32 %', min: 0, max: 31.99 },
-        { cat: 'Promedio', range: '32 – 38 %', min: 32, max: 38.99 },
-        { cat: 'Bueno', range: '38 – 44 %', min: 38, max: 44.99 },
-        { cat: 'Alto', range: '> 44 %', min: 45, max: 999 },
+        { cat: 'Bajo', range: '< 32 %', min: 0, max: 31.9 },
+        { cat: 'Promedio', range: '32 – 38 %', min: 32, max: 38.0 },
+        { cat: 'Bueno', range: '38 – 44 %', min: 38.1, max: 44.0 },
+        { cat: 'Alto', range: '> 44 %', min: 44.1, max: 999 },
       ];
 
   // Diagnóstico del somatotipo para el cliente

@@ -31,6 +31,7 @@ const RegisterClientModal: React.FC<RegisterClientModalProps> = ({
   const [newName, setNewName] = useState('');
   const [newGoal, setNewGoal] = useState('');
   const [newModality, setNewModality] = useState<'remoto' | 'presencial'>('remoto');
+  const [newSexo, setNewSexo] = useState<'masculino' | 'femenino'>('masculino');
 
   // Vincular existente
   const [linkEmail, setLinkEmail] = useState('');
@@ -223,6 +224,7 @@ const RegisterClientModal: React.FC<RegisterClientModalProps> = ({
             objetivo: newGoal.trim(),
             entrenador_id: profile?.id,
             modalidad: newModality,
+            sexo: newSexo,
           },
         },
       });
@@ -232,7 +234,7 @@ const RegisterClientModal: React.FC<RegisterClientModalProps> = ({
       if (signUpData?.user?.id) {
         await supabase
           .from('profiles')
-          .update({ modalidad: newModality })
+          .update({ modalidad: newModality, sexo: newSexo })
           .eq('id', signUpData.user.id);
       }
 
@@ -348,6 +350,13 @@ const RegisterClientModal: React.FC<RegisterClientModalProps> = ({
             <div>
               <label style={labelStyle}>OBJETIVO / FOCO PRINCIPAL</label>
               <input type="text" required placeholder="Ej. Hipertrofia general, Fuerza en banca" value={newGoal} onChange={(e) => setNewGoal(e.target.value)} style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>SEXO / GÉNERO BIOLÓGICO</label>
+              <select value={newSexo} onChange={(e) => setNewSexo(e.target.value as 'masculino' | 'femenino')} style={{ ...inputStyle, background: 'rgba(0,0,0,0.45)' }}>
+                <option value="masculino">👨 Masculino</option>
+                <option value="femenino">👩 Femenino</option>
+              </select>
             </div>
             <div>
               <label style={labelStyle}>MODALIDAD DE ENTRENAMIENTO</label>

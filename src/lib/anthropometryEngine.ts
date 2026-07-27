@@ -127,8 +127,6 @@ export function calculateBodyFatPct(
   const abdominal = pliegues.abdominal || 0;
   const muslo = pliegues.muslo || 0;
   const pantorrilla = pliegues.pantorrilla || 0;
-  const antebrazo = pliegues.antebrazo || 0;
-  const supraespinal = pliegues.supraespinal || suprailiaco;
 
   if (metodo === 'Faulkner') {
     // 4 pliegues: tríceps, subescapular, suprailíaco, abdominal
@@ -139,10 +137,14 @@ export function calculateBodyFatPct(
   }
 
   if (metodo === 'ISAK') {
-    // 8 pliegues o 6 pliegues ampliados ISAK
-    const sum8 = triceps + subescapular + suprailiaco + abdominal + muslo + pantorrilla + antebrazo + supraespinal;
-    if (sum8 <= 0) return 15;
-    const fatPct = genero === 'femenino' ? 3.58 + 0.155 * sum8 : 2.585 + 0.1051 * sum8;
+    // Ecuación de Carter (1982), validada para la suma de 6 pliegues: tríceps, subescapular,
+    // suprailíaco, abdominal, muslo y pierna. Antebrazo y supraespinal se registran para el
+    // perfil ISAK completo (informe/somatotipo) pero NO se suman a esta regresión: los
+    // coeficientes de Carter fueron calibrados para 6 pliegues, no 8, y sumar de más infla
+    // artificialmente el resultado.
+    const sum6 = triceps + subescapular + suprailiaco + abdominal + muslo + pantorrilla;
+    if (sum6 <= 0) return 15;
+    const fatPct = genero === 'femenino' ? 3.5803 + 0.1548 * sum6 : 2.585 + 0.1051 * sum6;
     return Math.max(3, Math.min(60, Math.round(fatPct * 10) / 10));
   }
 
@@ -175,7 +177,9 @@ export function calculateFourMasses(
   pctGrasa: number,
   diametros?: DiametrosOseos,
   genero: 'masculino' | 'femenino' = 'masculino',
-  metodo: 'Yuhasz' | 'Faulkner' | 'ISAK' = 'Yuhasz'
+  // Se mantiene en la firma por compatibilidad con los llamadores existentes; la masa ósea
+  // usa la misma ecuación de Rocha para los 3 métodos, así que ya no cambia el cálculo.
+  _metodo: 'Yuhasz' | 'Faulkner' | 'ISAK' = 'Yuhasz'
 ): FourMassFractionation {
   if (pesoKg <= 0) {
     return {
@@ -186,28 +190,19 @@ export function calculateFourMasses(
 
   const kgGrasa = Math.round(pesoKg * (pctGrasa / 100) * 100) / 100;
 
-  // Masa Ósea
+  // Masa Ósea — ecuación de Rocha / von Döbeln (1975), validada para los 3 métodos por igual:
+  // MO (kg) = 3.02 * [(estatura en m)² * diámetro biestiloideo (muñeca) * diámetro bicondíleo
+  // del fémur (rodilla) * 400] ^ 0.712. Usa solo muñeca y rodilla — el codo NO forma parte de
+  // esta fórmula publicada, así que solo se usa como respaldo si falta la medición de muñeca.
+  // No existe una variante publicada que incorpore biiliocrestal/biacromial para masa ósea;
+  // esos diámetros se muestran en el reporte como datos de referencia del perfil ISAK completo.
   let kgOseo = 0;
-  if (metodo === 'ISAK' && diametros?.codo && diametros?.rodilla && estaturaCm > 0) {
-    // Método Avanzado ISAK (Kerr / Drinkwater-Ross ponderado con los 6 diámetros óseos)
-    const hM = estaturaCm / 100;
-    const codoM = diametros.codo / 100;
-    const rodillaM = diametros.rodilla / 100;
-    const munecaM = (diametros.anteroposterior || diametros.codo) / 100;
-    const biilioM = ((diametros.biiliocrestal || diametros.biliocrestal) || 28) / 100;
-    const biacroM = (diametros.biacromial || 38) / 100;
-
-    // Rocha ampliando componente apendicular y axial ISAK
-    const diamEfectivo = (codoM * 0.35 + rodillaM * 0.35 + munecaM * 0.15 + (biilioM + biacroM) * 0.075);
-    kgOseo = 3.02 * Math.pow(hM * hM * diamEfectivo * rodillaM * 400, 0.712);
-  } else if (diametros?.codo && diametros?.rodilla && estaturaCm > 0) {
-    // Rocha / von Döbeln clásico para Yuhasz y Faulkner (Codo, Rodilla y Muñeca)
-    const codoM = diametros.codo / 100;
-    const rodillaM = diametros.rodilla / 100;
-    const munecaM = (diametros.anteroposterior ? diametros.anteroposterior / 100 : codoM);
+  const munecaCm = diametros?.anteroposterior || diametros?.codo;
+  if (munecaCm && diametros?.rodilla && estaturaCm > 0) {
     const estaturaM = estaturaCm / 100;
-    const diamApendicular = (codoM + munecaM) / 2;
-    kgOseo = 3.02 * Math.pow(estaturaM * estaturaM * diamApendicular * rodillaM * 400, 0.712);
+    const munecaM = munecaCm / 100;
+    const rodillaM = diametros.rodilla / 100;
+    kgOseo = 3.02 * Math.pow(estaturaM * estaturaM * munecaM * rodillaM * 400, 0.712);
   } else {
     // Estimación de masa ósea estandarizada por sexo
     kgOseo = pesoKg * (genero === 'femenino' ? 0.12 : 0.14);

@@ -112,6 +112,15 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
     try {
       const { error } = await supabase.from('valoraciones_antropometricas').insert([computed]);
       if (error) throw error;
+
+      // Persistir el sexo del atleta en su perfil para sincronización global
+      if (atleta?.id && genero) {
+        await supabase
+          .from('profiles')
+          .update({ sexo: genero })
+          .eq('id', atleta.id);
+      }
+
       showToast('🎉 ¡Valoración antropométrica guardada exitosamente!', 'success');
       onClose();
     } catch (err: any) {
