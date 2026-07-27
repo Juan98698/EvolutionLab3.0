@@ -91,7 +91,7 @@ export const AdminDashboard: React.FC = () => {
 
       if (error) throw error;
 
-      const loadedUsers = data || [];
+      const loadedUsers = (data || []).filter((u): u is Profile => Boolean(u && u.id));
       setUsers(loadedUsers);
 
       // Filtrar entrenadores del sistema para asignación
@@ -119,8 +119,8 @@ export const AdminDashboard: React.FC = () => {
     if (q) {
       result = result.filter(
         (u) =>
-          u.nombre.toLowerCase().includes(q) ||
-          u.email.toLowerCase().includes(q)
+          (u.nombre || '').toLowerCase().includes(q) ||
+          (u.email || '').toLowerCase().includes(q)
       );
     }
     return result;
@@ -588,15 +588,15 @@ export const AdminDashboard: React.FC = () => {
                         fontSize: '13px', fontWeight: 700, color: roleStyle.text,
                         border: `1px solid ${roleStyle.border}`
                       }}>
-                        {u.nombre.charAt(0).toUpperCase()}
+                        {(u.nombre || 'U').charAt(0).toUpperCase()}
                       </div>
                       <div>
                         <div style={{ fontSize: '14px', fontWeight: 700, color: 'white' }}>
-                          {u.nombre}
+                          {u.nombre || 'Sin Nombre'}
                           {isSelf && <span style={{ fontSize: '9px', color: '#f87171', marginLeft: '6px', fontWeight: 700 }}>(Tú)</span>}
                         </div>
                         <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)', marginTop: '2px' }}>
-                          {u.email}
+                          {u.email || 'Sin Email'}
                         </div>
                       </div>
                     </div>
@@ -659,7 +659,7 @@ export const AdminDashboard: React.FC = () => {
                     </button>
                     {!isSelf && (
                       <button
-                        onClick={() => handleDeleteUser(u.id, u.nombre)}
+                        onClick={() => handleDeleteUser(u.id, u.nombre || 'Usuario')}
                         style={{
                           padding: '10px 14px', background: 'rgba(239, 68, 68, 0.08)',
                           border: '1px solid rgba(239, 68, 68, 0.25)', borderRadius: '10px',
@@ -720,11 +720,11 @@ export const AdminDashboard: React.FC = () => {
                       fontSize: '13px', fontWeight: 700, color: roleStyle.text,
                       border: `1px solid ${roleStyle.border}`, flexShrink: 0
                     }}>
-                      {u.nombre.charAt(0).toUpperCase()}
+                      {(u.nombre || 'U').charAt(0).toUpperCase()}
                     </div>
                     <div style={{ overflow: 'hidden' }}>
                       <div style={{ fontSize: '13px', fontWeight: 600, color: 'white', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                        {u.nombre}
+                        {u.nombre || 'Sin Nombre'}
                         {isSelf && <span style={{ fontSize: '9px', color: '#f87171', marginLeft: '6px', fontWeight: 700 }}>(Tú)</span>}
                       </div>
                       <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)', marginTop: '2px' }}>
@@ -735,7 +735,7 @@ export const AdminDashboard: React.FC = () => {
 
                   {/* Email */}
                   <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {u.email}
+                    {u.email || 'Sin Email'}
                   </div>
 
                   {/* Current Role Badge & Coach info */}
@@ -832,7 +832,7 @@ export const AdminDashboard: React.FC = () => {
                       <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.15)', fontStyle: 'italic' }}>—</span>
                     ) : (
                       <button
-                        onClick={() => handleDeleteUser(u.id, u.nombre)}
+                        onClick={() => handleDeleteUser(u.id, u.nombre || 'Usuario')}
                         disabled={updatingId === u.id}
                         title="Eliminar usuario permanentemente"
                         style={{
