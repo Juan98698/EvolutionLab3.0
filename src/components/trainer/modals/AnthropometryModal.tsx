@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
 import { supabase } from '../../../lib/supabaseClient';
 import { Profile, ValoracionAntropometrica } from '../../../types/database.types';
-import { processFullAnthropometry } from '../../../lib/anthropometryEngine';
+import { processFullAnthropometry, getSomatotypeDiagnostic } from '../../../lib/anthropometryEngine';
 import SomatochartCanvas from '../../anthropometry/SomatochartCanvas';
+import FourMassesPieChart from '../../anthropometry/FourMassesPieChart';
 import AnthropometryReportPDF from '../../anthropometry/AnthropometryReportPDF';
 import { useModalA11y } from '../../../hooks/useModalA11y';
 import html2canvas from 'html2canvas';
@@ -119,7 +120,7 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
     }
   };
 
-  // Generar y Descargar PDF Nativo en 1 clic
+  // Generar y Descargar PDF Nativo de 2 páginas en 1 clic
   const handleDownloadPDF = async () => {
     setDownloadingPdf(true);
     try {
@@ -131,12 +132,22 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
 
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+      const pdfHeight = pdf.internal.pageSize.getHeight();
 
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      const totalHeightMm = (canvas.height * pdfWidth) / canvas.width;
+
+      // Página 1
+      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, totalHeightMm);
+
+      // Página 2 (si la altura del informe sobrepasa la primera página A4)
+      if (totalHeightMm > pdfHeight + 10) {
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, -pdfHeight, pdfWidth, totalHeightMm);
+      }
+
       pdf.save(`Valoracion_${atleta.nombre.replace(/\s+/g, '_')}_${computed.fecha}.pdf`);
 
-      showToast('📄 PDF descargado correctamente con tu Marca Blanca', 'success');
+      showToast('📄 PDF de 2 páginas descargado correctamente con tu Marca Blanca', 'success');
     } catch (err: any) {
       showToast('Error al generar PDF: ' + (err.message || err), 'error');
     } finally {
@@ -398,23 +409,40 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
                 />
               </div>
 
-              <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '16px' }}>
-                <h4 style={{ margin: '0 0 12px', fontFamily: 'Orbitron, sans-serif', fontSize: '12px', color: '#00d4ff' }}>RESULTADOS CLAVE</h4>
-                <div style={{ fontSize: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <div><strong>IMC:</strong> {computed.imc} kg/m² ({computed.clasificacion_imc})</div>
-                  <div><strong>% Grasa:</strong> {computed.pct_grasa}% ({computed.clasificacion_grasa})</div>
-                  <div><strong>Masa Muscular:</strong> {computed.kg_musculo} kg ({computed.pct_musculo}%)</div>
-                  <div><strong>Masa Grasa:</strong> {computed.kg_grasa} kg</div>
-                  <div><strong>Masa Ósea:</strong> {computed.kg_oseo} kg</div>
-                  <div><strong>Masa Residual:</strong> {computed.kg_residual} kg</div>
-                  <div><strong>Ratio M/G:</strong> {computed.ratio_musculo_grasa}</div>
-                </div>
+              <div>
+                <FourMassesPieChart
+                  pesoTotal={computed.peso}
+                  kgMusculo={computed.kg_musculo || 0}
+                  pctMusculo={computed.pct_musculo || 0}
+                  kgGrasa={computed.kg_grasa || 0}
+                  pctGrasa={computed.pct_grasa || 0}
+                  kgOseo={computed.kg_oseo || 0}
+                  pctOseo={computed.pct_oseo || 0}
+                  kgResidual={computed.kg_residual || 0}
+                  pctResidual={computed.pct_residual || 0}
+                  size={220}
+                />
               </div>
             </div>
 
-            {/* Previsualización del PDF en vivo */}
+            {/* Diagnóstico explicativo en el modal */}
+            <div style={{ background: 'rgba(0, 212, 255, 0.05)', border: '1px solid rgba(0, 212, 255, 0.2)', borderRadius: '12px', padding: '14px' }}>
+              <h4 style={{ margin: '0 0 6px', fontSize: '11px', fontWeight: 800, color: '#00d4ff', fontFamily: 'Orbitron, sans-serif' }}>
+                💡 DIAGNÓSTICO DEL SOMATOTIPO PARA EL ATLETA:
+              </h4>
+              <p style={{ margin: 0, fontSize: '12px', color: 'rgba(255,255,255,0.85)', lineHeight: '1.5' }}>
+                {getSomatotypeDiagnostic(
+                  computed.somatotipo?.endo || 0,
+                  computed.somatotipo?.meso || 0,
+                  computed.somatotipo?.ecto || 0,
+                  atleta.nombre
+                )}
+              </p>
+            </div>
+
+            {/* Previsualización del PDF de 2 páginas en vivo */}
             <div style={{ overflowX: 'auto', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '16px', background: '#334155' }}>
-              <span style={{ fontSize: '11px', color: '#cbd5e1', fontWeight: 800, display: 'block', marginBottom: '10px' }}>PREVISUALIZACIÓN DEL INFORME PDF MARCA BLANCA:</span>
+              <span style={{ fontSize: '11px', color: '#cbd5e1', fontWeight: 800, display: 'block', marginBottom: '10px' }}>PREVISUALIZACIÓN EN VIVO DEL INFORME PDF DE 2 PÁGINAS:</span>
               <AnthropometryReportPDF valoracion={computed} atletaNombre={atleta.nombre} trainerProfile={trainerProfile} />
             </div>
           </div>

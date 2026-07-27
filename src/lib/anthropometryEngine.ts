@@ -271,6 +271,32 @@ export function calculateSomatotype(
   return { endo, meso, ecto, x, y };
 }
 
+export function getSomatotypeDiagnostic(endo: number, meso: number, ecto: number, nombreAtleta: string = 'El atleta'): string {
+  const maxComp = Math.max(endo, meso, ecto);
+
+  if (maxComp === endo && endo >= meso && endo >= ecto) {
+    if (meso >= ecto) {
+      return `La gráfica de somatotipo ubica a ${nombreAtleta} con un componente endomórfico marcadamente predominante y un componente mesomórfico secundario (biotipo endo-mesomorfo). Presenta tendencia a la acumulación de grasa corporal pero con una sólida base estructural y muscular para trabajo de fuerza.`;
+    } else {
+      return `La gráfica de somatotipo ubica a ${nombreAtleta} en la zona endomórfica predominante. Se recomienda priorizar el déficit calórico controlado combinando sobrecarga progresiva y resistencia metabólica.`;
+    }
+  } else if (maxComp === meso && meso >= endo && meso >= ecto) {
+    if (endo >= ecto) {
+      return `La gráfica de somatotipo ubica a ${nombreAtleta} con una fuerte dominancia mesomórfica y endomorfia secundaria (biotipo meso-endomorfo). Destaca por su alta masa muscular y estructura física robusta para rendimiento de potencia.`;
+    } else {
+      return `La gráfica de somatotipo ubica a ${nombreAtleta} con un biotipo meso-ectomorfo (gran tono muscular con baja grasa relativa y extremidades estilizadas), ideal para estética atlética y fuerza relativa.`;
+    }
+  } else if (maxComp === ecto && ecto >= endo && ecto >= meso) {
+    if (meso >= endo) {
+      return `La gráfica de somatotipo ubica a ${nombreAtleta} con dominancia ectomórfica y respuesta mesomórfica secundaria (biotipo ecto-mesomorfo), caracterizado por porcentaje graso muy bajo y físico estilizado.`;
+    } else {
+      return `La gráfica de somatotipo ubica a ${nombreAtleta} en el cuadrante ectomórfico (complexión delgada y metabolismo elevado). Se sugiere enfocar en superávit calórico nutricional y volumen de hipertrofia.`;
+    }
+  } else {
+    return `La gráfica de somatotipo ubica a ${nombreAtleta} en una zona central equilibrada entre Endomorfia (${endo}), Mesomorfia (${meso}) y Ectomorfia (${ecto}), brindando alta flexibilidad para recomposición corporal.`;
+  }
+}
+
 // ---------------------------------------------------------------------------
 // 7. Metabolismo, Balance Calórico y Prescripción de Macronutrientes
 // ---------------------------------------------------------------------------
