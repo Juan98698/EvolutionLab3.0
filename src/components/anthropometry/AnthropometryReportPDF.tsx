@@ -119,9 +119,8 @@ export const AnthropometryReportPDF: React.FC<AnthropometryReportPDFProps> = ({
           ) : null}
           <div><strong>IMC:</strong> {valoracion.imc} kg/m²</div>
           <div><strong>Método:</strong> {valoracion.metodo}</div>
-          <div style={{ gridColumn: 'span 2' }}>
-            <strong>Objetivo:</strong> {valoracion.objetivo || 'Recomposición Corporal'}
-          </div>
+          <div><strong>Frecuencia:</strong> {valoracion.frecuencia_entreno ? `${valoracion.frecuencia_entreno} días/sem` : '3-4 días/sem'}</div>
+          <div><strong>Objetivo:</strong> {valoracion.objetivo || 'Recomposición Corporal'}</div>
         </div>
 
         {/* Grid Principal Pág 1: Somatocarta vs Gráfico Circular */}

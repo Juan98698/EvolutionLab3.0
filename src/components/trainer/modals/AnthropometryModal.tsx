@@ -35,8 +35,23 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
   const [estaturaSentado, setEstaturaSentado] = useState<number>(90);
   const [edad, setEdad] = useState<number>(25);
   const [genero, setGenero] = useState<'masculino' | 'femenino'>(atleta?.sexo || 'masculino');
-  const [objetivo] = useState<string>(atleta?.objetivo || 'Recomposición Corporal');
-  const [frecuenciaEntreno] = useState<string>('3-4');
+  const [objetivo, setObjetivo] = useState<string>(atleta?.objetivo || 'Recomposición Corporal');
+  const [frecuenciaEntreno, setFrecuenciaEntreno] = useState<string>('3-4');
+
+  const handleObjetivoChange = (newObj: string) => {
+    setObjetivo(newObj);
+    if (newObj.includes('Pérdida de Grasa Agresiva')) {
+      setAjusteCaloricoPct(-20);
+    } else if (newObj.includes('Pérdida de Grasa')) {
+      setAjusteCaloricoPct(-15);
+    } else if (newObj.includes('Hipertrofia Avanzada')) {
+      setAjusteCaloricoPct(15);
+    } else if (newObj.includes('Ganancia Muscular')) {
+      setAjusteCaloricoPct(10);
+    } else if (newObj.includes('Recomposición')) {
+      setAjusteCaloricoPct(0);
+    }
+  };
 
   // Pliegues (mm)
   const [pliegues, setPliegues] = useState({
@@ -113,11 +128,14 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
       const { error } = await supabase.from('valoraciones_antropometricas').insert([computed]);
       if (error) throw error;
 
-      // Persistir el sexo del atleta en su perfil para sincronización global
-      if (atleta?.id && genero) {
+      // Persistir el sexo y objetivo del atleta en su perfil para sincronización global
+      if (atleta?.id) {
         await supabase
           .from('profiles')
-          .update({ sexo: genero })
+          .update({
+            sexo: genero,
+            objetivo: objetivo,
+          })
           .eq('id', atleta.id);
       }
 
@@ -249,8 +267,27 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
               <div>
                 <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)', display: 'block', marginBottom: '4px' }}>SEXO / GÉNERO</label>
                 <select value={genero} onChange={(e) => setGenero(e.target.value as any)} style={{ width: '100%', background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '8px', boxSizing: 'border-box' }}>
-                  <option value="masculino">Masculino</option>
-                  <option value="femenino">Femenino</option>
+                  <option value="masculino">👨 Masculino</option>
+                  <option value="femenino">👩 Femenino</option>
+                </select>
+              </div>
+              <div>
+                <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)', display: 'block', marginBottom: '4px' }}>FRECUENCIA DE ENTRENO</label>
+                <select value={frecuenciaEntreno} onChange={(e) => setFrecuenciaEntreno(e.target.value)} style={{ width: '100%', background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '8px', boxSizing: 'border-box' }}>
+                  <option value="1-2">1-2 días/sem (Baja x1.20)</option>
+                  <option value="3-4">3-4 días/sem (Moderada x1.45)</option>
+                  <option value="5-6">5-6 días/sem (Alta x1.65)</option>
+                  <option value="diario">Diario / Atleta (Muy Alta x1.80)</option>
+                </select>
+              </div>
+              <div>
+                <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)', display: 'block', marginBottom: '4px' }}>OBJETIVO DEL ATLETA</label>
+                <select value={objetivo} onChange={(e) => handleObjetivoChange(e.target.value)} style={{ width: '100%', background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '8px', boxSizing: 'border-box' }}>
+                  <option value="Recomposición Corporal">Recomposición Corporal (0%)</option>
+                  <option value="Pérdida de Grasa (Déficit)">Pérdida de Grasa (-15%)</option>
+                  <option value="Pérdida de Grasa Agresiva">Pérdida de Grasa Agresiva (-20%)</option>
+                  <option value="Ganancia Muscular (Superávit)">Ganancia Muscular (+10%)</option>
+                  <option value="Hipertrofia Avanzada">Hipertrofia Avanzada (+15%)</option>
                 </select>
               </div>
               {metodo === 'ISAK' && (
