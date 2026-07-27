@@ -175,7 +175,12 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
         dbPayload.entrenador_id = currentTrainerId;
       }
 
-      const { error } = await supabase.from('valoraciones_antropometricas').insert([dbPayload]);
+      // Eliminar claves con valores undefined para evitar payload corrupto en Supabase
+      const cleanDbPayload = Object.fromEntries(
+        Object.entries(dbPayload).filter(([_, v]) => v !== undefined)
+      );
+
+      const { error } = await supabase.from('valoraciones_antropometricas').insert([cleanDbPayload]);
       if (error) throw error;
 
       // Persistir el sexo y objetivo del atleta en su perfil para sincronización global
