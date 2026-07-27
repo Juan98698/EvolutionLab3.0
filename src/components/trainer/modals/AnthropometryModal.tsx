@@ -118,13 +118,50 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
   const [gGrasaKg, setGGrasaKg] = useState<number | ''>(1.0);
 
   useEffect(() => {
-    if (isOpen && atleta) {
-      const initObj = atleta.objetivo || 'Recomposición Corporal';
-      setObjetivo(initObj);
-      setGenero(atleta.sexo || 'masculino');
-      setAjusteCaloricoPct(getAjusteDefault(initObj));
+    if (isOpen && atleta?.id) {
+      const loadLatestValuation = async () => {
+        try {
+          const query = supabase.from('valoraciones_antropometricas');
+          if (!query || typeof query.select !== 'function') return;
+
+          const { data, error } = await query
+            .select('*')
+            .eq('cliente_id', atleta.id)
+            .order('fecha', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          if (data && !error) {
+            if (data.peso !== undefined && data.peso !== null) setPeso(data.peso);
+            if (data.estatura !== undefined && data.estatura !== null) setEstatura(data.estatura);
+            if (data.estatura_sentado !== undefined && data.estatura_sentado !== null) setEstaturaSentado(data.estatura_sentado);
+            if (data.edad !== undefined && data.edad !== null) setEdad(data.edad);
+            if (data.genero) setGenero(data.genero as 'masculino' | 'femenino');
+            if (data.metodo) setMetodo(data.metodo as 'Yuhasz' | 'Faulkner' | 'ISAK');
+            if (data.objetivo) setObjetivo(data.objetivo);
+            if (data.frecuencia_entreno) setFrecuenciaEntreno(data.frecuencia_entreno);
+            if (data.pliegues) setPliegues((prev) => ({ ...prev, ...data.pliegues }));
+            if (data.perimetros) setPerimetros((prev) => ({ ...prev, ...data.perimetros }));
+            if (data.diametros) setDiametros((prev) => ({ ...prev, ...data.diametros }));
+            if (data.ajuste_calorico_pct !== undefined && data.ajuste_calorico_pct !== null) {
+              setAjusteCaloricoPct(data.ajuste_calorico_pct);
+            }
+            if (data.macros?.proteina?.gPerKg) setGProteinaKg(data.macros.proteina.gPerKg);
+            if (data.macros?.grasa?.gPerKg) setGGrasaKg(data.macros.grasa.gPerKg);
+          } else {
+            const initObj = atleta.objetivo || 'Recomposición Corporal';
+            setObjetivo(initObj);
+            setGenero(atleta.sexo || 'masculino');
+            setAjusteCaloricoPct(getAjusteDefault(initObj));
+          }
+        } catch (err) {
+          console.error('Error al cargar última valoración:', err);
+        }
+      };
+
+      loadLatestValuation();
     }
-  }, [isOpen, atleta]);
+  }, [isOpen, atleta?.id]);
 
   const dialogRef = useModalA11y<HTMLDivElement>({
     isOpen,
@@ -195,7 +232,7 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
       }
 
       showToast('🎉 ¡Valoración antropométrica guardada exitosamente!', 'success');
-      onClose();
+      // Mantenemos el modal abierto sin ejecutar onClose()
     } catch (err: any) {
       showToast('Error al guardar valoración: ' + (err.message || err), 'error');
     } finally {
