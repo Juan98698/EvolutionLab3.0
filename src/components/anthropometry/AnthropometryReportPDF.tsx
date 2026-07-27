@@ -50,13 +50,13 @@ export const AnthropometryReportPDF: React.FC<AnthropometryReportPDFProps> = ({
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #0f172a', paddingBottom: '14px', marginBottom: '20px' }}>
             <div>
               {trainerProfile?.logo_url ? (
-                <img src={trainerProfile.logo_url} alt={brandName} style={{ height: '48px', objectFit: 'contain' }} />
+                <img src={trainerProfile.logo_url} alt={brandName} style={{ height: '75px', maxHeight: '85px', maxWidth: '280px', objectFit: 'contain' }} />
               ) : (
-                <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 900, letterSpacing: '1px', color: '#0f172a', fontFamily: 'Orbitron, sans-serif' }}>
+                <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 900, letterSpacing: '1px', color: '#0f172a', fontFamily: 'Orbitron, sans-serif' }}>
                   {brandName}
                 </h1>
               )}
-              <p style={{ margin: '4px 0 0', fontSize: '11px', color: '#64748b' }}>{brandEslogan}</p>
+              <p style={{ margin: '6px 0 0', fontSize: '11px', color: '#64748b', fontWeight: 600 }}>{brandEslogan}</p>
             </div>
             <div style={{ textAlign: 'right' }}>
               <h2 style={{ margin: 0, fontSize: '16px', fontWeight: 800, color: '#2563eb', textTransform: 'uppercase' }}>INFORME ANTROPOMÉTRICO (PÁG 1)</h2>
@@ -66,13 +66,14 @@ export const AnthropometryReportPDF: React.FC<AnthropometryReportPDFProps> = ({
 
           {/* Datos del Valorado */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px', background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '10px', padding: '12px', marginBottom: '24px', fontSize: '12px' }}>
+            <div><strong>Valorador:</strong> {trainerProfile?.nombre || brandName}</div>
             <div><strong>Atleta:</strong> {atletaNombre}</div>
             <div><strong>Edad:</strong> {valoracion.edad} años</div>
             <div><strong>Peso:</strong> {valoracion.peso} kg</div>
             <div><strong>Estatura:</strong> {valoracion.estatura} cm</div>
             <div><strong>IMC:</strong> {valoracion.imc} kg/m²</div>
             <div><strong>Método:</strong> {valoracion.metodo}</div>
-            <div style={{ gridColumn: 'span 2' }}><strong>Objetivo:</strong> {valoracion.objetivo || 'Recomposición Corporal'}</div>
+            <div><strong>Objetivo:</strong> {valoracion.objetivo || 'Recomposición Corporal'}</div>
           </div>
 
           {/* Grid Principal Pág 1: Somatocarta vs Gráfico Circular */}
