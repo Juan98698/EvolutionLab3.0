@@ -425,8 +425,8 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
         {/* PESTAÑA 3: RESULTADOS Y SOMATOCARTA */}
         {activeTab === 'resultados' && (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-              <div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px', width: '100%' }}>
+              <div style={{ width: '100%', overflow: 'hidden' }}>
                 <SomatochartCanvas
                   x={computed.somatotipo?.x || 0}
                   y={computed.somatotipo?.y || 0}
@@ -436,7 +436,7 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
                 />
               </div>
 
-              <div>
+              <div style={{ width: '100%', overflow: 'hidden' }}>
                 <FourMassesPieChart
                   pesoTotal={computed.peso}
                   kgMusculo={computed.kg_musculo || 0}
@@ -468,9 +468,20 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
             </div>
 
             {/* Previsualización del PDF de 2 páginas en vivo */}
-            <div style={{ overflowX: 'auto', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '16px', background: '#334155' }}>
-              <span style={{ fontSize: '11px', color: '#cbd5e1', fontWeight: 800, display: 'block', marginBottom: '10px' }}>PREVISUALIZACIÓN EN VIVO DEL INFORME PDF DE 2 PÁGINAS:</span>
-              <AnthropometryReportPDF valoracion={computed} atletaNombre={atleta.nombre} trainerProfile={trainerProfile} />
+            <div style={{ background: '#334155', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '16px', overflow: 'hidden' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
+                <span style={{ fontSize: '11px', color: '#cbd5e1', fontWeight: 800, fontFamily: "'Orbitron', sans-serif" }}>
+                  📋 PREVISUALIZACIÓN EN VIVO DEL INFORME PDF (2 PÁGINAS)
+                </span>
+                <span style={{ fontSize: '10px', color: '#94a3b8', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  👈 Desliza horizontalmente para ver el documento completo 👉
+                </span>
+              </div>
+              <div style={{ width: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch', paddingBottom: '8px' }}>
+                <div style={{ minWidth: '794px' }}>
+                  <AnthropometryReportPDF valoracion={computed} atletaNombre={atleta.nombre} trainerProfile={trainerProfile} />
+                </div>
+              </div>
             </div>
           </div>
         )}

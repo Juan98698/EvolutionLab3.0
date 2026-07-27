@@ -47,13 +47,13 @@ export const SomatochartCanvas: React.FC<SomatochartCanvasProps> = ({
   const centerY = mapY(0);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'rgba(7, 10, 19, 0.6)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '16px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', marginBottom: '8px', fontSize: '11px', fontFamily: "'Orbitron', sans-serif", color: 'rgba(255,255,255,0.7)' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: 'rgba(7, 10, 19, 0.6)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '16px', width: '100%', boxSizing: 'border-box' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', marginBottom: '8px', fontSize: '11px', fontFamily: "'Orbitron', sans-serif", color: 'rgba(255,255,255,0.7)', flexWrap: 'wrap', gap: '6px' }}>
         <span style={{ color: '#00d4ff', fontWeight: 700 }}>SOMATOCARTA HEATH-CARTER</span>
         <span style={{ color: '#ff3366', fontWeight: 800 }}>X: {x} | Y: {y}</span>
       </div>
 
-      <svg width={width} height={height} style={{ overflow: 'visible' }}>
+      <svg viewBox={`0 0 ${width} ${height}`} style={{ width: '100%', height: 'auto', maxWidth: `${width}px`, overflow: 'visible' }}>
         <defs>
           <linearGradient id="mesoSectorGrad" x1="0%" y1="0%" x2="0%" y2="100%">
             <stop offset="0%" stopColor="#facc15" stopOpacity="0.25" />
