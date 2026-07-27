@@ -135,8 +135,11 @@ export const AnthropometryReportPDF: React.FC<AnthropometryReportPDFProps> = ({
               <div style={{ fontSize: '15px', fontWeight: 900, color: '#0f172a', marginTop: '2px' }}>
                 {ratioVal} <span style={{ fontSize: '11px', color: ratioInfo.color, fontWeight: 800 }}>({ratioInfo.nivel})</span>
               </div>
+              <div style={{ fontSize: '10px', color: '#334155', fontWeight: 600, marginTop: '3px' }}>
+                Tienes <strong>{ratioVal} kg</strong> de músculo por cada <strong>1 kg</strong> de grasa.
+              </div>
             </div>
-            <div style={{ fontSize: '10px', color: '#475569', textAlign: 'right', maxWidth: '150px', lineHeight: '1.3' }}>
+            <div style={{ fontSize: '10px', color: '#475569', textAlign: 'right', maxWidth: '140px', lineHeight: '1.3' }}>
               {ratioInfo.desc}
             </div>
           </div>

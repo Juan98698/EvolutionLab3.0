@@ -100,6 +100,7 @@ describe('AnthropometryReportPDF — tabla de % de masa muscular', () => {
 
     expect(container.textContent).toContain('Ratio Músculo / Grasa');
     expect(container.textContent).toContain('1.57');
+    expect(container.textContent).toContain('Tienes 1.57 kg de músculo por cada 1 kg de grasa.');
     expect(container.textContent).toContain('Requerimiento Hídrico');
     expect(container.textContent).toContain('2.7 – 3.0 L / día');
   });
