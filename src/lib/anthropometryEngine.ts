@@ -459,6 +459,7 @@ export function processFullAnthropometry(input: {
     estatura: input.estatura,
     estatura_sentado: input.estatura_sentado,
     metodo: input.metodo,
+    genero,
     objetivo: input.objetivo,
     frecuencia_entreno: input.frecuencia_entreno,
     pliegues,

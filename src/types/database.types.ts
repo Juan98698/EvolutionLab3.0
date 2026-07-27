@@ -398,6 +398,7 @@ export interface ValoracionAntropometrica {
   estatura: number;
   estatura_sentado?: number | null;
   metodo: 'Yuhasz' | 'Faulkner' | 'ISAK';
+  genero?: 'masculino' | 'femenino';
   objetivo?: string | null;
   frecuencia_entreno?: string | null;
 

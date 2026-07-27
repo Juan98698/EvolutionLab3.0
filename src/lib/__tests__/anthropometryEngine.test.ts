@@ -154,7 +154,7 @@ describe('anthropometryEngine Library', () => {
   });
 
   describe('processFullAnthropometry', () => {
-    it('integra el flujo completo de evaluación antropométrica con 6 diámetros y perímetro cefálico', () => {
+    it('integra el flujo completo de evaluación antropométrica con 6 diámetros y género femenino', () => {
       const result = processFullAnthropometry({
         cliente_id: 'client-1',
         entrenador_id: 'trainer-1',
@@ -171,6 +171,7 @@ describe('anthropometryEngine Library', () => {
       });
 
       expect(result.cliente_id).toBe('client-1');
+      expect(result.genero).toBe('femenino');
       expect(result.imc).toBe(30.7);
       expect(result.clasificacion_imc).toBe('Obesidad grado I');
       expect(result.pct_grasa).toBeGreaterThan(20);
@@ -179,6 +180,23 @@ describe('anthropometryEngine Library', () => {
       expect(result.diametros?.biiliocrestal).toBe(28);
       expect(result.somatotipo).toBeDefined();
       expect(result.macros?.proteina.grams).toBeGreaterThan(100);
+    });
+
+    it('aplica correctamente las tablas de clasificación normativas según género masculino', () => {
+      const resultMale = processFullAnthropometry({
+        cliente_id: 'client-male',
+        fecha: '2026-07-27',
+        edad: 30,
+        peso: 70,
+        estatura: 170,
+        metodo: 'Yuhasz',
+        genero: 'masculino',
+        pliegues: { triceps: 12, subescapular: 14, suprailiaco: 15, abdominal: 18, muslo: 20, pantorrilla: 16 },
+      });
+
+      expect(resultMale.genero).toBe('masculino');
+      expect(resultMale.clasificacion_grasa).toBeDefined();
+      expect(resultMale.clasificacion_musculo).toBeDefined();
     });
   });
 });

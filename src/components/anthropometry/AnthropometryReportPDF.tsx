@@ -21,6 +21,38 @@ export const AnthropometryReportPDF: React.FC<AnthropometryReportPDFProps> = ({
   const imc = valoracion.imc || 0;
   const pctGrasa = valoracion.pct_grasa || 0;
   const pctMusculo = valoracion.pct_musculo || 0;
+  const isFemenino = valoracion.genero === 'femenino';
+  const generoStr = isFemenino ? 'Mujeres' : 'Hombres';
+
+  const fatRows = isFemenino
+    ? [
+        { cat: 'Grasa esencial', range: '10 – 13 %', min: 0, max: 13.99 },
+        { cat: 'Atletas', range: '14 – 20 %', min: 14, max: 20.99 },
+        { cat: 'Buena forma física (fitness)', range: '21 – 24 %', min: 21, max: 24.99 },
+        { cat: 'Aceptable', range: '25 – 31 %', min: 25, max: 31.99 },
+        { cat: 'Obesidad', range: '≥ 32 %', min: 32, max: 999 },
+      ]
+    : [
+        { cat: 'Grasa esencial', range: '2 – 5 %', min: 0, max: 5.99 },
+        { cat: 'Atletas', range: '6 – 13 %', min: 6, max: 13.99 },
+        { cat: 'Buena forma física (fitness)', range: '14 – 17 %', min: 14, max: 17.99 },
+        { cat: 'Aceptable', range: '18 – 24 %', min: 18, max: 24.99 },
+        { cat: 'Obesidad', range: '≥ 25 %', min: 25, max: 999 },
+      ];
+
+  const muscleRows = isFemenino
+    ? [
+        { cat: 'Bajo', range: '< 28 %', min: 0, max: 27.99 },
+        { cat: 'Promedio', range: '28 – 34 %', min: 28, max: 34.99 },
+        { cat: 'Bueno', range: '34 – 38 %', min: 34, max: 38.99 },
+        { cat: 'Alto', range: '> 38 %', min: 39, max: 999 },
+      ]
+    : [
+        { cat: 'Bajo', range: '< 32 %', min: 0, max: 31.99 },
+        { cat: 'Promedio', range: '32 – 38 %', min: 32, max: 38.99 },
+        { cat: 'Bueno', range: '38 – 44 %', min: 38, max: 44.99 },
+        { cat: 'Alto', range: '> 44 %', min: 45, max: 999 },
+      ];
 
   // Diagnóstico del somatotipo para el cliente
   const somatoDiagnostic = getSomatotypeDiagnostic(
@@ -246,7 +278,7 @@ export const AnthropometryReportPDF: React.FC<AnthropometryReportPDFProps> = ({
 
         {/* Tabla % Grasa (ACE) */}
         <div style={{ marginBottom: '16px' }}>
-          <h4 style={{ margin: '0 0 6px', fontSize: '12px', fontWeight: 800, color: '#0f172a' }}>Clasificación del % de Grasa Corporal — ACE</h4>
+          <h4 style={{ margin: '0 0 6px', fontSize: '12px', fontWeight: 800, color: '#0f172a' }}>Clasificación del % de Grasa Corporal — ACE ({generoStr})</h4>
           <table style={{ width: '100%', fontSize: '11px', borderCollapse: 'collapse', border: '1px solid #cbd5e1' }}>
             <thead>
               <tr style={{ background: '#334155', color: 'white' }}>
@@ -256,14 +288,8 @@ export const AnthropometryReportPDF: React.FC<AnthropometryReportPDFProps> = ({
               </tr>
             </thead>
             <tbody>
-              {[
-                { cat: 'Grasa esencial', range: '10 – 13 %' },
-                { cat: 'Atletas', range: '14 – 20 %' },
-                { cat: 'Buena forma física (fitness)', range: '21 – 24 %' },
-                { cat: 'Aceptable', range: '25 – 31 %' },
-                { cat: 'Obesidad', range: '≥ 32 %' },
-              ].map((row, i) => {
-                const isMatch = valoracion.clasificacion_grasa?.toLowerCase().includes(row.cat.toLowerCase());
+              {fatRows.map((row, i) => {
+                const isMatch = (valoracion.clasificacion_grasa && valoracion.clasificacion_grasa.toLowerCase().includes(row.cat.toLowerCase())) || (pctGrasa >= row.min && pctGrasa <= row.max);
                 return (
                   <tr key={i} style={{ background: isMatch ? '#fef3c7' : 'transparent', fontWeight: isMatch ? 800 : 400, borderBottom: '1px solid #e2e8f0' }}>
                     <td style={{ padding: '4px 8px' }}>{row.cat}</td>
@@ -280,7 +306,7 @@ export const AnthropometryReportPDF: React.FC<AnthropometryReportPDFProps> = ({
 
         {/* Tabla % Masa Muscular */}
         <div style={{ marginBottom: '20px' }}>
-          <h4 style={{ margin: '0 0 6px', fontSize: '12px', fontWeight: 800, color: '#0f172a' }}>Clasificación del % de Masa Muscular</h4>
+          <h4 style={{ margin: '0 0 6px', fontSize: '12px', fontWeight: 800, color: '#0f172a' }}>Clasificación del % de Masa Muscular ({generoStr})</h4>
           <table style={{ width: '100%', fontSize: '11px', borderCollapse: 'collapse', border: '1px solid #cbd5e1' }}>
             <thead>
               <tr style={{ background: '#334155', color: 'white' }}>
@@ -290,13 +316,8 @@ export const AnthropometryReportPDF: React.FC<AnthropometryReportPDFProps> = ({
               </tr>
             </thead>
             <tbody>
-              {[
-                { cat: 'Bajo', range: '< 28 %' },
-                { cat: 'Promedio', range: '28 – 34 %' },
-                { cat: 'Bueno', range: '34 – 38 %' },
-                { cat: 'Alto', range: '> 38 %' },
-              ].map((row, i) => {
-                const isMatch = valoracion.clasificacion_musculo?.toLowerCase().includes(row.cat.toLowerCase());
+              {muscleRows.map((row, i) => {
+                const isMatch = (valoracion.clasificacion_musculo && valoracion.clasificacion_musculo.toLowerCase().includes(row.cat.toLowerCase())) || (pctMusculo >= row.min && pctMusculo <= row.max);
                 return (
                   <tr key={i} style={{ background: isMatch ? '#dcfce7' : 'transparent', fontWeight: isMatch ? 800 : 400, borderBottom: '1px solid #e2e8f0' }}>
                     <td style={{ padding: '4px 8px' }}>{row.cat}</td>
