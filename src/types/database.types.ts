@@ -366,6 +366,7 @@ export interface PerimetrosCorporales {
 export interface DiametrosOseos {
   codo?: number;
   rodilla?: number;
+  biiliocrestal?: number;
   biliocrestal?: number;
   biacromial?: number;
   anteroposterior?: number;

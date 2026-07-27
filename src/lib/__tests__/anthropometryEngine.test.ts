@@ -9,6 +9,7 @@ import {
   calculateSomatotype,
   calculateEnergyAndMacros,
   processFullAnthropometry,
+  getSomatotypeDiagnostic,
 } from '../anthropometryEngine';
 
 describe('anthropometryEngine Library', () => {
@@ -136,8 +137,24 @@ describe('anthropometryEngine Library', () => {
     });
   });
 
+  describe('getSomatotypeDiagnostic', () => {
+    it('genera diagnósticos explicativos claros para biotipos endo-mesomorfo, meso-ectomorfo y ectomorfo', () => {
+      const endoMeso = getSomatotypeDiagnostic(5.5, 4.2, 1.2, 'Camila');
+      expect(endoMeso).toContain('Camila');
+      expect(endoMeso).toContain('endo-mesomorfo');
+
+      const mesoEcto = getSomatotypeDiagnostic(1.5, 5.2, 4.1, 'Carlos');
+      expect(mesoEcto).toContain('Carlos');
+      expect(mesoEcto).toContain('meso-ectomorfo');
+
+      const ectoPuro = getSomatotypeDiagnostic(1.0, 1.5, 6.0, 'Mateo');
+      expect(ectoPuro).toContain('Mateo');
+      expect(ectoPuro).toContain('ectomórfica');
+    });
+  });
+
   describe('processFullAnthropometry', () => {
-    it('integra el flujo completo de evaluación antropométrica', () => {
+    it('integra el flujo completo de evaluación antropométrica con 6 diámetros y perímetro cefálico', () => {
       const result = processFullAnthropometry({
         cliente_id: 'client-1',
         entrenador_id: 'trainer-1',
@@ -145,9 +162,11 @@ describe('anthropometryEngine Library', () => {
         edad: 25,
         peso: 78.6,
         estatura: 160,
-        metodo: 'Yuhasz',
+        metodo: 'ISAK',
         objetivo: 'Perder Grasa Corporal',
-        pliegues: { triceps: 35, subescapular: 40, suprailiaco: 38, abdominal: 36, muslo: 60, pantorrilla: 40 },
+        pliegues: { triceps: 35, subescapular: 40, suprailiaco: 38, abdominal: 36, muslo: 60, pantorrilla: 40, antebrazo: 12, supraespinal: 15 },
+        perimetros: { brazo: 32, brazo_contraido: 34.5, torax: 100.3, cintura: 86, cadera: 109.9, muslo: 65.8, pantorrilla: 40.5, cefalico: 56 },
+        diametros: { codo: 5.8, rodilla: 9, biiliocrestal: 28, biacromial: 38, anteroposterior: 4.6, transversal: 30 },
         genero: 'femenino',
       });
 
@@ -155,7 +174,9 @@ describe('anthropometryEngine Library', () => {
       expect(result.imc).toBe(30.7);
       expect(result.clasificacion_imc).toBe('Obesidad grado I');
       expect(result.pct_grasa).toBeGreaterThan(20);
-      expect(result.clasificacion_grasa).toBeDefined();
+      expect(result.perimetros?.cefalico).toBe(56);
+      expect(result.diametros?.biacromial).toBe(38);
+      expect(result.diametros?.biiliocrestal).toBe(28);
       expect(result.somatotipo).toBeDefined();
       expect(result.macros?.proteina.grams).toBeGreaterThan(100);
     });

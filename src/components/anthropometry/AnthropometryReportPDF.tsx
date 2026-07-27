@@ -163,19 +163,25 @@ export const AnthropometryReportPDF: React.FC<AnthropometryReportPDFProps> = ({
                   <tr style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '4px 8px' }}>Cintura:</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{valoracion.perimetros?.cintura || 0} cm</td></tr>
                   <tr style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '4px 8px' }}>Cadera:</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{valoracion.perimetros?.cadera || 0} cm</td></tr>
                   <tr style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '4px 8px' }}>Muslo:</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{valoracion.perimetros?.muslo || 0} cm</td></tr>
-                  <tr><td style={{ padding: '4px 8px' }}>Pantorrilla:</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{valoracion.perimetros?.pantorrilla || 0} cm</td></tr>
+                  <tr style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '4px 8px' }}>Pantorrilla:</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{valoracion.perimetros?.pantorrilla || 0} cm</td></tr>
+                  {valoracion.perimetros?.cefalico ? (
+                    <tr><td style={{ padding: '4px 8px' }}>Cefálico:</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{valoracion.perimetros?.cefalico} cm</td></tr>
+                  ) : null}
                 </tbody>
               </table>
             </div>
 
-            {/* Diámetros Óseos */}
+            {/* Diámetros Óseos (6 campos exactos como la captura) */}
             <div style={{ border: '1px solid #cbd5e1', borderRadius: '8px', overflow: 'hidden' }}>
               <div style={{ background: '#334155', color: 'white', padding: '6px 10px', fontSize: '11px', fontWeight: 800 }}>DIÁMETROS (CM)</div>
               <table style={{ width: '100%', fontSize: '11px', borderCollapse: 'collapse' }}>
                 <tbody>
-                  <tr style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '4px 8px' }}>Diámetro Codo:</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{valoracion.diametros?.codo || 0} cm</td></tr>
-                  <tr style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '4px 8px' }}>Diámetro Muñeca:</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{valoracion.diametros?.anteroposterior || 5} cm</td></tr>
-                  <tr><td style={{ padding: '4px 8px' }}>Diámetro Rodilla:</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{valoracion.diametros?.rodilla || 0} cm</td></tr>
+                  <tr style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '4px 8px' }}>Codo:</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{valoracion.diametros?.codo || 0} cm</td></tr>
+                  <tr style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '4px 8px' }}>Rodilla:</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{valoracion.diametros?.rodilla || 0} cm</td></tr>
+                  <tr style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '4px 8px' }}>Biiliocrestal:</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{valoracion.diametros?.biiliocrestal || valoracion.diametros?.biliocrestal || 0} cm</td></tr>
+                  <tr style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '4px 8px' }}>Biacromial:</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{valoracion.diametros?.biacromial || 0} cm</td></tr>
+                  <tr style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '4px 8px' }}>Anteroposterior:</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{valoracion.diametros?.anteroposterior || 0} cm</td></tr>
+                  <tr><td style={{ padding: '4px 8px' }}>Transversal:</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{valoracion.diametros?.transversal || 0} cm</td></tr>
                 </tbody>
               </table>
             </div>

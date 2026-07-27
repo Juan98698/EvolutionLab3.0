@@ -66,6 +66,7 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
   const [diametros, setDiametros] = useState({
     codo: 6.8,
     rodilla: 9.5,
+    biiliocrestal: 28,
     biliocrestal: 28,
     biacromial: 38,
     anteroposterior: 20,
@@ -268,18 +269,14 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
                   <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Abdominal</label>
                   <input type="number" value={pliegues.abdominal} onChange={(e) => setPliegues({ ...pliegues, abdominal: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
                 </div>
-                {metodo !== 'Faulkner' && (
-                  <>
-                    <div>
-                      <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Muslo</label>
-                      <input type="number" value={pliegues.muslo} onChange={(e) => setPliegues({ ...pliegues, muslo: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
-                    </div>
-                    <div>
-                      <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Pantorrilla</label>
-                      <input type="number" value={pliegues.pantorrilla} onChange={(e) => setPliegues({ ...pliegues, pantorrilla: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
-                    </div>
-                  </>
-                )}
+                <div>
+                  <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Muslo</label>
+                  <input type="number" value={pliegues.muslo} onChange={(e) => setPliegues({ ...pliegues, muslo: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Pantorrilla</label>
+                  <input type="number" value={pliegues.pantorrilla} onChange={(e) => setPliegues({ ...pliegues, pantorrilla: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
+                </div>
                 {metodo === 'ISAK' && (
                   <>
                     <div>
@@ -295,7 +292,7 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
               </div>
             </div>
 
-            {/* Perímetros e Diámetros Corporales */}
+            {/* Perímetros Corporales */}
             <div>
               <h4 style={{ fontSize: '11px', fontFamily: 'Orbitron, sans-serif', color: '#00d4ff', margin: '12px 0 8px' }}>PERÍMETROS CORPORALES (CM)</h4>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px' }}>
@@ -327,19 +324,42 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
                   <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Pantorrilla</label>
                   <input type="number" value={perimetros.pantorrilla} onChange={(e) => setPerimetros({ ...perimetros, pantorrilla: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
                 </div>
+                {metodo === 'ISAK' && (
+                  <div>
+                    <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Perímetro Cefálico</label>
+                    <input type="number" value={perimetros.cefalico} onChange={(e) => setPerimetros({ ...perimetros, cefalico: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
+                  </div>
+                )}
               </div>
             </div>
 
+            {/* Diámetros Óseos (6 Opciones completas de la captura de usuario) */}
             <div>
               <h4 style={{ fontSize: '11px', fontFamily: 'Orbitron, sans-serif', color: '#00d4ff', margin: '12px 0 8px' }}>DIÁMETROS ÓSEOS (CM)</h4>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px' }}>
                 <div>
-                  <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Diámetro Codo</label>
+                  <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Codo</label>
                   <input type="number" step="0.1" value={diametros.codo} onChange={(e) => setDiametros({ ...diametros, codo: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
                 </div>
                 <div>
-                  <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Diámetro Rodilla</label>
+                  <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Rodilla</label>
                   <input type="number" step="0.1" value={diametros.rodilla} onChange={(e) => setDiametros({ ...diametros, rodilla: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Biiliocrestal</label>
+                  <input type="number" step="0.1" value={diametros.biiliocrestal || diametros.biliocrestal} onChange={(e) => setDiametros({ ...diametros, biiliocrestal: Number(e.target.value), biliocrestal: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Biacromial</label>
+                  <input type="number" step="0.1" value={diametros.biacromial} onChange={(e) => setDiametros({ ...diametros, biacromial: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Anteroposterior (Muñeca)</label>
+                  <input type="number" step="0.1" value={diametros.anteroposterior} onChange={(e) => setDiametros({ ...diametros, anteroposterior: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
+                </div>
+                <div>
+                  <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Transversal</label>
+                  <input type="number" step="0.1" value={diametros.transversal} onChange={(e) => setDiametros({ ...diametros, transversal: Number(e.target.value) })} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
                 </div>
               </div>
             </div>
