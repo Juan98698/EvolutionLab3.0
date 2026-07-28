@@ -7,32 +7,39 @@ interface ToastProps {
 }
 
 /**
- * Sistema reactivo de notificaciones Toast.
- * Coincide visualmente con el sistema legacy de #toast.
+ * Notificación Toast Sutil, Flotante y Glassmorphic.
+ * Diseño compacto de alta gama que no bloquea la pantalla ni estira su tamaño.
  */
 export const Toast: React.FC<ToastProps> = ({ message, type, visible }) => {
   if (!visible) return null;
 
-  const bgGradient =
+  const accentColor =
     type === 'success'
-      ? 'linear-gradient(135deg, #10b981 0%, #059669 100%)'
+      ? '#10b981'
       : type === 'error'
-      ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)'
-      : 'linear-gradient(135deg, #00d4ff 0%, #3b82f6 100%)';
+      ? '#ef4444'
+      : '#00d4ff';
 
   const borderColor =
     type === 'success'
-      ? 'rgba(16, 185, 129, 0.4)'
+      ? 'rgba(16, 185, 129, 0.35)'
       : type === 'error'
-      ? 'rgba(239, 68, 68, 0.4)'
-      : 'rgba(0, 212, 255, 0.4)';
+      ? 'rgba(239, 68, 68, 0.35)'
+      : 'rgba(0, 212, 255, 0.35)';
 
   const shadowGlow =
     type === 'success'
-      ? '0 10px 30px rgba(16, 185, 129, 0.4)'
+      ? '0 8px 24px rgba(16, 185, 129, 0.22), 0 2px 10px rgba(0, 0, 0, 0.5)'
       : type === 'error'
-      ? '0 10px 30px rgba(239, 68, 68, 0.4)'
-      : '0 10px 30px rgba(0, 212, 255, 0.4)';
+      ? '0 8px 24px rgba(239, 68, 68, 0.22), 0 2px 10px rgba(0, 0, 0, 0.5)'
+      : '0 8px 24px rgba(0, 212, 255, 0.22), 0 2px 10px rgba(0, 0, 0, 0.5)';
+
+  const icon =
+    type === 'success'
+      ? '✓'
+      : type === 'error'
+      ? '✕'
+      : 'ℹ';
 
   return (
     <div
@@ -42,35 +49,57 @@ export const Toast: React.FC<ToastProps> = ({ message, type, visible }) => {
       aria-live="polite"
       style={{
         position: 'fixed',
-        top: '24px',
+        top: '16px',
         left: '50%',
+        bottom: 'auto',
+        height: 'auto',
+        minHeight: 'auto',
+        maxHeight: 'none',
         transform: 'translateX(-50%)',
-        zIndex: 999999,
-        background: bgGradient,
-        color: '#ffffff',
-        padding: '12px 24px',
-        borderRadius: '50px',
+        zIndex: 9999999,
+        background: 'rgba(11, 15, 25, 0.94)',
+        color: '#f8fafc',
+        padding: '10px 18px',
+        borderRadius: '30px',
         boxShadow: shadowGlow,
         border: `1px solid ${borderColor}`,
         fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
-        fontSize: '13px',
-        fontWeight: 700,
-        textAlign: 'center',
-        maxWidth: 'calc(100vw - 32px)',
+        fontSize: '12.5px',
+        fontWeight: 600,
+        textAlign: 'left',
+        maxWidth: 'min(90vw, 420px)',
         width: 'max-content',
         lineHeight: 1.4,
-        letterSpacing: '0.3px',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
+        letterSpacing: '0.2px',
+        backdropFilter: 'blur(16px)',
+        WebkitBackdropFilter: 'blur(16px)',
         pointerEvents: 'none',
-        display: 'flex',
+        display: 'inline-flex',
         alignItems: 'center',
-        justifyContent: 'center',
-        gap: '8px',
+        gap: '10px',
         boxSizing: 'border-box',
+        whiteSpace: 'normal',
+        wordBreak: 'break-word',
       }}
     >
-      {message}
+      <span
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          width: '20px',
+          height: '20px',
+          borderRadius: '50%',
+          background: `rgba(${type === 'success' ? '16, 185, 129' : type === 'error' ? '239, 68, 68' : '0, 212, 255'}, 0.18)`,
+          color: accentColor,
+          fontSize: '11px',
+          fontWeight: 800,
+          flexShrink: 0,
+        }}
+      >
+        {icon}
+      </span>
+      <span>{message}</span>
     </div>
   );
 };
