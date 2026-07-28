@@ -21,7 +21,7 @@ vi.mock('../../common/BodyMuscleMap', () => ({
 const mockProfile = {
   id: 'user-123',
   nombre: 'Juan Manuel',
-  rol: 'entrenador',
+  rol: 'cliente',
   suscripcion_plan: 'iniciacion',
 };
 
@@ -81,13 +81,22 @@ const renderLibrary = () => {
 };
 
 describe('ExerciseLibrary Component', () => {
-  it('renderiza el Navbar y el título de la biblioteca de ejercicios', async () => {
+  it('renderiza el Navbar de atleta cuando el rol es cliente', async () => {
     renderLibrary();
 
     expect(screen.getByTestId('athlete-navbar')).toBeInTheDocument();
     await waitFor(() => {
       expect(screen.getByText(/BIBLIOTECA DE EJERCICIOS/i)).toBeInTheDocument();
     });
+  });
+
+  it('renderiza el Header de Entrenador (sin AthleteNavbar) cuando el rol es entrenador', async () => {
+    mockProfile.rol = 'entrenador';
+    renderLibrary();
+
+    expect(screen.queryByTestId('athlete-navbar')).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /← Volver al Panel/i })).toBeInTheDocument();
+    mockProfile.rol = 'cliente';
   });
 
   it('permite buscar ejercicios por nombre de forma insensible a mayúsculas/tildes', async () => {

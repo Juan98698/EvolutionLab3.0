@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useSupabase } from '../../context/SupabaseContext';
 import { supabase } from '../../lib/supabaseClient';
 import { EjercicioGlobal, Profile } from '../../types/database.types';
@@ -15,7 +16,9 @@ const normalizeText = (str: string) => {
 };
 
 export const ExerciseLibrary: React.FC = () => {
+  const navigate = useNavigate();
   const { profile } = useSupabase();
+  const isTrainer = profile?.rol === 'entrenador';
   const [exercises, setExercises] = useState<EjercicioGlobal[]>([]);
   const [loadingExercises, setLoadingExercises] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -202,7 +205,124 @@ export const ExerciseLibrary: React.FC = () => {
   return (
     <>
     <div style={{ background: 'transparent', minHeight: '100vh', color: 'white', paddingBottom: '50px' }}>
-      <AthleteNavbar />
+      {isTrainer ? (
+        <div className="top-bar" style={{ marginBottom: '10px', padding: '12px 0', position: 'relative', zIndex: 100 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px', maxWidth: '1200px', margin: '0 auto', padding: '0 20px' }}>
+            
+            {/* Logo & Heading */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <button
+                onClick={() => navigate('/trainer')}
+                style={{
+                  background: 'none',
+                  border: '1px solid var(--theme-border)',
+                  color: 'var(--theme-primary)',
+                  fontSize: '11px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  fontFamily: "'Orbitron', sans-serif",
+                  padding: '8px 14px',
+                  borderRadius: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+              >
+                ← Volver al Panel
+              </button>
+              <div>
+                <h1 style={{ fontFamily: 'Orbitron, sans-serif', fontSize: '15px', fontWeight: 800, margin: 0, letterSpacing: '1px', display: 'flex', alignItems: 'baseline', gap: '6px', flexWrap: 'wrap' }}>
+                  <span style={{ color: '#ffffff' }}>{profile?.marca?.nombre_display?.toUpperCase() || 'EVOLUTION'}</span> <span className="theme-text-gradient">{profile?.marca ? '' : 'LAB'}</span>
+                  <span style={{ fontSize: '9px', fontWeight: 500, color: 'rgba(255,255,255,0.45)', fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.5px' }}>Developed by Juan Manuel Cardona</span>
+                </h1>
+                <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  Entrenador: <span style={{ color: 'var(--theme-secondary)', fontWeight: 600 }}>{profile?.marca?.nombre_display || profile?.nombre || 'Trainer'}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Navigation group */}
+            <div className="nav-container" style={{ margin: 0, overflow: 'visible' }}>
+              <div className="nav-group nav-group-plan" style={{ border: 'none', padding: 0 }}>
+                <div className="nav-group-tabs" style={{ background: 'rgba(255,255,255,0.03)', padding: '4px', borderRadius: '10px', display: 'flex', gap: '4px' }}>
+                  <button
+                    className="tab"
+                    onClick={() => navigate('/trainer')}
+                    style={{ fontSize: '11px', padding: '8px 14px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '6px', border: 'none', cursor: 'pointer', fontFamily: "'Orbitron', sans-serif" }}
+                  >
+                    <svg className="tab-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                      <circle cx="9" cy="7" r="4" />
+                      <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                    </svg>
+                    Atletas
+                  </button>
+                  <button
+                    className="tab"
+                    onClick={() => navigate('/trainer')}
+                    style={{ fontSize: '11px', padding: '8px 14px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '6px', border: 'none', cursor: 'pointer', fontFamily: "'Orbitron', sans-serif" }}
+                  >
+                    <svg className="tab-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                    </svg>
+                    Auditoría / Sesiones
+                  </button>
+                  <button
+                    className="tab active"
+                    onClick={() => navigate('/biblioteca')}
+                    style={{ fontSize: '11px', padding: '8px 14px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '6px', border: 'none', cursor: 'pointer', fontFamily: "'Orbitron', sans-serif" }}
+                  >
+                    <svg className="tab-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+                      <path d="M4 4.5A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5v-15z" />
+                    </svg>
+                    Biblioteca
+                  </button>
+                  <button
+                    className="tab"
+                    onClick={() => navigate('/trainer/config')}
+                    style={{ fontSize: '11px', padding: '8px 14px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '6px', border: 'none', cursor: 'pointer', fontFamily: "'Orbitron', sans-serif" }}
+                  >
+                    <svg className="tab-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="3" />
+                      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                    </svg>
+                    Reglas Motor
+                  </button>
+                  <button
+                    className="tab"
+                    onClick={() => navigate('/trainer/branding')}
+                    style={{ fontSize: '11px', padding: '8px 14px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '6px', border: 'none', cursor: 'pointer', fontFamily: "'Orbitron', sans-serif" }}
+                  >
+                    <svg className="tab-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                      <path d="M2 17l10 5 10-5" />
+                      <path d="M2 12l10 5 10-5" />
+                    </svg>
+                    Mi Marca
+                  </button>
+                  <button
+                    className="tab"
+                    onClick={() => navigate('/dashboard')}
+                    style={{ fontSize: '11px', padding: '8px 14px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '6px', border: 'none', cursor: 'pointer', fontFamily: "'Orbitron', sans-serif", color: 'var(--theme-primary)' }}
+                  >
+                    <svg className="tab-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M18 8h1a4 4 0 0 1 0 8h-1" />
+                      <path d="M2 8h16v8H2z" />
+                      <path d="M6 12h4" />
+                    </svg>
+                    Mi Entrenamiento
+                  </button>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      ) : (
+        <AthleteNavbar />
+      )}
 
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '20px' }}>
         {/* Cabecera de la Biblioteca */}
