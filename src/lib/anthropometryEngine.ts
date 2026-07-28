@@ -400,19 +400,20 @@ export interface WaterRequirement {
 }
 
 /**
- * Requerimiento de Hidratación Diaria en Atletas
- * 
- * Criterio & Referencia Científica:
- * Basado en los rangos de reposición hídrica en nutrición y medicina deportiva del
- * ACSM (American College of Sports Medicine) e ISSN (International Society of Sports Nutrition).
- * 
- * Método:
- *   Volumen Hídrico (L/día) = [Peso Corporal (kg) × Tasa por Actividad (ml/kg)] / 1000
- * 
- * Rangos de cálculo según frecuencia semanal de entrenamiento:
- *   - Actividad Moderada (1-2 días/sem):  35 – 40 ml / kg / día
- *   - Actividad Estándar (3-4 días/sem):  38 – 43 ml / kg / día
- *   - Alta Intensidad / Atleta (5-6+ días): 42 – 48 ml / kg / día
+ * Requerimiento de Hidratación Diaria
+ *
+ * Criterio: la base de 30–35 ml/kg/día es la recomendación general más usada en
+ * dietética clínica para adultos sanos (con origen en el informe de 1945 del Food
+ * and Nutrition Board de EE.UU., recogida luego en guías de nutrición deportiva).
+ * El ajuste por frecuencia de entrenamiento sigue el criterio práctico habitual de
+ * sumar volumen adicional según el volumen/intensidad semanal de ejercicio.
+ *
+ * Aclaración: el ACSM sí tiene guías de hidratación, pero son sobre reposición
+ * pre/durante/post-ejercicio (p. ej. 5–7 ml/kg 4h antes de entrenar), no una cifra de
+ * litros totales por día — por eso no se cita aquí como fuente de esta tabla.
+ * Esto es una estimación general, no una prescripción médica ni un reemplazo del
+ * cálculo de tasa de sudoración individual (pesaje pre/post-ejercicio) para atletas
+ * de alto rendimiento.
  */
 export function calculateWaterRequirement(pesoKg: number, frecuenciaEntreno: string = '3-4'): WaterRequirement {
   if (pesoKg <= 0) return { minL: 0, maxL: 0, rangoStr: '0 L / día' };
@@ -446,24 +447,20 @@ export interface MuscleFatRatioClassification {
 }
 
 /**
- * Clasificación Cineantropométrica del Ratio Músculo / Grasa
- * 
- * Criterio & Referencia Científica:
- * Basado en los estándares de valoración cineantropométrica deportiva del GREC
- * (Grupo Español de Cineantropometría) y normas de referencia ISAK.
- * 
- * Fórmula:
- *   Ratio = Masa Muscular (kg) / Masa Grasa (kg)
- * 
- * Puntos de Corte y Criterio Clínico:
- *   - Hombres:
- *     - Ratio < 1.2: Inicial / Bajo (requiere recomposición)
- *     - Ratio 1.2 – 2.0: Saludable / Atlético
- *     - Ratio > 2.0: Composición Atlética Avanzada (alta dominancia magra)
- *   - Mujeres:
- *     - Ratio < 1.0: Inicial / Bajo
- *     - Ratio 1.0 – 1.5: Saludable / Atlético
- *     - Ratio > 1.5: Composición Atlética Avanzada
+ * Clasificación del Ratio Músculo / Grasa
+ *
+ * Nota importante: no hay una tabla publicada y ampliamente citada que fije puntos de
+ * corte específicos para el ratio "masa muscular (kg) / masa grasa (kg)" tal como se
+ * calcula acá. El GREC (Grupo Español de Cineantropometría, FEMEDE — "Protocolo de
+ * valoración de la composición corporal para el reconocimiento médico-deportivo",
+ * Arch Med Dep. 2010;27(139):330-44) e ISAK publican protocolos de medición y
+ * fraccionamiento corporal, pero no esta tabla de corte en particular. Existe además
+ * el índice adiposo-muscular (IAMC) de Alastrué et al., pero es una fórmula distinta.
+ *
+ * Los rangos de abajo son un criterio práctico propio, coherente con las categorías
+ * "Aceptable/Bueno" de las tablas de % grasa (ACE) y % muscular ya usadas en este
+ * motor — no una cita textual de una fuente única. Si se necesita trazabilidad total,
+ * conviene documentarlo explícitamente como criterio del entrenador.
  */
 export function classifyMuscleFatRatio(
   ratio: number,
