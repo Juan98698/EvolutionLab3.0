@@ -95,6 +95,7 @@ describe('ActiveSession Component', () => {
               },
               video_url: 'https://example.com/video.mp4',
               image_url: 'https://example.com/image.png',
+              gif_url: 'https://example.com/animation.gif',
               description: 'Recuéstate en el banco con los pies apoyados...'
             }
           ]
@@ -176,13 +177,6 @@ describe('ActiveSession Component', () => {
     expect(localStorage.getItem('sobrecarga_v5')).not.toBeNull();
 
     // ── Verificar que el motor de periodización realmente procesó la sesión ──
-    // No basta con "no crasheó": el plan actualizado en localStorage debe
-    // reflejar el resultado real de autoRegulatePlanForNextWeek() para el
-    // feedback dado (estímulo bueno + recuperado).
-    //
-    // El plan mock tiene 1 solo trainingDay → sessions_per_week se inicializa
-    // en 1 → esta única sesión cierra el microciclo de inmediato, así que el
-    // ajuste de volumen y la progresión de RIR se aplican en esta misma llamada.
     const updatedPlanRaw = localStorage.getItem('pwa_client_plan');
     expect(updatedPlanRaw).not.toBeNull();
     const updatedPlan = JSON.parse(updatedPlanRaw!);
@@ -190,7 +184,6 @@ describe('ActiveSession Component', () => {
     const updatedExercise = updatedPlan.trainingDays[0].exercises[0];
 
     // Estímulo bueno + recuperado, nivel default 'intermedio' → +1 serie
-    // (2 series iniciales → 3, con tope en MAX_SETS_PER_EXERCISE=8)
     expect(updatedExercise.variables['series de trabajo']).toBe('3');
 
     // Cierre de microciclo: la semana avanza de 1 a 2
@@ -199,5 +192,35 @@ describe('ActiveSession Component', () => {
     // El contador semanal se resetea tras procesar el cierre
     expect(updatedPlan.periodizationConfig.sessions_completed_this_week).toBe(0);
     expect(updatedPlan.periodizationConfig.weekly_session_feedback).toEqual([]);
+  });
+
+  it('should trigger vibration pattern when rest timer starts', () => {
+    render(<ActiveSession />);
+
+    // Complete series 1 to start rest timer
+    const checkBtn1 = screen.getByLabelText('Marcar serie 1 como completada');
+    fireEvent.click(checkBtn1);
+
+    // Verify vibration API was called with start pattern [150, 80, 150]
+    expect(global.navigator.vibrate).toHaveBeenCalledWith([150, 80, 150]);
+  });
+
+  it('should open full screen media modal and allow toggling between foto and gif', () => {
+    render(<ActiveSession />);
+
+    // Click thumbnail button to open full screen media modal
+    const thumbnailBtn = screen.getByLabelText('Ver imagen completa de Press banco plano con barra');
+    fireEvent.click(thumbnailBtn);
+
+    // Verify close button '✕' and caption are present in modal
+    const closeBtn = screen.getByLabelText('Cerrar vista previa');
+    expect(closeBtn).toBeDefined();
+
+    const titleElement = screen.getAllByText('Press banco plano con barra');
+    expect(titleElement.length).toBeGreaterThan(0);
+
+    // Close media modal
+    fireEvent.click(closeBtn);
+    expect(screen.queryByLabelText('Cerrar vista previa')).toBeNull();
   });
 });
