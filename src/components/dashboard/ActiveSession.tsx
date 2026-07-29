@@ -212,6 +212,44 @@ const ActiveSession: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentIdx]);
 
+  // ─── Rest timer audio & vibration alert ────────────────────────────────────
+  const playRestTimerEndAlert = () => {
+    // 1. Vibración hápitca si el dispositivo la soporta
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+      try {
+        navigator.vibrate([300, 150, 300, 150, 400]);
+      } catch (e) {}
+    }
+
+    // 2. Sonido audible sintetizado con Web Audio API (100% nativo, sin descargas de archivos)
+    try {
+      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+
+      const now = ctx.currentTime;
+      const playBeep = (freq: number, startTime: number, duration: number) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, startTime);
+        gain.gain.setValueAtTime(0.35, startTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(startTime);
+        osc.stop(startTime + duration);
+      };
+
+      // Tono deportivo de 3 notas (A5 -> A5 -> D6)
+      playBeep(880, now, 0.15);
+      playBeep(880, now + 0.2, 0.15);
+      playBeep(1174.66, now + 0.4, 0.35);
+    } catch (e) {
+      console.warn('No se pudo reproducir el tono de audio del temporizador:', e);
+    }
+  };
+
   // ─── Rest timer logic ─────────────────────────────────────────────────────
   const startRestTimer = useCallback((seconds: number) => {
     if (restIntervalRef.current) clearInterval(restIntervalRef.current);
@@ -220,8 +258,7 @@ const ActiveSession: React.FC = () => {
       setRestSecondsLeft(prev => {
         if (prev === null || prev <= 1) {
           clearInterval(restIntervalRef.current!);
-          // Vibrate on completion if supported
-          if ('vibrate' in navigator) navigator.vibrate([200, 100, 200]);
+          playRestTimerEndAlert();
           return null;
         }
         return prev - 1;
