@@ -213,27 +213,35 @@ const ActiveSession: React.FC = () => {
   }, [currentIdx]);
 
   // ─── Rest timer audio & vibration alert ────────────────────────────────────
-  const playRestTimerEndAlert = () => {
-    // 1. Vibración hápitca si el dispositivo la soporta
+  const playRestTimerStartAlert = () => {
     if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
       try {
-        navigator.vibrate([300, 150, 300, 150, 400]);
+        navigator.vibrate([150, 80, 150]);
+      } catch (e) {}
+    }
+  };
+
+  const playRestTimerEndAlert = () => {
+    // 1. Vibración háptica potente al terminar
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+      try {
+        navigator.vibrate([300, 120, 300, 120, 450]);
       } catch (e) {}
     }
 
-    // 2. Sonido audible sintetizado con Web Audio API (100% nativo, sin descargas de archivos)
+    // 2. Sonido audible deportivo LOUD sintetizado con Web Audio API (100% nativo)
     try {
       const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
       if (!AudioCtx) return;
       const ctx = new AudioCtx();
 
       const now = ctx.currentTime;
-      const playBeep = (freq: number, startTime: number, duration: number) => {
+      const playBeep = (freq: number, startTime: number, duration: number, type: OscillatorType = 'triangle') => {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
-        osc.type = 'sine';
+        osc.type = type;
         osc.frequency.setValueAtTime(freq, startTime);
-        gain.gain.setValueAtTime(0.35, startTime);
+        gain.gain.setValueAtTime(0.85, startTime);
         gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
         osc.connect(gain);
         gain.connect(ctx.destination);
@@ -241,10 +249,11 @@ const ActiveSession: React.FC = () => {
         osc.stop(startTime + duration);
       };
 
-      // Tono deportivo de 3 notas (A5 -> A5 -> D6)
-      playBeep(880, now, 0.15);
-      playBeep(880, now + 0.2, 0.15);
-      playBeep(1174.66, now + 0.4, 0.35);
+      // Tono deportivo de 4 notas potente y claro (G5 -> A5 -> C6 -> E6)
+      playBeep(783.99, now, 0.12, 'triangle');
+      playBeep(880.00, now + 0.15, 0.12, 'triangle');
+      playBeep(1046.50, now + 0.30, 0.12, 'triangle');
+      playBeep(1318.51, now + 0.45, 0.40, 'sine');
     } catch (e) {
       console.warn('No se pudo reproducir el tono de audio del temporizador:', e);
     }
@@ -254,6 +263,7 @@ const ActiveSession: React.FC = () => {
   const startRestTimer = useCallback((seconds: number) => {
     if (restIntervalRef.current) clearInterval(restIntervalRef.current);
     setRestSecondsLeft(seconds);
+    playRestTimerStartAlert();
     restIntervalRef.current = setInterval(() => {
       setRestSecondsLeft(prev => {
         if (prev === null || prev <= 1) {
@@ -1012,37 +1022,35 @@ const ActiveSession: React.FC = () => {
             tabIndex={-1}
             onClick={e => e.stopPropagation()}
           >
-            <button className="active-session-image-close" onClick={() => setShowFullImage(false)}>✕</button>
-            <img
-              src={activeMediaType === 'image' ? (currentExercise.image_url || currentExercise.gif_url) : (currentExercise.gif_url || currentExercise.image_url)}
-              alt={currentExercise.nombre}
-              className="active-session-image-large"
-            />
-            {currentExercise.image_url && currentExercise.gif_url && (
-              <button
-                type="button"
-                onClick={() => setActiveMediaType(prev => prev === 'image' ? 'gif' : 'image')}
-                style={{
-                  position: 'absolute',
-                  bottom: '16px',
-                  right: '16px',
-                  background: 'rgba(0, 0, 0, 0.75)',
-                  border: '1px solid var(--theme-border, rgba(255,255,255,0.15))',
-                  color: 'var(--theme-primary, #00d4ff)',
-                  borderRadius: '20px',
-                  padding: '6px 14px',
-                  fontSize: '11px',
-                  fontFamily: "'Orbitron', sans-serif",
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  zIndex: 10,
-                  boxShadow: '0 0 10px rgba(0, 212, 255, 0.3)'
-                }}
-              >
-                {activeMediaType === 'image' ? '🎬 Ver GIF' : '🖼️ Ver Foto'}
-              </button>
-            )}
-            <p className="active-session-image-caption">{currentExercise.nombre}</p>
+            <button
+              type="button"
+              className="active-session-image-close"
+              onClick={() => setShowFullImage(false)}
+              aria-label="Cerrar vista previa"
+            >
+              ✕
+            </button>
+            
+            <div className="active-session-image-frame">
+              <img
+                src={activeMediaType === 'image' ? (currentExercise.image_url || currentExercise.gif_url) : (currentExercise.gif_url || currentExercise.image_url)}
+                alt={currentExercise.nombre}
+                className="active-session-image-large"
+              />
+            </div>
+
+            <div className="active-session-image-footer">
+              <p className="active-session-image-caption">{currentExercise.nombre}</p>
+              {currentExercise.image_url && currentExercise.gif_url && (
+                <button
+                  type="button"
+                  className="active-session-image-toggle-btn"
+                  onClick={() => setActiveMediaType(prev => prev === 'image' ? 'gif' : 'image')}
+                >
+                  {activeMediaType === 'image' ? '🎬 Ver GIF' : '🖼️ Ver Foto'}
+                </button>
+              )}
+            </div>
           </div>
         </div>
       )}
