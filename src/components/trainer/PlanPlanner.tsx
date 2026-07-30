@@ -9,6 +9,7 @@ import { InfoTooltip } from '../common/InfoTooltip';
 import ReasoningTooltip, { buildLoadReasoningSteps, buildVolumeReasoningSteps } from '../common/ReasoningTooltip';
 import { getPrescribedLoadDetailed, mapExerciseToLiftKey } from '../../lib/periodizationEngine';
 import { PeriodizationHelpModal } from '../common/PeriodizationHelpModal';
+import { filterExercisesByQuery } from '../../lib/exerciseSearch';
 import { getThresholdsForMuscleGroup } from '../../lib/volumeThresholds';
 import { VolumeThresholdsTable } from './VolumeThresholdsTable';
 import { VolumeDistributorWizard } from './VolumeDistributorWizard';
@@ -381,7 +382,7 @@ export const PlanPlanner: React.FC = () => {
       try {
         const { data, error } = await supabase
           .from('ejercicios_globales')
-          .select('nombre, grupo_muscular, imagen_url, video_url, descripcion, gif_url')
+          .select('id, nombre, grupo_muscular, imagen_url, video_url, descripcion, gif_url')
           .order('nombre');
         if (!error && data) {
           const normalized = (data as any[]).map((e: any) => ({
@@ -2395,23 +2396,13 @@ export const PlanPlanner: React.FC = () => {
                                 value={ex.nombre}
                                 onChange={(e) => {
                                   handleExerciseChange(day.id, ex.id, 'nombre', e.target.value);
-                                  const query = e.target.value.trim().toLowerCase();
-                                  if (!query) {
-                                    setFilteredSuggestions(globalCatalog.slice(0, 8));
-                                  } else {
-                                    const matches = globalCatalog.filter(g => g.nombre.toLowerCase().includes(query)).slice(0, 8);
-                                    setFilteredSuggestions(matches);
-                                  }
+                                  const query = e.target.value;
+                                  setFilteredSuggestions(filterExercisesByQuery(globalCatalog, query, 25));
                                 }}
                                 onFocus={() => {
                                   setActiveInput({ dayId: day.id, exId: ex.id });
-                                  const query = (ex.nombre || '').trim().toLowerCase();
-                                  if (!query) {
-                                    setFilteredSuggestions(globalCatalog.slice(0, 8));
-                                  } else {
-                                    const matches = globalCatalog.filter(g => g.nombre.toLowerCase().includes(query)).slice(0, 8);
-                                    setFilteredSuggestions(matches);
-                                  }
+                                  const query = ex.nombre || '';
+                                  setFilteredSuggestions(filterExercisesByQuery(globalCatalog, query, 25));
                                 }}
                                 onBlur={() => {
                                   setTimeout(() => {
@@ -2443,9 +2434,9 @@ export const PlanPlanner: React.FC = () => {
                                   flexDirection: 'column',
                                   gap: '2px'
                                 }}>
-                                  {filteredSuggestions.map((sug) => (
+                                  {filteredSuggestions.map((sug, sugIdx) => (
                                     <button
-                                      key={sug.id}
+                                      key={sug.id || `sug_${sugIdx}_${sug.nombre}`}
                                       type="button"
                                       onMouseDown={(e) => {
                                         e.preventDefault();

@@ -7,6 +7,7 @@ import AthleteNavbar from '../common/AthleteNavbar';
 import Toast from '../common/Toast';
 import { PlanData, TrainingDay, Exercise, GlobalVariable, EjercicioGlobal } from '../../types/database.types';
 import { useModalA11y } from '../../hooks/useModalA11y';
+import { normalizeSearchText } from '../../lib/exerciseSearch';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────────
 const genDayId = () => 'day_' + Math.random().toString(36).substring(2, 9);
@@ -573,9 +574,9 @@ export const QuickStartPlanner: React.FC = () => {
   };
 
   const updateExerciseName = (dayId: string, exId: string, nombre: string) => {
-    // Try to auto-fill muscle group from global catalog
+    // Try to auto-fill muscle group from global catalog using normalized matching
     const match = ejerciciosGlobales.find(
-      (ej) => ej.nombre.toLowerCase().trim() === nombre.toLowerCase().trim()
+      (ej) => normalizeSearchText(ej.nombre) === normalizeSearchText(nombre)
     );
     setDays((prev) =>
       prev.map((d) =>

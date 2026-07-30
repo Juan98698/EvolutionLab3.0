@@ -4,6 +4,7 @@ import { writeSessionsToCache, readSessionsFromCache } from '../../lib/sessions'
 import { PlanData } from '../../types/database.types';
 import { autoRegulatePlanForNextWeek } from '../../lib/periodizationEngine';
 import { PeriodizationHelpModal } from '../common/PeriodizationHelpModal';
+import { filterExercisesByQuery } from '../../lib/exerciseSearch';
 
 interface AddSesionProps {
   plan: PlanData | null;
@@ -132,19 +133,16 @@ export const AddSesion: React.FC<AddSesionProps> = ({
 
   // Helper to get filtered suggestions for a row
   const getFilteredSuggestions = (typedValue: string) => {
-    const q = typedValue.toLowerCase().trim();
-    if (!q) {
+    if (!typedValue.trim()) {
       // Show plan exercises first if empty
       return suggestions.filter(s => s.isPlan).slice(0, 10);
     }
-    return suggestions
-      .filter(s => s.nombre.toLowerCase().includes(q))
-      .sort((a, b) => {
-        if (a.isPlan && !b.isPlan) return -1;
-        if (!a.isPlan && b.isPlan) return 1;
-        return a.nombre.localeCompare(b.nombre);
-      })
-      .slice(0, 12);
+    const filtered = filterExercisesByQuery(suggestions, typedValue, 20);
+    return filtered.sort((a, b) => {
+      if (a.isPlan && !b.isPlan) return -1;
+      if (!a.isPlan && b.isPlan) return 1;
+      return 0;
+    });
   };
 
   const handleSelectSuggestion = (idx: number, nombre: string, grupoMuscular: string) => {

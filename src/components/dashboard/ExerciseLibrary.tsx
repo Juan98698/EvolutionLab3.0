@@ -104,9 +104,12 @@ export const ExerciseLibrary: React.FC = () => {
   const filteredExercises = exercises.filter((ex) => {
     const normName = normalizeText(ex.nombre);
     const normDesc = normalizeText(ex.descripcion || '');
+    const normGroup = normalizeText(ex.grupo_muscular || '');
     const normQuery = normalizeText(searchQuery);
 
-    const matchesSearch = normName.includes(normQuery) || normDesc.includes(normQuery);
+    const queryTokens = normQuery.split(/\s+/).filter(Boolean);
+    const fullText = `${normName} ${normDesc} ${normGroup}`;
+    const matchesSearch = queryTokens.length === 0 || queryTokens.every(token => fullText.includes(token));
     
     if (!selectedMuscle) return matchesSearch;
 
