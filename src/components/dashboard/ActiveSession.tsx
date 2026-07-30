@@ -1031,12 +1031,13 @@ const ActiveSession: React.FC = () => {
               ✕
             </button>
             
-            <div className="active-session-image-frame">
+            <div className="active-session-image-frame" onContextMenu={(e) => e.preventDefault()} onDragStart={(e) => e.preventDefault()} style={{ position: 'relative' }}>
               <img
                 src={activeMediaType === 'image' ? (currentExercise.image_url || currentExercise.gif_url) : (currentExercise.gif_url || currentExercise.image_url)}
                 alt={currentExercise.nombre}
-                className="active-session-image-large"
+                className="active-session-image-large protected-media"
               />
+              <div className="media-protection-overlay" onContextMenu={(e) => e.preventDefault()} />
             </div>
 
             <div className="active-session-image-footer">

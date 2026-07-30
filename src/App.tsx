@@ -85,6 +85,51 @@ const ProtectedPage: React.FC<{
 );
 
 export const App: React.FC = () => {
+  React.useEffect(() => {
+    const handleContextMenu = (e: MouseEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === 'IMG' ||
+         target.tagName === 'VIDEO' ||
+         target.classList.contains('protected-media') ||
+         target.closest('.protected-media-container') ||
+         target.closest('.active-session-image-modal-content') ||
+         target.closest('.active-session-image-frame') ||
+         target.closest('.active-session-guide-thumbnail-container') ||
+         target.closest('.library-exercise-card') ||
+         target.closest('.exercise-card'))
+      ) {
+        e.preventDefault();
+      }
+    };
+
+    const handleDragStart = (e: DragEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (
+        target &&
+        (target.tagName === 'IMG' ||
+         target.tagName === 'VIDEO' ||
+         target.classList.contains('protected-media') ||
+         target.closest('.protected-media-container') ||
+         target.closest('.active-session-image-modal-content') ||
+         target.closest('.active-session-image-frame') ||
+         target.closest('.active-session-guide-thumbnail-container') ||
+         target.closest('.library-exercise-card'))
+      ) {
+        e.preventDefault();
+      }
+    };
+
+    document.addEventListener('contextmenu', handleContextMenu);
+    document.addEventListener('dragstart', handleDragStart);
+
+    return () => {
+      document.removeEventListener('contextmenu', handleContextMenu);
+      document.removeEventListener('dragstart', handleDragStart);
+    };
+  }, []);
+
   return (
     <ConfirmDialogProvider>
       <BrowserRouter>

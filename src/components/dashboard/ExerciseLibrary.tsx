@@ -856,8 +856,12 @@ export const ExerciseLibrary: React.FC = () => {
             ✕
           </button>
 
-          {/* Media: imagen o GIF */}
-          <div style={{ width: '100%', background: '#04070e', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '280px', flex: 1, overflow: 'hidden' }}>
+          {/* Media: imagen o GIF (Protegido contra clic derecho y arrastrar) */}
+          <div
+            style={{ width: '100%', background: '#04070e', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '280px', flex: 1, overflow: 'hidden', position: 'relative' }}
+            onContextMenu={(e) => e.preventDefault()}
+            onDragStart={(e) => e.preventDefault()}
+          >
             <img
               src={
                 gifViewerMediaType === 'gif'
@@ -865,13 +869,17 @@ export const ExerciseLibrary: React.FC = () => {
                   : (gifViewerExercise.imagen_url || gifViewerExercise.gif_url || '')
               }
               alt={gifViewerExercise.nombre}
+              className="protected-media"
               style={{
                 maxWidth: '100%',
                 maxHeight: '60vh',
                 objectFit: 'contain',
                 display: 'block',
+                pointerEvents: 'none',
+                userSelect: 'none',
               }}
             />
+            <div className="media-protection-overlay" onContextMenu={(e) => e.preventDefault()} />
           </div>
 
           {/* Footer: nombre + toggle */}
