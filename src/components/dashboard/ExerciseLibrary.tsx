@@ -5,6 +5,7 @@ import { supabase } from '../../lib/supabaseClient';
 import { EjercicioGlobal, Profile } from '../../types/database.types';
 import BodyMuscleMap from '../common/BodyMuscleMap';
 import AthleteNavbar from '../common/AthleteNavbar';
+import ProtectedCanvasMedia from '../common/ProtectedCanvasMedia';
 import { useModalA11y } from '../../hooks/useModalA11y';
 
 const normalizeText = (str: string) => {
@@ -856,30 +857,22 @@ export const ExerciseLibrary: React.FC = () => {
             ✕
           </button>
 
-          {/* Media: imagen o GIF (Protegido contra clic derecho y arrastrar) */}
+          {/* Media: renderizado en HTML5 Canvas con Blobs de Memoria protegidos */}
           <div
             style={{ width: '100%', background: '#04070e', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '280px', flex: 1, overflow: 'hidden', position: 'relative' }}
             onContextMenu={(e) => e.preventDefault()}
             onDragStart={(e) => e.preventDefault()}
           >
-            <img
+            <ProtectedCanvasMedia
               src={
                 gifViewerMediaType === 'gif'
                   ? (gifViewerExercise.gif_url || gifViewerExercise.imagen_url || '')
                   : (gifViewerExercise.imagen_url || gifViewerExercise.gif_url || '')
               }
               alt={gifViewerExercise.nombre}
-              className="protected-media"
-              style={{
-                maxWidth: '100%',
-                maxHeight: '60vh',
-                objectFit: 'contain',
-                display: 'block',
-                pointerEvents: 'none',
-                userSelect: 'none',
-              }}
+              maxHeight="60vh"
+              objectFit="contain"
             />
-            <div className="media-protection-overlay" onContextMenu={(e) => e.preventDefault()} />
           </div>
 
           {/* Footer: nombre + toggle */}

@@ -5,6 +5,7 @@ import { PlanData } from '../../types/database.types';
 import { writeSessionsToCache, readSessionsFromCache } from '../../lib/sessions';
 import { autoRegulatePlanForNextWeek } from '../../lib/periodizationEngine';
 import { ErrorBoundary } from '../common/ErrorBoundary';
+import ProtectedCanvasMedia from '../common/ProtectedCanvasMedia';
 import { useModalA11y } from '../../hooks/useModalA11y';
 import { useWakeLock } from '../../hooks/useWakeLock';
 
@@ -1032,12 +1033,12 @@ const ActiveSession: React.FC = () => {
             </button>
             
             <div className="active-session-image-frame" onContextMenu={(e) => e.preventDefault()} onDragStart={(e) => e.preventDefault()} style={{ position: 'relative' }}>
-              <img
-                src={activeMediaType === 'image' ? (currentExercise.image_url || currentExercise.gif_url) : (currentExercise.gif_url || currentExercise.image_url)}
+              <ProtectedCanvasMedia
+                src={(activeMediaType === 'image' ? (currentExercise.image_url || currentExercise.gif_url) : (currentExercise.gif_url || currentExercise.image_url)) || ''}
                 alt={currentExercise.nombre}
-                className="active-session-image-large protected-media"
+                maxHeight="60vh"
+                objectFit="contain"
               />
-              <div className="media-protection-overlay" onContextMenu={(e) => e.preventDefault()} />
             </div>
 
             <div className="active-session-image-footer">
