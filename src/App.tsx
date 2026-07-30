@@ -121,12 +121,33 @@ export const App: React.FC = () => {
       }
     };
 
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Bloquear F12
+      if (e.key === 'F12') {
+        e.preventDefault();
+      }
+      // Bloquear Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C
+      if (
+        (e.ctrlKey || e.metaKey) &&
+        e.shiftKey &&
+        (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c')
+      ) {
+        e.preventDefault();
+      }
+      // Bloquear Ctrl+U (Ver código fuente)
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'U' || e.key === 'u')) {
+        e.preventDefault();
+      }
+    };
+
     document.addEventListener('contextmenu', handleContextMenu);
     document.addEventListener('dragstart', handleDragStart);
+    document.addEventListener('keydown', handleKeyDown);
 
     return () => {
       document.removeEventListener('contextmenu', handleContextMenu);
       document.removeEventListener('dragstart', handleDragStart);
+      document.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
 
