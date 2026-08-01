@@ -857,6 +857,7 @@ export const ExerciseLibrary: React.FC = () => {
           </button>
 
           {/* Media: imagen o GIF protegido */}
+          {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions -- marco contenedor de proteccion contra clic derecho */}
           <div
             style={{ width: '100%', background: '#04070e', display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '280px', flex: 1, overflow: 'hidden', position: 'relative' }}
             onContextMenu={(e) => e.preventDefault()}
@@ -879,6 +880,7 @@ export const ExerciseLibrary: React.FC = () => {
                 userSelect: 'none',
               }}
             />
+            {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions -- capa transparente de proteccion contra clic derecho */}
             <div className="media-protection-overlay" onContextMenu={(e) => e.preventDefault()} onDragStart={(e) => e.preventDefault()} />
           </div>
 

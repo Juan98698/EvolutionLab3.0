@@ -1031,6 +1031,7 @@ const ActiveSession: React.FC = () => {
               ✕
             </button>
             
+            {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions -- marco contenedor de proteccion contra clic derecho */}
             <div className="active-session-image-frame" onContextMenu={(e) => e.preventDefault()} onDragStart={(e) => e.preventDefault()} style={{ position: 'relative' }}>
               <img
                 src={activeMediaType === 'image' ? (currentExercise.image_url || currentExercise.gif_url) : (currentExercise.gif_url || currentExercise.image_url)}
@@ -1038,6 +1039,7 @@ const ActiveSession: React.FC = () => {
                 className="active-session-image-large protected-media"
                 style={{ pointerEvents: 'none', userSelect: 'none' }}
               />
+              {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions -- capa transparente de proteccion contra clic derecho */}
               <div className="media-protection-overlay" onContextMenu={(e) => e.preventDefault()} onDragStart={(e) => e.preventDefault()} />
             </div>
 
