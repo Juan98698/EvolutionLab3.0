@@ -26,6 +26,7 @@ import {
   detectPatternFromExerciseName, 
 } from '../../lib/strengthThresholds';
 import { GeneratedSession } from '../../lib/sessionDistributor';
+import { mergeSkeletonIntoExistingPlan, mergeProtocolIntoExistingPlan } from '../../lib/planMerger';
 import {
   Chart as ChartJS,
   RadialLinearScale,
@@ -221,44 +222,44 @@ export const PlanPlanner: React.FC = () => {
       return;
     }
 
-    // Si ya hay ejercicios creados, advertimos
-    const hasExercises = trainingDays.some(day => day.exercises && day.exercises.some(ex => ex.nombre_original !== ''));
+    // Verificar si ya existen ejercicios reales cargados en el plan
+    const hasExercises = trainingDays.some(day => day.exercises && day.exercises.some(ex => ex.nombre_original && ex.nombre_original !== '' && !ex.nombre.startsWith('[ ESPACIO PARA:')));
+
+    let newDays: TrainingDay[];
+
     if (hasExercises) {
-      if (!(await confirm(
-        'Aplicar el esqueleto de volumen reemplazará los días y ejercicios actuales. ¿Estás seguro de que quieres continuar?',
-        { title: 'Reemplazar plan actual', confirmText: 'Reemplazar', danger: true }
-      ))) {
-        return;
-      }
+      // Fusionar inteligentemente manteniendo los ejercicios y multimedia previamente seleccionados
+      newDays = mergeSkeletonIntoExistingPlan(sessions, trainingDays, globalVariables);
+      showToast('Esqueleto de distribución fusionado con tus ejercicios actuales. ⚡', 'success');
+    } else {
+      // Si no hay ejercicios, generar el esqueleto limpio con placeholders
+      newDays = sessions.map(session => {
+        return {
+          id: `day_${generateId()}`,
+          name: session.label,
+          exercises: session.muscleTargets.map(target => {
+            const exVariables = { ...Object.fromEntries(globalVariables.map(gv => [gv.id, gv.defaultValue || ''])) };
+            exVariables['series de trabajo'] = String(target.plannedSets);
+
+            return {
+              id: generateId(),
+              nombre: `[ ESPACIO PARA: ${target.muscleGroup.toUpperCase()} ]`,
+              nombre_original: '',
+              grupo_muscular: target.muscleGroup,
+              variables: exVariables,
+              video_url: '',
+              image_url: '',
+              gif_url: ''
+            } as Exercise;
+          })
+        };
+      });
+      showToast('Esqueleto de distribución generado correctamente. ⚡', 'success');
     }
-
-    // Reemplazar trainingDays
-    const newDays: TrainingDay[] = sessions.map(session => {
-      return {
-        id: `day_${generateId()}`,
-        name: session.label,
-        exercises: session.muscleTargets.map(target => {
-          const exVariables = { ...Object.fromEntries(globalVariables.map(gv => [gv.id, gv.defaultValue || ''])) };
-          exVariables['series de trabajo'] = String(target.plannedSets);
-
-          return {
-            id: generateId(),
-            nombre: `[ ESPACIO PARA: ${target.muscleGroup.toUpperCase()} ]`,
-            nombre_original: '',
-            grupo_muscular: target.muscleGroup,
-            variables: exVariables,
-            video_url: '',
-            image_url: '',
-            gif_url: ''
-          } as Exercise;
-        })
-      };
-    });
 
     setTrainingDays(newDays);
     setWeeklyTargets(targets);
     setDistributorWizardOpen(false);
-    showToast('Esqueleto de distribución generado correctamente. ⚡', 'success');
   };
 
   // Capitalizar texto respetando acentos en español (ej. "Extensión de rodilla")
@@ -3057,7 +3058,8 @@ export const PlanPlanner: React.FC = () => {
               })
             }));
             
-            const finalDays = recalculatePlanWeights(enrichedDays, periodizationConfig?.marcas_1rm || {});
+            const mergedDays = mergeProtocolIntoExistingPlan(enrichedDays, trainingDays, true);
+            const finalDays = recalculatePlanWeights(mergedDays, periodizationConfig?.marcas_1rm || {});
             setTrainingDays(finalDays);
             
             if (recommendedSchedule && recommendedSchedule.length === 7) {
