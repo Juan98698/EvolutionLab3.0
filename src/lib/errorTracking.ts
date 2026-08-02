@@ -31,6 +31,32 @@ function _initSentry(dsn: string): void {
     dsn,
     environment: (import.meta as any).env?.MODE || 'development',
     tracesSampleRate: 0.2,
+    ignoreErrors: [
+      // Errores de scripts inyectados por navegadores in-app (Instagram, TikTok, Facebook en iOS)
+      "undefined is not an object (evaluating 'window.webkit.messageHandlers')",
+      "undefined is not an object (evaluating 'a.webkit.messageHandlers')",
+      "webkit.messageHandlers",
+      "sendDataToNative",
+      "sendPageHideMessage",
+      // Recargas dinámicas de chunks desactualizados de Vite
+      "Failed to fetch dynamically imported module",
+      "Importing a module script failed"
+    ],
+    beforeSend(event, hint) {
+      const error = hint?.originalException;
+      if (error && typeof error === 'object') {
+        const message = String((error as any).message || '');
+        const stack = String((error as any).stack || '');
+        if (
+          message.includes('webkit.messageHandlers') ||
+          stack.includes('sendDataToNative') ||
+          stack.includes('sendPageHideMessage')
+        ) {
+          return null; // Ignorar en Sentry (ruido de script inyectado de terceros)
+        }
+      }
+      return event;
+    }
   });
   console.info('[ErrorTracking] Sentry inicializado exitosamente.');
 }
@@ -66,6 +92,22 @@ export function initErrorTracking(): void {
 
   if (typeof window !== 'undefined') {
     (window as any).captureException = captureException;
+
+    // Polyfill defensivo para navegadores in-app de iOS (Instagram/Meta/TikTok).
+    // Instagram inyecta scripts (sendDataToNative / sendPageHideMessage) que asumen
+    // que window.webkit.messageHandlers siempre existe. Si no existe, lanza TypeError global.
+    try {
+      if (!(window as any).webkit) {
+        (window as any).webkit = {};
+      }
+      if (!(window as any).webkit.messageHandlers) {
+        (window as any).webkit.messageHandlers = new Proxy({}, {
+          get: () => ({ postMessage: () => {} })
+        });
+      }
+    } catch {
+      // Ignorar en entornos donde window.webkit esté congelado
+    }
   }
 
   if (dsn) {
