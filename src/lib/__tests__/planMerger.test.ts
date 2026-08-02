@@ -123,6 +123,93 @@ describe('planMerger Module', () => {
       expect(tricepsEx?.nombre).toBe('[ ESPACIO PARA: TRÍCEPS ]');
       expect(tricepsEx?.variables['series de trabajo']).toBe('3');
     });
+
+    it('reparte los ejercicios reales entre slots repetidos del mismo grupo muscular en vez de que el primero se los quede todos', () => {
+      // Caso hipotético: el esqueleto pide dos slots de "Pecho" el mismo día (hoy ningún
+      // generador real hace esto, pero la función debe seguir siendo correcta si algún
+      // split personalizado futuro lo permite).
+      const existingDays: TrainingDay[] = [
+        {
+          id: 'day_1',
+          name: 'Día 1: Pecho Doble',
+          exercises: [
+            {
+              id: 'ex_1',
+              nombre: 'Press de Banca',
+              nombre_original: 'Press de Banca',
+              grupo_muscular: 'Pecho',
+              variables: { 'series de trabajo': '3' }
+            } as Exercise,
+            {
+              id: 'ex_2',
+              nombre: 'Aperturas con Mancuernas',
+              nombre_original: 'Aperturas con Mancuernas',
+              grupo_muscular: 'Pecho',
+              variables: { 'series de trabajo': '3' }
+            } as Exercise
+          ]
+        }
+      ];
+
+      const sessions: GeneratedSession[] = [
+        {
+          id: 'sess_1',
+          label: 'Día 1: Pecho Doble',
+          muscleTargets: [
+            { muscleGroup: 'Pecho', plannedSets: 4 },
+            { muscleGroup: 'Pecho', plannedSets: 3 }
+          ]
+        }
+      ];
+
+      const result = mergeSkeletonIntoExistingPlan(sessions, existingDays, []);
+      const exercises = result[0].exercises;
+
+      // Ambos ejercicios reales deben sobrevivir — ninguno debe convertirse en placeholder.
+      expect(exercises).toHaveLength(2);
+      expect(exercises.every(e => !e.nombre.startsWith('[ ESPACIO PARA:'))).toBe(true);
+
+      const nombres = exercises.map(e => e.nombre).sort();
+      expect(nombres).toEqual(['Aperturas con Mancuernas', 'Press de Banca']);
+    });
+
+    it('crea placeholder solo para los slots repetidos que exceden los ejercicios reales disponibles', () => {
+      const existingDays: TrainingDay[] = [
+        {
+          id: 'day_1',
+          name: 'Día 1: Pecho Doble',
+          exercises: [
+            {
+              id: 'ex_1',
+              nombre: 'Press de Banca',
+              nombre_original: 'Press de Banca',
+              grupo_muscular: 'Pecho',
+              variables: { 'series de trabajo': '3' }
+            } as Exercise
+          ]
+        }
+      ];
+
+      const sessions: GeneratedSession[] = [
+        {
+          id: 'sess_1',
+          label: 'Día 1: Pecho Doble',
+          muscleTargets: [
+            { muscleGroup: 'Pecho', plannedSets: 4 },
+            { muscleGroup: 'Pecho', plannedSets: 3 }
+          ]
+        }
+      ];
+
+      const result = mergeSkeletonIntoExistingPlan(sessions, existingDays, []);
+      const exercises = result[0].exercises;
+
+      expect(exercises).toHaveLength(2);
+      // El único ejercicio real existente se conserva (no se pierde ni se duplica)...
+      expect(exercises.filter(e => e.nombre === 'Press de Banca')).toHaveLength(1);
+      // ...y el segundo slot, al no tener un ejercicio real disponible, cae en placeholder.
+      expect(exercises.filter(e => e.nombre === '[ ESPACIO PARA: PECHO ]')).toHaveLength(1);
+    });
   });
 
   describe('mergeProtocolIntoExistingPlan', () => {

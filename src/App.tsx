@@ -121,33 +121,19 @@ export const App: React.FC = () => {
       }
     };
 
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Bloquear F12
-      if (e.key === 'F12') {
-        e.preventDefault();
-      }
-      // Bloquear Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C
-      if (
-        (e.ctrlKey || e.metaKey) &&
-        e.shiftKey &&
-        (e.key === 'I' || e.key === 'i' || e.key === 'J' || e.key === 'j' || e.key === 'C' || e.key === 'c')
-      ) {
-        e.preventDefault();
-      }
-      // Bloquear Ctrl+U (Ver código fuente)
-      if ((e.ctrlKey || e.metaKey) && (e.key === 'U' || e.key === 'u')) {
-        e.preventDefault();
-      }
-    };
+    // Nota: se eliminó el bloqueo de atajos de DevTools (F12 / Ctrl+Shift+I / Ctrl+U) que
+    // existía acá. Era trivial de sortear (menú del navegador, view-source:, etc.), se
+    // aplicaba a TODA la app en vez de solo a los componentes de ejercicios, y podía
+    // interferir con debugging legítimo o extensiones de accesibilidad. La protección real
+    // contra copia casual de las imágenes/GIFs sigue activa vía contextmenu/dragstart abajo,
+    // que sí están acotados a los componentes de contenido protegido.
 
     document.addEventListener('contextmenu', handleContextMenu);
     document.addEventListener('dragstart', handleDragStart);
-    document.addEventListener('keydown', handleKeyDown);
 
     return () => {
       document.removeEventListener('contextmenu', handleContextMenu);
       document.removeEventListener('dragstart', handleDragStart);
-      document.removeEventListener('keydown', handleKeyDown);
     };
   }, []);
 

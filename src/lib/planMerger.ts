@@ -62,10 +62,33 @@ export const mergeSkeletonIntoExistingPlan = (
 
     const newExercises: Exercise[] = [];
 
+    // Si el esqueleto tiene más de un objetivo para el mismo grupo muscular en el mismo día
+    // (p. ej. dos slots de "Pecho"), hay que repartir el pool de ejercicios reales disponibles
+    // entre esos objetivos en vez de que el primero se los quede todos y el/los siguientes
+    // caigan siempre en placeholder aunque sí exista un ejercicio real disponible para ellos.
+    // Hoy ningún generador de esqueleto produce duplicados (ver sessionDistributor.ts), pero
+    // esto deja la función correcta si en el futuro un split personalizado los permite.
+    const targetCountByMuscle: Record<string, number> = {};
+    session.muscleTargets.forEach(t => {
+      const gm = normalizeMuscleGroup(t.muscleGroup);
+      targetCountByMuscle[gm] = (targetCountByMuscle[gm] || 0) + 1;
+    });
+    const slotSeenByMuscle: Record<string, number> = {};
+
     // Procesar cada objetivo muscular del esqueleto para este día
     session.muscleTargets.forEach(target => {
       const targetGm = normalizeMuscleGroup(target.muscleGroup);
-      const matches = existingByMuscle[targetGm] || [];
+      const totalSlotsForMuscle = targetCountByMuscle[targetGm] || 1;
+      const slotIndex = slotSeenByMuscle[targetGm] || 0;
+      slotSeenByMuscle[targetGm] = slotIndex + 1;
+
+      const pool = existingByMuscle[targetGm] || [];
+      // Reparto round-robin: con un solo slot para este músculo (el caso normal), esto
+      // selecciona el pool completo, igual que antes. Con varios slots, cada uno se
+      // queda con su porción en vez de que el primero consuma todo el pool.
+      const matches = totalSlotsForMuscle > 1
+        ? pool.filter((_, i) => i % totalSlotsForMuscle === slotIndex)
+        : pool;
 
       if (matches.length > 0) {
         // Hay ejercicios reales para este grupo muscular en este día
@@ -83,9 +106,6 @@ export const mergeSkeletonIntoExistingPlan = (
             variables: updatedVars
           });
         });
-
-        // Marcar este grupo muscular como procesado
-        delete existingByMuscle[targetGm];
       } else {
         // No hay ejercicio previo para este grupo muscular ➔ crear placeholder
         const exVariables = { ...Object.fromEntries(globalVariables.map(gv => [gv.id, gv.defaultValue || ''])) };
@@ -104,9 +124,14 @@ export const mergeSkeletonIntoExistingPlan = (
       }
     });
 
-    // Añadir cualquier otro ejercicio existente de grupos musculares no listados en el esqueleto para ese día
-    Object.values(existingByMuscle).flat().forEach(ex => {
-      newExercises.push(ex);
+    // Añadir cualquier otro ejercicio existente de grupos musculares que no tienen
+    // ningún objetivo en el esqueleto para ese día (preserva agregados manuales del
+    // entrenador para músculos que el esqueleto no contempla).
+    const musclesEnObjetivos = new Set(Object.keys(targetCountByMuscle));
+    Object.entries(existingByMuscle).forEach(([gm, exs]) => {
+      if (!musclesEnObjetivos.has(gm)) {
+        exs.forEach(ex => newExercises.push(ex));
+      }
     });
 
     return {
