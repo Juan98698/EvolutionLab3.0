@@ -1104,3 +1104,55 @@ export const evaluateStrengthPlanVolume = (
 
   return result;
 };
+
+/**
+ * Recalcula los pesos sugeridos en kg para una lista de días de entrenamiento
+ * basándose en las marcas de 1RM del atleta y las fórmulas científicas.
+ */
+export const recalculatePlanWeights = (
+  days: any[],
+  marcas: Record<string, number>,
+  formulaOverride?: 'epley' | 'brzycki' | 'epley_brzycki_avg',
+  roundingOverride?: number
+): any[] => {
+  const formula = formulaOverride || 'epley';
+  const rounding = roundingOverride ?? 2.5;
+
+  return days.map((day: any) => ({
+    ...day,
+    exercises: (day.exercises || []).map((ex: any) => {
+      if (!ex.nombre) return ex;
+      const normName = ex.nombre.toLowerCase().trim();
+      const liftKey = mapExerciseToLiftKey(normName);
+      if (!liftKey) return ex;
+      const oneRm = marcas[liftKey] ||
+                    marcas[liftKey.replace(/ /g, '_')] ||
+                    marcas[liftKey.replace(/_/g, ' ')] ||
+                    (liftKey.includes('banca') ? (marcas['press_banca'] || marcas['press de banca']) : undefined);
+      if (!oneRm) return ex;
+      const repsStr = ex.variables?.['repeticiones'] || ex.variables?.['reps'] || '10';
+      const repsMatch = String(repsStr).match(/\d+/);
+      const reps = repsMatch ? parseInt(repsMatch[0], 10) : 10;
+      const rirStr = ex.variables?.['rir'] || '2';
+      const rir = parseInt(String(rirStr), 10) || 2;
+
+      const prescribed = getPrescribedLoadDetailed(
+        oneRm,
+        reps,
+        rir,
+        formula,
+        rounding
+      );
+
+      const updatedVariables = { ...(ex.variables || {}) };
+      if (prescribed.weight > 0) {
+        updatedVariables['peso'] = String(prescribed.weight);
+      }
+
+      return {
+        ...ex,
+        variables: updatedVariables
+      };
+    })
+  }));
+};

@@ -438,3 +438,21 @@ export interface ValoracionAntropometrica {
   created_at?: string;
 }
 
+export interface TrainerTemplate {
+  id: string; // uuid
+  trainer_id: string; // uuid del entrenador
+  nombre: string;
+  descripcion?: string | null;
+  objetivo: 'hipertrofia' | 'fuerza' | 'perdida_grasa' | 'mantenimiento' | 'salud';
+  nivel_atleta: 'principiante' | 'intermedio' | 'avanzado';
+  dias_semana: number;
+  plan_data: {
+    trainingDays: TrainingDay[];
+    weeklyTargets?: Record<string, number>;
+    globalVariables?: GlobalVariable[];
+    periodizationConfig?: Partial<PeriodizationConfig>;
+  };
+  created_at?: string;
+  updated_at?: string;
+}
+

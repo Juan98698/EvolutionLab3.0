@@ -15,6 +15,7 @@ import { VolumeThresholdsTable } from './VolumeThresholdsTable';
 import { VolumeDistributorWizard } from './VolumeDistributorWizard';
 import { GuidedPlanSetup, GuidedPlanParams } from './GuidedPlanSetup';
 import { ProtocolSelectorModal } from './ProtocolSelectorModal';
+import { SaveTemplateModal } from './SaveTemplateModal';
 import { getProtocolsForContext } from '../../lib/protocols';
 import { VolumeTracker } from './VolumeTracker';
 import { PeriodizationPanel } from './PeriodizationPanel';
@@ -305,6 +306,7 @@ export const PlanPlanner: React.FC = () => {
   const [globalCatalogNames, setGlobalCatalogNames] = useState<string[]>([]);
   
   const [protocolModalOpen, setProtocolModalOpen] = useState(false);
+  const [saveTemplateModalOpen, setSaveTemplateModalOpen] = useState(false);
   const [activeInput, setActiveInput] = useState<{ dayId: string; exId: string } | null>(null);
   const [filteredSuggestions, setFilteredSuggestions] = useState<EjercicioGlobal[]>([]);
 
@@ -1830,7 +1832,14 @@ export const PlanPlanner: React.FC = () => {
             className="btn" 
             style={{ background: '#0284c7', border: 'none', color: '#fff', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 'bold', whiteSpace: 'nowrap', boxShadow: '0 4px 12px rgba(2, 132, 199, 0.3)' }}
           >
-            <span style={{ fontSize: '16px' }}>📚</span> Protocolos de entrenamiento
+            <span style={{ fontSize: '16px' }}>📚</span> Protocolos y Mis Plantillas
+          </button>
+          <button 
+            onClick={() => setSaveTemplateModalOpen(true)} 
+            className="btn" 
+            style={{ background: 'linear-gradient(135deg, #00F2FE 0%, #4FACFE 100%)', border: 'none', color: '#04070e', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 'bold', whiteSpace: 'nowrap', boxShadow: '0 4px 12px rgba(0, 242, 254, 0.25)' }}
+          >
+            <span style={{ fontSize: '16px' }}>💾</span> Guardar como Plantilla
           </button>
           <button 
             onClick={() => setThresholdsTableOpen(true)} 
@@ -3027,6 +3036,9 @@ export const PlanPlanner: React.FC = () => {
           onClose={() => setProtocolModalOpen(false)}
           objective={periodizationConfig.objetivo as any || 'hipertrofia'}
           level={periodizationConfig.nivel_atleta as any || 'intermedio'}
+          trainerId={profile?.id || 'default'}
+          client1RM={periodizationConfig?.marcas_1rm || {}}
+          showToast={showToast}
           onApplyProtocol={(newDays: TrainingDay[], recommendedSchedule?: number[]) => {
             const trainerId = profile?.id || 'default';
             const libraryKey = `evolution_exercise_library_${trainerId}`;
@@ -3072,6 +3084,23 @@ export const PlanPlanner: React.FC = () => {
             } else {
               showToast('✅ Protocolo de entrenamiento cargado y adaptado.', 'success');
             }
+          }}
+        />
+      )}
+
+      {/* Save Template Modal */}
+      {saveTemplateModalOpen && (
+        <SaveTemplateModal
+          isOpen={saveTemplateModalOpen}
+          onClose={() => setSaveTemplateModalOpen(false)}
+          trainerId={profile?.id || 'default'}
+          trainingDays={trainingDays}
+          weeklyTargets={weeklyTargets}
+          globalVariables={globalVariables}
+          periodizationConfig={periodizationConfig}
+          showToast={showToast}
+          onSaveSuccess={() => {
+            setSaveTemplateModalOpen(false);
           }}
         />
       )}

@@ -104,7 +104,7 @@ describe('ProtocolSelectorModal Component', () => {
     );
 
     expect(screen.getByRole('dialog')).toBeInTheDocument();
-    expect(screen.getByText(/Protocolos Científicos/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Protocolos Científicos/i).length).toBeGreaterThan(0);
     expect(screen.getByText(/Plantillas Recomendadas/i)).toBeInTheDocument();
   });
 
