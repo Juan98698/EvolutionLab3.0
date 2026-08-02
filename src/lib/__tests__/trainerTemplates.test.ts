@@ -11,6 +11,19 @@ import {
 } from '../trainerTemplates';
 import { TrainingDay, Exercise, TrainerTemplate } from '../../types/database.types';
 
+vi.mock('../supabaseClient', () => ({
+  supabase: {
+    from: vi.fn(() => ({
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      order: vi.fn().mockResolvedValue({ data: null, error: { message: 'Offline mode' } }),
+      upsert: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: null, error: { message: 'Offline mode' } }),
+      delete: vi.fn().mockReturnThis()
+    }))
+  }
+}));
+
 describe('trainerTemplates Module', () => {
   const mockTrainerId = 'trainer_uuid_123';
 

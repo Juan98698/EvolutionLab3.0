@@ -80,11 +80,20 @@ export async function getTrainerTemplates(trainerId: string): Promise<TrainerTem
   }
 
   try {
-    const { data, error } = await supabase
-      .from('plantillas_entrenador')
-      .select('*')
-      .eq('trainer_id', trainerId)
-      .order('updated_at', { ascending: false });
+    const fetchRemote = async () => {
+      const { data, error } = await supabase
+        .from('plantillas_entrenador')
+        .select('*')
+        .eq('trainer_id', trainerId)
+        .order('updated_at', { ascending: false });
+      return { data, error };
+    };
+
+    const timeoutPromise = new Promise<{ data: null; error: { message: string } }>(resolve =>
+      setTimeout(() => resolve({ data: null, error: { message: 'Timeout de red (1.5s)' } }), 1500)
+    );
+
+    const { data, error } = await Promise.race([fetchRemote(), timeoutPromise]);
 
     if (error) {
       console.warn('[TrainerTemplates] Error en consulta de Supabase, usando caché local:', error.message);
