@@ -63,8 +63,8 @@ describe('AthleteTemplates Module (Independent Athlete Local Persistence)', () =
     const trainingDays = convertLocalDaysToTrainingDays(sampleDays);
     expect(trainingDays.length).toBe(1);
     expect(trainingDays[0].name).toBe('Día 1: Pecho & Tríceps');
-    expect(trainingDays[0].exercises[0].name).toBe('Press de Banca Plano');
-    expect(trainingDays[0].exercises[0].muscle_group).toBe('Pecho');
+    expect(trainingDays[0].exercises[0].nombre).toBe('Press de Banca Plano');
+    expect(trainingDays[0].exercises[0].grupo_muscular).toBe('Pecho');
 
     const backToLocal = convertTrainingDaysToLocalDays(trainingDays);
     expect(backToLocal.length).toBe(1);

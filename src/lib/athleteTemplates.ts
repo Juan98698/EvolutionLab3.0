@@ -50,8 +50,8 @@ export function convertLocalDaysToTrainingDays(localDays: LocalDay[]): TrainingD
     name: day.name,
     exercises: (day.exercises || []).map(ex => ({
       id: ex.id || `ex_${generateShortId()}`,
-      name: ex.nombre,
-      muscle_group: ex.grupoMuscular,
+      nombre: ex.nombre,
+      grupo_muscular: ex.grupoMuscular,
       variables: ex.variables || {},
       progression_notes: ex.progression_notes,
       progression_type: ex.progression_type,
@@ -69,8 +69,8 @@ export function convertTrainingDaysToLocalDays(trainingDays: TrainingDay[]): Loc
     name: day.name,
     exercises: (day.exercises || []).map(ex => ({
       id: ex.id || `ex_${generateShortId()}`,
-      nombre: ex.name || (ex as any).nombre || '',
-      grupoMuscular: ex.muscle_group || (ex as any).grupoMuscular || '',
+      nombre: ex.nombre || (ex as any).name || '',
+      grupoMuscular: ex.grupo_muscular || (ex as any).muscle_group || '',
       variables: ex.variables || {},
       progression_notes: ex.progression_notes,
       progression_type: ex.progression_type,
