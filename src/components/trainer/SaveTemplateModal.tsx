@@ -102,7 +102,10 @@ export const SaveTemplateModal: React.FC<SaveTemplateModalProps> = ({
       onClose();
     } catch (err) {
       console.error('[SaveTemplateModal] Error al guardar plantilla:', err);
-      if (showToast) showToast('No se pudo guardar la plantilla. Intenta de nuevo.', 'error');
+      const mensaje = err instanceof Error && err.message
+        ? err.message
+        : 'No se pudo guardar la plantilla. Intenta de nuevo.';
+      if (showToast) showToast(mensaje, 'error');
     } finally {
       setIsSaving(false);
     }
