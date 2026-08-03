@@ -28,5 +28,5 @@ Antes de marcar cualquier característica o refactor como `DONE`, el desarrollad
 ---
 
 ## 🏋️ Ejemplo de Aplicación
-* **Guardado y Reutilización de Plantillas**: Disponible tanto en `PlanPlanner.tsx` (entrenador) como en `AthleteDashboard.tsx` (atleta que edita su plan activo).
+* **Guardado y Reutilización de Plantillas**: Disponible tanto en `PlanPlanner.tsx` (entrenadores vía Supabase DB) como en `QuickStartPlanner.tsx` (atletas independientes vía almacenamiento personal de plantillas en LocalStorage).
 * **Fusión Inteligente (`planMerger.ts`)**: Inyectable en planes de clientes por el entrenador y en planes personales por el atleta autodidacta.

@@ -8,6 +8,12 @@ import Toast from '../common/Toast';
 import { PlanData, TrainingDay, Exercise, GlobalVariable, EjercicioGlobal } from '../../types/database.types';
 import { useModalA11y } from '../../hooks/useModalA11y';
 import { normalizeSearchText } from '../../lib/exerciseSearch';
+import {
+  getAthleteTemplates,
+  saveAthleteTemplate,
+  deleteAthleteTemplate,
+  AthleteTemplate
+} from '../../lib/athleteTemplates';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────────
 const genDayId = () => 'day_' + Math.random().toString(36).substring(2, 9);
@@ -363,6 +369,70 @@ export const QuickStartPlanner: React.FC = () => {
   const [newVarName, setNewVarName] = useState('');
   const [newVarDefault, setNewVarDefault] = useState('');
   const [newVarDef, setNewVarDef] = useState('');
+
+  // Estados para Plantillas Personales del Atleta
+  const [athleteTemplates, setAthleteTemplates] = useState<AthleteTemplate[]>([]);
+  const [saveTplModalOpen, setSaveTplModalOpen] = useState(false);
+  const [tplName, setTplName] = useState('');
+  const [tplDesc, setTplDesc] = useState('');
+
+  useEffect(() => {
+    setAthleteTemplates(getAthleteTemplates(user?.id || 'default'));
+  }, [user]);
+
+  const handleSaveAthleteTemplate = () => {
+    if (!tplName.trim()) {
+      showToast('Por favor, ingresa un nombre para tu plantilla.', 'error');
+      return;
+    }
+    const hasExercise = days.some(d => d.exercises.some(e => e.nombre.trim() !== ''));
+    if (!hasExercise) {
+      showToast('Tu plantilla debe tener al menos un ejercicio con nombre.', 'error');
+      return;
+    }
+
+    saveAthleteTemplate({
+      athlete_id: user?.id || 'default',
+      nombre: tplName,
+      descripcion: tplDesc,
+      days
+    });
+
+    setAthleteTemplates(getAthleteTemplates(user?.id || 'default'));
+    setSaveTplModalOpen(false);
+    setTplName('');
+    setTplDesc('');
+    showToast('⭐ Plantilla personal guardada con éxito', 'success');
+  };
+
+  const handleLoadAthleteTemplate = async (template: AthleteTemplate) => {
+    if (days.some(d => d.exercises.some(e => e.nombre.trim() !== ''))) {
+      if (!(await confirm(`Cargar la plantilla "${template.nombre}" reemplazará tus días y ejercicios actuales. ¿Deseas continuar?`, { title: 'Reemplazar plan actual', confirmText: 'Reemplazar', danger: true }))) {
+        return;
+      }
+    }
+
+    setDays(template.days.map(d => ({
+      id: genDayId(),
+      name: d.name,
+      exercises: d.exercises.map(e => ({
+        id: genExId(),
+        nombre: e.nombre,
+        grupoMuscular: e.grupoMuscular,
+        variables: { ...(e.variables || {}) }
+      }))
+    })));
+
+    showToast(`⭐ Plantilla personal "${template.nombre}" cargada`, 'success');
+  };
+
+  const handleDeleteAthleteTemplate = async (templateId: string, name: string) => {
+    if (await confirm(`¿Eliminar la plantilla "${name}"?`, { title: 'Eliminar plantilla', confirmText: 'Eliminar', danger: true })) {
+      deleteAthleteTemplate(user?.id || 'default', templateId);
+      setAthleteTemplates(getAthleteTemplates(user?.id || 'default'));
+      showToast('Plantilla eliminada', 'info');
+    }
+  };
 
   const toggleExerciseExpand = (exId: string) => {
     setExpandedExercises((prev) => ({ ...prev, [exId]: !prev[exId] }));
@@ -1180,7 +1250,7 @@ export const QuickStartPlanner: React.FC = () => {
             border: '1px solid var(--theme-border)',
             borderRadius: '12px',
             padding: '14px',
-            marginBottom: '20px'
+            marginBottom: '16px'
           }}>
             <span style={{
               display: 'block',
@@ -1225,6 +1295,100 @@ export const QuickStartPlanner: React.FC = () => {
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Mis Plantillas Personales Guardadas */}
+          <div style={{
+            background: 'rgba(255, 255, 255, 0.02)',
+            border: '1px solid var(--theme-border)',
+            borderRadius: '12px',
+            padding: '14px',
+            marginBottom: '20px'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+              <span style={{
+                fontSize: '10px',
+                fontWeight: 700,
+                color: '#38bdf8',
+                textTransform: 'uppercase',
+                fontFamily: "'Orbitron', sans-serif",
+                letterSpacing: '0.5px'
+              }}>
+                Mis Plantillas Personales ({athleteTemplates.length})
+              </span>
+              <button
+                type="button"
+                onClick={() => setSaveTplModalOpen(true)}
+                style={{
+                  background: 'rgba(56, 189, 248, 0.1)',
+                  border: '1px solid rgba(56, 189, 248, 0.3)',
+                  borderRadius: '6px',
+                  color: '#38bdf8',
+                  padding: '4px 10px',
+                  fontSize: '10px',
+                  fontWeight: 700,
+                  fontFamily: "'Orbitron', sans-serif",
+                  cursor: 'pointer'
+                }}
+              >
+                + Guardar Plan Actual como Plantilla
+              </button>
+            </div>
+
+            {athleteTemplates.length === 0 ? (
+              <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', margin: 0 }}>
+                No tienes plantillas personales guardadas aún. Puedes guardar tu rutina actual usando el botón superior.
+              </p>
+            ) : (
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                {athleteTemplates.map((tpl) => (
+                  <div
+                    key={tpl.id}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      background: 'rgba(15, 23, 42, 0.8)',
+                      border: '1px solid rgba(56, 189, 248, 0.3)',
+                      borderRadius: '8px',
+                      padding: '4px 8px 4px 12px'
+                    }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => handleLoadAthleteTemplate(tpl)}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: 'white',
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        fontFamily: "'Orbitron', sans-serif",
+                        cursor: 'pointer',
+                        padding: 0
+                      }}
+                    >
+                      ⭐ {tpl.nombre} ({tpl.dias_semana}d)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteAthleteTemplate(tpl.id, tpl.nombre)}
+                      title="Eliminar plantilla"
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#f87171',
+                        cursor: 'pointer',
+                        fontSize: '12px',
+                        padding: '0 2px'
+                      }}
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Loading skeleton */}
@@ -2107,6 +2271,94 @@ export const QuickStartPlanner: React.FC = () => {
           100% { opacity: 0.6; }
         }
       `}</style>
+
+      {/* Modal: Guardar Plantilla Personal */}
+      {saveTplModalOpen && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(0,0,0,0.8)',
+          backdropFilter: 'blur(8px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 9999,
+          padding: '20px'
+        }}>
+          <div style={{
+            background: '#0f172a',
+            border: '1px solid var(--theme-border)',
+            borderRadius: '16px',
+            padding: '24px',
+            maxWidth: '420px',
+            width: '100%',
+            color: 'white'
+          }}>
+            <h3 style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '16px', margin: '0 0 12px 0', color: '#38bdf8' }}>
+              ⭐ Guardar como Plantilla Personal
+            </h3>
+            <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)', margin: '0 0 16px 0' }}>
+              Guarda tus días y ejercicios actuales como una plantilla reutilizable para futuros planes.
+            </p>
+            <div style={{ marginBottom: '12px' }}>
+              <label style={styles.label}>Nombre de la Plantilla</label>
+              <input
+                type="text"
+                placeholder="Ej: Rutina Fuerza 4 Días"
+                value={tplName}
+                onChange={(e) => setTplName(e.target.value)}
+                style={styles.input}
+              />
+            </div>
+            <div style={{ marginBottom: '20px' }}>
+              <label style={styles.label}>Descripción (Opcional)</label>
+              <input
+                type="text"
+                placeholder="Ej: Enfocado en hipertrofia y piernas"
+                value={tplDesc}
+                onChange={(e) => setTplDesc(e.target.value)}
+                style={styles.input}
+              />
+            </div>
+            <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                onClick={() => setSaveTplModalOpen(false)}
+                style={{
+                  background: 'rgba(255,255,255,0.06)',
+                  border: '1px solid rgba(255,255,255,0.1)',
+                  color: 'white',
+                  borderRadius: '8px',
+                  padding: '8px 16px',
+                  fontSize: '12px',
+                  cursor: 'pointer'
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveAthleteTemplate}
+                style={{
+                  background: 'var(--theme-btn-gradient)',
+                  border: 'none',
+                  color: 'white',
+                  borderRadius: '8px',
+                  padding: '8px 16px',
+                  fontSize: '12px',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+              >
+                Guardar Plantilla
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Toast message={toastState.message} type={toastState.type} visible={toastState.visible} />
     </div>
