@@ -186,6 +186,12 @@ export async function saveTrainerTemplate(
         .single();
 
       if (error) {
+        const isRlsError = error.code === '42501' || error.message?.includes('row-level security') || error.message?.includes('permission denied');
+        if (isRlsError) {
+          // Revertir caché local para evitar bypass de la restricción RLS
+          saveLocalTemplates(params.trainer_id, currentLocal);
+          throw new Error('Tu suscripción actual no permite guardar plantillas personalizadas. Por favor, actualiza tu plan para continuar.');
+        }
         console.warn('[TrainerTemplates] No se pudo guardar en remoto (guardado en caché local):', error.message);
       } else if (data) {
         return data as TrainerTemplate;
