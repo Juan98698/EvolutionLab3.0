@@ -100,7 +100,7 @@ export async function getTrainerTemplates(trainerId: string): Promise<TrainerTem
       return localList;
     }
 
-    if (data && data.length > 0) {
+    if (Array.isArray(data)) {
       const remoteTemplates = data as TrainerTemplate[];
       // Sincronizar en caché local
       saveLocalTemplates(trainerId, remoteTemplates);
@@ -168,36 +168,38 @@ export async function saveTrainerTemplate(
 
   // 2. Persistir en Supabase DB si hay conexión
   if (params.trainer_id && params.trainer_id !== 'default') {
-    try {
-      const { data, error } = await supabase
-        .from('plantillas_entrenador')
-        .upsert({
-          id: templatePayload.id,
-          trainer_id: templatePayload.trainer_id,
-          nombre: templatePayload.nombre,
-          descripcion: templatePayload.descripcion,
-          objetivo: templatePayload.objetivo,
-          nivel_atleta: templatePayload.nivel_atleta,
-          dias_semana: templatePayload.dias_semana,
-          plan_data: templatePayload.plan_data,
-          updated_at: now
-        })
-        .select()
-        .single();
+    const { data, error } = await supabase
+      .from('plantillas_entrenador')
+      .upsert({
+        id: templatePayload.id,
+        trainer_id: templatePayload.trainer_id,
+        nombre: templatePayload.nombre,
+        descripcion: templatePayload.descripcion,
+        objetivo: templatePayload.objetivo,
+        nivel_atleta: templatePayload.nivel_atleta,
+        dias_semana: templatePayload.dias_semana,
+        plan_data: templatePayload.plan_data,
+        updated_at: now
+      })
+      .select()
+      .single();
 
-      if (error) {
-        const isRlsError = error.code === '42501' || error.message?.includes('row-level security') || error.message?.includes('permission denied');
-        if (isRlsError) {
-          // Revertir caché local para evitar bypass de la restricción RLS
-          saveLocalTemplates(params.trainer_id, currentLocal);
-          throw new Error('Tu suscripción actual no permite guardar plantillas personalizadas. Por favor, actualiza tu plan para continuar.');
-        }
-        console.warn('[TrainerTemplates] No se pudo guardar en remoto (guardado en caché local):', error.message);
-      } else if (data) {
-        return data as TrainerTemplate;
+    if (error) {
+      const isRlsError = error.code === '42501' || error.message?.includes('row-level security') || error.message?.includes('permission denied');
+      if (isRlsError) {
+        // Revertir caché local para evitar bypass de la restricción RLS
+        saveLocalTemplates(params.trainer_id, currentLocal);
+        throw new Error('Tu suscripción actual no permite guardar plantillas personalizadas. Por favor, actualiza tu plan para continuar.');
       }
-    } catch (err) {
-      console.warn('[TrainerTemplates] Excepción guardando en remoto:', err);
+      console.warn('[TrainerTemplates] Error en remoto Supabase, usando respaldo offline:', error.message);
+    } else if (data) {
+      const remoteTemplate = data as TrainerTemplate;
+      const updatedWithRemote = currentLocal.map(t => t.id === remoteTemplate.id ? remoteTemplate : t);
+      if (!updatedWithRemote.some(t => t.id === remoteTemplate.id)) {
+        updatedWithRemote.unshift(remoteTemplate);
+      }
+      saveLocalTemplates(params.trainer_id, updatedWithRemote);
+      return remoteTemplate;
     }
   }
 
