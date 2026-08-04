@@ -185,12 +185,31 @@ export async function saveTrainerTemplate(
       .single();
 
     if (error) {
-      const isRlsError = error.code === '42501' || error.message?.includes('row-level security') || error.message?.includes('permission denied');
+      const fullErrorMsg = `${error.message || ''} ${error.details || ''} ${error.hint || ''}`.toLowerCase();
+      const isTableGrantError = 
+        fullErrorMsg.includes('permission denied for table') ||
+        fullErrorMsg.includes('permission denied for relation') ||
+        fullErrorMsg.includes('permission denied for schema') ||
+        (fullErrorMsg.includes('permission denied') && !fullErrorMsg.includes('row-level security') && !fullErrorMsg.includes('policy'));
+
+      const isRlsError = !isTableGrantError && (
+        fullErrorMsg.includes('row-level security') ||
+        fullErrorMsg.includes('violates row-level security policy') ||
+        fullErrorMsg.includes('rls policy')
+      );
+
+      if (isTableGrantError) {
+        console.warn('[TrainerTemplates] Permiso GRANT de tabla faltante en Postgres:', error.message);
+        saveLocalTemplates(params.trainer_id, currentLocal);
+        throw new Error('Error de permisos en Supabase: falta ejecutar los permisos GRANT en la tabla plantillas_entrenador en el SQL Editor de Supabase.');
+      }
+
       if (isRlsError) {
         // Revertir caché local para evitar bypass de la restricción RLS
         saveLocalTemplates(params.trainer_id, currentLocal);
         throw new Error('Tu suscripción actual no permite guardar plantillas personalizadas. Por favor, actualiza tu plan para continuar.');
       }
+
       console.warn('[TrainerTemplates] Error en remoto Supabase, usando respaldo offline:', error.message);
     } else if (data) {
       const remoteTemplate = data as TrainerTemplate;

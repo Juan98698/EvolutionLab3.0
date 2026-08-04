@@ -190,6 +190,52 @@ describe('trainerTemplates Module', () => {
       expect(remaining).toHaveLength(1);
       expect(remaining[0].nombre).toBe('Plantilla 2');
     });
+
+    it('identifica correctamente cuando el error es falta de permisos GRANT en la tabla de Supabase', async () => {
+      const { supabase } = await import('../supabaseClient');
+      vi.mocked(supabase.from).mockReturnValueOnce({
+        upsert: vi.fn().mockReturnThis(),
+        select: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
+          data: null,
+          error: { message: 'permission denied for table plantillas_entrenador', code: '42501' }
+        })
+      } as any);
+
+      await expect(
+        saveTrainerTemplate({
+          trainer_id: 'trainer_test_grant',
+          nombre: 'Plantilla Test Grant',
+          objetivo: 'hipertrofia',
+          nivel_atleta: 'intermedio',
+          dias_semana: 3,
+          trainingDays: []
+        })
+      ).rejects.toThrow('Error de permisos en Supabase: falta ejecutar los permisos GRANT');
+    });
+
+    it('identifica correctamente cuando el error es por restricción RLS de suscripción', async () => {
+      const { supabase } = await import('../supabaseClient');
+      vi.mocked(supabase.from).mockReturnValueOnce({
+        upsert: vi.fn().mockReturnThis(),
+        select: vi.fn().mockReturnThis(),
+        single: vi.fn().mockResolvedValue({
+          data: null,
+          error: { message: 'new row violates row-level security policy for table "plantillas_entrenador"', code: '42501' }
+        })
+      } as any);
+
+      await expect(
+        saveTrainerTemplate({
+          trainer_id: 'trainer_test_rls',
+          nombre: 'Plantilla Test RLS',
+          objetivo: 'hipertrofia',
+          nivel_atleta: 'intermedio',
+          dias_semana: 3,
+          trainingDays: []
+        })
+      ).rejects.toThrow('Tu suscripción actual no permite guardar plantillas personalizadas');
+    });
   });
 
   describe('applyTemplateToPlan', () => {
