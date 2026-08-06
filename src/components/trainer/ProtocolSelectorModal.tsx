@@ -5,6 +5,7 @@ import { TrainingDay, TrainerTemplate } from '../../types/database.types';
 import { detectPatternFromExerciseName } from '../../lib/strengthThresholds';
 import { supabase } from '../../lib/supabaseClient';
 import { useModalA11y } from '../../hooks/useModalA11y';
+import { useConfirm } from '../../context/ConfirmDialogContext';
 import { getTrainerTemplates, deleteTrainerTemplate, applyTemplateToPlan } from '../../lib/trainerTemplates';
 
 interface Props {
@@ -55,6 +56,7 @@ export function ProtocolSelectorModal({
   }, [isOpen, activeTab, trainerId]);
 
   const dialogRef = useModalA11y<HTMLDivElement>({ isOpen, onClose });
+  const confirm = useConfirm();
 
   if (!isOpen) return null;
 
@@ -72,7 +74,12 @@ export function ProtocolSelectorModal({
   });
 
   const handleDeleteTemplate = async (templateId: string, name: string) => {
-    if (!window.confirm(`¿Estás seguro de que quieres eliminar la plantilla "${name}"?`)) return;
+    const confirmed = await confirm(`¿Estás seguro de que quieres eliminar la plantilla "${name}"?`, {
+      title: 'Eliminar plantilla',
+      confirmText: 'Eliminar',
+      danger: true
+    });
+    if (!confirmed) return;
     await deleteTrainerTemplate(templateId, trainerId);
     setCustomTemplates(prev => prev.filter(t => t.id !== templateId));
     if (selectedCustomTemplate?.id === templateId) {

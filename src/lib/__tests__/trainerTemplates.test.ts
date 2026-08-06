@@ -236,6 +236,31 @@ describe('trainerTemplates Module', () => {
         })
       ).rejects.toThrow('Tu suscripción actual no permite guardar plantillas personalizadas');
     });
+
+    it('ante una falla de red genuina (promesa rechazada, no un {error} de PostgREST), guarda localmente sin lanzar al usuario', async () => {
+      const { supabase } = await import('../supabaseClient');
+      vi.mocked(supabase.from).mockImplementationOnce(() => ({
+        select: vi.fn().mockReturnThis(),
+        eq: vi.fn().mockReturnThis(),
+        order: vi.fn().mockResolvedValue({ data: null, error: null }),
+        upsert: vi.fn().mockReturnThis(),
+        single: vi.fn().mockRejectedValue(new TypeError('Failed to fetch')),
+        delete: vi.fn().mockReturnThis()
+      }) as any);
+
+      const saved = await saveTrainerTemplate({
+        trainer_id: mockTrainerId,
+        nombre: 'Plantilla Sin Conexión',
+        objetivo: 'hipertrofia',
+        nivel_atleta: 'intermedio',
+        dias_semana: 3,
+        trainingDays: []
+      });
+
+      // No debe lanzar -- debe resolver con el payload guardado localmente
+      expect(saved.nombre).toBe('Plantilla Sin Conexión');
+      expect(getLocalTemplates(mockTrainerId).some(t => t.nombre === 'Plantilla Sin Conexión')).toBe(true);
+    });
   });
 
   describe('applyTemplateToPlan', () => {

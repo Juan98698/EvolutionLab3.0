@@ -2,6 +2,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react';
 import { ProtocolSelectorModal } from '../ProtocolSelectorModal';
+import { ConfirmDialogProvider } from '../../../context/ConfirmDialogContext';
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -80,13 +81,15 @@ afterEach(cleanup);
 describe('ProtocolSelectorModal Component', () => {
   it('no renderiza nada cuando isOpen es false', () => {
     render(
-      <ProtocolSelectorModal
-        isOpen={false}
-        onClose={vi.fn()}
-        objective="hipertrofia"
-        level="intermedio"
-        onApplyProtocol={vi.fn()}
-      />
+      <ConfirmDialogProvider>
+        <ProtocolSelectorModal
+          isOpen={false}
+          onClose={vi.fn()}
+          objective="hipertrofia"
+          level="intermedio"
+          onApplyProtocol={vi.fn()}
+        />
+      </ConfirmDialogProvider>
     );
 
     expect(screen.queryByRole('dialog')).toBeNull();
@@ -94,13 +97,15 @@ describe('ProtocolSelectorModal Component', () => {
 
   it('renderiza el modal con la lista de protocolos cuando isOpen es true', () => {
     render(
-      <ProtocolSelectorModal
-        isOpen={true}
-        onClose={vi.fn()}
-        objective="hipertrofia"
-        level="intermedio"
-        onApplyProtocol={vi.fn()}
-      />
+      <ConfirmDialogProvider>
+        <ProtocolSelectorModal
+          isOpen={true}
+          onClose={vi.fn()}
+          objective="hipertrofia"
+          level="intermedio"
+          onApplyProtocol={vi.fn()}
+        />
+      </ConfirmDialogProvider>
     );
 
     expect(screen.getByRole('dialog')).toBeInTheDocument();
@@ -110,13 +115,15 @@ describe('ProtocolSelectorModal Component', () => {
 
   it('permite seleccionar un protocolo y ver su guía científica', () => {
     render(
-      <ProtocolSelectorModal
-        isOpen={true}
-        onClose={vi.fn()}
-        objective="hipertrofia"
-        level="intermedio"
-        onApplyProtocol={vi.fn()}
-      />
+      <ConfirmDialogProvider>
+        <ProtocolSelectorModal
+          isOpen={true}
+          onClose={vi.fn()}
+          objective="hipertrofia"
+          level="intermedio"
+          onApplyProtocol={vi.fn()}
+        />
+      </ConfirmDialogProvider>
     );
 
     // Seleccionar el primer protocolo disponible en la lista lateral
@@ -134,13 +141,15 @@ describe('ProtocolSelectorModal Component', () => {
     const onApplyProtocol = vi.fn();
 
     render(
-      <ProtocolSelectorModal
-        isOpen={true}
-        onClose={vi.fn()}
-        objective="hipertrofia"
-        level="intermedio"
-        onApplyProtocol={onApplyProtocol}
-      />
+      <ConfirmDialogProvider>
+        <ProtocolSelectorModal
+          isOpen={true}
+          onClose={vi.fn()}
+          objective="hipertrofia"
+          level="intermedio"
+          onApplyProtocol={onApplyProtocol}
+        />
+      </ConfirmDialogProvider>
     );
 
     // Seleccionar un protocolo
@@ -185,13 +194,15 @@ describe('ProtocolSelectorModal Component', () => {
     const onApplyProtocol = vi.fn();
 
     render(
-      <ProtocolSelectorModal
-        isOpen={true}
-        onClose={vi.fn()}
-        objective="fuerza"
-        level="avanzado"
-        onApplyProtocol={onApplyProtocol}
-      />
+      <ConfirmDialogProvider>
+        <ProtocolSelectorModal
+          isOpen={true}
+          onClose={vi.fn()}
+          objective="fuerza"
+          level="avanzado"
+          onApplyProtocol={onApplyProtocol}
+        />
+      </ConfirmDialogProvider>
     );
 
     const buttons = screen.getAllByRole('button');
@@ -223,13 +234,15 @@ describe('ProtocolSelectorModal Component', () => {
     const onClose = vi.fn();
 
     render(
-      <ProtocolSelectorModal
-        isOpen={true}
-        onClose={onClose}
-        objective="hipertrofia"
-        level="intermedio"
-        onApplyProtocol={vi.fn()}
-      />
+      <ConfirmDialogProvider>
+        <ProtocolSelectorModal
+          isOpen={true}
+          onClose={onClose}
+          objective="hipertrofia"
+          level="intermedio"
+          onApplyProtocol={vi.fn()}
+        />
+      </ConfirmDialogProvider>
     );
 
     const cancelBtn = screen.getByRole('button', { name: /Cancelar/i });

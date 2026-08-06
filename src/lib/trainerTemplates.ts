@@ -168,21 +168,31 @@ export async function saveTrainerTemplate(
 
   // 2. Persistir en Supabase DB si hay conexión
   if (params.trainer_id && params.trainer_id !== 'default') {
-    const { data, error } = await supabase
-      .from('plantillas_entrenador')
-      .upsert({
-        id: templatePayload.id,
-        trainer_id: templatePayload.trainer_id,
-        nombre: templatePayload.nombre,
-        descripcion: templatePayload.descripcion,
-        objetivo: templatePayload.objetivo,
-        nivel_atleta: templatePayload.nivel_atleta,
-        dias_semana: templatePayload.dias_semana,
-        plan_data: templatePayload.plan_data,
-        updated_at: now
-      })
-      .select()
-      .single();
+    let data: TrainerTemplate | null = null;
+    let error: { code?: string; message?: string; details?: string; hint?: string } | null = null;
+
+    try {
+      const response = await supabase
+        .from('plantillas_entrenador')
+        .upsert({
+          id: templatePayload.id,
+          trainer_id: templatePayload.trainer_id,
+          nombre: templatePayload.nombre,
+          descripcion: templatePayload.descripcion,
+          objetivo: templatePayload.objetivo,
+          nivel_atleta: templatePayload.nivel_atleta,
+          dias_semana: templatePayload.dias_semana,
+          plan_data: templatePayload.plan_data,
+          updated_at: now
+        })
+        .select()
+        .single();
+      data = response.data as TrainerTemplate | null;
+      error = response.error;
+    } catch (networkErr) {
+      console.warn('[TrainerTemplates] Falla de red al guardar en remoto, usando respaldo offline:', networkErr);
+      return templatePayload;
+    }
 
     if (error) {
       const fullErrorMsg = `${error.message || ''} ${error.details || ''} ${error.hint || ''}`.toLowerCase();

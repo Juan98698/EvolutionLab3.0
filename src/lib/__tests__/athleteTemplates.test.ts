@@ -1,5 +1,5 @@
 // @vitest-environment happy-dom
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import {
   getAthleteTemplates,
   saveAthleteTemplate,
@@ -36,6 +36,8 @@ describe('AthleteTemplates Module (Independent Athlete Local Persistence)', () =
       days: sampleDays
     });
 
+    expect(saved).not.toBeNull();
+    if (!saved) return;
     expect(saved.id).toBeDefined();
     expect(saved.nombre).toBe('Mi Rutina de Volumen 4 Días');
     expect(saved.days.length).toBe(1);
@@ -45,6 +47,23 @@ describe('AthleteTemplates Module (Independent Athlete Local Persistence)', () =
     expect(list[0].id).toBe(saved.id);
   });
 
+  it('returns null (not a false success) if localStorage.setItem genuinely fails', () => {
+    const spy = vi.spyOn(window.localStorage, 'setItem').mockImplementation(() => {
+      throw new DOMException('Quota exceeded', 'QuotaExceededError');
+    });
+
+    const saved = saveAthleteTemplate({
+      athlete_id: athleteId,
+      nombre: 'Rutina que no debería persistir',
+      days: sampleDays
+    });
+
+    expect(saved).toBeNull();
+    expect(getAthleteTemplates(athleteId)).toEqual([]);
+
+    spy.mockRestore();
+  });
+
   it('deletes an athlete template correctly', () => {
     const saved = saveAthleteTemplate({
       athlete_id: athleteId,
@@ -52,6 +71,8 @@ describe('AthleteTemplates Module (Independent Athlete Local Persistence)', () =
       days: sampleDays
     });
 
+    expect(saved).not.toBeNull();
+    if (!saved) return;
     expect(getAthleteTemplates(athleteId).length).toBe(1);
 
     const success = deleteAthleteTemplate(athleteId, saved.id);

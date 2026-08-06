@@ -103,7 +103,7 @@ export function saveAthleteTemplate(params: {
   nombre: string;
   descripcion?: string | null;
   days: LocalDay[];
-}): AthleteTemplate {
+}): AthleteTemplate | null {
   const now = new Date().toISOString();
   const templateId = params.id || `ath_tpl_${generateShortId()}_${Date.now()}`;
 
@@ -132,7 +132,12 @@ export function saveAthleteTemplate(params: {
   try {
     localStorage.setItem(getLocalStorageKey(params.athlete_id), JSON.stringify(updated));
   } catch (err) {
+    // localStorage.setItem puede fallar de verdad (cuota excedida, modo privado en iOS/Safari).
+    // Si eso pasa, NO hay que reportar éxito: el atleta no tiene respaldo en la nube, así que
+    // un "guardado" que en realidad no persistió nada es peor que un error visible -- se
+    // pierde el plan en silencio y recién se nota cuando vuelve a entrar.
     console.warn('[AthleteTemplates] Error al guardar plantilla del atleta:', err);
+    return null;
   }
 
   return template;

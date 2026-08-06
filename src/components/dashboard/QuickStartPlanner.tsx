@@ -391,12 +391,17 @@ export const QuickStartPlanner: React.FC = () => {
       return;
     }
 
-    saveAthleteTemplate({
+    const saved = saveAthleteTemplate({
       athlete_id: user?.id || 'default',
       nombre: tplName,
       descripcion: tplDesc,
       days
     });
+
+    if (!saved) {
+      showToast('❌ No se pudo guardar la plantilla en este dispositivo (posiblemente sin espacio de almacenamiento). Intenta liberar espacio o probar de nuevo.', 'error');
+      return;
+    }
 
     setAthleteTemplates(getAthleteTemplates(user?.id || 'default'));
     setSaveTplModalOpen(false);
