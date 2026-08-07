@@ -12,8 +12,11 @@ import {
   getAthleteTemplates,
   saveAthleteTemplate,
   deleteAthleteTemplate,
+  convertLocalDaysToTrainingDays,
+  convertTrainingDaysToLocalDays,
   AthleteTemplate
 } from '../../lib/athleteTemplates';
+import { mergeProtocolIntoExistingPlan } from '../../lib/planMerger';
 
 // ─── Helpers ────────────────────────────────────────────────────────────────────
 const genDayId = () => 'day_' + Math.random().toString(36).substring(2, 9);
@@ -411,13 +414,7 @@ export const QuickStartPlanner: React.FC = () => {
   };
 
   const handleLoadAthleteTemplate = async (template: AthleteTemplate) => {
-    if (days.some(d => d.exercises.some(e => e.nombre.trim() !== ''))) {
-      if (!(await confirm(`Cargar la plantilla "${template.nombre}" reemplazará tus días y ejercicios actuales. ¿Deseas continuar?`, { title: 'Reemplazar plan actual', confirmText: 'Reemplazar', danger: true }))) {
-        return;
-      }
-    }
-
-    setDays(template.days.map(d => ({
+    const templateLocalDays: LocalDay[] = template.days.map(d => ({
       id: genDayId(),
       name: d.name,
       exercises: d.exercises.map(e => ({
@@ -426,8 +423,30 @@ export const QuickStartPlanner: React.FC = () => {
         grupoMuscular: e.grupoMuscular,
         variables: { ...(e.variables || {}) }
       }))
-    })));
+    }));
 
+    if (days.some(d => d.exercises.some(e => e.nombre.trim() !== ''))) {
+      const shouldMerge = await confirm(
+        `¿Deseas fusionar la plantilla "${template.nombre}" manteniendo la configuración de series por grupo muscular de tu plan actual?`,
+        {
+          title: 'Cargar plantilla personal',
+          confirmText: '⚡ Fusionar Inteligente',
+          cancelText: 'Reemplazar Plan',
+          danger: false
+        }
+      );
+
+      if (shouldMerge) {
+        const existingTrainingDays = convertLocalDaysToTrainingDays(days);
+        const templateTrainingDays = convertLocalDaysToTrainingDays(templateLocalDays);
+        const mergedTrainingDays = mergeProtocolIntoExistingPlan(templateTrainingDays, existingTrainingDays, true);
+        setDays(convertTrainingDaysToLocalDays(mergedTrainingDays));
+        showToast(`⚡ Plantilla personal "${template.nombre}" fusionada con éxito`, 'success');
+        return;
+      }
+    }
+
+    setDays(templateLocalDays);
     showToast(`⭐ Plantilla personal "${template.nombre}" cargada`, 'success');
   };
 
@@ -507,13 +526,7 @@ export const QuickStartPlanner: React.FC = () => {
     const template = ROUTINE_TEMPLATES[key];
     if (!template) return;
 
-    if (days.some(d => d.exercises.some(e => e.nombre.trim() !== ''))) {
-      if (!(await confirm('Cargar una plantilla reemplazará tus días y ejercicios actuales. ¿Deseas continuar?', { title: 'Reemplazar plan actual', confirmText: 'Reemplazar', danger: true }))) {
-        return;
-      }
-    }
-
-    const newDays: LocalDay[] = template.days.map((d) => ({
+    const templateLocalDays: LocalDay[] = template.days.map((d) => ({
       id: genDayId(),
       name: d.name,
       exercises: d.exercises.map((e) => ({
@@ -524,7 +537,28 @@ export const QuickStartPlanner: React.FC = () => {
       }))
     }));
 
-    setDays(newDays);
+    if (days.some(d => d.exercises.some(e => e.nombre.trim() !== ''))) {
+      const shouldMerge = await confirm(
+        `¿Deseas fusionar la rutina "${template.title}" manteniendo el número de series configuradas en tu plan actual?`,
+        {
+          title: 'Cargar rutina preestablecida',
+          confirmText: '⚡ Fusionar Inteligente',
+          cancelText: 'Reemplazar Plan',
+          danger: false
+        }
+      );
+
+      if (shouldMerge) {
+        const existingTrainingDays = convertLocalDaysToTrainingDays(days);
+        const templateTrainingDays = convertLocalDaysToTrainingDays(templateLocalDays);
+        const mergedTrainingDays = mergeProtocolIntoExistingPlan(templateTrainingDays, existingTrainingDays, true);
+        setDays(convertTrainingDaysToLocalDays(mergedTrainingDays));
+        showToast(`⚡ Rutina "${template.title}" fusionada con éxito`, 'success');
+        return;
+      }
+    }
+
+    setDays(templateLocalDays);
     showToast(`✅ Rutina "${template.title}" cargada con éxito`, 'success');
   };
 

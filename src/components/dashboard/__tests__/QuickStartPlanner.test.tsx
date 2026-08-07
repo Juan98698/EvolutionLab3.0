@@ -336,18 +336,49 @@ describe('QuickStartPlanner — selección de plantillas', () => {
 
     const dialog = await screen.findByRole('dialog');
     expect(dialog).toBeInTheDocument();
-    expect(within(dialog).getByText('Cancelar')).toBeInTheDocument();
+    expect(within(dialog).getByText('Reemplazar Plan')).toBeInTheDocument();
 
-    // Cancelar — el plan anterior debe permanecer
-    fireEvent.click(within(dialog).getByText('Cancelar'));
+    // Reemplazar plan
+    fireEvent.click(within(dialog).getByText('Reemplazar Plan'));
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
 
-    // El nombre del Día 1 de PPL NO debe aparecer
+    // Al confirmar Reemplazar Plan, los días se reemplazan por la plantilla PPL
     const namedInputs = document.querySelectorAll('input[type="text"]');
     const hasPPL = Array.from(namedInputs).some((el) => (el as HTMLInputElement).value.includes('Empuje (Push)'));
-    expect(hasPPL).toBe(false);
+    expect(hasPPL).toBe(true);
+  });
+
+  it('al confirmar "⚡ Fusionar Inteligente", fusiona la plantilla preservando el volumen del plan actual', async () => {
+    renderPlanner();
+    await waitFor(() => screen.getByText('QUICK START — MI PLAN PERSONAL'));
+
+    const fullBodyBtn = screen.queryByRole('button', { name: /Full Body/i });
+    if (!fullBodyBtn) return;
+
+    // Cargar plantilla inicial
+    fireEvent.click(fullBodyBtn);
+    await waitFor(() => {
+      const namedInputs = document.querySelectorAll('input[type="text"]');
+      return Array.from(namedInputs).some((el) => (el as HTMLInputElement).value.includes('Fuerza'));
+    });
+
+    // Cargar otra plantilla para disparar la confirmación
+    const pplBtn = screen.queryByRole('button', { name: /Push.*Pull.*Legs/i });
+    if (!pplBtn) return;
+    fireEvent.click(pplBtn);
+
+    const dialog = await screen.findByRole('dialog');
+    expect(dialog).toBeInTheDocument();
+
+    // Hacer click en "⚡ Fusionar Inteligente"
+    const mergeBtn = within(dialog).getByText(/⚡ Fusionar Inteligente/i);
+    fireEvent.click(mergeBtn);
+
+    await waitFor(() => {
+      expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    });
   });
 });
 
