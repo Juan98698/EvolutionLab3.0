@@ -44,7 +44,7 @@ export function ProtocolSelectorModal({
   }, []);
 
   useEffect(() => {
-    if (isOpen && activeTab === 'custom') {
+    if (isOpen) {
       getTrainerTemplates(trainerId).then(list => {
         setCustomTemplates(list);
         if (list.length > 0 && !selectedCustomTemplate) {
@@ -53,7 +53,7 @@ export function ProtocolSelectorModal({
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, activeTab, trainerId]);
+  }, [isOpen, trainerId]);
 
   const dialogRef = useModalA11y<HTMLDivElement>({ isOpen, onClose });
   const confirm = useConfirm();
