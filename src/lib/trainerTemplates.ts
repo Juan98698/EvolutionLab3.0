@@ -3,6 +3,24 @@ import { TrainerTemplate, TrainingDay, Exercise, GlobalVariable, PeriodizationCo
 import { recalculatePlanWeights } from './periodizationEngine';
 
 /**
+ * Genera un UUID v4 válido compatible con PostgreSQL
+ */
+export const generateUUID = (): string => {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    const v = c === 'x' ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+};
+
+export const isValidUUID = (str: string): boolean => {
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(str);
+};
+
+/**
  * Genera un ID corto seguro
  */
 const generateShortId = (): string => Math.random().toString(36).substring(2, 11);
@@ -134,7 +152,9 @@ export async function saveTrainerTemplate(
 ): Promise<TrainerTemplate> {
   const now = new Date().toISOString();
   const sanitizedDays = sanitizePlanDaysForTemplate(params.trainingDays);
-  const templateId = params.id || `tpl_${generateShortId()}_${Date.now()}`;
+  const templateId = (params.id && isValidUUID(params.id))
+    ? params.id
+    : generateUUID();
 
   const templatePayload: TrainerTemplate = {
     id: templateId,
