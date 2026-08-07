@@ -314,7 +314,7 @@ describe('QuickStartPlanner — selección de plantillas', () => {
     });
   });
 
-  it('muestra diálogo de confirmación cuando hay ejercicios y se carga otra plantilla', async () => {
+  it('muestra el diálogo de 3 vías cuando hay ejercicios y se carga otra plantilla', async () => {
     renderPlanner();
     await waitFor(() => screen.getByText('QUICK START — MI PLAN PERSONAL'));
 
@@ -329,17 +329,19 @@ describe('QuickStartPlanner — selección de plantillas', () => {
       return Array.from(namedInputs).some((el) => (el as HTMLInputElement).value.includes('Fuerza'));
     });
 
-    // Ahora cambiar a otra plantilla — debe pedir confirmación
+    // Ahora cambiar a otra plantilla — debe mostrar el diálogo de 3 vías
     const pplBtn = screen.queryByRole('button', { name: /Push.*Pull.*Legs/i });
     if (!pplBtn) return;
     fireEvent.click(pplBtn);
 
     const dialog = await screen.findByRole('dialog');
     expect(dialog).toBeInTheDocument();
-    expect(within(dialog).getByText('Reemplazar Plan')).toBeInTheDocument();
+    expect(within(dialog).getByRole('button', { name: /Reemplazar Plan/i })).toBeInTheDocument();
+    expect(within(dialog).getByRole('button', { name: /Fusionar Inteligente/i })).toBeInTheDocument();
+    expect(within(dialog).getByRole('button', { name: /Cancelar/i })).toBeInTheDocument();
 
-    // Reemplazar plan
-    fireEvent.click(within(dialog).getByText('Reemplazar Plan'));
+    // Reemplazar plan explícitamente
+    fireEvent.click(within(dialog).getByRole('button', { name: /Reemplazar Plan/i }));
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
@@ -364,7 +366,7 @@ describe('QuickStartPlanner — selección de plantillas', () => {
       return Array.from(namedInputs).some((el) => (el as HTMLInputElement).value.includes('Fuerza'));
     });
 
-    // Cargar otra plantilla para disparar la confirmación
+    // Cargar otra plantilla para disparar el diálogo
     const pplBtn = screen.queryByRole('button', { name: /Push.*Pull.*Legs/i });
     if (!pplBtn) return;
     fireEvent.click(pplBtn);
@@ -373,12 +375,57 @@ describe('QuickStartPlanner — selección de plantillas', () => {
     expect(dialog).toBeInTheDocument();
 
     // Hacer click en "⚡ Fusionar Inteligente"
-    const mergeBtn = within(dialog).getByText(/⚡ Fusionar Inteligente/i);
+    const mergeBtn = within(dialog).getByRole('button', { name: /Fusionar Inteligente/i });
     fireEvent.click(mergeBtn);
 
     await waitFor(() => {
       expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
     });
+  });
+
+  it('REGRESIÓN: cerrar el diálogo sin elegir nada (backdrop o botón Cancelar) NO debe modificar el plan actual', async () => {
+    renderPlanner();
+    await waitFor(() => screen.getByText('QUICK START — MI PLAN PERSONAL'));
+
+    const fullBodyBtn = screen.queryByRole('button', { name: /Full Body/i });
+    if (!fullBodyBtn) return;
+
+    fireEvent.click(fullBodyBtn);
+    await waitFor(() => {
+      const namedInputs = document.querySelectorAll('input[type="text"]');
+      return Array.from(namedInputs).some((el) => (el as HTMLInputElement).value.includes('Fuerza'));
+    });
+
+    const beforeValues = Array.from(document.querySelectorAll('input[type="text"]')).map(
+      (i) => (i as HTMLInputElement).value
+    );
+
+    const pplBtn = screen.queryByRole('button', { name: /Push.*Pull.*Legs/i });
+    if (!pplBtn) return;
+    fireEvent.click(pplBtn);
+
+    let dialog = await screen.findByRole('dialog');
+
+    // 1) Click en el backdrop (fuera del diálogo) -- gesto universal de "cancelar, cerrar sin hacer nada"
+    const backdrop = screen.getByRole('presentation');
+    fireEvent.click(backdrop);
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+
+    let afterValues = Array.from(document.querySelectorAll('input[type="text"]')).map(
+      (i) => (i as HTMLInputElement).value
+    );
+    expect(afterValues).toEqual(beforeValues);
+
+    // 2) Volver a disparar el diálogo y ahora clickear el botón "Cancelar" explícito
+    fireEvent.click(pplBtn);
+    dialog = await screen.findByRole('dialog');
+    fireEvent.click(within(dialog).getByRole('button', { name: /Cancelar/i }));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+
+    afterValues = Array.from(document.querySelectorAll('input[type="text"]')).map(
+      (i) => (i as HTMLInputElement).value
+    );
+    expect(afterValues).toEqual(beforeValues);
   });
 });
 

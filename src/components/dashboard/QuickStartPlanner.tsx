@@ -376,6 +376,16 @@ export const QuickStartPlanner: React.FC = () => {
   // Estados para Plantillas Personales del Atleta
   const [athleteTemplates, setAthleteTemplates] = useState<AthleteTemplate[]>([]);
   const [saveTplModalOpen, setSaveTplModalOpen] = useState(false);
+  // Reemplaza al confirm() de 2 vías (fusionar/reemplazar) que existía antes: ese hook
+  // resuelve `false` tanto al clickear "Reemplazar Plan" como al cerrar el diálogo sin
+  // elegir nada (backdrop, Escape) -- lo que hacía que cerrar el diálogo sin querer
+  // reemplazara el plan igual. Este estado separa las 3 salidas: fusionar, reemplazar,
+  // y cancelar-sin-cambios (que es lo único que corre al cerrar el diálogo implícitamente).
+  const [pendingLoad, setPendingLoad] = useState<{ label: string; templateLocalDays: LocalDay[] } | null>(null);
+  const pendingLoadDialogRef = useModalA11y<HTMLDivElement>({
+    isOpen: !!pendingLoad,
+    onClose: () => setPendingLoad(null),
+  });
   const [tplName, setTplName] = useState('');
   const [tplDesc, setTplDesc] = useState('');
 
@@ -426,24 +436,8 @@ export const QuickStartPlanner: React.FC = () => {
     }));
 
     if (days.some(d => d.exercises.some(e => e.nombre.trim() !== ''))) {
-      const shouldMerge = await confirm(
-        `¿Deseas fusionar la plantilla "${template.nombre}" manteniendo la configuración de series por grupo muscular de tu plan actual?`,
-        {
-          title: 'Cargar plantilla personal',
-          confirmText: '⚡ Fusionar Inteligente',
-          cancelText: 'Reemplazar Plan',
-          danger: false
-        }
-      );
-
-      if (shouldMerge) {
-        const existingTrainingDays = convertLocalDaysToTrainingDays(days);
-        const templateTrainingDays = convertLocalDaysToTrainingDays(templateLocalDays);
-        const mergedTrainingDays = mergeProtocolIntoExistingPlan(templateTrainingDays, existingTrainingDays, true);
-        setDays(convertTrainingDaysToLocalDays(mergedTrainingDays));
-        showToast(`⚡ Plantilla personal "${template.nombre}" fusionada con éxito`, 'success');
-        return;
-      }
+      setPendingLoad({ label: `plantilla personal "${template.nombre}"`, templateLocalDays });
+      return;
     }
 
     setDays(templateLocalDays);
@@ -538,28 +532,31 @@ export const QuickStartPlanner: React.FC = () => {
     }));
 
     if (days.some(d => d.exercises.some(e => e.nombre.trim() !== ''))) {
-      const shouldMerge = await confirm(
-        `¿Deseas fusionar la rutina "${template.title}" manteniendo el número de series configuradas en tu plan actual?`,
-        {
-          title: 'Cargar rutina preestablecida',
-          confirmText: '⚡ Fusionar Inteligente',
-          cancelText: 'Reemplazar Plan',
-          danger: false
-        }
-      );
-
-      if (shouldMerge) {
-        const existingTrainingDays = convertLocalDaysToTrainingDays(days);
-        const templateTrainingDays = convertLocalDaysToTrainingDays(templateLocalDays);
-        const mergedTrainingDays = mergeProtocolIntoExistingPlan(templateTrainingDays, existingTrainingDays, true);
-        setDays(convertTrainingDaysToLocalDays(mergedTrainingDays));
-        showToast(`⚡ Rutina "${template.title}" fusionada con éxito`, 'success');
-        return;
-      }
+      setPendingLoad({ label: `rutina "${template.title}"`, templateLocalDays });
+      return;
     }
 
     setDays(templateLocalDays);
     showToast(`✅ Rutina "${template.title}" cargada con éxito`, 'success');
+  };
+
+  /** El usuario eligió fusionar: aplica el merge inteligente y cierra el diálogo. */
+  const handleConfirmMergePending = () => {
+    if (!pendingLoad) return;
+    const existingTrainingDays = convertLocalDaysToTrainingDays(days);
+    const templateTrainingDays = convertLocalDaysToTrainingDays(pendingLoad.templateLocalDays);
+    const mergedTrainingDays = mergeProtocolIntoExistingPlan(templateTrainingDays, existingTrainingDays, true);
+    setDays(convertTrainingDaysToLocalDays(mergedTrainingDays));
+    showToast(`⚡ ${pendingLoad.label} fusionada con tu plan actual`, 'success');
+    setPendingLoad(null);
+  };
+
+  /** El usuario eligió reemplazar explícitamente: única vía que reemplaza el plan. */
+  const handleConfirmReplacePending = () => {
+    if (!pendingLoad) return;
+    setDays(pendingLoad.templateLocalDays);
+    showToast(`✅ ${pendingLoad.label} cargada (plan anterior reemplazado)`, 'success');
+    setPendingLoad(null);
   };
 
   const handleCalculate1RM = (e: React.FormEvent) => {
@@ -2393,6 +2390,97 @@ export const QuickStartPlanner: React.FC = () => {
                 }}
               >
                 Guardar Plantilla
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: decidir qué hacer con un plan en progreso al cargar plantilla/rutina.
+          A diferencia del confirm() de 2 vías que reemplazaba antes, acá cerrar el
+          diálogo (backdrop, Escape, botón "Cancelar") NO tiene ningún efecto sobre
+          `days` -- solo "Fusionar" y "Reemplazar" lo modifican, cada uno de forma explícita. */}
+      {pendingLoad && (
+        <div
+          role="presentation"
+          onClick={(e) => { if (e.target === e.currentTarget) setPendingLoad(null); }}
+          style={{
+            position: 'fixed',
+            top: 0, left: 0, right: 0, bottom: 0,
+            background: 'rgba(0,0,0,0.8)',
+            backdropFilter: 'blur(8px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            padding: '20px'
+          }}
+        >
+          <div
+            ref={pendingLoadDialogRef}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="pending-load-title"
+            aria-describedby="pending-load-message"
+            tabIndex={-1}
+            style={{
+              background: '#0f172a',
+              border: '1px solid var(--theme-border)',
+              borderRadius: '16px',
+              padding: '24px',
+              maxWidth: '440px',
+              width: '100%',
+              color: 'white'
+            }}
+          >
+            <h3 id="pending-load-title" style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '16px', margin: '0 0 12px 0', color: '#38bdf8' }}>
+              Ya tenés un plan en progreso
+            </h3>
+            <p id="pending-load-message" style={{ fontSize: '13px', color: 'rgba(255,255,255,0.75)', lineHeight: 1.5, margin: '0 0 20px 0' }}>
+              Vas a cargar la {pendingLoad.label}. Tu plan actual tiene días y ejercicios cargados — elegí qué hacer, o cerrá este diálogo para no cambiar nada.
+            </p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <button
+                type="button"
+                onClick={handleConfirmMergePending}
+                style={{
+                  background: 'var(--theme-btn-gradient)',
+                  border: 'none', color: 'white', borderRadius: '10px',
+                  padding: '12px 16px', fontSize: '13px', fontWeight: 700, cursor: 'pointer',
+                  textAlign: 'left'
+                }}
+              >
+                ⚡ Fusionar Inteligente
+                <div style={{ fontSize: '11px', fontWeight: 400, opacity: 0.85, marginTop: '2px' }}>
+                  Conserva la configuración de series de tu plan actual por grupo muscular.
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmReplacePending}
+                style={{
+                  background: 'rgba(239, 68, 68, 0.12)',
+                  border: '1px solid rgba(239, 68, 68, 0.35)', color: '#fca5a5', borderRadius: '10px',
+                  padding: '12px 16px', fontSize: '13px', fontWeight: 700, cursor: 'pointer',
+                  textAlign: 'left'
+                }}
+              >
+                🔄 Reemplazar Plan
+                <div style={{ fontSize: '11px', fontWeight: 400, opacity: 0.85, marginTop: '2px' }}>
+                  Descarta tu plan actual por completo y empieza desde la plantilla.
+                </div>
+              </button>
+              <button
+                type="button"
+                onClick={() => setPendingLoad(null)}
+                style={{
+                  background: 'transparent',
+                  border: '1px solid var(--theme-border)', color: 'rgba(255,255,255,0.6)', borderRadius: '10px',
+                  padding: '10px 16px', fontSize: '12px', fontWeight: 600, cursor: 'pointer',
+                  marginTop: '4px'
+                }}
+              >
+                Cancelar (no cambiar nada)
               </button>
             </div>
           </div>
