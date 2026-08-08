@@ -2,11 +2,21 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
+import { visualizer } from 'rollup-plugin-visualizer';
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
     react(),
+    // Solo se activa con `ANALYZE=true npm run build` -- no corre en builds normales
+    // ni en CI, y no afecta el bundle final (solo genera un reporte HTML aparte).
+    process.env.ANALYZE && visualizer({
+      filename: 'dist/stats.html',
+      open: false,
+      gzipSize: true,
+      brotliSize: true,
+      template: 'treemap'
+    }),
     VitePWA({
       registerType: 'autoUpdate',
       // NO usar includeAssets — los iconos y fondo ya están cubiertos por globPatterns.
@@ -48,7 +58,7 @@ export default defineConfig({
         // cacheando bajo demanda vía runtimeCaching más abajo, así que la
         // experiencia offline no cambia — solo dejan de descargarse para TODOS
         // los usuarios apenas instalan la PWA.
-        globIgnores: ['**/jspdf*.js', '**/html2canvas*.js', '**/AdminDashboard*.js'],
+        globIgnores: ['**/jspdf*.js', '**/html2canvas*.js', '**/AdminDashboard*.js', 'stats.html'],
         skipWaiting: true,
         clientsClaim: true,
         cleanupOutdatedCaches: true,
@@ -136,5 +146,28 @@ export default defineConfig({
   test: {
     exclude: ['**/e2e/**', 'node_modules', 'dist', '.vercel'],
     setupFiles: ['./src/test-setup.ts']
+  },
+  build: {
+    rollupOptions: {
+      output: {
+        // Basado en el perfilado real con rollup-plugin-visualizer (no en una suposición):
+        // Chart.js NO aparecía en el chunk principal (ya se carga dinámicamente en
+        // AthleteDashboard/Historial). Los contribuyentes reales eran Supabase completo
+        // (~770KB sin comprimir, entre sus 7 subpaquetes) y Sentry (~208KB), ninguno de
+        // los dos separado en un vendor chunk propio hasta ahora.
+        manualChunks: {
+          'vendor-supabase': [
+            '@supabase/supabase-js',
+            '@supabase/auth-js',
+            '@supabase/postgrest-js',
+            '@supabase/storage-js',
+            '@supabase/realtime-js',
+            '@supabase/functions-js'
+          ],
+          'vendor-sentry': ['@sentry/react', '@sentry/browser'],
+          'vendor-react': ['react', 'react-dom', 'react-router-dom', 'react-router']
+        }
+      }
+    }
   }
 });
