@@ -5001,3 +5001,19 @@ option {
     bottom: calc(68px + env(safe-area-inset-bottom, 0px) + 12px) !important;
   }
 }
+
+/* ===== PREVENCIÓN DE AUTO-ZOOM Y DESPLAZAMIENTO EN DISPOSITIVOS MÓVILES ===== */
+@media screen and (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important; /* Previene que iOS Safari y Android Chrome hagan zoom automático al enfocar */
+  }
+  html, body {
+    max-width: 100vw;
+    overflow-x: hidden;
+  }
+  .modal-overlay, .active-session-modal-overlay {
+    max-width: 100vw;
+    box-sizing: border-box;
+  }
+}
+
