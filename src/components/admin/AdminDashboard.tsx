@@ -265,6 +265,19 @@ export const AdminDashboard: React.FC = () => {
 
       if (error) throw error;
 
+      // Broadcast update to user in real time
+      const channel = supabase.channel('plan-updates:' + editingUser.id);
+      channel.subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          channel.send({
+            type: 'broadcast',
+            event: 'plan-updated',
+            payload: { message: 'El administrador ha actualizado tu perfil.' }
+          });
+          setTimeout(() => { supabase.removeChannel(channel); }, 1000);
+        }
+      });
+
       showToast(`✏️ Usuario "${editNombre}" actualizado con éxito.`, 'success');
       setEditOpen(false);
       fetchUsers();
@@ -292,6 +305,19 @@ export const AdminDashboard: React.FC = () => {
 
       if (error) throw error;
       showToast('✅ Vigencia de usuario actualizada.', 'success');
+
+      // Broadcast update to user in real time
+      const channel = supabase.channel('plan-updates:' + userId);
+      channel.subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          channel.send({
+            type: 'broadcast',
+            event: 'plan-updated',
+            payload: { message: 'Se ha actualizado la vigencia de tu plan.' }
+          });
+          setTimeout(() => { supabase.removeChannel(channel); }, 1000);
+        }
+      });
     } catch (err: any) {
       console.error('Error al actualizar vigencia:', err);
       showToast('Error: ' + err.message, 'error');

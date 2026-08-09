@@ -511,6 +511,7 @@ export const AthleteDashboard: React.FC = () => {
       .on('broadcast', { event: 'plan-updated' }, () => {
         showToast('✨ ¡Tu entrenador ha modificado tu rutina en tiempo real! ⚡', 'info');
         fetchPlan();
+        refreshProfile();
       })
       .subscribe();
 

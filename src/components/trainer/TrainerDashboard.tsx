@@ -193,6 +193,19 @@ export const TrainerDashboard: React.FC = () => {
       const { error } = await supabase.from('profiles').update({ vigencia_dias: newVigencia }).eq('id', atletaId);
       if (error) throw error;
       showToast('✅ Vigencia de atleta actualizada.', 'success');
+
+      // Notificar al atleta en tiempo real para que refresque su perfil y vigencia sin recargar
+      const channel = supabase.channel('plan-updates:' + atletaId);
+      channel.subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          channel.send({
+            type: 'broadcast',
+            event: 'plan-updated',
+            payload: { message: 'Se ha actualizado la vigencia de tu plan.' }
+          });
+          setTimeout(() => { supabase.removeChannel(channel); }, 1000);
+        }
+      });
     } catch (err: any) {
       showToast('Error: ' + err.message, 'error');
     } finally {
