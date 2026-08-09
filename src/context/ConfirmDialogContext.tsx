@@ -184,18 +184,24 @@ const ConfirmDialogView: React.FC<ConfirmDialogViewProps> = ({
             type="button"
             onClick={onConfirm}
             style={{
-              background: accentColor,
+              background: danger 
+                ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)' 
+                : 'var(--theme-btn-gradient, linear-gradient(135deg, #00d4ff 0%, #0070a0 100%))',
               border: 'none',
-              borderRadius: '8px',
-              color: danger ? 'white' : '#000',
-              padding: '10px 18px',
+              borderRadius: '10px',
+              color: '#ffffff',
+              padding: '10px 20px',
               fontSize: '12px',
               fontWeight: 800,
+              fontFamily: "'Orbitron', sans-serif",
+              letterSpacing: '0.5px',
               cursor: 'pointer',
-              transition: 'all 0.2s',
-              boxShadow: danger ? '0 4px 12px rgba(239, 68, 68, 0.3)' : '0 4px 12px rgba(0, 212, 255, 0.2)'
+              transition: 'all 0.25s ease',
+              boxShadow: danger 
+                ? '0 4px 15px rgba(239, 68, 68, 0.4)' 
+                : '0 4px 15px var(--theme-btn-glow, rgba(0, 212, 255, 0.35))'
             }}
-            onMouseEnter={(e) => e.currentTarget.style.filter = 'brightness(1.1)'}
+            onMouseEnter={(e) => e.currentTarget.style.filter = 'brightness(1.15)'}
             onMouseLeave={(e) => e.currentTarget.style.filter = 'none'}
           >
             {confirmText}
