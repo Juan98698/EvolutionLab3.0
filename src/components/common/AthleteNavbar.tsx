@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useSupabase } from '../../context/SupabaseContext';
+import { useConfirm } from '../../context/ConfirmDialogContext';
 import { supabase } from '../../lib/supabaseClient';
 import { readSessionsFromCache, SESSIONS_UPDATED_EVENT } from '../../lib/sessions';
 import { useModalA11y } from '../../hooks/useModalA11y';
@@ -11,6 +12,7 @@ export const AthleteNavbar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { profile, signOut, isSoloClient } = useSupabase();
+  const confirm = useConfirm();
 
   const currentPath = location.pathname;
 
@@ -183,7 +185,7 @@ export const AthleteNavbar: React.FC = () => {
   }, [profile?.entrenador_id]);
 
   const handleLogout = async () => {
-    if (window.confirm('¿Seguro que deseas cerrar la sesión?')) {
+    if (await confirm('¿Seguro que deseas cerrar la sesión?', { title: 'Cerrar sesión', confirmText: 'Cerrar sesión' })) {
       await signOut();
       navigate('/login');
     }
