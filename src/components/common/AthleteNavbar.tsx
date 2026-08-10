@@ -85,10 +85,16 @@ export const AthleteNavbar: React.FC = () => {
   const handleMercadoPagoCheckout = async (plan: 'premium' | 'coach', redirectPath: string) => {
     setPaymentLoading(true);
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('Debes iniciar sesión para realizar la compra.');
+      }
+
       const response = await fetch('/api/create-mercadopago-preference', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
           userId: profile?.id,

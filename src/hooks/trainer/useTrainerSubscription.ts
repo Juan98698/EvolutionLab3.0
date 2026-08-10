@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
+import { supabase } from '../../lib/supabaseClient';
 import { Profile } from '../../types/database.types';
 
 export const useTrainerSubscription = (
@@ -35,10 +36,16 @@ export const useTrainerSubscription = (
   const handleMercadoPagoCheckout = async (plan: string, redirectPath: string) => {
     setPaymentLoading(true);
     try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('Debes iniciar sesión para realizar la compra.');
+      }
+
       const response = await fetch('/api/create-mercadopago-preference', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
         },
         body: JSON.stringify({
           userId: profile?.id,

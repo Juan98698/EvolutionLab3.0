@@ -1,13 +1,18 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || '';
+const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || '';
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Enable CORS
+  // Enable CORS securely
+  const origin = req.headers.origin || '*';
   res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Origin', origin);
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
   res.setHeader(
     'Access-Control-Allow-Headers',
-    'X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
+    'Authorization, X-CSRF-Token, X-Requested-With, Accept, Accept-Version, Content-Length, Content-MD5, Content-Type, Date, X-Api-Version'
   );
 
   if (req.method === 'OPTIONS') {
@@ -20,10 +25,35 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    const { userId, email, plan, redirectPath } = req.body;
+    // 1. Verificación obligatoria de autenticación del usuario vía Token JWT en la cabecera Authorization
+    const authHeader = req.headers.authorization || req.headers.Authorization;
+    if (!authHeader || typeof authHeader !== 'string' || !authHeader.startsWith('Bearer ')) {
+      return res.status(401).json({ error: 'Acceso no autorizado: Se requiere cabecera Authorization con token de sesión.' });
+    }
 
-    if (!userId || !email || !plan || !redirectPath) {
-      return res.status(400).json({ error: 'Missing required parameters: userId, email, plan, or redirectPath' });
+    const token = authHeader.substring(7);
+    if (!supabaseUrl || !supabaseAnonKey) {
+      console.error('⚠️ Variables de entorno de Supabase no configuradas en el servidor.');
+      return res.status(500).json({ error: 'Error de configuración en el servidor.' });
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+      auth: { persistSession: false }
+    });
+
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError || !user) {
+      console.error('⚠️ Fallo en la autenticación del token de la sesión:', authError?.message);
+      return res.status(401).json({ error: 'Sesión no válida o expirada. Por favor inicie sesión nuevamente.' });
+    }
+
+    // 2. SEGURIDAD: userId se asigna EXCLUSIVAMENTE desde el user.id verificado del token JWT.
+    const verifiedUserId = user.id;
+    const { plan, redirectPath } = req.body;
+    const userEmail = user.email || req.body.email;
+
+    if (!plan || !redirectPath) {
+      return res.status(400).json({ error: 'Missing required parameters: plan or redirectPath' });
     }
 
     const accessToken = process.env.MERCADOPAGO_ACCESS_TOKEN;
@@ -74,27 +104,22 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       process.env.VERCEL_ENV === 'development';
 
     // Determine client origin robustly
-    let origin = req.headers.origin;
-    if (!origin || origin === 'null') {
-      origin = host ? `${protocol}://${host}` : '';
+    let clientOrigin = req.headers.origin;
+    if (!clientOrigin || clientOrigin === 'null') {
+      clientOrigin = host ? `${protocol}://${host}` : '';
     }
-    if (!origin) {
-      origin = isLocal ? 'http://localhost:3000' : 'https://evolution-lab.vercel.app';
+    if (!clientOrigin) {
+      clientOrigin = isLocal ? 'http://localhost:3000' : 'https://evolution-lab.vercel.app';
     }
 
-    // Standardize URL to avoid double slashes or missing slashes
-    const cleanOrigin = origin.endsWith('/') ? origin.slice(0, -1) : origin;
+    const cleanOrigin = clientOrigin.endsWith('/') ? clientOrigin.slice(0, -1) : clientOrigin;
     const cleanPath = redirectPath.startsWith('/') ? redirectPath : `/${redirectPath}`;
     let baseRedirectUrl = `${cleanOrigin}${cleanPath}`;
 
-    // MercadoPago strictly requires HTTPS for all back_urls.
-    // If it starts with http:// (e.g. during local testing on localhost), we force it to https://
-    // so that MercadoPago accepts preference creation.
     if (baseRedirectUrl.startsWith('http://')) {
       baseRedirectUrl = baseRedirectUrl.replace('http://', 'https://');
     }
 
-    // Determine webhook notification url
     let notificationUrl = '';
     if (process.env.MERCADOPAGO_WEBHOOK_URL) {
       notificationUrl = process.env.MERCADOPAGO_WEBHOOK_URL;
@@ -102,13 +127,10 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       notificationUrl = `https://${host}/api/mercadopago-webhook`;
     }
 
-    // In sandbox mode, we override the payer email with the official test buyer email configured
-    // in environment variables to allow payments to be processed successfully in Sandbox.
-    // In production, we use the user's real email.
     const testBuyerEmail = process.env.MERCADOPAGO_TEST_BUYER_EMAIL || 'TESTUSER3169499133033229626@testuser.com';
     const payerEmail = isSandbox
       ? testBuyerEmail
-      : email;
+      : userEmail;
 
     // MercadoPago Preference body
     const preferenceBody: any = {
@@ -132,20 +154,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       },
       auto_return: 'approved',
       metadata: {
-        user_id: userId,
+        user_id: verifiedUserId, // FORZADO a la identidad real verificada por JWT
         plan: plan,
-        email: email,
+        email: userEmail,
       },
     };
 
-    console.log('Sending Preference Body to MercadoPago:', JSON.stringify(preferenceBody, null, 2));
-
-    // Attach notification url only if it's set (must be a public HTTPS url)
     if (notificationUrl) {
       preferenceBody.notification_url = notificationUrl;
     }
 
-    console.log(`Creating MercadoPago preference for user ${userId}, plan: ${plan}, notify: ${notificationUrl}`);
+    console.log(`Creating MercadoPago preference for authenticated user ${verifiedUserId}, plan: ${plan}, notify: ${notificationUrl}`);
 
     const mpResponse = await fetch('https://api.mercadopago.com/checkout/preferences', {
       method: 'POST',
@@ -162,7 +181,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const preference = await mpResponse.json();
-
     const redirectUrl = (isSandbox && preference.sandbox_init_point) ? preference.sandbox_init_point : preference.init_point;
 
     return res.status(200).json({ id: preference.id, url: redirectUrl });
