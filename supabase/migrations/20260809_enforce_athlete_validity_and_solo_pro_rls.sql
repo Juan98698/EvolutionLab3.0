@@ -1,5 +1,5 @@
 -- Migration: Enforce Athlete Validity and Solo Lifter Pro Subscription in Server RLS
--- Date: 2026-08-09
+-- Date: 2026-08-09 (Updated to include dias_plan, ejercicios_plan, and Solo Lifter Pro enforcement)
 
 -- 1. Helper function: Validar si el usuario es un entrenador registrado
 CREATE OR REPLACE FUNCTION public.es_entrenador(user_id UUID)
@@ -25,10 +25,6 @@ RETURNS BOOLEAN AS $$
 $$ LANGUAGE sql SECURITY DEFINER STABLE;
 
 -- 3. Función para validar si un atleta se encuentra dentro de su periodo de vigencia activo.
--- Retorna true si:
--- - vigencia_dias >= 9999 (plan vitalicio / ilimitado)
--- - fecha_inicio es NULL (sin fecha asignada)
--- - la fecha actual (CURRENT_DATE) no ha superado fecha_inicio + vigencia_dias
 CREATE OR REPLACE FUNCTION public.es_atleta_vigente(user_id UUID)
 RETURNS BOOLEAN AS $$
   SELECT EXISTS (
@@ -65,17 +61,33 @@ BEGIN
   LOOP
     EXECUTE format('DROP POLICY IF EXISTS %I ON public.sesiones_historial', pol.policyname);
   END LOOP;
+
+  FOR pol IN
+    SELECT policyname FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'dias_plan'
+  LOOP
+    EXECUTE format('DROP POLICY IF EXISTS %I ON public.dias_plan', pol.policyname);
+  END LOOP;
+
+  FOR pol IN
+    SELECT policyname FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'ejercicios_plan'
+  LOOP
+    EXECUTE format('DROP POLICY IF EXISTS %I ON public.ejercicios_plan', pol.policyname);
+  END LOOP;
 END $$;
 
--- 6. Habilitar RLS en sesiones_historial
+-- 6. Habilitar RLS en tablas clave
 ALTER TABLE IF EXISTS public.sesiones_historial ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.dias_plan ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.ejercicios_plan ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.planes ENABLE ROW LEVEL SECURITY;
 
--- Lectura (SELECT): Permitida al cliente propietario o a su entrenador (historial siempre legible)
+-- ── 7. POLÍTICAS RLS EN sesiones_historial ─────────────────────────────────
 CREATE POLICY "Clientes y entrenadores pueden ver sesiones"
   ON public.sesiones_historial FOR SELECT
   USING (auth.uid() = cliente_id OR public.es_entrenador(auth.uid()));
 
--- Inserción (INSERT): El atleta debe estar vigente o ser registrado por su entrenador
 CREATE POLICY "Atletas vigentes pueden registrar sesiones"
   ON public.sesiones_historial FOR INSERT
   WITH CHECK (
@@ -83,7 +95,6 @@ CREATE POLICY "Atletas vigentes pueden registrar sesiones"
     OR public.es_entrenador(auth.uid())
   );
 
--- Actualización (UPDATE): El atleta debe estar vigente o ser actualizado por su entrenador
 CREATE POLICY "Atletas vigentes pueden actualizar sesiones"
   ON public.sesiones_historial FOR UPDATE
   USING (
@@ -91,7 +102,6 @@ CREATE POLICY "Atletas vigentes pueden actualizar sesiones"
     OR public.es_entrenador(auth.uid())
   );
 
--- Eliminación (DELETE): El atleta debe estar vigente o ser eliminado por su entrenador
 CREATE POLICY "Atletas vigentes pueden eliminar sesiones"
   ON public.sesiones_historial FOR DELETE
   USING (
@@ -99,13 +109,64 @@ CREATE POLICY "Atletas vigentes pueden eliminar sesiones"
     OR public.es_entrenador(auth.uid())
   );
 
--- 7. Reforzar actualización en la tabla planes
+-- ── 8. POLÍTICAS RLS EN dias_plan ─────────────────────────────────────────
+CREATE POLICY "Ver dias de plan"
+  ON public.dias_plan FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.planes
+      WHERE planes.id = dias_plan.plan_id
+        AND (planes.cliente_id = auth.uid() OR planes.creador_id = auth.uid() OR public.es_entrenador(auth.uid()))
+    )
+  );
+
+CREATE POLICY "Atletas vigentes y entrenadores pro gestionan dias de plan"
+  ON public.dias_plan FOR ALL
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.planes
+      WHERE planes.id = dias_plan.plan_id
+        AND (
+          (planes.cliente_id = auth.uid() AND public.es_atleta_vigente(auth.uid()))
+          OR (planes.creador_id = auth.uid() AND public.es_entrenador_pro(auth.uid()))
+        )
+    )
+  );
+
+-- ── 9. POLÍTICAS RLS EN ejercicios_plan ───────────────────────────────────
+CREATE POLICY "Ver ejercicios de plan"
+  ON public.ejercicios_plan FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.dias_plan
+      JOIN public.planes ON planes.id = dias_plan.plan_id
+      WHERE dias_plan.id = ejercicios_plan.dia_id
+        AND (planes.cliente_id = auth.uid() OR planes.creador_id = auth.uid() OR public.es_entrenador(auth.uid()))
+    )
+  );
+
+CREATE POLICY "Atletas vigentes y entrenadores pro gestionan ejercicios de plan"
+  ON public.ejercicios_plan FOR ALL
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.dias_plan
+      JOIN public.planes ON planes.id = dias_plan.plan_id
+      WHERE dias_plan.id = ejercicios_plan.dia_id
+        AND (
+          (planes.cliente_id = auth.uid() AND public.es_atleta_vigente(auth.uid()))
+          OR (planes.creador_id = auth.uid() AND public.es_entrenador_pro(auth.uid()))
+        )
+    )
+  );
+
+-- ── 10. POLÍTICAS RLS EN planes ───────────────────────────────────────────
 DROP POLICY IF EXISTS "Atletas pueden actualizar sus propios planes" ON public.planes;
 DROP POLICY IF EXISTS "Atletas vigentes pueden actualizar sus propios planes" ON public.planes;
+DROP POLICY IF EXISTS "Atletas vigentes y Solo Lifter Pro pueden actualizar sus propios planes" ON public.planes;
 
-CREATE POLICY "Atletas vigentes pueden actualizar sus propios planes"
+CREATE POLICY "Atletas vigentes y Solo Lifter Pro pueden actualizar sus propios planes"
   ON public.planes FOR UPDATE
   USING (
-    (cliente_id = auth.uid() AND public.es_atleta_vigente(auth.uid()))
+    (cliente_id = auth.uid() AND public.es_atleta_vigente(auth.uid()) AND public.es_solo_lifter_pro(auth.uid()))
     OR (creador_id = auth.uid() AND public.es_entrenador_pro(auth.uid()))
   );
