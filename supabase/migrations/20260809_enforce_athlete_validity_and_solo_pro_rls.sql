@@ -1,7 +1,30 @@
 -- Migration: Enforce Athlete Validity and Solo Lifter Pro Subscription in Server RLS
 -- Date: 2026-08-09
 
--- 1. Función para validar si un atleta se encuentra dentro de su periodo de vigencia activo.
+-- 1. Helper function: Validar si el usuario es un entrenador registrado
+CREATE OR REPLACE FUNCTION public.es_entrenador(user_id UUID)
+RETURNS BOOLEAN AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE id = user_id AND rol = 'entrenador'
+  );
+$$ LANGUAGE sql SECURITY DEFINER STABLE;
+
+-- 2. Helper function: Validar si el usuario es un entrenador con suscripción activa pagada
+CREATE OR REPLACE FUNCTION public.es_entrenador_pro(user_id UUID)
+RETURNS BOOLEAN AS $$
+  SELECT EXISTS (
+    SELECT 1 FROM public.profiles
+    WHERE id = user_id
+      AND rol = 'entrenador'
+      AND suscripcion_plan IS NOT NULL
+      AND LOWER(suscripcion_plan) NOT IN ('free', 'gratuito')
+      AND COALESCE(suscripcion_estado, 'activo') NOT IN ('expirado', 'cancelado')
+      AND (suscripcion_expira_at IS NULL OR suscripcion_expira_at > NOW())
+  );
+$$ LANGUAGE sql SECURITY DEFINER STABLE;
+
+-- 3. Función para validar si un atleta se encuentra dentro de su periodo de vigencia activo.
 -- Retorna true si:
 -- - vigencia_dias >= 9999 (plan vitalicio / ilimitado)
 -- - fecha_inicio es NULL (sin fecha asignada)
@@ -12,14 +35,14 @@ RETURNS BOOLEAN AS $$
     SELECT 1 FROM public.profiles
     WHERE id = user_id
       AND (
-        vigencia_dias >= 9999
+        COALESCE(vigencia_dias, 0) >= 9999
         OR fecha_inicio IS NULL
-        OR (fecha_inicio + (vigencia_dias || ' days')::INTERVAL) >= CURRENT_DATE
+        OR (fecha_inicio::DATE + (COALESCE(vigencia_dias, 30) || ' days')::INTERVAL) >= CURRENT_DATE
       )
   );
 $$ LANGUAGE sql SECURITY DEFINER STABLE;
 
--- 2. Función para validar si un atleta independiente (Solo Lifter) posee el plan pago "Solo Lifter Pro" (premium) activo.
+-- 4. Función para validar si un atleta independiente (Solo Lifter) posee el plan pago "Solo Lifter Pro" (premium) activo.
 CREATE OR REPLACE FUNCTION public.es_solo_lifter_pro(user_id UUID)
 RETURNS BOOLEAN AS $$
   SELECT EXISTS (
@@ -31,7 +54,7 @@ RETURNS BOOLEAN AS $$
   );
 $$ LANGUAGE sql SECURITY DEFINER STABLE;
 
--- 3. Limpieza dinámica de políticas preexistentes para asegurar idempotencia
+-- 5. Limpieza dinámica de políticas preexistentes para asegurar idempotencia
 DO $$
 DECLARE
   pol RECORD;
@@ -44,7 +67,7 @@ BEGIN
   END LOOP;
 END $$;
 
--- 4. Habilitar RLS en sesiones_historial
+-- 6. Habilitar RLS en sesiones_historial
 ALTER TABLE IF EXISTS public.sesiones_historial ENABLE ROW LEVEL SECURITY;
 
 -- Lectura (SELECT): Permitida al cliente propietario o a su entrenador (historial siempre legible)
@@ -76,8 +99,9 @@ CREATE POLICY "Atletas vigentes pueden eliminar sesiones"
     OR public.es_entrenador(auth.uid())
   );
 
--- 5. Reforzar actualización en la tabla planes
+-- 7. Reforzar actualización en la tabla planes
 DROP POLICY IF EXISTS "Atletas pueden actualizar sus propios planes" ON public.planes;
+DROP POLICY IF EXISTS "Atletas vigentes pueden actualizar sus propios planes" ON public.planes;
 
 CREATE POLICY "Atletas vigentes pueden actualizar sus propios planes"
   ON public.planes FOR UPDATE

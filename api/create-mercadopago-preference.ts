@@ -1,9 +1,6 @@
 import { VercelRequest, VercelResponse } from '@vercel/node';
 import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || '';
-const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || '';
-
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   // Enable CORS securely
   const origin = req.headers.origin || '*';
@@ -32,6 +29,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
 
     const token = authHeader.substring(7);
+    const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || '';
+    const supabaseAnonKey = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || '';
+
     if (!supabaseUrl || !supabaseAnonKey) {
       console.error('⚠️ Variables de entorno de Supabase no configuradas en el servidor.');
       return res.status(500).json({ error: 'Error de configuración en el servidor.' });
