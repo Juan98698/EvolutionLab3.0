@@ -1,5 +1,5 @@
 -- Migration: Enforce Athlete Validity and Solo Lifter Pro Subscription in Server RLS
--- Date: 2026-08-09 (Updated to include dias_plan, ejercicios_plan, and Solo Lifter Pro enforcement)
+-- Date: 2026-08-09 (Updated)
 
 -- 1. Helper function: Validar si el usuario es un entrenador registrado
 CREATE OR REPLACE FUNCTION public.es_entrenador(user_id UUID)
@@ -75,6 +75,13 @@ BEGIN
   LOOP
     EXECUTE format('DROP POLICY IF EXISTS %I ON public.ejercicios_plan', pol.policyname);
   END LOOP;
+
+  FOR pol IN
+    SELECT policyname FROM pg_policies
+    WHERE schemaname = 'public' AND tablename = 'planes'
+  LOOP
+    EXECUTE format('DROP POLICY IF EXISTS %I ON public.planes', pol.policyname);
+  END LOOP;
 END $$;
 
 -- 6. Habilitar RLS en tablas clave
@@ -109,7 +116,41 @@ CREATE POLICY "Atletas vigentes pueden eliminar sesiones"
     OR public.es_entrenador(auth.uid())
   );
 
--- ── 8. POLÍTICAS RLS EN dias_plan ─────────────────────────────────────────
+-- ── 8. POLÍTICAS RLS EN planes ───────────────────────────────────────────
+CREATE POLICY "Admin acceso total planes"
+  ON public.planes FOR ALL
+  USING (public.es_admin(auth.uid()));
+
+CREATE POLICY "Ver planes propios o de clientes vinculados"
+  ON public.planes FOR SELECT
+  USING (
+    cliente_id = auth.uid()
+    OR creador_id = auth.uid()
+    OR public.es_entrenador(auth.uid())
+  );
+
+CREATE POLICY "Crear planes propios"
+  ON public.planes FOR INSERT
+  WITH CHECK (
+    cliente_id = auth.uid()
+    OR (creador_id = auth.uid() AND public.es_entrenador(auth.uid()))
+  );
+
+CREATE POLICY "Atletas vigentes y entrenadores actualizan planes"
+  ON public.planes FOR UPDATE
+  USING (
+    (cliente_id = auth.uid() AND public.es_atleta_vigente(auth.uid()))
+    OR (creador_id = auth.uid() AND public.es_entrenador(auth.uid()))
+  );
+
+CREATE POLICY "Eliminar planes propios"
+  ON public.planes FOR DELETE
+  USING (
+    cliente_id = auth.uid()
+    OR (creador_id = auth.uid() AND public.es_entrenador(auth.uid()))
+  );
+
+-- ── 9. POLÍTICAS RLS EN dias_plan ─────────────────────────────────────────
 CREATE POLICY "Ver dias de plan"
   ON public.dias_plan FOR SELECT
   USING (
@@ -120,7 +161,7 @@ CREATE POLICY "Ver dias de plan"
     )
   );
 
-CREATE POLICY "Atletas vigentes y entrenadores pro gestionan dias de plan"
+CREATE POLICY "Atletas vigentes y entrenadores gestionan dias de plan"
   ON public.dias_plan FOR ALL
   USING (
     EXISTS (
@@ -128,12 +169,12 @@ CREATE POLICY "Atletas vigentes y entrenadores pro gestionan dias de plan"
       WHERE planes.id = dias_plan.plan_id
         AND (
           (planes.cliente_id = auth.uid() AND public.es_atleta_vigente(auth.uid()))
-          OR (planes.creador_id = auth.uid() AND public.es_entrenador_pro(auth.uid()))
+          OR (planes.creador_id = auth.uid() AND public.es_entrenador(auth.uid()))
         )
     )
   );
 
--- ── 9. POLÍTICAS RLS EN ejercicios_plan ───────────────────────────────────
+-- ── 10. POLÍTICAS RLS EN ejercicios_plan ───────────────────────────────────
 CREATE POLICY "Ver ejercicios de plan"
   ON public.ejercicios_plan FOR SELECT
   USING (
@@ -145,7 +186,7 @@ CREATE POLICY "Ver ejercicios de plan"
     )
   );
 
-CREATE POLICY "Atletas vigentes y entrenadores pro gestionan ejercicios de plan"
+CREATE POLICY "Atletas vigentes y entrenadores gestionan ejercicios de plan"
   ON public.ejercicios_plan FOR ALL
   USING (
     EXISTS (
@@ -154,19 +195,7 @@ CREATE POLICY "Atletas vigentes y entrenadores pro gestionan ejercicios de plan"
       WHERE dias_plan.id = ejercicios_plan.dia_id
         AND (
           (planes.cliente_id = auth.uid() AND public.es_atleta_vigente(auth.uid()))
-          OR (planes.creador_id = auth.uid() AND public.es_entrenador_pro(auth.uid()))
+          OR (planes.creador_id = auth.uid() AND public.es_entrenador(auth.uid()))
         )
     )
-  );
-
--- ── 10. POLÍTICAS RLS EN planes ───────────────────────────────────────────
-DROP POLICY IF EXISTS "Atletas pueden actualizar sus propios planes" ON public.planes;
-DROP POLICY IF EXISTS "Atletas vigentes pueden actualizar sus propios planes" ON public.planes;
-DROP POLICY IF EXISTS "Atletas vigentes y Solo Lifter Pro pueden actualizar sus propios planes" ON public.planes;
-
-CREATE POLICY "Atletas vigentes y Solo Lifter Pro pueden actualizar sus propios planes"
-  ON public.planes FOR UPDATE
-  USING (
-    (cliente_id = auth.uid() AND public.es_atleta_vigente(auth.uid()) AND public.es_solo_lifter_pro(auth.uid()))
-    OR (creador_id = auth.uid() AND public.es_entrenador_pro(auth.uid()))
   );
