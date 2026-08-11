@@ -708,12 +708,16 @@ export const AthleteDashboard: React.FC = () => {
     const diasTranscurridos = (hoyLocal.getTime() - fechaInicio.getTime()) / (1000 * 60 * 60 * 24);
 
     const expired = diasTranscurridos >= vigencia;
-    const message = vigencia >= 9999
-      ? '🔒 Tu plan ha finalizado. Contacta a tu entrenador para renovar.'
-      : `🔒 Tu plan ha finalizado. Han pasado más de ${vigencia} días. Contacta a tu entrenador para renovar.`;
+    const message = isSoloClient
+      ? (vigencia >= 9999
+          ? '🔒 Tu periodo de plan ha finalizado. Renueva o actualiza tu plan en tu panel.'
+          : `🔒 Tu plan ha finalizado. Han pasado más de ${vigencia} días. Renueva tu suscripción o actualiza tu plan.`)
+      : (vigencia >= 9999
+          ? '🔒 Tu plan ha finalizado. Contacta a tu entrenador para renovar.'
+          : `🔒 Tu plan ha finalizado. Han pasado más de ${vigencia} días. Contacta a tu entrenador para renovar.`);
 
     return { expired, message };
-  }, [profile, plan]);
+  }, [profile, plan, isSoloClient]);
 
   // Verificar si el diagnóstico de periodización está pendiente
   const isEvaluationPending = useMemo(() => {
@@ -941,7 +945,9 @@ export const AthleteDashboard: React.FC = () => {
               margin: '0 0 28px 0'
             }}>
               Tu plan de entrenamiento ha llegado al fin de su vigencia (<strong>{vigencia} días</strong> desde el <strong>{inicioStr}</strong>). 
-              Para continuar visualizando tu rutina de ejercicios y registrando tus sesiones, por favor ponte en contacto con tu entrenador para renovar.
+              {isSoloClient 
+                ? ' Para continuar visualizando tu rutina de ejercicios y registrando tus sesiones, por favor renueva tu suscripción Solo Lifter Pro.'
+                : ' Para continuar visualizando tu rutina de ejercicios y registrando tus sesiones, por favor ponte en contacto con tu entrenador para renovar.'}
             </p>
 
             {/* Profile Info Summary */}
@@ -1752,12 +1758,39 @@ export const AthleteDashboard: React.FC = () => {
                 color: 'var(--theme-primary)', letterSpacing: '1.5px',
                 textTransform: 'uppercase', margin: '0 0 12px 0'
               }}>
-                Aún sin plan asignado
+                {isSoloClient ? 'Aún sin plan de entrenamiento' : 'Aún sin plan asignado'}
               </h2>
               <p className="desc-text" style={{ fontSize: '13px', color: '#94a3b8', lineHeight: 1.6, margin: '0 0 24px 0' }}>
-                Tu entrenador aún no ha publicado o activado tu plan de entrenamiento personalizado. Contacta con él para comenzar.
+                {isSoloClient
+                  ? 'Aún no has creado tu plan personalizado. Diseña tu rutina desde la pestaña Plan o haz clic en "Crear / Editar mi Plan" para comenzar a entrenar.'
+                  : 'Tu entrenador aún no ha publicado o activado tu plan de entrenamiento personalizado. Contacta con él para comenzar.'}
               </p>
-              {wsHref && (
+              {isSoloClient ? (
+                <div style={{ display: 'flex', justifyContent: 'center' }}>
+                  <button
+                    type="button"
+                    onClick={() => setShowQuickStartPlanner(true)}
+                    style={{
+                      background: 'var(--theme-btn-gradient, linear-gradient(135deg, #00d4ff 0%, #0070a0 100%))',
+                      color: 'white',
+                      border: 'none',
+                      padding: '12px 28px',
+                      borderRadius: '30px',
+                      fontSize: '12px',
+                      fontWeight: 800,
+                      fontFamily: "'Orbitron', sans-serif",
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      cursor: 'pointer',
+                      boxShadow: '0 4px 15px var(--theme-btn-glow, rgba(0, 212, 255, 0.25))',
+                      transition: 'all 0.3s ease'
+                    }}
+                  >
+                    ✏️ Crear / Editar mi Plan
+                  </button>
+                </div>
+              ) : wsHref ? (
                 <div style={{ display: 'flex', justifyContent: 'center' }}>
                   <a
                     href={wsHref}
@@ -1785,7 +1818,7 @@ export const AthleteDashboard: React.FC = () => {
                     Avisar a mi Entrenador
                   </a>
                 </div>
-              )}
+              ) : null}
             </div>
           )}
         </div>
