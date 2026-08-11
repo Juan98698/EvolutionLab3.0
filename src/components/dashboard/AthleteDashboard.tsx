@@ -1769,7 +1769,7 @@ export const AthleteDashboard: React.FC = () => {
                 <div style={{ display: 'flex', justifyContent: 'center' }}>
                   <button
                     type="button"
-                    onClick={() => setShowQuickStartPlanner(true)}
+                    onClick={() => navigate('/solo/planner')}
                     style={{
                       background: 'var(--theme-btn-gradient, linear-gradient(135deg, #00d4ff 0%, #0070a0 100%))',
                       color: 'white',
