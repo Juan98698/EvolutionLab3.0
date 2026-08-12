@@ -1079,6 +1079,10 @@ export const Login: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [infoMsg, setInfoMsg] = useState<string | null>(null);
+  const [isForgotMode, setIsForgotMode] = useState(false);
+  const [isRecoveryMode] = useState(() => typeof window !== 'undefined' && window.location.hash.includes('type=recovery'));
+  const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [saberMasOpen, setSaberMasOpen] = useState(false);
   const [activeAudience, setActiveAudience] = useState<'trainer' | 'solo' | 'guided'>('trainer');
   const [isVideoModalOpen, setIsVideoModalOpen] = useState(false);
@@ -1257,16 +1261,17 @@ export const Login: React.FC = () => {
     }
   };
 
-  // Redirigir si ya está autenticado
+  // Redirigir si ya está autenticado (excepto durante el flujo de recuperación de contraseña,
+  // que crea una sesión temporal para permitir setear la nueva clave)
   useEffect(() => {
-    if (!authLoading && isAuthenticated && !skipAutoRedirect.current) {
+    if (!authLoading && isAuthenticated && !skipAutoRedirect.current && !isRecoveryMode) {
       if (isTrainer) {
         navigate('/trainer', { replace: true });
       } else {
         navigate('/dashboard', { replace: true });
       }
     }
-  }, [isAuthenticated, isTrainer, authLoading, navigate]);
+  }, [isAuthenticated, isTrainer, authLoading, navigate, isRecoveryMode]);
 
 
 
@@ -1305,6 +1310,90 @@ export const Login: React.FC = () => {
       skipAutoRedirect.current = false;
       setErrorMsg(err instanceof Error ? err.message : 'Correo o contraseña incorrectos.');
       setLoading(false);
+    }
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg(null);
+    setInfoMsg(null);
+
+    if (!email.trim()) {
+      setErrorMsg('Ingresá tu correo electrónico para continuar.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
+        redirectTo: `${window.location.origin}/login`,
+      });
+      if (error) throw error;
+      setInfoMsg('Listo. Revisá tu correo (y la carpeta de spam) para restablecer tu contraseña.');
+    } catch (err: unknown) {
+      console.error('Error al solicitar recuperación de contraseña:', err);
+      setErrorMsg(err instanceof Error ? err.message : 'No pudimos enviar el correo de recuperación. Intentá nuevamente.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg(null);
+    setInfoMsg(null);
+
+    if (password.length < 6) {
+      setErrorMsg('La contraseña debe tener al menos 6 caracteres.');
+      return;
+    }
+    if (password !== confirmNewPassword) {
+      setErrorMsg('Las contraseñas no coinciden.');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) throw error;
+
+      setInfoMsg('Contraseña actualizada. Ingresando...');
+
+      let target = '/dashboard';
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.id) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('rol')
+          .eq('id', user.id)
+          .maybeSingle();
+        if (profile?.rol === 'entrenador') target = '/trainer';
+      }
+
+      setIsExiting(true);
+      window.setTimeout(() => navigate(target, { replace: true }), 700);
+    } catch (err: unknown) {
+      console.error('Error al actualizar contraseña:', err);
+      setErrorMsg(err instanceof Error ? err.message : 'No pudimos actualizar tu contraseña. Probá solicitando un nuevo enlace.');
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setErrorMsg(null);
+    setInfoMsg(null);
+    try {
+      skipAutoRedirect.current = true;
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: { redirectTo: `${window.location.origin}/login` },
+      });
+      if (error) throw error;
+      // Si no hay error, el navegador redirige a Google — no queda más por hacer acá.
+    } catch (err: unknown) {
+      console.error('Error al iniciar sesión con Google:', err);
+      skipAutoRedirect.current = false;
+      setErrorMsg(err instanceof Error ? err.message : 'No pudimos iniciar sesión con Google. Intentá nuevamente.');
     }
   };
 
@@ -2634,10 +2723,14 @@ export const Login: React.FC = () => {
                 <span style={{ color: 'rgba(255,255,255,0.5)' }}>EVOLUTION</span> <span className="theme-text-gradient">LAB</span>
               </div>
               <h1 style={{ fontSize: '17px', margin: '0 0 4px 0', fontFamily: "'Orbitron', sans-serif", fontWeight: 800, letterSpacing: '1px', color: 'rgba(255,255,255,0.92)' }}>
-                {isRegisterMode ? 'REGISTRARSE' : 'PORTAL ATLETA'}
+                {isRecoveryMode ? 'NUEVA CONTRASEÑA' : isForgotMode ? 'RECUPERAR ACCESO' : isRegisterMode ? 'REGISTRARSE' : 'PORTAL ATLETA'}
               </h1>
               <p style={{ margin: 0, fontSize: '12px', opacity: 0.6 }}>
-                {isRegisterMode 
+                {isRecoveryMode
+                  ? 'Elegí una nueva contraseña para tu cuenta.'
+                  : isForgotMode
+                  ? 'Te enviamos un enlace a tu correo para restablecerla.'
+                  : isRegisterMode
                   ? (trainerParam ? `Como atleta del Coach ${trainerName || 'cargando...'}` : 'Crea tu cuenta de Evolution Lab')
                   : 'Ingresa a tu plan de entrenamiento'}
               </p>
@@ -2661,7 +2754,111 @@ export const Login: React.FC = () => {
               </div>
             )}
 
-            {!isRegisterMode ? (
+            {infoMsg && (
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', background: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.25)', padding: '12px', borderRadius: '10px', color: '#6ee7b7', fontSize: '12px' }}>
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                  <path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/>
+                </svg>
+                <span>{infoMsg}</span>
+              </div>
+            )}
+
+            {isRecoveryMode ? (
+              /* FORMULARIO: NUEVA CONTRASEÑA (llegó desde el enlace de recuperación) */
+              <form onSubmit={handleUpdatePassword} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <div style={{ margin: 0, position: 'relative' }}>
+                  <div className="input-wrapper">
+                    <span className="input-icon">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
+                      </svg>
+                    </span>
+                    <input type={showPassword ? 'text' : 'password'} id="new-password" className="form-control" placeholder="••••••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="new-password" style={{ width: '100%' }} />
+                    <label htmlFor="new-password" className="floating-label">Nueva contraseña</label>
+                    <button type="button" className={`password-toggle${showPassword ? ' visible' : ''}`} onClick={() => setShowPassword(!showPassword)} aria-label="Mostrar u ocultar contraseña">
+                      <svg className="eye-on" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                      </svg>
+                      <svg className="eye-off" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/>
+                        <line x1="1" y1="1" x2="23" y2="23"/>
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                <div style={{ margin: 0, position: 'relative' }}>
+                  <div className="input-wrapper">
+                    <span className="input-icon">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
+                      </svg>
+                    </span>
+                    <input type={showPassword ? 'text' : 'password'} id="confirm-password" className="form-control" placeholder="••••••••••••" value={confirmNewPassword} onChange={(e) => setConfirmNewPassword(e.target.value)} required autoComplete="new-password" style={{ width: '100%' }} />
+                    <label htmlFor="confirm-password" className="floating-label">Confirmar contraseña</label>
+                  </div>
+                </div>
+
+                <button type="submit" className="btn-submit" disabled={loading} style={{ marginTop: '5px', width: '100%' }}>
+                  <span>{loading ? 'GUARDANDO...' : 'GUARDAR NUEVA CONTRASEÑA'}</span>
+                </button>
+              </form>
+            ) : isForgotMode ? (
+              /* FORMULARIO: RECUPERAR CONTRASEÑA */
+              <form onSubmit={handleForgotPassword} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                <div style={{ margin: 0, position: 'relative' }}>
+                  <div className="input-wrapper">
+                    <span className="input-icon">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 4l-10 8L2 4"/>
+                      </svg>
+                    </span>
+                    <input type="email" id="forgot-email" className="form-control" placeholder="ejemplo@correo.com" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="username" style={{ width: '100%' }} />
+                    <label htmlFor="forgot-email" className="floating-label">Correo Electrónico</label>
+                  </div>
+                </div>
+
+                <button type="submit" className="btn-submit" disabled={loading} style={{ marginTop: '5px', width: '100%' }}>
+                  <span>{loading ? 'ENVIANDO...' : 'ENVIAR ENLACE'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsForgotMode(false);
+                    setErrorMsg(null);
+                    setInfoMsg(null);
+                  }}
+                  style={{
+                    background: 'transparent',
+                    border: `1px solid rgba(255, 255, 255, 0.08)`,
+                    borderRadius: '10px',
+                    height: '40px',
+                    fontFamily: "'Orbitron', sans-serif",
+                    fontWeight: 700,
+                    fontSize: '11px',
+                    letterSpacing: '0.5px',
+                    color: 'rgba(255, 255, 255, 0.6)',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    marginTop: '10px',
+                    width: '100%'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.borderColor = pri + '55';
+                    e.currentTarget.style.color = '#fff';
+                    e.currentTarget.style.boxShadow = `0 0 10px ${pri}11`;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.08)';
+                    e.currentTarget.style.color = 'rgba(255, 255, 255, 0.6)';
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
+                >
+                  ← VOLVER A INICIAR SESIÓN
+                </button>
+              </form>
+            ) : !isRegisterMode ? (
               /* FORMULARIO DE INICIO DE SESIÓN */
               <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 <div style={{ margin: 0, position: 'relative' }}>
@@ -2697,8 +2894,56 @@ export const Login: React.FC = () => {
                   </div>
                 </div>
 
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsForgotMode(true);
+                    setErrorMsg(null);
+                    setInfoMsg(null);
+                  }}
+                  style={{
+                    background: 'transparent', border: 'none', padding: 0,
+                    color: 'rgba(255,255,255,0.5)', fontSize: '11.5px', textAlign: 'right',
+                    cursor: 'pointer', marginTop: '-10px', alignSelf: 'flex-end',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.color = pri; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.color = 'rgba(255,255,255,0.5)'; }}
+                >
+                  ¿Olvidaste tu contraseña?
+                </button>
+
                 <button type="submit" className="btn-submit" disabled={loading} style={{ marginTop: '5px', width: '100%' }}>
                   <span>{loading ? 'VERIFICANDO...' : 'ENTRAR'}</span>
+                </button>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '2px 0' }}>
+                  <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.08)' }} />
+                  <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)', fontFamily: "'Orbitron', sans-serif", letterSpacing: '1px' }}>O</span>
+                  <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.08)' }} />
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleGoogleLogin}
+                  disabled={loading}
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+                    width: '100%', height: '44px', borderRadius: '10px',
+                    background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.12)',
+                    color: '#fff', fontFamily: "'Orbitron', sans-serif", fontWeight: 700, fontSize: '11px',
+                    letterSpacing: '0.5px', cursor: loading ? 'not-allowed' : 'pointer', transition: 'all 0.2s',
+                    opacity: loading ? 0.6 : 1,
+                  }}
+                  onMouseEnter={(e) => { if (!loading) e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 48 48">
+                    <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                    <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.9-2.26 5.36-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                    <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                    <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                  </svg>
+                  Continuar con Google
                 </button>
 
                 <button
@@ -2839,6 +3084,36 @@ export const Login: React.FC = () => {
 
                 <button type="submit" className="btn-submit" disabled={loading} style={{ marginTop: '5px', width: '100%' }}>
                   <span>{loading ? 'REGISTRANDO...' : 'REGISTRARSE'}</span>
+                </button>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', margin: '2px 0' }}>
+                  <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.08)' }} />
+                  <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)', fontFamily: "'Orbitron', sans-serif", letterSpacing: '1px' }}>O</span>
+                  <div style={{ flex: 1, height: '1px', background: 'rgba(255,255,255,0.08)' }} />
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleGoogleLogin}
+                  disabled={loading}
+                  style={{
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px',
+                    width: '100%', height: '44px', borderRadius: '10px',
+                    background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.12)',
+                    color: '#fff', fontFamily: "'Orbitron', sans-serif", fontWeight: 700, fontSize: '11px',
+                    letterSpacing: '0.5px', cursor: loading ? 'not-allowed' : 'pointer', transition: 'all 0.2s',
+                    opacity: loading ? 0.6 : 1,
+                  }}
+                  onMouseEnter={(e) => { if (!loading) e.currentTarget.style.background = 'rgba(255,255,255,0.08)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = 'rgba(255,255,255,0.04)'; }}
+                >
+                  <svg width="16" height="16" viewBox="0 0 48 48">
+                    <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
+                    <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.9-2.26 5.36-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
+                    <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
+                    <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
+                  </svg>
+                  Continuar con Google
                 </button>
 
                 <button
