@@ -1092,7 +1092,7 @@ export const Login: React.FC = () => {
   });
   const [carouselIndex, setCarouselIndex] = useState(0);
 
-  // Estados de Registro
+  // Estados de Registro & Validación en Vivo
   const [isRegisterMode, setIsRegisterMode] = useState(false);
   const [registerName, setRegisterName] = useState('');
   const [registerRole, setRegisterRole] = useState<'cliente' | 'entrenador'>('cliente');
@@ -1100,6 +1100,18 @@ export const Login: React.FC = () => {
   const [registerInstagram, setRegisterInstagram] = useState('');
   const [trainerParam, setTrainerParam] = useState<string | null>(null);
   const [trainerName, setTrainerName] = useState<string | null>(null);
+
+  // Estados de Validación en Vivo & Confirmación de Contraseña
+  const [emailTouched, setEmailTouched] = useState(false);
+  const [passwordTouched, setPasswordTouched] = useState(false);
+  const [confirmRegisterPassword, setConfirmRegisterPassword] = useState('');
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [confirmPasswordTouched, setConfirmPasswordTouched] = useState(false);
+
+  // Computados de Validación
+  const isEmailValid = useMemo(() => isRealEmailDomain(email), [email]);
+  const isPasswordValid = useMemo(() => password.length >= 6, [password]);
+  const isConfirmPasswordValid = useMemo(() => confirmRegisterPassword.length >= 6 && confirmRegisterPassword === password, [confirmRegisterPassword, password]);
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -1408,6 +1420,14 @@ export const Login: React.FC = () => {
 
       if (!isRealEmailDomain(email)) {
         throw new Error('Por favor ingresa un correo electrónico real y válido (ej: usuario@gmail.com, usuario@hotmail.com). No se admiten correos temporales ni ficticios.');
+      }
+
+      if (password.length < 6) {
+        throw new Error('La contraseña debe tener al menos 6 caracteres.');
+      }
+
+      if (password !== confirmRegisterPassword) {
+        throw new Error('Las contraseñas no coinciden. Por favor verifica ambos campos de contraseña.');
       }
 
       if (trainerParam) {
@@ -1719,6 +1739,13 @@ export const Login: React.FC = () => {
         @keyframes pulse {
           0%, 100% { opacity: 1; transform: scale(1); }
           50% { opacity: 0.4; transform: scale(1.2); }
+        }
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+        .btn-spinner {
+          animation: spin 0.8s linear infinite;
         }
 
         @keyframes circuitDashFlow {
@@ -2861,15 +2888,57 @@ export const Login: React.FC = () => {
               /* FORMULARIO DE INICIO DE SESIÓN */
               <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
                 <div style={{ margin: 0, position: 'relative' }}>
-                  <div className="input-wrapper">
+                  <div className="input-wrapper" style={{
+                    borderColor: emailTouched && email.length > 0
+                      ? (isEmailValid ? 'rgba(16, 185, 129, 0.6)' : 'rgba(239, 68, 68, 0.6)')
+                      : undefined,
+                    boxShadow: emailTouched && email.length > 0
+                      ? (isEmailValid ? '0 0 12px rgba(16, 185, 129, 0.15)' : '0 0 12px rgba(239, 68, 68, 0.2)')
+                      : undefined,
+                    transition: 'all 0.25s ease'
+                  }}>
                     <span className="input-icon">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                         <rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 4l-10 8L2 4"/>
                       </svg>
                     </span>
-                    <input type="email" id="email" className="form-control" placeholder="ejemplo@correo.com" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="username" style={{ width: '100%' }} />
+                    <input
+                      type="email"
+                      id="email"
+                      className="form-control"
+                      placeholder="ejemplo@correo.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      onBlur={() => setEmailTouched(true)}
+                      required
+                      autoComplete="username"
+                      style={{ width: '100%', paddingRight: emailTouched && email.length > 0 ? '38px' : undefined }}
+                    />
                     <label htmlFor="email" className="floating-label">Correo Electrónico</label>
+
+                    {/* Checkmark Verde o Alerta en Vivo */}
+                    {emailTouched && email.length > 0 && (
+                      <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', pointerEvents: 'none' }}>
+                        {isEmailValid ? (
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                        ) : (
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="12" y1="8" x2="12" y2="12" />
+                            <line x1="12" y1="16" x2="12.01" y2="16" />
+                          </svg>
+                        )}
+                      </span>
+                    )}
                   </div>
+
+                  {emailTouched && email.length > 0 && !isEmailValid && (
+                    <span style={{ fontSize: '11px', color: '#fca5a5', marginTop: '5px', display: 'flex', alignItems: 'center', gap: '4px', paddingLeft: '4px' }}>
+                      ⚠️ Formato de correo no válido (ej: usuario@gmail.com)
+                    </span>
+                  )}
                 </div>
 
                 <div style={{ margin: 0, position: 'relative' }}>
@@ -2894,7 +2963,15 @@ export const Login: React.FC = () => {
                 </div>
 
                 <button type="submit" className="btn-submit" disabled={loading} style={{ marginTop: '5px', width: '100%' }}>
-                  <span>{loading ? 'VERIFICANDO...' : 'ENTRAR'}</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                    {loading && (
+                      <svg className="btn-spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeOpacity="0.25" strokeWidth="2.5" />
+                        <path d="M12 2 a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+                      </svg>
+                    )}
+                    {loading ? 'VERIFICANDO...' : 'ENTRAR'}
+                  </span>
                 </button>
 
                 <button
@@ -2950,28 +3027,165 @@ export const Login: React.FC = () => {
                   </div>
                 </div>
 
+                {/* Email de Registro con Validación en Vivo */}
                 <div style={{ margin: 0, position: 'relative' }}>
-                  <div className="input-wrapper">
+                  <div className="input-wrapper" style={{
+                    borderColor: emailTouched && email.length > 0
+                      ? (isEmailValid ? 'rgba(16, 185, 129, 0.6)' : 'rgba(239, 68, 68, 0.6)')
+                      : undefined,
+                    boxShadow: emailTouched && email.length > 0
+                      ? (isEmailValid ? '0 0 12px rgba(16, 185, 129, 0.15)' : '0 0 12px rgba(239, 68, 68, 0.2)')
+                      : undefined,
+                    transition: 'all 0.25s ease'
+                  }}>
                     <span className="input-icon">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                         <rect x="2" y="4" width="20" height="16" rx="2"/><path d="M22 4l-10 8L2 4"/>
                       </svg>
                     </span>
-                    <input type="email" id="email" className="form-control" placeholder="ejemplo@correo.com" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="username" style={{ width: '100%' }} />
-                    <label htmlFor="email" className="floating-label">Correo Electrónico</label>
+                    <input
+                      type="email"
+                      id="register-email"
+                      className="form-control"
+                      placeholder="ejemplo@correo.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      onBlur={() => setEmailTouched(true)}
+                      required
+                      autoComplete="username"
+                      style={{ width: '100%', paddingRight: emailTouched && email.length > 0 ? '38px' : undefined }}
+                    />
+                    <label htmlFor="register-email" className="floating-label">Correo Electrónico</label>
+
+                    {emailTouched && email.length > 0 && (
+                      <span style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', pointerEvents: 'none' }}>
+                        {isEmailValid ? (
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                        ) : (
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="12" y1="8" x2="12" y2="12" />
+                            <line x1="12" y1="16" x2="12.01" y2="16" />
+                          </svg>
+                        )}
+                      </span>
+                    )}
                   </div>
+
+                  {emailTouched && email.length > 0 && !isEmailValid && (
+                    <span style={{ fontSize: '11px', color: '#fca5a5', marginTop: '5px', display: 'flex', alignItems: 'center', gap: '4px', paddingLeft: '4px' }}>
+                      ⚠️ Ingresa un correo válido (ej: usuario@gmail.com)
+                    </span>
+                  )}
                 </div>
 
+                {/* Contraseña de Registro */}
                 <div style={{ margin: 0, position: 'relative' }}>
-                  <div className="input-wrapper">
+                  <div className="input-wrapper" style={{
+                    borderColor: passwordTouched && password.length > 0
+                      ? (isPasswordValid ? 'rgba(16, 185, 129, 0.6)' : 'rgba(239, 68, 68, 0.6)')
+                      : undefined,
+                    transition: 'all 0.25s ease'
+                  }}>
                     <span className="input-icon">
                       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
                         <rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0110 0v4"/>
                       </svg>
                     </span>
-                    <input type={showPassword ? 'text' : 'password'} id="password" className="form-control" placeholder="••••••••••••" value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="new-password" style={{ width: '100%' }} />
-                    <label htmlFor="password" className="floating-label">Contraseña</label>
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      id="register-password"
+                      className="form-control"
+                      placeholder="••••••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      onBlur={() => setPasswordTouched(true)}
+                      required
+                      autoComplete="new-password"
+                      style={{ width: '100%', paddingRight: '38px' }}
+                    />
+                    <label htmlFor="register-password" className="floating-label">Contraseña (Mín. 6 caracteres)</label>
+                    <button type="button" className={`password-toggle${showPassword ? ' visible' : ''}`} onClick={() => setShowPassword(!showPassword)} aria-label="Mostrar u ocultar contraseña">
+                      <svg className="eye-on" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                      </svg>
+                      <svg className="eye-off" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/>
+                        <line x1="1" y1="1" x2="23" y2="23"/>
+                      </svg>
+                    </button>
                   </div>
+
+                  {passwordTouched && password.length > 0 && !isPasswordValid && (
+                    <span style={{ fontSize: '11px', color: '#fca5a5', marginTop: '5px', display: 'flex', alignItems: 'center', gap: '4px', paddingLeft: '4px' }}>
+                      ⚠️ La contraseña debe tener al menos 6 caracteres
+                    </span>
+                  )}
+                </div>
+
+                {/* NUEVO: Confirmar Contraseña */}
+                <div style={{ margin: 0, position: 'relative' }}>
+                  <div className="input-wrapper" style={{
+                    borderColor: confirmPasswordTouched && confirmRegisterPassword.length > 0
+                      ? (isConfirmPasswordValid ? 'rgba(16, 185, 129, 0.6)' : 'rgba(239, 68, 68, 0.6)')
+                      : undefined,
+                    boxShadow: confirmPasswordTouched && confirmRegisterPassword.length > 0
+                      ? (isConfirmPasswordValid ? '0 0 12px rgba(16, 185, 129, 0.15)' : '0 0 12px rgba(239, 68, 68, 0.2)')
+                      : undefined,
+                    transition: 'all 0.25s ease'
+                  }}>
+                    <span className="input-icon">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                      </svg>
+                    </span>
+                    <input
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      id="confirmRegisterPassword"
+                      className="form-control"
+                      placeholder="••••••••••••"
+                      value={confirmRegisterPassword}
+                      onChange={(e) => setConfirmRegisterPassword(e.target.value)}
+                      onBlur={() => setConfirmPasswordTouched(true)}
+                      required
+                      autoComplete="new-password"
+                      style={{ width: '100%', paddingRight: '38px' }}
+                    />
+                    <label htmlFor="confirmRegisterPassword" className="floating-label">Confirmar Contraseña</label>
+                    <button type="button" className={`password-toggle${showConfirmPassword ? ' visible' : ''}`} onClick={() => setShowConfirmPassword(!showConfirmPassword)} aria-label="Mostrar u ocultar confirmación de contraseña">
+                      <svg className="eye-on" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/>
+                      </svg>
+                      <svg className="eye-off" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                        <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19m-6.72-1.07a3 3 0 11-4.24-4.24"/>
+                        <line x1="1" y1="1" x2="23" y2="23"/>
+                      </svg>
+                    </button>
+
+                    {confirmPasswordTouched && confirmRegisterPassword.length > 0 && (
+                      <span style={{ position: 'absolute', right: '38px', top: '50%', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', pointerEvents: 'none' }}>
+                        {isConfirmPasswordValid ? (
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                        ) : (
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <circle cx="12" cy="12" r="10" />
+                            <line x1="12" y1="8" x2="12" y2="12" />
+                            <line x1="12" y1="16" x2="12.01" y2="16" />
+                          </svg>
+                        )}
+                      </span>
+                    )}
+                  </div>
+
+                  {confirmPasswordTouched && confirmRegisterPassword.length > 0 && (
+                    <span style={{ fontSize: '11px', color: isConfirmPasswordValid ? '#6ee7b7' : '#fca5a5', marginTop: '5px', display: 'flex', alignItems: 'center', gap: '4px', paddingLeft: '4px' }}>
+                      {isConfirmPasswordValid ? '✓ Las contraseñas coinciden' : '⚠️ Las contraseñas no coinciden'}
+                    </span>
+                  )}
                 </div>
 
                 {!trainerParam && (
@@ -3034,7 +3248,15 @@ export const Login: React.FC = () => {
                 )}
 
                 <button type="submit" className="btn-submit" disabled={loading} style={{ marginTop: '5px', width: '100%' }}>
-                  <span>{loading ? 'REGISTRANDO...' : 'REGISTRARSE'}</span>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
+                    {loading && (
+                      <svg className="btn-spinner" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                        <circle cx="12" cy="12" r="10" stroke="currentColor" strokeOpacity="0.25" strokeWidth="2.5" />
+                        <path d="M12 2 a10 10 0 0 1 10 10" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
+                      </svg>
+                    )}
+                    {loading ? 'REGISTRANDO...' : 'REGISTRARSE'}
+                  </span>
                 </button>
 
                 <button
