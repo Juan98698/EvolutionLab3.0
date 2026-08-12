@@ -1633,6 +1633,31 @@ export const Login: React.FC = () => {
           50% { opacity: 0.4; transform: scale(1.2); }
         }
 
+        @keyframes circuitDashFlow {
+          to { stroke-dashoffset: -120; }
+        }
+        @keyframes circuitPadPulse {
+          0%, 100% { opacity: 0.5; }
+          50% { opacity: 1; }
+        }
+        @keyframes circuitGroupPulse {
+          0%, 100% { opacity: 0.5; }
+          50% { opacity: 0.85; }
+        }
+        @keyframes particleFloat {
+          0%, 100% { transform: translateY(0) scale(1); opacity: 0.35; }
+          50% { transform: translateY(-18px) scale(1.35); opacity: 0.9; }
+        }
+        .circuit-trace {
+          animation: circuitDashFlow 7s linear infinite;
+        }
+        .circuit-pad {
+          animation: circuitPadPulse 2.6s ease-in-out infinite;
+        }
+        .circuit-group {
+          animation: circuitGroupPulse 9s ease-in-out infinite;
+        }
+
         .login-card {
           background: ${themeStyles[theme].cardBg} !important;
           backdrop-filter: blur(20px) !important;
@@ -2153,6 +2178,64 @@ export const Login: React.FC = () => {
         borderRadius: '50%', filter: 'blur(120px)', pointerEvents: 'none', zIndex: 0,
         animation: 'floatGlow2 15s infinite alternate ease-in-out', transition: 'background 0.8s ease'
       }} />
+
+      {/* ═══ Animated circuit traces (science + tech ambient layer) ═══ */}
+      <svg
+        className="circuit-group"
+        width="380" height="380" viewBox="0 0 380 380"
+        style={{ position: 'absolute', top: 0, left: 0, pointerEvents: 'none', zIndex: 0 }}
+        aria-hidden="true"
+      >
+        <g stroke={pri} strokeWidth="1.3" fill="none" strokeLinecap="round" opacity={0.55}>
+          <path className="circuit-trace" strokeDasharray="7 6" d="M-10,150 L100,150 L160,90 L260,90 L310,140 L400,140" />
+          <path className="circuit-trace" strokeDasharray="7 6" style={{ animationDelay: '-3.4s' }} d="M-10,210 L70,210 L130,270 L230,270 L270,230 L400,230" />
+        </g>
+        <g fill={pri}>
+          <circle className="circuit-pad" cx="100" cy="150" r="3.5" />
+          <circle className="circuit-pad" cx="260" cy="90" r="3.5" style={{ animationDelay: '-1.2s' }} />
+          <circle className="circuit-pad" cx="130" cy="270" r="3.5" style={{ animationDelay: '-2s' }} />
+        </g>
+      </svg>
+      <svg
+        className="circuit-group"
+        width="380" height="380" viewBox="0 0 380 380"
+        style={{ position: 'absolute', bottom: 0, right: 0, pointerEvents: 'none', zIndex: 0, animationDelay: '-4.5s' }}
+        aria-hidden="true"
+      >
+        <g stroke={sec} strokeWidth="1.3" fill="none" strokeLinecap="round" opacity={0.55}>
+          <path className="circuit-trace" strokeDasharray="7 6" style={{ animationDelay: '-2s' }} d="M390,230 L280,230 L220,290 L120,290 L80,250 L-20,250" />
+          <path className="circuit-trace" strokeDasharray="7 6" style={{ animationDelay: '-5.1s' }} d="M390,170 L310,170 L250,110 L150,110 L110,150 L-20,150" />
+        </g>
+        <g fill={sec}>
+          <circle className="circuit-pad" cx="280" cy="230" r="3.5" style={{ animationDelay: '-0.8s' }} />
+          <circle className="circuit-pad" cx="150" cy="110" r="3.5" style={{ animationDelay: '-1.9s' }} />
+          <circle className="circuit-pad" cx="220" cy="290" r="3.5" style={{ animationDelay: '-2.6s' }} />
+        </g>
+      </svg>
+
+      {/* ═══ Floating particles ═══ */}
+      {[
+        { top: '9%', left: '7%', size: 4, color: pri, duration: 9, delay: -1 },
+        { top: '20%', left: '86%', size: 3, color: sec, duration: 11, delay: -4 },
+        { top: '46%', left: '4%', size: 5, color: sec, duration: 13, delay: -7 },
+        { top: '68%', left: '93%', size: 4, color: pri, duration: 10, delay: -2 },
+        { top: '82%', left: '14%', size: 3, color: pri, duration: 14, delay: -9 },
+        { top: '33%', left: '96%', size: 3, color: sec, duration: 8, delay: -3 },
+        { top: '92%', left: '58%', size: 4, color: sec, duration: 12, delay: -5 },
+      ].map((p, i) => (
+        <span
+          key={`particle-${i}`}
+          style={{
+            position: 'absolute', top: p.top, left: p.left,
+            width: `${p.size}px`, height: `${p.size}px`, borderRadius: '50%',
+            background: p.color, boxShadow: `0 0 ${p.size * 2}px ${p.color}`,
+            opacity: 0.5, pointerEvents: 'none', zIndex: 0,
+            animation: `particleFloat ${p.duration}s ease-in-out infinite`,
+            animationDelay: `${p.delay}s`,
+          }}
+        />
+      ))}
+
 
       <div className="landing-grid-container" style={{ width: '100%', maxWidth: '1440px', margin: '0 auto', padding: '40px 20px', position: 'relative', zIndex: 1 }}>
         
