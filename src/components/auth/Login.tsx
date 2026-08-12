@@ -1645,17 +1645,33 @@ export const Login: React.FC = () => {
           50% { opacity: 0.85; }
         }
         @keyframes particleFloat {
-          0%, 100% { transform: translateY(0) scale(1); opacity: 0.35; }
-          50% { transform: translateY(-18px) scale(1.35); opacity: 0.9; }
+          0%, 100% { transform: translate3d(0, 0, 0) scale(1); opacity: 0.35; }
+          50% { transform: translate3d(0, -18px, 0) scale(1.25); opacity: 0.85; }
+        }
+        .ambient-bg-container {
+          contain: paint layout;
+          pointer-events: none;
+          transform: translate3d(0, 0, 0);
+          will-change: transform;
         }
         .circuit-trace {
-          animation: circuitDashFlow 7s linear infinite;
+          animation: circuitDashFlow 8s linear infinite;
+          will-change: stroke-dashoffset;
         }
         .circuit-pad {
-          animation: circuitPadPulse 2.6s ease-in-out infinite;
+          animation: circuitPadPulse 3s ease-in-out infinite;
+          will-change: opacity;
         }
         .circuit-group {
-          animation: circuitGroupPulse 9s ease-in-out infinite;
+          animation: circuitGroupPulse 10s ease-in-out infinite;
+          will-change: opacity;
+          transform: translate3d(0, 0, 0);
+        }
+        .particle-dot {
+          will-change: transform, opacity;
+          transform: translate3d(0, 0, 0);
+          backface-visibility: hidden;
+          -webkit-backface-visibility: hidden;
         }
 
         .login-card {
@@ -2179,30 +2195,31 @@ export const Login: React.FC = () => {
         animation: 'floatGlow2 15s infinite alternate ease-in-out', transition: 'background 0.8s ease'
       }} />
 
-      {/* ═══ Fullscreen Animated Circuit Traces & Cyberpunk Matrix Overlay ═══ */}
-      <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none', zIndex: 0 }}>
+      {/* ═══ Fullscreen Animated Circuit Traces & Cyberpunk Matrix Overlay (GPU 120FPS Accelerated) ═══ */}
+      <div className="ambient-bg-container" style={{ position: 'absolute', inset: 0, overflow: 'hidden', zIndex: 0 }}>
         {/* Fullscreen Cyber Grid Pattern */}
         <div style={{
           position: 'absolute', inset: 0,
           backgroundImage: `radial-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px)`,
-          backgroundSize: '32px 32px',
-          opacity: 0.6
+          backgroundSize: '36px 36px',
+          opacity: 0.5,
+          pointerEvents: 'none'
         }} />
 
-        {/* Fullscreen Circuit Traces (Top, Middle, Bottom) */}
+        {/* Fullscreen Circuit Traces (Hardware Layer Promoted) */}
         <svg
           className="circuit-group"
           width="100%" height="100%" viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice"
-          style={{ position: 'absolute', inset: 0 }}
+          style={{ position: 'absolute', inset: 0, pointerEvents: 'none' }}
           aria-hidden="true"
         >
-          <g stroke={pri} strokeWidth="1.3" fill="none" strokeLinecap="round" opacity={0.55}>
+          <g stroke={pri} strokeWidth="1.2" fill="none" strokeLinecap="round" opacity={0.45}>
             <path className="circuit-trace" strokeDasharray="8 6" d="M-20,120 L180,120 L240,60 L480,60 L540,120 L780,120 L840,180" />
             <path className="circuit-trace" strokeDasharray="8 6" style={{ animationDelay: '-2.5s' }} d="M-20,240 L120,240 L180,300 L360,300 L420,240 L620,240 L680,300" />
             <path className="circuit-trace" strokeDasharray="8 6" style={{ animationDelay: '-4.8s' }} d="M1460,80 L1260,80 L1200,140 L980,140 L920,80 L720,80" />
             <path className="circuit-trace" strokeDasharray="8 6" style={{ animationDelay: '-1.2s' }} d="M1460,200 L1320,200 L1260,260 L1040,260 L980,200 L820,200" />
           </g>
-          <g stroke={sec} strokeWidth="1.3" fill="none" strokeLinecap="round" opacity={0.55}>
+          <g stroke={sec} strokeWidth="1.2" fill="none" strokeLinecap="round" opacity={0.45}>
             <path className="circuit-trace" strokeDasharray="8 6" style={{ animationDelay: '-3.2s' }} d="M-20,680 L220,680 L280,740 L520,740 L580,680 L880,680" />
             <path className="circuit-trace" strokeDasharray="8 6" style={{ animationDelay: '-5.7s' }} d="M1460,720 L1240,720 L1180,780 L920,780 L860,720 L660,720" />
             <path className="circuit-trace" strokeDasharray="8 6" style={{ animationDelay: '-0.9s' }} d="M-20,820 L140,820 L200,760 L440,760 L500,820 L750,820" />
@@ -2223,40 +2240,34 @@ export const Login: React.FC = () => {
           </g>
         </svg>
 
-        {/* ═══ Floating Science & Biomechanics Particles (24 Particles) ═══ */}
+        {/* ═══ GPU Accelerated Floating Particles (16 Optimized Nodes) ═══ */}
         {[
-          { top: '6%', left: '5%', size: 4, color: pri, duration: 8, delay: -1 },
-          { top: '12%', left: '42%', size: 3, color: sec, duration: 11, delay: -3 },
-          { top: '18%', left: '88%', size: 5, color: pri, duration: 13, delay: -6 },
-          { top: '25%', left: '15%', size: 3, color: sec, duration: 9, delay: -2 },
-          { top: '32%', left: '78%', size: 4, color: pri, duration: 12, delay: -8 },
-          { top: '40%', left: '4%', size: 6, color: sec, duration: 15, delay: -4 },
-          { top: '48%', left: '94%', size: 3, color: pri, duration: 10, delay: -7 },
-          { top: '55%', left: '22%', size: 4, color: sec, duration: 14, delay: -5 },
-          { top: '62%', left: '85%', size: 5, color: pri, duration: 9, delay: -9 },
-          { top: '70%', left: '10%', size: 3, color: pri, duration: 11, delay: -3 },
-          { top: '78%', left: '48%', size: 4, color: sec, duration: 13, delay: -11 },
-          { top: '85%', left: '90%', size: 5, color: sec, duration: 10, delay: -2 },
-          { top: '92%', left: '32%', size: 3, color: pri, duration: 12, delay: -6 },
-          { top: '15%', left: '62%', size: 4, color: sec, duration: 10, delay: -4 },
-          { top: '38%', left: '48%', size: 3, color: pri, duration: 14, delay: -8 },
-          { top: '65%', left: '60%', size: 4, color: pri, duration: 9, delay: -1 },
-          { top: '82%', left: '72%', size: 3, color: sec, duration: 13, delay: -7 },
-          { top: '28%', left: '33%', size: 5, color: pri, duration: 11, delay: -5 },
-          { top: '73%', left: '28%', size: 4, color: sec, duration: 12, delay: -10 },
-          { top: '95%', left: '12%', size: 3, color: pri, duration: 15, delay: -3 },
-          { top: '8%', left: '75%', size: 4, color: sec, duration: 9, delay: -6 },
-          { top: '52%', left: '68%', size: 3, color: pri, duration: 10, delay: -2 },
-          { top: '88%', left: '40%', size: 5, color: sec, duration: 14, delay: -8 },
-          { top: '44%', left: '18%', size: 3, color: pri, duration: 11, delay: -4 },
+          { top: '8%', left: '6%', size: 4, color: pri, duration: 8, delay: -1 },
+          { top: '15%', left: '44%', size: 3, color: sec, duration: 11, delay: -3 },
+          { top: '22%', left: '86%', size: 4, color: pri, duration: 13, delay: -6 },
+          { top: '34%', left: '12%', size: 3, color: sec, duration: 9, delay: -2 },
+          { top: '42%', left: '82%', size: 4, color: pri, duration: 12, delay: -8 },
+          { top: '50%', left: '5%', size: 5, color: sec, duration: 15, delay: -4 },
+          { top: '58%', left: '92%', size: 3, color: pri, duration: 10, delay: -7 },
+          { top: '66%', left: '20%', size: 4, color: sec, duration: 14, delay: -5 },
+          { top: '74%', left: '80%', size: 5, color: pri, duration: 9, delay: -9 },
+          { top: '82%', left: '14%', size: 3, color: pri, duration: 11, delay: -3 },
+          { top: '88%', left: '50%', size: 4, color: sec, duration: 13, delay: -11 },
+          { top: '94%', left: '88%', size: 4, color: sec, duration: 10, delay: -2 },
+          { top: '28%', left: '65%', size: 3, color: sec, duration: 10, delay: -4 },
+          { top: '60%', left: '48%', size: 4, color: pri, duration: 14, delay: -8 },
+          { top: '78%', left: '68%', size: 3, color: pri, duration: 9, delay: -1 },
+          { top: '90%', left: '34%', size: 4, color: sec, duration: 12, delay: -10 },
         ].map((p, i) => (
           <span
-            key={`particle-dense-${i}`}
+            key={`particle-gpu-${i}`}
+            className="particle-dot"
             style={{
               position: 'absolute', top: p.top, left: p.left,
               width: `${p.size}px`, height: `${p.size}px`, borderRadius: '50%',
-              background: p.color, boxShadow: `0 0 ${p.size * 2.5}px ${p.color}`,
-              opacity: 0.65, pointerEvents: 'none', zIndex: 0,
+              background: p.color,
+              boxShadow: `0 0 ${p.size * 2}px ${p.color}`,
+              opacity: 0.6, pointerEvents: 'none', zIndex: 0,
               animation: `particleFloat ${p.duration}s ease-in-out infinite`,
               animationDelay: `${p.delay}s`,
             }}
