@@ -2541,14 +2541,16 @@ export const Login: React.FC = () => {
         <div className="auth-section" style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
           <div className="login-card stagger-card" style={{ width: '100%', maxWidth: '440px' }}>
             <div className="header" style={{ textAlign: 'center', marginBottom: '20px' }}>
-              <div className="logo-symbol" style={{ margin: '0 auto 16px auto' }}>
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M15 3h4a2 2 0 012 2v14a2 2 0 01-2 2h-4"/>
-                  <polyline points="10 17 15 12 10 7"/>
-                  <line x1="15" y1="12" x2="3" y2="12"/>
+              <div className="logo-symbol" style={{ margin: '0 auto 14px auto' }}>
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none">
+                  <path d="M12 1.5L21 6.5V17.5L12 22.5L3 17.5V6.5L12 1.5Z" stroke="white" strokeWidth="1.5" strokeLinejoin="round" strokeOpacity="0.95"/>
+                  <text x="12" y="15.8" textAnchor="middle" fontFamily="'Orbitron', sans-serif" fontWeight={800} fontSize="8.5" fill="white" letterSpacing="-0.3">EL</text>
                 </svg>
               </div>
-              <h1 style={{ fontSize: '18px', margin: '0 0 4px 0', fontFamily: "'Orbitron', sans-serif", fontWeight: 800, letterSpacing: '1px' }}>
+              <div style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '10px', fontWeight: 700, letterSpacing: '2.5px', marginBottom: '8px' }}>
+                <span style={{ color: 'rgba(255,255,255,0.5)' }}>EVOLUTION</span> <span className="theme-text-gradient">LAB</span>
+              </div>
+              <h1 style={{ fontSize: '17px', margin: '0 0 4px 0', fontFamily: "'Orbitron', sans-serif", fontWeight: 800, letterSpacing: '1px', color: 'rgba(255,255,255,0.92)' }}>
                 {isRegisterMode ? 'REGISTRARSE' : 'PORTAL ATLETA'}
               </h1>
               <p style={{ margin: 0, fontSize: '12px', opacity: 0.6 }}>
@@ -2796,7 +2798,7 @@ export const Login: React.FC = () => {
             <div style={{ marginTop: '24px', display: 'flex', flexDirection: 'column', gap: '8px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '16px' }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: 'rgba(255,255,255,0.5)' }}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke={pri} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M9 3h6l1 7h-8l1-7z"/><path d="M10 10v4a2 2 0 002 2h0a2 2 0 002-2v-4"/><line x1="12" y1="16" x2="12" y2="21"/>
+                  <path d="M9 2h6"/><path d="M10 2v6.34a2 2 0 01-.4 1.2L4.7 17.3A2 2 0 006.3 20.5h11.4a2 2 0 001.6-3.2l-4.9-7.76a2 2 0 01-.4-1.2V2"/><path d="M8.5 14h7"/>
                 </svg>
                 Diseñado bajo evidencia científica
               </span>
