@@ -38,11 +38,11 @@ type RawEjercicioRow = {
   nombre_ejercicio: string;
   grupo_muscular: string | null;
   series_reps: number[];
-  peso: number;
-  rpe_rir: number;
+  peso: number | null;
+  rpe_rir: number | null;
   descanso: number;
-  volumen: number;
-  rm_estimado: number;
+  volumen: number | null;
+  rm_estimado: number | null;
   feedback_estimulo: string | null;
   feedback_recuperacion: string | null;
 };
@@ -203,12 +203,13 @@ export async function syncOfflineSessions(userId: string): Promise<SyncResult> {
       // 2. Mapear e insertar ejercicios individuales
       const ejerciciosInsert = s.ejercicios.map((ej) => {
         const totalReps = (ej.repsArray || []).reduce((a, b) => a + b, 0);
-        const vol = ej.peso * totalReps;
+        const hasPeso = ej.peso != null && ej.peso > 0;
+        const vol = hasPeso ? ej.peso! * totalReps : null;
         const maxReps = Math.max(...(ej.repsArray || [0]));
-        const epley = ej.peso * (1 + maxReps / 30);
+        const epley = hasPeso ? ej.peso! * (1 + maxReps / 30) : null;
         const brzyckiDenominator = 1.0278 - 0.0278 * maxReps;
-        const brzycki = brzyckiDenominator > 0.01 ? ej.peso / brzyckiDenominator : ej.peso;
-        const rmEst = (epley + brzycki) / 2;
+        const brzycki = hasPeso ? (brzyckiDenominator > 0.01 ? ej.peso! / brzyckiDenominator : ej.peso!) : null;
+        const rmEst = (epley != null && brzycki != null) ? (epley + brzycki) / 2 : null;
 
         return {
           sesion_id: sesionId,
@@ -220,8 +221,8 @@ export async function syncOfflineSessions(userId: string): Promise<SyncResult> {
           descanso: ej.descanso,
           volumen: vol,
           rm_estimado: rmEst,
-          feedback_estimulo: (ej as any).feedback_estimulo || null,
-          feedback_recuperacion: (ej as any).feedback_recuperacion || null
+          feedback_estimulo: (ej as any).feedback_estimulo || 'good',
+          feedback_recuperacion: (ej as any).feedback_recuperacion || 'recovered',
         };
       });
 
@@ -311,6 +312,8 @@ export function flattenSessionsForOverload(sessions: LocalSesion[]): Session[] {
     for (const e of s.ejercicios) {
       if (!e.nombre?.trim()) continue;
       const repsArray = e.repsArray || [];
+      const pesoSafe = e.peso ?? 0;
+      const isFunctional = e.peso == null;
       rows.push({
         id: `${s.id}_${e.id_ej}`,
         fecha: s.fecha,
@@ -319,7 +322,7 @@ export function flattenSessionsForOverload(sessions: LocalSesion[]): Session[] {
         repsArray,
         rpe_rir: e.rpe,
         descanso: e.descanso,
-        volumen: e.peso * repsArray.reduce((a, b) => a + b, 0),
+        volumen: isFunctional ? null : pesoSafe * repsArray.reduce((a, b) => a + b, 0),
         grupo: e.grupo,
       });
     }

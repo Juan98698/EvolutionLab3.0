@@ -95,12 +95,12 @@ export const TrainerAlertsHub: React.FC<TrainerAlertsHubProps> = ({ visible, onC
                 id: s.id,
                 fecha: s.sesiones_historial?.fecha || '',
                 ejercicio: s.nombre_ejercicio,
-                peso: Number(s.peso) || 0,
-                rpe_rir: Number(s.rpe_rir) || 2,
+                peso: s.peso != null ? Number(s.peso) : null,
+                rpe_rir: s.rpe_rir != null ? Number(s.rpe_rir) : null,
                 series_reps: Array.isArray(s.series_reps) ? s.series_reps : [],
                 descanso: Number(s.descanso) || 90,
-                volumen: Number(s.volumen) || 0,
-                rm_estimado: Number(s.rm_estimado) || 0,
+                volumen: s.volumen != null ? Number(s.volumen) : null,
+                rm_estimado: s.rm_estimado != null ? Number(s.rm_estimado) : null,
                 grupo: s.grupo_muscular || 'General',
               });
             }

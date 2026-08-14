@@ -49,7 +49,7 @@ function hasPR(sessions: Session[]): boolean {
   const sorted = [...sessions].sort((a, b) => a.fecha.localeCompare(b.fecha));
   for (const s of sorted) {
     const key = s.ejercicio.toLowerCase();
-    if (s.peso > 0) {
+    if (s.peso != null && s.peso > 0) {
       if (maxByExercise[key] !== undefined && s.peso > maxByExercise[key]) {
         foundPR = true;
       }
@@ -65,7 +65,7 @@ function countPRs(sessions: Session[]): number {
   const sorted = [...sessions].sort((a, b) => a.fecha.localeCompare(b.fecha));
   for (const s of sorted) {
     const key = s.ejercicio.toLowerCase();
-    if (s.peso > 0) {
+    if (s.peso != null && s.peso > 0) {
       if (maxByExercise[key] !== undefined && s.peso > maxByExercise[key]) {
         prCount++;
       }
@@ -304,7 +304,8 @@ export const GamificacionPanel: React.FC<GamificacionPanelProps> = ({ sesiones, 
     const getVol = (sess: Session[]) => sess.reduce((sum, s) => {
       const repsList = s.repsArray?.length ? s.repsArray : (s.series_reps?.length ? s.series_reps : (s.reps != null ? [s.reps] : [0]));
       const totalReps = repsList.reduce((a, b) => a + b, 0);
-      return sum + (s.peso * totalReps);
+      const pesoNum = s.peso ?? 0;
+      return sum + (pesoNum * totalReps);
     }, 0);
 
     const volThis = getVol(thisWeekSessions);

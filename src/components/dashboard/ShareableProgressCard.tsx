@@ -96,10 +96,10 @@ export const ShareableProgressCard: React.FC<ShareableProgressCardProps> = ({
           maxByExerciseBeforeWeek[key] = Math.max(maxByExerciseBeforeWeek[key] || 0, s.peso || 0);
         } else {
           const prevMax = maxByExerciseBeforeWeek[key] || 0;
-          if (s.peso > prevMax && prevMax > 0) {
+          if (s.peso != null && s.peso > prevMax && prevMax > 0) {
             prs++;
             maxByExerciseBeforeWeek[key] = s.peso;
-          } else if (prevMax === 0 && s.peso > 0) {
+          } else if (prevMax === 0 && s.peso != null && s.peso > 0) {
             maxByExerciseBeforeWeek[key] = s.peso;
           }
         }

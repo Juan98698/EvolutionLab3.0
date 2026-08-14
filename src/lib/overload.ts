@@ -5,16 +5,16 @@ export interface Session {
   id: string;
   fecha: string;
   ejercicio: string;
-  peso: number;
-  rpe_rir?: number;
-  rpe?: number;
+  peso: number | null;
+  rpe_rir?: number | null;
+  rpe?: number | null;
   reps?: number;
   repsArray?: number[];
   series_reps?: number[];
   descanso?: number;
-  volumen?: number;
-  rm?: number;
-  rm_estimado?: number;
+  volumen?: number | null;
+  rm?: number | null;
+  rm_estimado?: number | null;
   grupo?: string;
   [key: string]: unknown;
 }
@@ -85,17 +85,19 @@ const obtenerRepsArray = (s: Session): number[] => {
   return [5];
 };
 
-const calcularVolumen = (peso: number, repsArray: number[]) =>
-  peso * repsArray.reduce((a, b) => a + b, 0);
-
-const calcularRM = (peso: number, repsArray: number[]) => {
-  if (!repsArray.length) return 0;
+const calcularRM = (peso: number | null, repsArray: number[]) => {
+  if (!repsArray.length || peso == null || peso <= 0) return 0;
   return Math.max(...repsArray.map((reps) => peso * (1 + reps / 30)));
+};
+
+const calcularVolumen = (peso: number | null, repsArray: number[]) => {
+  if (!repsArray.length || peso == null || peso <= 0) return 0;
+  return peso * repsArray.reduce((a, b) => a + b, 0);
 };
 
 const normalizarFila = (s: Session): FilaEjercicio => {
   const repsArray = obtenerRepsArray(s);
-  const peso = s.peso;
+  const peso = s.peso ?? 0;
   return {
     fecha: s.fecha,
     ejercicio: s.ejercicio,
@@ -104,8 +106,8 @@ const normalizarFila = (s: Session): FilaEjercicio => {
     peso,
     rpe: s.rpe_rir ?? s.rpe ?? 2,
     descanso: s.descanso ?? 90,
-    volumen: s.volumen ?? calcularVolumen(peso, repsArray),
-    rm: s.rm ?? s.rm_estimado ?? calcularRM(peso, repsArray),
+    volumen: s.volumen ?? calcularVolumen(s.peso, repsArray),
+    rm: s.rm ?? s.rm_estimado ?? calcularRM(s.peso, repsArray),
   };
 };
 

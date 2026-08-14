@@ -137,10 +137,11 @@ export const Analytics: React.FC = () => {
         if (e.nombre === selectedEx) {
           const repsArray = e.repsArray || [];
           const totalReps = repsArray.reduce((a, b) => a + b, 0);
-          const volumen = e.peso * totalReps;
+          const pesoSafe = e.peso ?? 0;
+          const volumen = pesoSafe * totalReps;
           
           let rm = 0;
-          if (repsArray.length > 0) {
+          if (repsArray.length > 0 && e.peso != null && e.peso > 0) {
             const maxReps = Math.max(...repsArray);
             const epley = e.peso * (1 + maxReps / 30);
             const brzycki = e.peso / (1.0278 - 0.0278 * maxReps);

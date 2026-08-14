@@ -272,11 +272,11 @@ export interface SesionEjercicio {
   nombre_ejercicio: string;
   grupo_muscular?: string | null;
   series_reps: number[]; // Array de repeticiones de las series completadas
-  peso: number;
-  rpe_rir: number;
+  peso: number | null;
+  rpe_rir: number | null;
   descanso: number;
-  volumen: number;
-  rm_estimado: number;
+  volumen: number | null;
+  rm_estimado: number | null;
   created_at?: string;
 }
 
@@ -292,9 +292,9 @@ export interface LocalSesionEjercicio {
   id_ej: string | number; // UUID en DB, número autoincrementable en offline
   nombre: string;
   grupo: string;
-  peso: number;
+  peso: number | null;
   repsArray: number[];
-  rpe: number;
+  rpe: number | null;
   descanso: number;
   notas_ej?: string;
 }
@@ -303,6 +303,10 @@ export interface EjercicioGlobal {
   id: string;
   nombre: string;
   grupo_muscular: string;
+  categoria?: 'musculacion' | 'funcional' | 'calistenia' | 'movilidad';
+  subcategoria_funcional?: 'metabolico' | 'potencia' | 'fullbody' | 'core' | null;
+  tipo_metrica?: 'peso_reps' | 'tiempo' | 'reps_tiempo' | 'distancia_peso';
+  musculos_secundarios?: string[];
   imagen_url?: string | null;
   descripcion?: string | null;
   video_url?: string | null;

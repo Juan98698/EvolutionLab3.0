@@ -23,6 +23,7 @@ export const ExerciseLibrary: React.FC = () => {
   const [loadingExercises, setLoadingExercises] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedMuscle, setSelectedMuscle] = useState<string | null>(null);
+  const [selectedModality, setSelectedModality] = useState<'todos' | 'musculacion' | 'funcional' | 'calistenia'>('todos');
   const [trainerProfile, setTrainerProfile] = useState<Profile | null>(null);
   const [visibleCount, setVisibleCount] = useState(12);
 
@@ -44,7 +45,7 @@ export const ExerciseLibrary: React.FC = () => {
   // Resetear paginación al cambiar filtros o búsquedas
   useEffect(() => {
     setVisibleCount(12);
-  }, [searchQuery, selectedMuscle]);
+  }, [searchQuery, selectedMuscle, selectedModality]);
 
   // Determinar si es cliente autónomo free
   const isAutonomousClient = profile?.rol === 'cliente' && !profile?.entrenador_id;
@@ -100,100 +101,94 @@ export const ExerciseLibrary: React.FC = () => {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [supabase, isBlocked]);
 
-  // Filtrado de ejercicios por texto y músculo
+  // Filtrado de ejercicios por texto, modalidad y grupo muscular (primario + secundario)
   const filteredExercises = exercises.filter((ex) => {
     const normName = normalizeText(ex.nombre);
     const normDesc = normalizeText(ex.descripcion || '');
     const normGroup = normalizeText(ex.grupo_muscular || '');
     const normQuery = normalizeText(searchQuery);
 
+    // Filtro por Modalidad
+    if (selectedModality !== 'todos') {
+      const cat = normalizeText(ex.categoria || 'musculacion');
+      if (selectedModality === 'funcional') {
+        const isFunc = cat === 'funcional' || cat === 'hiit' || cat === 'cardio' || normGroup === 'full body';
+        if (!isFunc) return false;
+      } else if (cat !== selectedModality) {
+        return false;
+      }
+    }
+
     const queryTokens = normQuery.split(/\s+/).filter(Boolean);
-    const fullText = `${normName} ${normDesc} ${normGroup}`;
+    const secMusclesText = Array.isArray(ex.musculos_secundarios) ? ex.musculos_secundarios.join(' ') : '';
+    const fullText = `${normName} ${normDesc} ${normGroup} ${normalizeText(secMusclesText)}`;
     const matchesSearch = queryTokens.length === 0 || queryTokens.every(token => fullText.includes(token));
     
     if (!selectedMuscle) return matchesSearch;
 
     const muscleGroup = normalizeText(ex.grupo_muscular);
     const filterText = normalizeText(selectedMuscle);
+    const hasSecMuscle = Array.isArray(ex.musculos_secundarios) && ex.musculos_secundarios.some(m => normalizeText(m).includes(filterText));
 
-    // Mapeo flexible de filtros musculares del mapa a grupos musculares de ejercicios
+    if (filterText === 'full body' || filterText === 'funcional') {
+      return matchesSearch && (muscleGroup.includes('full body') || muscleGroup.includes('funcional') || ex.categoria === 'funcional');
+    }
+
     if (filterText === 'espalda') {
       return matchesSearch && (
-        muscleGroup.includes('espalda') || 
-        muscleGroup.includes('dorsal') || 
-        muscleGroup.includes('lumbar') ||
-        muscleGroup.includes('trapecio') ||
-        muscleGroup.includes('romboides')
+        muscleGroup.includes('espalda') || muscleGroup.includes('dorsal') || 
+        muscleGroup.includes('lumbar') || muscleGroup.includes('trapecio') ||
+        muscleGroup.includes('romboides') || hasSecMuscle
       );
     }
     if (filterText === 'pecho') {
       return matchesSearch && (
-        muscleGroup.includes('pecho') || 
-        muscleGroup.includes('pectoral')
+        muscleGroup.includes('pecho') || muscleGroup.includes('pectoral') || hasSecMuscle
       );
     }
     if (filterText === 'biceps') {
-      return matchesSearch && (
-        muscleGroup.includes('biceps')
-      );
+      return matchesSearch && (muscleGroup.includes('biceps') || hasSecMuscle);
     }
     if (filterText === 'triceps') {
-      return matchesSearch && (
-        muscleGroup.includes('triceps')
-      );
+      return matchesSearch && (muscleGroup.includes('triceps') || hasSecMuscle);
     }
     if (filterText === 'hombros') {
       return matchesSearch && (
-        muscleGroup.includes('hombro') || 
-        muscleGroup.includes('deltoide')
+        muscleGroup.includes('hombro') || muscleGroup.includes('deltoide') || hasSecMuscle
       );
     }
     if (filterText === 'abdomen') {
       return matchesSearch && (
-        muscleGroup.includes('abdomen') || 
-        muscleGroup.includes('core') || 
-        muscleGroup.includes('oblicuo') || 
-        muscleGroup.includes('abdominal')
+        muscleGroup.includes('abdomen') || muscleGroup.includes('core') || 
+        muscleGroup.includes('oblicuo') || muscleGroup.includes('abdominal') || hasSecMuscle
       );
     }
     if (filterText === 'gluteos') {
-      return matchesSearch && (
-        muscleGroup.includes('gluteo')
-      );
+      return matchesSearch && (muscleGroup.includes('gluteo') || hasSecMuscle);
     }
     if (filterText === 'cuadriceps') {
       return matchesSearch && (
-        muscleGroup.includes('cuadriceps') || 
-        muscleGroup.includes('cudriceps')
+        muscleGroup.includes('cuadriceps') || muscleGroup.includes('cudriceps') || hasSecMuscle
       );
     }
     if (filterText === 'isquiosurales') {
       return matchesSearch && (
-        muscleGroup.includes('femoral') || 
-        muscleGroup.includes('isquio')
+        muscleGroup.includes('femoral') || muscleGroup.includes('isquio') || hasSecMuscle
       );
     }
     if (filterText === 'pantorrillas') {
       return matchesSearch && (
-        muscleGroup.includes('pantorrilla') || 
-        muscleGroup.includes('pantorilla')
+        muscleGroup.includes('pantorrilla') || muscleGroup.includes('pantorilla') || hasSecMuscle
       );
     }
     if (filterText === 'piernas') {
       return matchesSearch && (
-        muscleGroup.includes('pierna') || 
-        muscleGroup.includes('cuadriceps') || 
-        muscleGroup.includes('cudriceps') || 
-        muscleGroup.includes('femoral') || 
-        muscleGroup.includes('isquio') || 
-        muscleGroup.includes('gluteo') || 
-        muscleGroup.includes('pantorrilla') || 
-        muscleGroup.includes('pantorilla') ||
-        muscleGroup.includes('aductor') ||
-        muscleGroup.includes('abductor')
+        muscleGroup.includes('pierna') || muscleGroup.includes('cuadriceps') || 
+        muscleGroup.includes('isquio') || muscleGroup.includes('gluteo') || 
+        muscleGroup.includes('pantorrilla') || hasSecMuscle
       );
     }
-    return matchesSearch && (muscleGroup.includes(filterText) || filterText.includes(muscleGroup));
+    return matchesSearch && (muscleGroup.includes(filterText) || filterText.includes(muscleGroup) || hasSecMuscle);
   });
 
   const handleUpgradeClick = () => {
@@ -483,9 +478,65 @@ export const ExerciseLibrary: React.FC = () => {
             <div style={{
               display: 'flex',
               flexDirection: 'column',
-              gap: '30px',
+              gap: '20px',
               width: '100%'
             }}>
+              {/* Selector de Modalidad (Pestañas) */}
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '4px' }}>
+                <button
+                  type="button"
+                  onClick={() => { setSelectedModality('todos'); setSelectedMuscle(null); }}
+                  style={{
+                    padding: '8px 16px', borderRadius: '10px',
+                    border: '1px solid ' + (selectedModality === 'todos' ? 'var(--theme-primary, #00d4ff)' : 'rgba(255,255,255,0.08)'),
+                    background: selectedModality === 'todos' ? 'var(--theme-primary-alpha, rgba(0,212,255,0.15))' : 'rgba(15,23,42,0.6)',
+                    color: selectedModality === 'todos' ? '#fff' : 'rgba(255,255,255,0.6)',
+                    fontFamily: "'Orbitron', sans-serif", fontSize: '11px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s'
+                  }}
+                >
+                  TODOS
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setSelectedModality('musculacion'); setSelectedMuscle(null); }}
+                  style={{
+                    padding: '8px 16px', borderRadius: '10px',
+                    border: '1px solid ' + (selectedModality === 'musculacion' ? '#00d4ff' : 'rgba(255,255,255,0.08)'),
+                    background: selectedModality === 'musculacion' ? 'rgba(0,212,255,0.15)' : 'rgba(15,23,42,0.6)',
+                    color: selectedModality === 'musculacion' ? '#fff' : 'rgba(255,255,255,0.6)',
+                    fontFamily: "'Orbitron', sans-serif", fontSize: '11px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s'
+                  }}
+                >
+                  🏋️‍♂️ FUERZA
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setSelectedModality('funcional'); setSelectedMuscle(null); }}
+                  style={{
+                    padding: '8px 16px', borderRadius: '10px',
+                    border: '1px solid ' + (selectedModality === 'funcional' ? '#ff7e2e' : 'rgba(255,255,255,0.08)'),
+                    background: selectedModality === 'funcional' ? 'rgba(255,126,46,0.15)' : 'rgba(15,23,42,0.6)',
+                    color: selectedModality === 'funcional' ? '#ff7e2e' : 'rgba(255,255,255,0.6)',
+                    fontFamily: "'Orbitron', sans-serif", fontSize: '11px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s'
+                  }}
+                >
+                  ⚡ FUNCIONAL & HIIT
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setSelectedModality('calistenia'); setSelectedMuscle(null); }}
+                  style={{
+                    padding: '8px 16px', borderRadius: '10px',
+                    border: '1px solid ' + (selectedModality === 'calistenia' ? '#10b981' : 'rgba(255,255,255,0.08)'),
+                    background: selectedModality === 'calistenia' ? 'rgba(16,185,129,0.15)' : 'rgba(15,23,42,0.6)',
+                    color: selectedModality === 'calistenia' ? '#10b981' : 'rgba(255,255,255,0.6)',
+                    fontFamily: "'Orbitron', sans-serif", fontSize: '11px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s'
+                  }}
+                >
+                  🤸 CALISTENIA
+                </button>
+              </div>
+
               {/* Buscador de Texto */}
               <div style={{
                 background: 'var(--theme-card-bg, #0f172a)',
@@ -543,12 +594,30 @@ export const ExerciseLibrary: React.FC = () => {
                 <div style={{
                   flex: '1 1 300px',
                   maxWidth: '360px',
-                  margin: '0 auto'
+                  display: 'flex',
+                  flexDirection: 'column'
                 }}>
                   <BodyMuscleMap
                     selectedMuscle={selectedMuscle}
-                    onSelectMuscle={setSelectedMuscle}
+                    onSelectMuscle={(muscle) => setSelectedMuscle(muscle)}
                   />
+
+                  {/* Botón de acceso directo a Full Body / Funcionales */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedMuscle(prev => prev === 'full body' ? null : 'full body');
+                      setSelectedModality('funcional');
+                    }}
+                    style={{
+                      width: '100%', marginTop: '12px', padding: '10px', borderRadius: '12px',
+                      border: '1px solid ' + (selectedMuscle === 'full body' ? '#ff7e2e' : 'rgba(255,126,46,0.3)'),
+                      background: selectedMuscle === 'full body' ? 'rgba(255,126,46,0.2)' : 'rgba(255,126,46,0.06)',
+                      color: '#ff7e2e', fontFamily: "'Orbitron', sans-serif", fontSize: '11px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s'
+                    }}
+                  >
+                    ⚡ VER EJERCICIOS FULL BODY / FUNCIONALES
+                  </button>
                 </div>
 
                 {/* Lista de Ejercicios */}
