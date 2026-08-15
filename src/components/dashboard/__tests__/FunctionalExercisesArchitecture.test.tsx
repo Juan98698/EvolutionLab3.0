@@ -22,8 +22,11 @@ describe('Functional Exercises Architecture & Component Protection Tests', () =>
       expect(isFunctionalExercise({ nombre: 'Sled Push', tipo_metrica: 'distancia_peso' })).toBe(true);
     });
 
-    it('identifica ejercicios con grupo_muscular "Full Body"', () => {
+    it('identifica ejercicios por grupo o por nombre de movimiento funcional común', () => {
       expect(isFunctionalExercise({ nombre: 'Kettlebell Swings', grupo_muscular: 'Full Body' })).toBe(true);
+      expect(isFunctionalExercise({ nombre: 'Burpee Box Jump' })).toBe(true);
+      expect(isFunctionalExercise({ nombre: 'Azote de Cuerda 30s' })).toBe(true);
+      expect(isFunctionalExercise({ nombre: 'Empuje de Trineo (Sled Push)' })).toBe(true);
     });
 
     it('retorna false para ejercicios tradicionales de musculación e hipertrofia', () => {

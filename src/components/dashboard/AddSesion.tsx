@@ -5,6 +5,7 @@ import { PlanData } from '../../types/database.types';
 import { autoRegulatePlanForNextWeek } from '../../lib/periodizationEngine';
 import { PeriodizationHelpModal } from '../common/PeriodizationHelpModal';
 import { filterExercisesByQuery } from '../../lib/exerciseSearch';
+import { isFunctionalExercise } from '../../lib/exerciseUtils';
 
 interface AddSesionProps {
   plan: PlanData | null;
@@ -231,18 +232,21 @@ export const AddSesion: React.FC<AddSesionProps> = ({
         return;
       }
 
-      const pesoRaw = (ej.peso || '').trim().toLowerCase();
-      const cleanPesoStr = pesoRaw.replace(/[^\d.,]/g, '').replace(',', '.');
-      const peso = (pesoRaw === '' || pesoRaw === 'autocarga') ? 0 : parseFloat(cleanPesoStr);
-      if (isNaN(peso) || peso < 0) {
-        setErrorMsg(`Ejercicio ${num} ("${ej.nombre}"): el peso debe ser mayor o igual a 0 kg o la palabra "Autocarga".`);
-        return;
-      }
+      const isFunc = isFunctionalExercise({ nombre: ej.nombre, grupo: ej.grupo });
+      if (!isFunc) {
+        const pesoRaw = (ej.peso || '').trim().toLowerCase();
+        const cleanPesoStr = pesoRaw.replace(/[^\d.,]/g, '').replace(',', '.');
+        const peso = (pesoRaw === '' || pesoRaw === 'autocarga') ? 0 : parseFloat(cleanPesoStr);
+        if (isNaN(peso) || peso < 0) {
+          setErrorMsg(`Ejercicio ${num} ("${ej.nombre}"): el peso debe ser mayor o igual a 0 kg o la palabra "Autocarga".`);
+          return;
+        }
 
-      const rpe = parseFloat(ej.rpe);
-      if (isNaN(rpe) || rpe < 0 || rpe > 10) {
-        setErrorMsg(`Ejercicio ${num} ("${ej.nombre}"): el RIR debe estar entre 0 y 10.`);
-        return;
+        const rpe = parseFloat(ej.rpe);
+        if (isNaN(rpe) || rpe < 0 || rpe > 10) {
+          setErrorMsg(`Ejercicio ${num} ("${ej.nombre}"): el RIR debe estar entre 0 y 10.`);
+          return;
+        }
       }
 
       const descanso = parseInt(ej.descanso, 10);
@@ -268,15 +272,17 @@ export const AddSesion: React.FC<AddSesionProps> = ({
       const nextEjId = 1000 + nextSesionId * 20;
 
       const ejerciciosGuardar = tempExercises.map((ej, index) => {
+        const isFunc = isFunctionalExercise({ nombre: ej.nombre, grupo: ej.grupo });
         const nombreNorm = ej.nombre.trim().charAt(0).toUpperCase() + ej.nombre.trim().slice(1).toLowerCase();
         const pesoRaw = (ej.peso || '').trim().toLowerCase();
+        const pesoNum = isFunc ? null : ((pesoRaw === '' || pesoRaw === 'autocarga') ? 0 : Number(pesoRaw) || 0);
         return {
           id_ej: nextEjId + index,
           nombre: nombreNorm,
           grupo: ej.grupo,
-          peso: (pesoRaw === '' || pesoRaw === 'autocarga') ? 0 : Number(pesoRaw),
+          peso: pesoNum,
           repsArray: ej.repsArray,
-          rpe: Number(ej.rpe),
+          rpe: isFunc ? null : (Number(ej.rpe) || 2),
           descanso: Number(ej.descanso),
           notas_ej: ej.notas_ej || '',
           feedback_estimulo: ej.feedback_estimulo || 'good',
@@ -316,21 +322,23 @@ export const AddSesion: React.FC<AddSesionProps> = ({
 
         // Insertar detalles
         const ejerciciosInsert = ejerciciosGuardar.map(ej => {
+          const isFunc = isFunctionalExercise(ej);
           const totalReps = ej.repsArray.reduce((a, b) => a + b, 0);
-          const vol = ej.peso * totalReps;
+          const vol = isFunc || ej.peso == null ? null : ej.peso * totalReps;
           
           const maxReps = Math.max(...ej.repsArray);
-          const epley = ej.peso * (1 + maxReps / 30);
-          const brzycki = ej.peso / (1.0278 - 0.0278 * maxReps);
-          const rmEst = (epley + brzycki) / 2;
+          const epley = isFunc || ej.peso == null ? null : ej.peso * (1 + maxReps / 30);
+          const brzyckiDenominator = 1.0278 - 0.0278 * maxReps;
+          const brzycki = isFunc || ej.peso == null ? null : (brzyckiDenominator > 0.01 ? ej.peso / brzyckiDenominator : ej.peso);
+          const rmEst = (epley != null && brzycki != null) ? Math.round(((epley + brzycki) / 2) * 10) / 10 : null;
 
           return {
             sesion_id: sesionId,
             nombre_ejercicio: ej.nombre,
             grupo_muscular: ej.grupo,
             series_reps: ej.repsArray,
-            peso: ej.peso,
-            rpe_rir: ej.rpe,
+            peso: isFunc ? null : ej.peso,
+            rpe_rir: isFunc ? null : ej.rpe,
             descanso: ej.descanso,
             volumen: vol,
             rm_estimado: rmEst,
@@ -814,53 +822,83 @@ export const AddSesion: React.FC<AddSesionProps> = ({
                     gridTemplateColumns: 'repeat(3, 1fr)',
                     gap: '12px'
                   }}>
-                    <div className="form-group" style={{ margin: 0 }}>
-                      <label htmlFor={`ej-peso-${idx}`} style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, marginBottom: '6px', letterSpacing: '0.5px' }}>PESO DE TRABAJO (KG)</label>
-                      <input
-                        id={`ej-peso-${idx}`}
-                        type="text"
-                        placeholder="Ej. 50 o Autocarga"
-                        value={ej.peso}
-                        onChange={(e) => handleFieldChange(idx, 'peso', e.target.value)}
-                        style={{
-                          width: '100%',
-                          background: 'rgba(255,255,255,0.03)',
-                          border: '1px solid var(--theme-border)',
-                          borderRadius: '10px',
-                          color: 'white',
-                          padding: '12px',
-                          fontSize: '13px',
-                          height: '44px',
-                          boxSizing: 'border-box'
-                        }}
-                      />
-                    </div>
+                    {(() => {
+                      const isFunc = isFunctionalExercise({ nombre: ej.nombre, grupo: ej.grupo });
+                      if (isFunc) {
+                        return (
+                          <div style={{
+                            gridColumn: 'span 2',
+                            background: 'rgba(255, 126, 46, 0.08)',
+                            border: '1px solid rgba(255, 126, 46, 0.25)',
+                            borderRadius: '10px',
+                            padding: '10px 14px',
+                            fontSize: '11px',
+                            color: '#ff7e2e',
+                            fontWeight: 700,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px'
+                          }}>
+                            <span>⚡ FUNCIONAL / METABÓLICO</span>
+                            <span style={{ color: 'rgba(255,255,255,0.4)', fontWeight: 400 }}>
+                              (Sin tonelaje ni 1RM)
+                            </span>
+                          </div>
+                        );
+                      }
 
-                    <div className="form-group" style={{ margin: 0 }}>
-                      <label htmlFor={`ej-rir-${idx}`} style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, marginBottom: '6px', letterSpacing: '0.5px' }}>RIR LOGRADO</label>
-                      <input
-                        id={`ej-rir-${idx}`}
-                        type="number"
-                        inputMode="decimal"
-                        step="0.5"
-                        min="0"
-                        max="10"
-                        placeholder="Ej. 2"
-                        value={ej.rpe}
-                        onChange={(e) => handleFieldChange(idx, 'rpe', e.target.value)}
-                        style={{
-                          width: '100%',
-                          background: 'rgba(255,255,255,0.03)',
-                          border: '1px solid var(--theme-border)',
-                          borderRadius: '10px',
-                          color: 'white',
-                          padding: '12px',
-                          fontSize: '13px',
-                          height: '44px',
-                          boxSizing: 'border-box'
-                        }}
-                      />
-                    </div>
+                      return (
+                        <>
+                          <div className="form-group" style={{ margin: 0 }}>
+                            <label htmlFor={`ej-peso-${idx}`} style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, marginBottom: '6px', letterSpacing: '0.5px' }}>PESO DE TRABAJO (KG)</label>
+                            <input
+                              id={`ej-peso-${idx}`}
+                              type="text"
+                              placeholder="Ej. 50 o Autocarga"
+                              value={ej.peso}
+                              onChange={(e) => handleFieldChange(idx, 'peso', e.target.value)}
+                              style={{
+                                width: '100%',
+                                background: 'rgba(255,255,255,0.03)',
+                                border: '1px solid var(--theme-border)',
+                                borderRadius: '10px',
+                                color: 'white',
+                                padding: '12px',
+                                fontSize: '13px',
+                                height: '44px',
+                                boxSizing: 'border-box'
+                              }}
+                            />
+                          </div>
+
+                          <div className="form-group" style={{ margin: 0 }}>
+                            <label htmlFor={`ej-rir-${idx}`} style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, marginBottom: '6px', letterSpacing: '0.5px' }}>RIR LOGRADO</label>
+                            <input
+                              id={`ej-rir-${idx}`}
+                              type="number"
+                              inputMode="decimal"
+                              step="0.5"
+                              min="0"
+                              max="10"
+                              placeholder="Ej. 2"
+                              value={ej.rpe}
+                              onChange={(e) => handleFieldChange(idx, 'rpe', e.target.value)}
+                              style={{
+                                width: '100%',
+                                background: 'rgba(255,255,255,0.03)',
+                                border: '1px solid var(--theme-border)',
+                                borderRadius: '10px',
+                                color: 'white',
+                                padding: '12px',
+                                fontSize: '13px',
+                                height: '44px',
+                                boxSizing: 'border-box'
+                              }}
+                            />
+                          </div>
+                        </>
+                      );
+                    })()}
 
                     <div className="form-group" style={{ margin: 0 }}>
                       <label htmlFor={`ej-descanso-${idx}`} style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, marginBottom: '6px', letterSpacing: '0.5px' }}>DESCANSO (SEGUNDOS)</label>

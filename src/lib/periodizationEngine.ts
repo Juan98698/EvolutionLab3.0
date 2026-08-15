@@ -19,6 +19,7 @@ import {
   getStrengthThreshold,
   MovementPattern,
 } from './strengthThresholds';
+import { isFunctionalExercise } from './exerciseUtils';
 
 // ─── Strength NL weighting (Opción B) ────────────────────────────────────────
 // Pondera NL por intensidad estimada desde RIR, igual que VolumeTracker.
@@ -87,8 +88,8 @@ export interface LoadPrescription {
 export interface LoggedExerciseInput {
   nombre: string;
   repsArray: number[];
-  peso: number;
-  rir: number;                        // BUG-06 fix: renamed from 'rpe' — this is Reps In Reserve
+  peso: number | null;
+  rir?: number | null;
   feedback_estimulo?: 'none' | 'good' | 'extreme';
   feedback_recuperacion?: 'recovered' | 'just_in_time' | 'sore';
 }
@@ -311,11 +312,12 @@ export const checkRepProgressionTrigger = (
   loggedMaxReps: number,
   repsMax: number,
   repsMin: number,
-  rirLogrado: number,
+  rirLogrado: number | null | undefined,
   rirTarget: number,
   oneRM: number,
   roundingIncrement: number = 2.5
 ): RepProgressionResult | null => {
+  if (rirLogrado == null) return null;
   // Condición: llegó al tope del rango Y le sobra al menos 1 RIR de margen
   if (loggedMaxReps < repsMax) return null;
   if (rirLogrado <= rirTarget + 1) return null;
@@ -633,8 +635,8 @@ export const autoRegulatePlanForNextWeek = (
     const actualRIR = logged.rir;
     const maxReps = Math.max(...(logged.repsArray || []), 0);
 
-    if (maxReps > 0 && logged.peso > 0) {
-      const currentEstimated1RM = calculate1RM(logged.peso, maxReps, actualRIR);
+    if (maxReps > 0 && logged.peso != null && logged.peso > 0 && !isFunctionalExercise(logged)) {
+      const currentEstimated1RM = calculate1RM(logged.peso, maxReps, actualRIR ?? undefined);
       if (currentEstimated1RM > 0) {
         updateMarca1RM(marcas, normName, currentEstimated1RM);
         const aliasKey = mapExerciseToLiftKey(normName);
@@ -695,7 +697,7 @@ export const autoRegulatePlanForNextWeek = (
 
   updatedPlan.trainingDays?.forEach(day => {
     day.exercises?.forEach(ex => {
-      if (!ex.nombre) return;
+      if (!ex.nombre || isFunctionalExercise(ex)) return;
       const normName = ex.nombre.toLowerCase().trim();
       let oneRM = marcas[normName];
       if (!oneRM) {

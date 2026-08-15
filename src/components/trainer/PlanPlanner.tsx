@@ -26,6 +26,7 @@ import {
   evaluateStrengthVolumeDetailed,
   detectPatternFromExerciseName, 
 } from '../../lib/strengthThresholds';
+import { isFunctionalExercise } from '../../lib/exerciseUtils';
 import { GeneratedSession } from '../../lib/sessionDistributor';
 import { mergeSkeletonIntoExistingPlan, mergeProtocolIntoExistingPlan } from '../../lib/planMerger';
 import {
@@ -522,6 +523,7 @@ export const PlanPlanner: React.FC = () => {
     const day = trainingDays[safeIdx];
     if (day && Array.isArray(day.exercises)) {
       day.exercises.forEach(ex => {
+        if (isFunctionalExercise(ex)) return;
         const gm = normalizeMuscleGroup((ex as any).grupo_muscular);
         if (gm && volumeMap[gm] !== undefined) {
           const seriesStr = ex.variables['series de trabajo'] || ex.variables['series'] || '';
@@ -545,6 +547,7 @@ export const PlanPlanner: React.FC = () => {
       trainingDays.forEach(day => {
         if (day && Array.isArray(day.exercises)) {
           day.exercises.forEach(ex => {
+            if (isFunctionalExercise(ex)) return;
             const gm = getThresholdsForMuscleGroup((ex as any).grupo_muscular || '', periodizationConfig?.nivel_atleta, periodizationConfig?.objetivo as any).gm;
             const seriesStr = ex.variables?.['series de trabajo'] || ex.variables?.['series'] || '';
             const series = parseSeries(seriesStr);

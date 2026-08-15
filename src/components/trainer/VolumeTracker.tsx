@@ -13,6 +13,8 @@ import {
   detectPatternFromExerciseName
 } from '../../lib/strengthThresholds';
 
+import { isFunctionalExercise } from '../../lib/exerciseUtils';
+
 // ─── Músculos desde la fuente de verdad ──────────────────────────────────────
 const ALL_MUSCLES = Object.keys(THRESHOLDS_INTERMEDIO).filter(k => k !== 'General');
 
@@ -105,6 +107,7 @@ export const VolumeTracker: React.FC<VolumeTrackerProps> = ({
     const map: Record<string, number> = {};
     trainingDays.forEach(day => {
       day.exercises?.forEach(ex => {
+        if (isFunctionalExercise(ex)) return;
         const gm = getThresholdsForMuscleGroup(
           (ex as any).grupo_muscular || '', athleteLevel, blockObjective
         ).gm;

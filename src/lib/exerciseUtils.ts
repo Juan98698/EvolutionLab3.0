@@ -5,8 +5,10 @@
 export interface ExerciseBaseLike {
   categoria?: string | null;
   grupo_muscular?: string | null;
+  grupo?: string | null;
   tipo_metrica?: string | null;
   nombre?: string | null;
+  nombre_ejercicio?: string | null;
   [key: string]: any;
 }
 
@@ -27,8 +29,21 @@ export function isFunctionalExercise(ex: ExerciseBaseLike | null | undefined): b
     return true;
   }
 
-  const grupo = (ex.grupo_muscular || '').toLowerCase().trim();
+  const grupo = (ex.grupo_muscular || ex.grupo || '').toLowerCase().trim();
   if (grupo === 'full body' || grupo === 'funcional' || grupo === 'cardio') {
+    return true;
+  }
+
+  const nombre = (ex.nombre || ex.nombre_ejercicio || '').toLowerCase().trim();
+  if (
+    nombre.includes('wall ball') ||
+    nombre.includes('burpee') ||
+    nombre.includes('battle rope') ||
+    nombre.includes('azote de cuerda') ||
+    nombre.includes('sled push') ||
+    nombre.includes('trineo') ||
+    nombre.includes('kettlebell swing')
+  ) {
     return true;
   }
 

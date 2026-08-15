@@ -7,6 +7,7 @@ import { autoRegulatePlanForNextWeek } from '../../lib/periodizationEngine';
 import { ErrorBoundary } from '../common/ErrorBoundary';
 import { useModalA11y } from '../../hooks/useModalA11y';
 import { useWakeLock } from '../../hooks/useWakeLock';
+import { isFunctionalExercise } from '../../lib/exerciseUtils';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -405,6 +406,7 @@ const ActiveSession: React.FC = () => {
       const ejerciciosGuardar = exercises
         .filter(ex => ex.series.some(s => s.done))
         .map((ex, index) => {
+          const isFunc = isFunctionalExercise(ex);
           const repsArray = ex.series
             .filter(s => s.done)
             .map(s => {
@@ -412,14 +414,14 @@ const ActiveSession: React.FC = () => {
               return isNaN(r) || r < 1 ? ex.suggestedReps || 1 : r;
             });
           const pesoRaw = (ex.series.find(s => s.done)?.peso || '').trim().toLowerCase();
-          const pesoNum = (pesoRaw === '' || pesoRaw === 'autocarga') ? 0 : parseFloat(pesoRaw) || 0;
+          const pesoNum = isFunc ? null : ((pesoRaw === '' || pesoRaw === 'autocarga') ? 0 : parseFloat(pesoRaw) ?? 0);
           return {
             id_ej: 1000 + index,
             nombre: ex.nombre.trim().charAt(0).toUpperCase() + ex.nombre.trim().slice(1),
             grupo: ex.grupo,
             peso: pesoNum,
             repsArray,
-            rpe: parseFloat(ex.targetRIR) || 2,
+            rpe: isFunc ? null : (parseFloat(ex.targetRIR) || 2),
             descanso: ex.descanso,
             notas_ej: '',
             feedback_estimulo: ex.feedback_estimulo,
@@ -456,20 +458,21 @@ const ActiveSession: React.FC = () => {
         nuevaSesion.id = sesionId;
 
         const ejerciciosInsert = ejerciciosGuardar.map(ej => {
+          const isFunc = isFunctionalExercise(ej);
           const totalReps = ej.repsArray.reduce((a, b) => a + b, 0);
-          const vol = ej.peso * totalReps;
+          const vol = isFunc || ej.peso == null ? null : ej.peso * totalReps;
           const maxReps = Math.max(...ej.repsArray);
-          const epley = ej.peso * (1 + maxReps / 30);
+          const epley = isFunc || ej.peso == null ? null : ej.peso * (1 + maxReps / 30);
           const brzyckiDenominator = 1.0278 - 0.0278 * maxReps;
-          const brzycki = brzyckiDenominator > 0.01 ? ej.peso / brzyckiDenominator : ej.peso;
-          const rmEst = (epley + brzycki) / 2;
+          const brzycki = isFunc || ej.peso == null ? null : (brzyckiDenominator > 0.01 ? ej.peso / brzyckiDenominator : ej.peso);
+          const rmEst = (epley != null && brzycki != null) ? Math.round(((epley + brzycki) / 2) * 10) / 10 : null;
           return {
             sesion_id: sesionId,
             nombre_ejercicio: ej.nombre,
             grupo_muscular: ej.grupo,
             series_reps: ej.repsArray,
-            peso: ej.peso,
-            rpe_rir: ej.rpe,
+            peso: isFunc ? null : ej.peso,
+            rpe_rir: isFunc ? null : ej.rpe,
             descanso: ej.descanso,
             volumen: vol,
             rm_estimado: rmEst,

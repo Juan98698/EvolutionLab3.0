@@ -10,6 +10,7 @@ import {
   detectPatternFromExerciseName,
   MovementPattern,
 } from '../../lib/strengthThresholds';
+import { isFunctionalExercise } from '../../lib/exerciseUtils';
 
 interface PeriodizationPanelProps {
   config: PeriodizationConfig | undefined;
@@ -227,6 +228,7 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
       trainingDays.forEach(day => {
         if (day && Array.isArray(day.exercises)) {
           day.exercises.forEach(ex => {
+            if (isFunctionalExercise(ex)) return;
             const gm = getThresholdsForMuscleGroup((ex as any).grupo_muscular || '', config?.nivel_atleta, config?.objetivo as any).gm;
             const seriesStr = ex.variables?.['series de trabajo'] || ex.variables?.['series'] || '';
             const series = parseSeries(seriesStr);
