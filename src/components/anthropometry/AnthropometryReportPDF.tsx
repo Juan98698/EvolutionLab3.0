@@ -2,7 +2,12 @@ import React from 'react';
 import { ValoracionAntropometrica, Profile } from '../../types/database.types';
 import SomatochartCanvas from './SomatochartCanvas';
 import FourMassesPieChart from './FourMassesPieChart';
-import { getSomatotypeDiagnostic, classifyMuscleFatRatio, calculateWaterRequirement } from '../../lib/anthropometryEngine';
+import {
+  getSomatotypeDiagnostic,
+  classifyMuscleFatRatio,
+  calculateWaterRequirement,
+  calculateCardiometabolicRisk,
+} from '../../lib/anthropometryEngine';
 
 interface AnthropometryReportPDFProps {
   valoracion: ValoracionAntropometrica;
@@ -18,15 +23,24 @@ export const AnthropometryReportPDF: React.FC<AnthropometryReportPDFProps> = ({
   const brandName = trainerProfile?.marca?.nombre_display || trainerProfile?.nombre || 'EVOLUTION LAB';
   const brandEslogan = trainerProfile?.marca?.eslogan || 'Sistemas de Entrenamiento & Nutrición de Alta Precisión';
 
-  const imc = valoracion.imc || 0;
   const pctGrasa = valoracion.pct_grasa || 0;
   const pctMusculo = valoracion.pct_musculo || 0;
   const isFemenino = valoracion.genero === 'femenino';
   const generoStr = isFemenino ? 'Mujeres' : 'Hombres';
+  const diametros = (valoracion.diametros || {}) as any;
 
   const ratioVal = valoracion.ratio_musculo_grasa || 0;
   const ratioInfo = classifyMuscleFatRatio(ratioVal, valoracion.genero || 'masculino');
   const waterStr = valoracion.agua_recomendada_l || calculateWaterRequirement(valoracion.peso, valoracion.frecuencia_entreno || '3-4').rangoStr;
+
+  const cardioResult = calculateCardiometabolicRisk(
+    valoracion.perimetros?.cintura || 0,
+    valoracion.perimetros?.cadera,
+    valoracion.estatura || 170,
+    valoracion.genero || 'masculino',
+    atletaNombre,
+    valoracion.metodo || 'ISAK'
+  );
 
   const fatRows = isFemenino
     ? [
@@ -44,9 +58,6 @@ export const AnthropometryReportPDF: React.FC<AnthropometryReportPDFProps> = ({
         { cat: 'Obesidad', range: '≥ 25 %', min: 25, max: 999 },
       ];
 
-  // Los rangos numéricos (min/max) están alineados exactamente con los límites de
-  // classifyMuscleMass en anthropometryEngine.ts (rounded <= X) para que ninguna fila se
-  // solape con la siguiente — de lo contrario, un valor en el borde resalta dos filas a la vez.
   const muscleRows = isFemenino
     ? [
         { cat: 'Bajo', range: '< 28 %', min: 0, max: 27.9 },
@@ -59,6 +70,18 @@ export const AnthropometryReportPDF: React.FC<AnthropometryReportPDFProps> = ({
         { cat: 'Promedio', range: '32 – 38 %', min: 32, max: 38.0 },
         { cat: 'Bueno', range: '38 – 44 %', min: 38.1, max: 44.0 },
         { cat: 'Alto', range: '> 44 %', min: 44.1, max: 999 },
+      ];
+
+  const cardioRows = isFemenino
+    ? [
+        { cat: '🟢 Óptimo / Bajo Riesgo', range: '< 80.0 cm', whtr: '< 0.50', fuente: 'ALAD / IDF', isCurrent: cardioResult.categoria === 'Óptimo / Bajo Riesgo' },
+        { cat: '🟡 Riesgo Elevado (ALAD / IDF / WHtR)', range: '80.0 – 87.9 cm', whtr: '≥ 0.50', fuente: 'ALAD / IDF / WHtR', isCurrent: cardioResult.categoria === 'Riesgo Elevado (ALAD / IDF / WHtR)' },
+        { cat: '🔴 Riesgo Muy Elevado (ATP III / OMS)', range: '≥ 88.0 cm', whtr: 'Cualquiera', fuente: 'NCEP-ATP III / OMS', isCurrent: cardioResult.categoria === 'Riesgo Muy Elevado (ATP III / OMS)' },
+      ]
+    : [
+        { cat: '🟢 Óptimo / Bajo Riesgo', range: '< 90.0 cm', whtr: '< 0.50', fuente: 'ALAD / IDF', isCurrent: cardioResult.categoria === 'Óptimo / Bajo Riesgo' },
+        { cat: '🟡 Riesgo Elevado (ALAD / IDF / WHtR)', range: '90.0 – 101.9 cm', whtr: '≥ 0.50', fuente: 'ALAD / IDF / WHtR', isCurrent: cardioResult.categoria === 'Riesgo Elevado (ALAD / IDF / WHtR)' },
+        { cat: '🔴 Riesgo Muy Elevado (ATP III / OMS)', range: '≥ 102.0 cm', whtr: 'Cualquiera', fuente: 'NCEP-ATP III / OMS', isCurrent: cardioResult.categoria === 'Riesgo Muy Elevado (ATP III / OMS)' },
       ];
 
   // Diagnóstico del somatotipo para el cliente
@@ -198,7 +221,7 @@ export const AnthropometryReportPDF: React.FC<AnthropometryReportPDFProps> = ({
         </div>
 
         <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '12px', textAlign: 'center', fontSize: '10px', color: '#94a3b8' }}>
-          Documento generado por {brandName} — Página 1 de 2
+          Documento generado por {brandName} — Página 1 de 3
         </div>
       </div>
 
@@ -212,12 +235,13 @@ export const AnthropometryReportPDF: React.FC<AnthropometryReportPDFProps> = ({
           padding: '32px 36px',
           background: '#ffffff',
           boxSizing: 'border-box',
+          marginBottom: '16px',
         }}
       >
         {/* Subencabezado Pág 2 */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #0f172a', paddingBottom: '10px', marginBottom: '20px' }}>
           <span style={{ fontWeight: 800, fontSize: '13px', color: '#0f172a', textTransform: 'uppercase' }}>{atletaNombre} — MEDIDAS & TABLAS NORMATIVAS</span>
-          <span style={{ fontSize: '11px', color: '#64748b' }}>Página 2 de 2</span>
+          <span style={{ fontSize: '11px', color: '#64748b' }}>Página 2 de 3</span>
         </div>
 
         {/* Grid de Medidas Físicas (Pliegues, Perímetros, Diámetros) */}
@@ -248,177 +272,229 @@ export const AnthropometryReportPDF: React.FC<AnthropometryReportPDFProps> = ({
                 <tr style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '4px 8px' }}>Cintura:</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{valoracion.perimetros?.cintura || 0} cm</td></tr>
                 <tr style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '4px 8px' }}>Cadera:</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{valoracion.perimetros?.cadera || 0} cm</td></tr>
                 <tr style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '4px 8px' }}>Muslo:</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{valoracion.perimetros?.muslo || 0} cm</td></tr>
-                <tr style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '4px 8px' }}>Pantorrilla:</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{valoracion.perimetros?.pantorrilla || 0} cm</td></tr>
-                {valoracion.metodo === 'ISAK' && valoracion.perimetros?.cefalico ? (
-                  <tr><td style={{ padding: '4px 8px' }}>Cefálico:</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{valoracion.perimetros?.cefalico} cm</td></tr>
-                ) : null}
+                <tr><td style={{ padding: '4px 8px' }}>Pantorrilla:</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{valoracion.perimetros?.pantorrilla || 0} cm</td></tr>
               </tbody>
             </table>
           </div>
 
           {/* Diámetros Óseos */}
           <div style={{ border: '1px solid #cbd5e1', borderRadius: '8px', overflow: 'hidden' }}>
-            <div style={{ background: '#334155', color: 'white', padding: '6px 10px', fontSize: '11px', fontWeight: 800 }}>DIÁMETROS (CM)</div>
+            <div style={{ background: '#334155', color: 'white', padding: '6px 10px', fontSize: '11px', fontWeight: 800 }}>DIÁMETROS ÓSEOS (CM)</div>
             <table style={{ width: '100%', fontSize: '11px', borderCollapse: 'collapse' }}>
               <tbody>
-                <tr style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '4px 8px' }}>Codo:</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{valoracion.diametros?.codo || 0} cm</td></tr>
-                <tr style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '4px 8px' }}>Rodilla:</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{valoracion.diametros?.rodilla || 0} cm</td></tr>
-                <tr style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '4px 8px' }}>Anteroposterior (Muñeca):</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{valoracion.diametros?.anteroposterior || 0} cm</td></tr>
-                {valoracion.metodo === 'ISAK' && (
-                  <>
-                    <tr style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '4px 8px' }}>Biiliocrestal:</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{valoracion.diametros?.biiliocrestal || valoracion.diametros?.biliocrestal || 0} cm</td></tr>
-                    <tr style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '4px 8px' }}>Biacromial:</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{valoracion.diametros?.biacromial || 0} cm</td></tr>
-                    <tr><td style={{ padding: '4px 8px' }}>Transversal:</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{valoracion.diametros?.transversal || 0} cm</td></tr>
-                  </>
-                )}
+                <tr style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '4px 8px' }}>Biacromial:</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{diametros?.biacromial || 0} cm</td></tr>
+                <tr style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '4px 8px' }}>Bi-iliocrestídeo:</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{diametros?.bi_iliocrestideo || 0} cm</td></tr>
+                <tr style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '4px 8px' }}>Humeral (Biepicondilar):</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{diametros?.humeral || 0} cm</td></tr>
+                <tr style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '4px 8px' }}>Femoral (Bicondilar):</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{diametros?.femoral || 0} cm</td></tr>
+                <tr style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '4px 8px' }}>Muñeca (Biestiloideo):</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{diametros?.muneca || 0} cm</td></tr>
+                <tr><td style={{ padding: '4px 8px' }}>Tobillo (Bimaleolar):</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{diametros?.tobillo || 0} cm</td></tr>
               </tbody>
             </table>
           </div>
         </div>
 
-        {/* ── TABLAS NORMATIVAS DE CLASIFICACIÓN (Sin números en el título) ─────────────── */}
-        {/* Tabla IMC (OMS) */}
-        <div style={{ marginBottom: '16px' }}>
-          <h4 style={{ margin: '0 0 6px', fontSize: '12px', fontWeight: 800, color: '#0f172a' }}>Índice de Masa Corporal (IMC) — OMS</h4>
-          <table style={{ width: '100%', fontSize: '11px', borderCollapse: 'collapse', border: '1px solid #cbd5e1' }}>
-            <thead>
-              <tr style={{ background: '#334155', color: 'white' }}>
-                <th style={{ padding: '5px 8px', textAlign: 'left' }}>Clasificación</th>
-                <th style={{ padding: '5px 8px', textAlign: 'left' }}>Rango IMC (kg/m²)</th>
-                <th style={{ padding: '5px 8px', textAlign: 'left' }}>Valoración</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[
-                { cat: 'Bajo peso', range: '< 18.5', min: 0, max: 18.49 },
-                { cat: 'Normal', range: '18.5 – 24.9', min: 18.5, max: 24.99 },
-                { cat: 'Sobrepeso', range: '25.0 – 29.9', min: 25.0, max: 29.99 },
-                { cat: 'Obesidad grado I', range: '30.0 – 34.9', min: 30.0, max: 34.99 },
-                { cat: 'Obesidad grado II', range: '35.0 – 39.9', min: 35.0, max: 39.99 },
-                { cat: 'Obesidad grado III', range: '≥ 40.0', min: 40.0, max: 999 },
-              ].map((row, i) => {
-                const isMatch = valoracion.clasificacion_imc
-                  ? row.cat.toLowerCase() === valoracion.clasificacion_imc.toLowerCase()
-                  : imc >= row.min && imc <= row.max;
-                return (
-                  <tr key={i} style={{ background: isMatch ? '#e0f2fe' : 'transparent', fontWeight: isMatch ? 800 : 400, borderBottom: '1px solid #e2e8f0' }}>
-                    <td style={{ padding: '4px 8px' }}>{row.cat}</td>
-                    <td style={{ padding: '4px 8px' }}>{row.range}</td>
-                    <td style={{ padding: '4px 8px', color: isMatch ? '#0284c7' : '#64748b' }}>
-                      {isMatch ? `◄ ${atletaNombre} (${imc})` : ''}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Tabla % Grasa (ACE) */}
-        <div style={{ marginBottom: '16px' }}>
-          <h4 style={{ margin: '0 0 6px', fontSize: '12px', fontWeight: 800, color: '#0f172a' }}>Clasificación del % de Grasa Corporal — ACE ({generoStr})</h4>
-          <table style={{ width: '100%', fontSize: '11px', borderCollapse: 'collapse', border: '1px solid #cbd5e1' }}>
-            <thead>
-              <tr style={{ background: '#334155', color: 'white' }}>
-                <th style={{ padding: '5px 8px', textAlign: 'left' }}>Clasificación</th>
-                <th style={{ padding: '5px 8px', textAlign: 'left' }}>Rango % Grasa</th>
-                <th style={{ padding: '5px 8px', textAlign: 'left' }}>Valoración</th>
-              </tr>
-            </thead>
-            <tbody>
-              {fatRows.map((row, i) => {
-                const isMatch = valoracion.clasificacion_grasa
-                  ? row.cat.toLowerCase() === valoracion.clasificacion_grasa.toLowerCase()
-                  : pctGrasa >= row.min && pctGrasa <= row.max;
-                return (
-                  <tr key={i} style={{ background: isMatch ? '#fef3c7' : 'transparent', fontWeight: isMatch ? 800 : 400, borderBottom: '1px solid #e2e8f0' }}>
-                    <td style={{ padding: '4px 8px' }}>{row.cat}</td>
-                    <td style={{ padding: '4px 8px' }}>{row.range}</td>
-                    <td style={{ padding: '4px 8px', color: isMatch ? '#d97706' : '#64748b' }}>
-                      {isMatch ? `◄ ${atletaNombre} (${pctGrasa}%)` : ''}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Tabla % Masa Muscular */}
-        <div style={{ marginBottom: '20px' }}>
-          <h4 style={{ margin: '0 0 6px', fontSize: '12px', fontWeight: 800, color: '#0f172a' }}>Clasificación del % de Masa Muscular ({generoStr})</h4>
-          <table style={{ width: '100%', fontSize: '11px', borderCollapse: 'collapse', border: '1px solid #cbd5e1' }}>
-            <thead>
-              <tr style={{ background: '#334155', color: 'white' }}>
-                <th style={{ padding: '5px 8px', textAlign: 'left' }}>Clasificación</th>
-                <th style={{ padding: '5px 8px', textAlign: 'left' }}>Rango % Muscular</th>
-                <th style={{ padding: '5px 8px', textAlign: 'left' }}>Valoración</th>
-              </tr>
-            </thead>
-            <tbody>
-              {muscleRows.map((row, i) => {
-                const isMatch = valoracion.clasificacion_musculo
-                  ? row.cat.toLowerCase() === valoracion.clasificacion_musculo.toLowerCase()
-                  : pctMusculo >= row.min && pctMusculo <= row.max;
-                return (
-                  <tr key={i} style={{ background: isMatch ? '#dcfce7' : 'transparent', fontWeight: isMatch ? 800 : 400, borderBottom: '1px solid #e2e8f0' }}>
-                    <td style={{ padding: '4px 8px' }}>{row.cat}</td>
-                    <td style={{ padding: '4px 8px' }}>{row.range}</td>
-                    <td style={{ padding: '4px 8px', color: isMatch ? '#16a34a' : '#64748b' }}>
-                      {isMatch ? `◄ ${atletaNombre} (${pctMusculo}%)` : ''}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Bloque de Metabolismo (BMR, TDEE, Ajuste %) - Captura 1 del Usuario */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '16px' }}>
-          <div style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '10px' }}>
-            <span style={{ fontSize: '10px', color: '#64748b', fontWeight: 700 }}>BMR (Gasto Basal)</span>
-            <h3 style={{ margin: '4px 0 0', color: '#0284c7', fontSize: '16px', fontWeight: 900 }}>{valoracion.bmr || 0} kcal</h3>
+        {/* Tablas Normativas: % Grasa vs % Músculo */}
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
+          {/* Tabla Normativa Grasa */}
+          <div style={{ border: '1px solid #cbd5e1', borderRadius: '8px', overflow: 'hidden' }}>
+            <div style={{ background: '#0284c7', color: 'white', padding: '6px 10px', fontSize: '11px', fontWeight: 800 }}>
+              % GRASA CORPORAL — {generoStr.toUpperCase()} (ACE)
+            </div>
+            <table style={{ width: '100%', fontSize: '10px', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ background: '#f1f5f9', borderBottom: '1px solid #cbd5e1' }}>
+                  <th style={{ padding: '4px 8px', textAlign: 'left' }}>Categoría</th>
+                  <th style={{ padding: '4px 8px', textAlign: 'right' }}>Rango</th>
+                </tr>
+              </thead>
+              <tbody>
+                {fatRows.map((r, i) => {
+                  const isCurrent = pctGrasa >= r.min && pctGrasa <= r.max;
+                  return (
+                    <tr
+                      key={i}
+                      style={{
+                        background: isCurrent ? '#bae6fd' : i % 2 === 0 ? '#ffffff' : '#f8fafc',
+                        fontWeight: isCurrent ? 800 : 400,
+                        color: isCurrent ? '#0369a1' : '#334155',
+                      }}
+                    >
+                      <td style={{ padding: '4px 8px' }}>{isCurrent ? `👉 ${r.cat}` : r.cat}</td>
+                      <td style={{ padding: '4px 8px', textAlign: 'right' }}>{r.range}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
-          <div style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '10px' }}>
-            <span style={{ fontSize: '10px', color: '#64748b', fontWeight: 700 }}>TDEE (Mantenimiento)</span>
-            <h3 style={{ margin: '4px 0 0', color: '#16a34a', fontSize: '16px', fontWeight: 900 }}>{valoracion.tdee || 0} kcal</h3>
-          </div>
-          <div style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '10px' }}>
-            <span style={{ fontSize: '10px', color: '#64748b', fontWeight: 700 }}>Ajuste Calórico (%)</span>
-            <h3 style={{ margin: '4px 0 0', color: '#0f172a', fontSize: '16px', fontWeight: 900 }}>
-              {valoracion.ajuste_calorico_pct !== undefined && valoracion.ajuste_calorico_pct > 0
-                ? `+${valoracion.ajuste_calorico_pct}`
-                : (valoracion.ajuste_calorico_pct ?? 0)}%
-            </h3>
+
+          {/* Tabla Normativa Músculo */}
+          <div style={{ border: '1px solid #cbd5e1', borderRadius: '8px', overflow: 'hidden' }}>
+            <div style={{ background: '#16a34a', color: 'white', padding: '6px 10px', fontSize: '11px', fontWeight: 800 }}>
+              % MASA MUSCULAR — {generoStr.toUpperCase()}
+            </div>
+            <table style={{ width: '100%', fontSize: '10px', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ background: '#f1f5f9', borderBottom: '1px solid #cbd5e1' }}>
+                  <th style={{ padding: '4px 8px', textAlign: 'left' }}>Categoría</th>
+                  <th style={{ padding: '4px 8px', textAlign: 'right' }}>Rango</th>
+                </tr>
+              </thead>
+              <tbody>
+                {muscleRows.map((r, i) => {
+                  const isCurrent = pctMusculo >= r.min && pctMusculo <= r.max;
+                  return (
+                    <tr
+                      key={i}
+                      style={{
+                        background: isCurrent ? '#bbf7d0' : i % 2 === 0 ? '#ffffff' : '#f8fafc',
+                        fontWeight: isCurrent ? 800 : 400,
+                        color: isCurrent ? '#15803d' : '#334155',
+                      }}
+                    >
+                      <td style={{ padding: '4px 8px' }}>{isCurrent ? `👉 ${r.cat}` : r.cat}</td>
+                      <td style={{ padding: '4px 8px', textAlign: 'right' }}>{r.range}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
         </div>
 
-        {/* Tarjetas de Prescripción Macronutrientes */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '16px' }}>
-          <div style={{ background: '#eff6ff', border: '1px solid #bfdbfe', borderRadius: '8px', padding: '10px', textAlign: 'center' }}>
-            <span style={{ fontSize: '11px', color: '#1e40af', fontWeight: 700 }}>PROTEÍNA ({valoracion.macros?.proteina.gPerKg} g/kg)</span>
-            <h3 style={{ margin: '4px 0 0', color: '#1d4ed8', fontSize: '16px', fontWeight: 900 }}>{valoracion.macros?.proteina.grams} g</h3>
-            <span style={{ fontSize: '10px', color: '#3b82f6' }}>{valoracion.macros?.proteina.calories} kcal ({valoracion.macros?.proteina.percentage}%)</span>
+        {/* Sección de Prescripción Nutricional / Macronutrientes */}
+        <div style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '10px', padding: '14px', marginBottom: '20px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+            <span style={{ fontSize: '12px', fontWeight: 800, color: '#0f172a', textTransform: 'uppercase', fontFamily: 'Orbitron, sans-serif' }}>
+              📊 PRESCRIPCIÓN NUTRICIONAL & METABOLISMO
+            </span>
+            <span style={{ fontSize: '11px', color: '#475569' }}>
+              TMB: <strong>{(valoracion as any).tmb || valoracion.bmr || 0} kcal</strong> | TDEE: <strong>{valoracion.tdee} kcal</strong>
+            </span>
           </div>
-          <div style={{ background: '#fef3c7', border: '1px solid #fde68a', borderRadius: '8px', padding: '10px', textAlign: 'center' }}>
-            <span style={{ fontSize: '11px', color: '#92400e', fontWeight: 700 }}>GRASA ({valoracion.macros?.grasa.gPerKg} g/kg)</span>
-            <h3 style={{ margin: '4px 0 0', color: '#b45309', fontSize: '16px', fontWeight: 900 }}>{valoracion.macros?.grasa.grams} g</h3>
-            <span style={{ fontSize: '10px', color: '#d97706' }}>{valoracion.macros?.grasa.calories} kcal ({valoracion.macros?.grasa.percentage}%)</span>
-          </div>
-          <div style={{ background: '#dcfce7', border: '1px solid #bbf7d0', borderRadius: '8px', padding: '10px', textAlign: 'center' }}>
-            <span style={{ fontSize: '11px', color: '#166534', fontWeight: 700 }}>CARBOHIDRATOS ({valoracion.macros?.carbohidratos.gPerKg} g/kg)</span>
-            <h3 style={{ margin: '4px 0 0', color: '#15803d', fontSize: '16px', fontWeight: 900 }}>{valoracion.macros?.carbohidratos.grams} g</h3>
-            <span style={{ fontSize: '10px', color: '#16a34a' }}>{valoracion.macros?.carbohidratos.calories} kcal ({valoracion.macros?.carbohidratos.percentage}%)</span>
-          </div>
-        </div>
 
-        <div style={{ textAlign: 'center', background: '#0f172a', color: 'white', borderRadius: '8px', padding: '8px', fontSize: '12px', fontWeight: 800, marginBottom: '20px' }}>
-          OBJETIVO DE LA DIETA: {valoracion.target_calorias} KCAL / DÍA
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginBottom: '10px' }}>
+            <div style={{ background: '#dbeafe', border: '1px solid #bfdbfe', borderRadius: '8px', padding: '10px', textAlign: 'center' }}>
+              <span style={{ fontSize: '11px', color: '#1e40af', fontWeight: 700 }}>PROTEÍNA ({valoracion.macros?.proteina.gPerKg} g/kg)</span>
+              <h3 style={{ margin: '4px 0 0', color: '#1d4ed8', fontSize: '16px', fontWeight: 900 }}>{valoracion.macros?.proteina.grams} g</h3>
+              <span style={{ fontSize: '10px', color: '#3b82f6' }}>{valoracion.macros?.proteina.calories} kcal ({valoracion.macros?.proteina.percentage}%)</span>
+            </div>
+            <div style={{ background: '#fef3c7', border: '1px solid #fde68a', borderRadius: '8px', padding: '10px', textAlign: 'center' }}>
+              <span style={{ fontSize: '11px', color: '#92400e', fontWeight: 700 }}>GRASA ({valoracion.macros?.grasa.gPerKg} g/kg)</span>
+              <h3 style={{ margin: '4px 0 0', color: '#b45309', fontSize: '16px', fontWeight: 900 }}>{valoracion.macros?.grasa.grams} g</h3>
+              <span style={{ fontSize: '10px', color: '#d97706' }}>{valoracion.macros?.grasa.calories} kcal ({valoracion.macros?.grasa.percentage}%)</span>
+            </div>
+            <div style={{ background: '#dcfce7', border: '1px solid #bbf7d0', borderRadius: '8px', padding: '10px', textAlign: 'center' }}>
+              <span style={{ fontSize: '11px', color: '#166534', fontWeight: 700 }}>CARBOHIDRATOS ({valoracion.macros?.carbohidratos.gPerKg} g/kg)</span>
+              <h3 style={{ margin: '4px 0 0', color: '#15803d', fontSize: '16px', fontWeight: 900 }}>{valoracion.macros?.carbohidratos.grams} g</h3>
+              <span style={{ fontSize: '10px', color: '#16a34a' }}>{valoracion.macros?.carbohidratos.calories} kcal ({valoracion.macros?.carbohidratos.percentage}%)</span>
+            </div>
+          </div>
+
+          <div style={{ textAlign: 'center', background: '#0f172a', color: 'white', borderRadius: '8px', padding: '8px', fontSize: '12px', fontWeight: 800 }}>
+            OBJETIVO DE LA DIETA: {valoracion.target_calorias} KCAL / DÍA
+          </div>
         </div>
 
         <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '12px', textAlign: 'center', fontSize: '10px', color: '#94a3b8' }}>
-          Documento generado por {brandName} — Página 2 de 2
+          Documento generado por {brandName} — Página 2 de 3
+        </div>
+      </div>
+
+      {/* ══════════════════════════════════════════════════════════════════════ */}
+      {/* PÁGINA 3: SALUD CARDIOMETABÓLICA Y PERÍMETRO VISCERAL (ALAD/IDF/ATP III) */}
+      {/* ══════════════════════════════════════════════════════════════════════ */}
+      <div
+        id="anthropometry-pdf-page-3"
+        style={{
+          width: '800px',
+          padding: '32px 36px',
+          background: '#ffffff',
+          boxSizing: 'border-box',
+        }}
+      >
+        {/* Subencabezado Pág 3 */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '2px solid #0f172a', paddingBottom: '10px', marginBottom: '20px' }}>
+          <span style={{ fontWeight: 800, fontSize: '13px', color: '#0f172a', textTransform: 'uppercase' }}>{atletaNombre} — SALUD CARDIOMETABÓLICA Y VISCERAL</span>
+          <span style={{ fontSize: '11px', color: '#64748b' }}>Página 3 de 3</span>
+        </div>
+
+        {/* Tarjetas Destacadas de Marcadores Cardiometabólicos */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px', marginBottom: '20px' }}>
+          <div style={{ background: cardioResult.nivelRiesgo === 'alto' ? '#fef2f2' : cardioResult.nivelRiesgo === 'moderado' ? '#fffbeb' : '#f0fdf4', border: `1px solid ${cardioResult.nivelRiesgo === 'alto' ? '#fecaca' : cardioResult.nivelRiesgo === 'moderado' ? '#fef3c7' : '#bbf7d0'}`, borderRadius: '10px', padding: '12px', textAlign: 'center' }}>
+            <span style={{ fontSize: '10px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Perímetro de Cintura</span>
+            <div style={{ fontSize: '18px', fontWeight: 900, color: cardioResult.nivelRiesgo === 'alto' ? '#dc2626' : cardioResult.nivelRiesgo === 'moderado' ? '#d97706' : '#16a34a', marginTop: '2px' }}>
+              {cardioResult.cintura} cm
+            </div>
+            <span style={{ fontSize: '9px', color: '#475569', fontWeight: 600 }}>Corte Étnico: {isFemenino ? '<80.0 cm' : '<90.0 cm'}</span>
+          </div>
+
+          <div style={{ background: cardioResult.whtrAlerta ? '#fffbeb' : '#f0fdf4', border: `1px solid ${cardioResult.whtrAlerta ? '#fef3c7' : '#bbf7d0'}`, borderRadius: '10px', padding: '12px', textAlign: 'center' }}>
+            <span style={{ fontSize: '10px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Índice Cintura / Estatura (WHtR)</span>
+            <div style={{ fontSize: '18px', fontWeight: 900, color: cardioResult.whtrAlerta ? '#d97706' : '#16a34a', marginTop: '2px' }}>
+              {cardioResult.whtr}
+            </div>
+            <span style={{ fontSize: '9px', color: '#475569', fontWeight: 600 }}>{cardioResult.whtrCategoria}</span>
+          </div>
+
+          <div style={{ background: cardioResult.iccCategoria.includes('Androide') ? '#fef2f2' : '#f8fafc', border: `1px solid ${cardioResult.iccCategoria.includes('Androide') ? '#fecaca' : '#cbd5e1'}`, borderRadius: '10px', padding: '12px', textAlign: 'center' }}>
+            <span style={{ fontSize: '10px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Índice Cintura / Cadera (ICC)</span>
+            <div style={{ fontSize: '18px', fontWeight: 900, color: cardioResult.iccCategoria.includes('Androide') ? '#dc2626' : '#0f172a', marginTop: '2px' }}>
+              {cardioResult.icc != null ? cardioResult.icc : 'N/A'}
+            </div>
+            <span style={{ fontSize: '9px', color: '#475569', fontWeight: 600 }}>{cardioResult.iccCategoria}</span>
+          </div>
+        </div>
+
+        {/* Tabla Normativa de Riesgo Visceral & Étnico */}
+        <div style={{ border: '1px solid #cbd5e1', borderRadius: '10px', overflow: 'hidden', marginBottom: '20px' }}>
+          <div style={{ background: '#0f172a', color: 'white', padding: '8px 12px', fontSize: '12px', fontWeight: 800, fontFamily: 'Orbitron, sans-serif' }}>
+            🫀 TABLA NORMATIVA DE SALUD CARDIOMETABÓLICA Y VISCERAL ({generoStr.toUpperCase()})
+          </div>
+          <table style={{ width: '100%', fontSize: '11px', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ background: '#f1f5f9', borderBottom: '2px solid #cbd5e1', textTransform: 'uppercase', fontSize: '10px' }}>
+                <th style={{ padding: '8px 10px', textAlign: 'left' }}>Categoría de Riesgo</th>
+                <th style={{ padding: '8px 10px', textAlign: 'center' }}>Cintura Absoluta</th>
+                <th style={{ padding: '8px 10px', textAlign: 'center' }}>Criterio WHtR</th>
+                <th style={{ padding: '8px 10px', textAlign: 'right' }}>Fuente de Referencia</th>
+              </tr>
+            </thead>
+            <tbody>
+              {cardioRows.map((r, i) => {
+                return (
+                  <tr
+                    key={i}
+                    style={{
+                      background: r.isCurrent ? (i === 2 ? '#fef2f2' : i === 1 ? '#fffbeb' : '#f0fdf4') : i % 2 === 0 ? '#ffffff' : '#f8fafc',
+                      fontWeight: r.isCurrent ? 800 : 400,
+                      color: r.isCurrent ? (i === 2 ? '#dc2626' : i === 1 ? '#b45309' : '#15803d') : '#334155',
+                      borderBottom: '1px solid #f1f5f9',
+                    }}
+                  >
+                    <td style={{ padding: '8px 10px' }}>{r.isCurrent ? `👉 ${r.cat}` : r.cat}</td>
+                    <td style={{ padding: '8px 10px', textAlign: 'center' }}>{r.range}</td>
+                    <td style={{ padding: '8px 10px', textAlign: 'center' }}>{r.whtr}</td>
+                    <td style={{ padding: '8px 10px', textAlign: 'right', fontSize: '10px', color: '#64748b' }}>{r.fuente}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+
+        {/* Recuadro de Diagnóstico Metabólico Poblacional Explicativo */}
+        <div style={{ background: cardioResult.nivelRiesgo === 'alto' ? '#fef2f2' : cardioResult.nivelRiesgo === 'moderado' ? '#fffbeb' : '#f0fdf4', border: `1px solid ${cardioResult.nivelRiesgo === 'alto' ? '#fecaca' : cardioResult.nivelRiesgo === 'moderado' ? '#fef3c7' : '#bbf7d0'}`, borderRadius: '12px', padding: '16px', marginBottom: '24px' }}>
+          <h4 style={{ margin: '0 0 8px', fontSize: '13px', fontWeight: 800, color: cardioResult.nivelRiesgo === 'alto' ? '#991b1b' : cardioResult.nivelRiesgo === 'moderado' ? '#92400e' : '#166534', fontFamily: 'Orbitron, sans-serif', display: 'flex', alignItems: 'center', gap: '6px' }}>
+            💡 DIAGNÓSTICO CLÍNICO POBLACIONAL DE ADIPOSIDAD VISCERAL
+          </h4>
+          <p style={{ margin: 0, fontSize: '12px', color: cardioResult.nivelRiesgo === 'alto' ? '#7f1d1d' : cardioResult.nivelRiesgo === 'moderado' ? '#78350f' : '#14532d', lineHeight: '1.6' }}>
+            {cardioResult.diagnosticoText}
+          </p>
+        </div>
+
+        <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '12px', textAlign: 'center', fontSize: '10px', color: '#94a3b8' }}>
+          Documento generado por {brandName} — Página 3 de 3
         </div>
       </div>
     </div>

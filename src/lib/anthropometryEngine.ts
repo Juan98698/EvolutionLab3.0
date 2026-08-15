@@ -59,6 +59,99 @@ export function calculateBMI(pesoKg: number, estaturaCm: number): IMCClassificat
 }
 
 // ---------------------------------------------------------------------------
+// 1.5. Clasificación de Riesgo Cardiometabólico y Salud Visceral (ALAD / IDF / ATP III)
+// ---------------------------------------------------------------------------
+
+export interface CardiometabolicRiskResult {
+  cintura: number;
+  whtr: number;
+  whtrAlerta: boolean;
+  icc: number | null;
+  categoria: 'Óptimo / Bajo Riesgo' | 'Riesgo Elevado (ALAD / IDF / WHtR)' | 'Riesgo Muy Elevado (ATP III / OMS)';
+  nivelRiesgo: 'bajo' | 'moderado' | 'alto';
+  whtrCategoria: 'Óptimo (< 0.50)' | 'Elevado (≥ 0.50)';
+  iccCategoria: 'Androide / Manzana (Alto Riesgo)' | 'Ginoide / Periférico (Riesgo Bajo)' | 'No determinado';
+  rangoStr: string;
+  diagnosticoText: string;
+}
+
+export function calculateCardiometabolicRisk(
+  cinturaCm: number,
+  caderaCm: number | undefined | null,
+  estaturaCm: number,
+  genero: string = 'masculino',
+  nombreAtleta: string = 'Atleta',
+  metodo: string = 'ISAK'
+): CardiometabolicRiskResult {
+  const isFemale = (genero || '').toLowerCase() === 'femenino';
+  const cintura = Math.max(0, Math.round((cinturaCm || 0) * 10) / 10);
+  const estatura = Math.max(0, Math.round((estaturaCm || 0) * 10) / 10);
+  const cadera = (caderaCm != null && caderaCm > 0) ? Math.round(caderaCm * 10) / 10 : null;
+
+  const whtr = (cintura > 0 && estatura > 0) ? Math.round((cintura / estatura) * 100) / 100 : 0;
+  const whtrAlerta = whtr >= 0.50;
+  const whtrCategoria = whtrAlerta ? 'Elevado (≥ 0.50)' : 'Óptimo (< 0.50)';
+
+  let icc: number | null = null;
+  let iccCategoria: 'Androide / Manzana (Alto Riesgo)' | 'Ginoide / Periférico (Riesgo Bajo)' | 'No determinado' = 'No determinado';
+
+  if (cadera && cadera > 0 && cintura > 0) {
+    icc = Math.round((cintura / cadera) * 100) / 100;
+    const iccThreshold = isFemale ? 0.85 : 0.90;
+    iccCategoria = icc > iccThreshold ? 'Androide / Manzana (Alto Riesgo)' : 'Ginoide / Periférico (Riesgo Bajo)';
+  }
+
+  const limitElevado = isFemale ? 80 : 90;
+  const limitMuyElevado = isFemale ? 88 : 102;
+
+  let categoria: 'Óptimo / Bajo Riesgo' | 'Riesgo Elevado (ALAD / IDF / WHtR)' | 'Riesgo Muy Elevado (ATP III / OMS)';
+  let nivelRiesgo: 'bajo' | 'moderado' | 'alto';
+  let rangoStr: string;
+
+  if (cintura >= limitMuyElevado) {
+    categoria = 'Riesgo Muy Elevado (ATP III / OMS)';
+    nivelRiesgo = 'alto';
+    rangoStr = isFemale ? '≥ 88.0 cm (ATP III / OMS)' : '≥ 102.0 cm (ATP III / OMS)';
+  } else if (cintura >= limitElevado || whtrAlerta) {
+    categoria = 'Riesgo Elevado (ALAD / IDF / WHtR)';
+    nivelRiesgo = 'moderado';
+    rangoStr = isFemale ? '80.0 – 87.9 cm (ALAD/IDF) o WHtR ≥ 0.50' : '90.0 – 101.9 cm (ALAD/IDF) o WHtR ≥ 0.50';
+  } else {
+    categoria = 'Óptimo / Bajo Riesgo';
+    nivelRiesgo = 'bajo';
+    rangoStr = isFemale ? '< 80.0 cm' : '< 90.0 cm';
+  }
+
+  const metodoLabel = (metodo || 'ISAK').toUpperCase();
+  let diagnosticoText = '';
+
+  if (nivelRiesgo === 'alto') {
+    diagnosticoText = `${nombreAtleta}, tu perímetro de cintura registrado de ${cintura} cm te ubica en el rango de RIESGO MUY ELEVADO según los estándares internacionales NCEP-ATP III / OMS. En población hispana, este volumen abdominal refleja una acumulación masiva de grasa visceral intraabdominal con alto riesgo cardiometabólico. Independientemente del % de grasa subcutánea estimado por el método ${metodoLabel}, se prioriza la reducción de masa adiposa central mediante déficit calórico y ejercicio de fuerza.`;
+  } else if (nivelRiesgo === 'moderado') {
+    if (whtrAlerta && cintura < limitElevado) {
+      diagnosticoText = `${nombreAtleta}, aunque tu cintura absoluta en cm (${cintura} cm) se encuentra por debajo del umbral estándar, tu Índice Cintura/Estatura (WHtR = ${whtr}) supera el límite de seguridad de 0.50. Debido a la menor capacidad de expansión subcutánea en nuestra población, este valor indica alerta temprana de grasa visceral. Se recomienda monitorear la composición corporal de forma periódica.`;
+    } else {
+      diagnosticoText = `${nombreAtleta}, tu perímetro de cintura de ${cintura} cm (WHtR = ${whtr}) te sitúa en RIESGO ELEVADO bajo los consensos latinoamericanos ALAD / IDF. Esta franja señala desbordamiento lipídico e inminente resistencia a la insulina. El método ${metodoLabel} evalúa adiposidad subcutánea, por lo que este parámetro funcional ayuda a proteger tu salud metabólica de forma oportuna.`;
+    }
+  } else {
+    diagnosticoText = `${nombreAtleta}, tu perímetro de cintura (${cintura} cm) e Índice Cintura/Estatura (WHtR = ${whtr}) se encuentran en rangos óptimos de protección metabólica y sensibilidad a la insulina según la ALAD/IDF.`;
+  }
+
+  return {
+    cintura,
+    whtr,
+    whtrAlerta,
+    icc,
+    categoria,
+    nivelRiesgo,
+    whtrCategoria,
+    iccCategoria,
+    rangoStr,
+    diagnosticoText,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // 2. Clasificación de % Grasa Corporal (American Council on Exercise - ACE)
 // ---------------------------------------------------------------------------
 

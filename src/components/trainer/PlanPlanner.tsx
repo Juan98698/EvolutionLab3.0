@@ -386,7 +386,7 @@ export const PlanPlanner: React.FC = () => {
       try {
         const { data, error } = await supabase
           .from('ejercicios_globales')
-          .select('id, nombre, grupo_muscular, imagen_url, video_url, descripcion, gif_url')
+          .select('id, nombre, grupo_muscular, imagen_url, video_url, descripcion, gif_url, categoria, subcategoria_funcional, tipo_metrica, musculos_secundarios')
           .order('nombre');
         if (!error && data) {
           const normalized = (data as any[]).map((e: any) => ({
@@ -1105,6 +1105,10 @@ export const PlanPlanner: React.FC = () => {
                     let nextDescription = (ex as any).description || '';
                     let nextNombreOriginal = ex.nombre_original || '';
                     let nextGrupoMuscular = ex.grupo_muscular || '';
+                    let nextCategoria = (ex as any).categoria || '';
+                    let nextSubcategoriaFuncional = (ex as any).subcategoria_funcional || '';
+                    let nextTipoMetrica = (ex as any).tipo_metrica || '';
+                    let nextMusculosSecundarios = (ex as any).musculos_secundarios || [];
 
                     const isCustomUpload = ex.image_url && ex.image_url.includes(`/${trainerId}/`);
 
@@ -1116,6 +1120,10 @@ export const PlanPlanner: React.FC = () => {
                       nextDescription = (foundLocal?.description) || (foundGlobal?.descripcion) || '';
                       nextNombreOriginal = (foundGlobal?.nombre) || (foundLocal?.nombreOriginal) || '';
                       nextGrupoMuscular = (foundGlobal?.grupo_muscular) || (foundLocal?.grupoMuscular) || '';
+                      nextCategoria = (foundGlobal?.categoria) || (foundLocal?.categoria) || '';
+                      nextSubcategoriaFuncional = (foundGlobal?.subcategoria_funcional) || (foundLocal?.subcategoria_funcional) || '';
+                      nextTipoMetrica = (foundGlobal?.tipo_metrica) || (foundLocal?.tipo_metrica) || '';
+                      nextMusculosSecundarios = (foundGlobal?.musculos_secundarios) || (foundLocal?.musculos_secundarios) || [];
                       
                       if (foundLocal && foundGlobal) {
                         showToast(`✨ ¡Auto-rellenado (historial + catálogo global) para "${val}"!`, 'info');
@@ -1143,6 +1151,10 @@ export const PlanPlanner: React.FC = () => {
                           nextVideoUrl = ex.video_url || (linkedLocal?.videoUrl) || (linkedGlobal?.video_url) || '';
                           nextDescription = (ex as any).description || (linkedLocal?.description) || (linkedGlobal?.descripcion) || '';
                           nextGrupoMuscular = ex.grupo_muscular || (linkedGlobal?.grupo_muscular) || (linkedLocal?.grupoMuscular) || '';
+                          nextCategoria = (ex as any).categoria || (linkedGlobal?.categoria) || (linkedLocal?.categoria) || '';
+                          nextSubcategoriaFuncional = (ex as any).subcategoria_funcional || (linkedGlobal?.subcategoria_funcional) || (linkedLocal?.subcategoria_funcional) || '';
+                          nextTipoMetrica = (ex as any).tipo_metrica || (linkedGlobal?.tipo_metrica) || (linkedLocal?.tipo_metrica) || '';
+                          nextMusculosSecundarios = (ex as any).musculos_secundarios || (linkedGlobal?.musculos_secundarios) || (linkedLocal?.musculos_secundarios) || [];
                         }
                       } else {
                         // Si la imagen actual NO es un upload personalizado, la limpiamos para no arrastrar la imagen del ejercicio anterior
@@ -1152,6 +1164,10 @@ export const PlanPlanner: React.FC = () => {
                           nextVideoUrl = '';
                           nextDescription = '';
                           nextGrupoMuscular = '';
+                          nextCategoria = '';
+                          nextSubcategoriaFuncional = '';
+                          nextTipoMetrica = '';
+                          nextMusculosSecundarios = [];
                         }
                       }
                       if (val.trim() === '') {
@@ -1161,6 +1177,10 @@ export const PlanPlanner: React.FC = () => {
                         nextVideoUrl = '';
                         nextDescription = '';
                         nextGrupoMuscular = '';
+                        nextCategoria = '';
+                        nextSubcategoriaFuncional = '';
+                        nextTipoMetrica = '';
+                        nextMusculosSecundarios = [];
                       }
                     }
 
@@ -1215,6 +1235,10 @@ export const PlanPlanner: React.FC = () => {
                       video_url: nextVideoUrl,
                       description: nextDescription,
                       grupo_muscular: nextGrupoMuscular,
+                      categoria: nextCategoria,
+                      subcategoria_funcional: nextSubcategoriaFuncional,
+                      tipo_metrica: nextTipoMetrica,
+                      musculos_secundarios: nextMusculosSecundarios,
                       variables: updatedVars
                     };
                   } catch (e) {
@@ -1323,7 +1347,7 @@ export const PlanPlanner: React.FC = () => {
           // Recargar catálogo global en el estado
           const { data: updatedCatalog } = await supabase
             .from('ejercicios_globales')
-            .select('nombre, grupo_muscular, imagen_url, video_url, descripcion, gif_url')
+            .select('id, nombre, grupo_muscular, imagen_url, video_url, descripcion, gif_url, categoria, subcategoria_funcional, tipo_metrica, musculos_secundarios')
             .order('nombre');
           if (updatedCatalog) {
             setGlobalCatalog(updatedCatalog as EjercicioGlobal[]);

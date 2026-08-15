@@ -12,6 +12,7 @@ import {
   getSomatotypeDiagnostic,
   calculateWaterRequirement,
   classifyMuscleFatRatio,
+  calculateCardiometabolicRisk,
 } from '../anthropometryEngine';
 
 describe('anthropometryEngine Library', () => {
@@ -228,6 +229,70 @@ describe('anthropometryEngine Library', () => {
 
       const mujerAvanzada = classifyMuscleFatRatio(1.8, 'femenino');
       expect(mujerAvanzada.nivel).toBe('Composición Atlética Avanzada');
+    });
+  });
+
+  describe('calculateCardiometabolicRisk (ALAD / IDF / ATP III)', () => {
+    it('clasifica umbrales de hombres según ALAD/IDF y ATP III', () => {
+      const bajo = calculateCardiometabolicRisk(88, 100, 180, 'masculino');
+      expect(bajo.categoria).toBe('Óptimo / Bajo Riesgo');
+      expect(bajo.nivelRiesgo).toBe('bajo');
+      expect(bajo.whtr).toBe(0.49);
+      expect(bajo.whtrAlerta).toBe(false);
+
+      const moderado = calculateCardiometabolicRisk(94, 100, 180, 'masculino');
+      expect(moderado.categoria).toBe('Riesgo Elevado (ALAD / IDF / WHtR)');
+      expect(moderado.nivelRiesgo).toBe('moderado');
+
+      const alto = calculateCardiometabolicRisk(104, 110, 195, 'masculino');
+      expect(alto.categoria).toBe('Riesgo Muy Elevado (ATP III / OMS)');
+      expect(alto.nivelRiesgo).toBe('alto');
+    });
+
+    it('clasifica umbrales de mujeres según ALAD/IDF y ATP III', () => {
+      const bajo = calculateCardiometabolicRisk(76, 95, 165, 'femenino');
+      expect(bajo.categoria).toBe('Óptimo / Bajo Riesgo');
+      expect(bajo.nivelRiesgo).toBe('bajo');
+
+      const moderado = calculateCardiometabolicRisk(82, 95, 165, 'femenino');
+      expect(moderado.categoria).toBe('Riesgo Elevado (ALAD / IDF / WHtR)');
+      expect(moderado.nivelRiesgo).toBe('moderado');
+
+      const alto = calculateCardiometabolicRisk(90, 100, 165, 'femenino');
+      expect(alto.categoria).toBe('Riesgo Muy Elevado (ATP III / OMS)');
+      expect(alto.nivelRiesgo).toBe('alto');
+    });
+
+    it('eleva a riesgo elevado cuando WHtR >= 0.50 aunque la cintura en cm sea normal', () => {
+      const bajaEstatura = calculateCardiometabolicRisk(86, 98, 170, 'masculino');
+      expect(bajaEstatura.whtr).toBe(0.51);
+      expect(bajaEstatura.whtrAlerta).toBe(true);
+      expect(bajaEstatura.categoria).toBe('Riesgo Elevado (ALAD / IDF / WHtR)');
+      expect(bajaEstatura.nivelRiesgo).toBe('moderado');
+    });
+
+    it('maneja cadera undefined o 0 devolviendo icc null de forma segura', () => {
+      const sinCadera = calculateCardiometabolicRisk(92, undefined, 175, 'masculino');
+      expect(sinCadera.icc).toBeNull();
+      expect(sinCadera.iccCategoria).toBe('No determinado');
+      expect(sinCadera.cintura).toBe(92);
+      expect(sinCadera.whtr).toBe(0.53);
+    });
+
+    it('clasifica correctamente el patrón androide vs ginoide mediante ICC', () => {
+      const androide = calculateCardiometabolicRisk(95, 100, 180, 'masculino');
+      expect(androide.icc).toBe(0.95);
+      expect(androide.iccCategoria).toBe('Androide / Manzana (Alto Riesgo)');
+
+      const ginoide = calculateCardiometabolicRisk(80, 100, 180, 'masculino');
+      expect(ginoide.icc).toBe(0.80);
+      expect(ginoide.iccCategoria).toBe('Ginoide / Periférico (Riesgo Bajo)');
+    });
+
+    it('menciona el método en la narrativa de diagnóstico (Yuhasz vs ISAK)', () => {
+      const resYuhasz = calculateCardiometabolicRisk(94, 100, 175, 'masculino', 'Carlos', 'Yuhasz');
+      expect(resYuhasz.diagnosticoText).toContain('YUHASZ');
+      expect(resYuhasz.diagnosticoText).toContain('Carlos');
     });
   });
 });

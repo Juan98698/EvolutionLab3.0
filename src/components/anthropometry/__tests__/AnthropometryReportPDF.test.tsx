@@ -42,19 +42,21 @@ function buildValoracion(overrides: Partial<ValoracionAntropometrica>): Valoraci
   } as ValoracionAntropometrica;
 }
 
-/** Devuelve la tabla <table> que sigue al <h4> cuyo texto incluye `tituloParcial`. */
+/** Devuelve la tabla <table> asociada al contenedor que incluye `tituloParcial`. */
 function getTablaPorTitulo(container: HTMLElement, tituloParcial: string): HTMLElement {
-  const headings = Array.from(container.querySelectorAll('h4'));
-  const heading = headings.find((h) => h.textContent?.includes(tituloParcial));
-  if (!heading) throw new Error(`No se encontró un <h4> que contenga "${tituloParcial}"`);
-  const tabla = heading.parentElement?.querySelector('table');
-  if (!tabla) throw new Error(`No se encontró la tabla debajo de "${tituloParcial}"`);
-  return tabla as HTMLElement;
+  const tables = Array.from(container.querySelectorAll('table'));
+  for (const table of tables) {
+    const parentDiv = table.parentElement;
+    if (parentDiv && parentDiv.textContent?.toLowerCase().includes(tituloParcial.toLowerCase())) {
+      return table;
+    }
+  }
+  throw new Error(`No se encontró la tabla para "${tituloParcial}"`);
 }
 
-/** Cuenta cuántas filas de la tabla están marcadas como coincidencia (contienen el marcador ◄). */
+/** Cuenta cuántas filas de la tabla están marcadas como activas (contienen 👉 o font-weight 800). */
 function contarFilasMarcadas(tabla: HTMLElement): number {
-  return Array.from(tabla.querySelectorAll('tbody tr')).filter((tr) => tr.textContent?.includes('◄')).length;
+  return Array.from(tabla.querySelectorAll('tbody tr')).filter((tr) => tr.textContent?.includes('👉')).length;
 }
 
 describe('AnthropometryReportPDF — tabla de % de masa muscular', () => {
@@ -103,5 +105,31 @@ describe('AnthropometryReportPDF — tabla de % de masa muscular', () => {
     expect(container.textContent).toContain('Tienes 1.57 kg de músculo por cada 1 kg de grasa.');
     expect(container.textContent).toContain('Requerimiento Hídrico');
     expect(container.textContent).toContain('2.7 – 3.0 L / día');
+  });
+
+  it('renderiza la Página 3 del informe con las cadenas de numeración corregidas (1 de 3, 2 de 3, 3 de 3)', () => {
+    const valoracion = buildValoracion({
+      perimetros: { cintura: 94, cadera: 100 },
+      estatura: 175,
+      genero: 'masculino',
+    });
+    const { container } = render(
+      <AnthropometryReportPDF valoracion={valoracion} atletaNombre="Carlos Test" trainerProfile={null} />
+    );
+
+    const p1 = container.querySelector('#anthropometry-pdf-page-1');
+    const p2 = container.querySelector('#anthropometry-pdf-page-2');
+    const p3 = container.querySelector('#anthropometry-pdf-page-3');
+
+    expect(p1).toBeTruthy();
+    expect(p2).toBeTruthy();
+    expect(p3).toBeTruthy();
+
+    expect(p1?.textContent).toContain('Página 1 de 3');
+    expect(p2?.textContent).toContain('Página 2 de 3');
+    expect(p3?.textContent).toContain('Página 3 de 3');
+    expect(p3?.textContent).toContain('SALUD CARDIOMETABÓLICA Y VISCERAL');
+    expect(p3?.textContent).toContain('👉 🟡 Riesgo Elevado (ALAD / IDF / WHtR)');
+    expect(p3?.textContent).toContain('DIAGNÓSTICO CLÍNICO POBLACIONAL DE ADIPOSIDAD VISCERAL');
   });
 });

@@ -240,14 +240,15 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
     }
   };
 
-  // Generar y Descargar PDF Nativo de 2 páginas en 1 clic
+  // Generar y Descargar PDF Nativo de 3 páginas en 1 clic
   const handleDownloadPDF = async () => {
     setDownloadingPdf(true);
     try {
       const page1Element = document.getElementById('anthropometry-pdf-page-1');
       const page2Element = document.getElementById('anthropometry-pdf-page-2');
+      const page3Element = document.getElementById('anthropometry-pdf-page-3');
 
-      if (!page1Element || !page2Element) {
+      if (!page1Element || !page2Element || !page3Element) {
         throw new Error('No se encontraron las páginas del informe PDF.');
       }
 
@@ -268,9 +269,16 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
       const height2 = (canvas2.height * pdfWidth) / canvas2.width;
       pdf.addImage(imgData2, 'PNG', 0, 0, pdfWidth, Math.min(pdfHeight, height2));
 
+      // Renderizar Página 3
+      pdf.addPage();
+      const canvas3 = await html2canvas(page3Element, { scale: 2, useCORS: true });
+      const imgData3 = canvas3.toDataURL('image/png');
+      const height3 = (canvas3.height * pdfWidth) / canvas3.width;
+      pdf.addImage(imgData3, 'PNG', 0, 0, pdfWidth, Math.min(pdfHeight, height3));
+
       pdf.save(`Valoracion_${atleta.nombre.replace(/\s+/g, '_')}_${computed.fecha}.pdf`);
 
-      showToast('📄 PDF de 2 páginas descargado correctamente con tu Marca Blanca', 'success');
+      showToast('📄 PDF de 3 páginas descargado correctamente con tu Marca Blanca', 'success');
     } catch (err: any) {
       showToast('Error al generar PDF: ' + (err.message || err), 'error');
     } finally {
@@ -609,11 +617,11 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
               </p>
             </div>
 
-            {/* Previsualización del PDF de 2 páginas en vivo */}
+            {/* Previsualización del PDF de 3 páginas en vivo */}
             <div style={{ background: '#334155', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '16px', overflow: 'hidden' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
                 <span style={{ fontSize: '11px', color: '#cbd5e1', fontWeight: 800, fontFamily: "'Orbitron', sans-serif" }}>
-                  📋 PREVISUALIZACIÓN EN VIVO DEL INFORME PDF (2 PÁGINAS)
+                  📋 PREVISUALIZACIÓN EN VIVO DEL INFORME PDF (3 PÁGINAS)
                 </span>
                 <span style={{ fontSize: '10px', color: '#94a3b8', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: '4px' }}>
                   👈 Desliza horizontalmente para ver el documento completo 👉
