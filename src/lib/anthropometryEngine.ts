@@ -64,21 +64,22 @@ export function calculateBMI(pesoKg: number, estaturaCm: number): IMCClassificat
 
 export interface CardiometabolicRiskResult {
   cintura: number;
+  cinturaRegistrada: boolean;
   whtr: number;
   whtrAlerta: boolean;
   icc: number | null;
-  categoria: 'Óptimo / Bajo Riesgo' | 'Riesgo Elevado (ALAD / IDF / WHtR)' | 'Riesgo Muy Elevado (ATP III / OMS)';
-  nivelRiesgo: 'bajo' | 'moderado' | 'alto';
-  whtrCategoria: 'Óptimo (< 0.50)' | 'Elevado (≥ 0.50)';
+  categoria: 'Óptimo / Bajo Riesgo' | 'Riesgo Elevado (ALAD / IDF / WHtR)' | 'Riesgo Muy Elevado (ATP III / OMS)' | 'No determinado (Sin datos de cintura)';
+  nivelRiesgo: 'bajo' | 'moderado' | 'alto' | 'indeterminado';
+  whtrCategoria: 'Óptimo (< 0.50)' | 'Elevado (≥ 0.50)' | 'No determinado';
   iccCategoria: 'Androide / Manzana (Alto Riesgo)' | 'Ginoide / Periférico (Riesgo Bajo)' | 'No determinado';
   rangoStr: string;
   diagnosticoText: string;
 }
 
 export function calculateCardiometabolicRisk(
-  cinturaCm: number,
+  cinturaCm: number | undefined | null,
   caderaCm: number | undefined | null,
-  estaturaCm: number,
+  estaturaCm: number | undefined | null,
   genero: string = 'masculino',
   nombreAtleta: string = 'Atleta',
   metodo: string = 'ISAK'
@@ -87,6 +88,22 @@ export function calculateCardiometabolicRisk(
   const cintura = Math.max(0, Math.round((cinturaCm || 0) * 10) / 10);
   const estatura = Math.max(0, Math.round((estaturaCm || 0) * 10) / 10);
   const cadera = (caderaCm != null && caderaCm > 0) ? Math.round(caderaCm * 10) / 10 : null;
+
+  if (!cintura || cintura <= 0) {
+    return {
+      cintura: 0,
+      cinturaRegistrada: false,
+      whtr: 0,
+      whtrAlerta: false,
+      icc: null,
+      categoria: 'No determinado (Sin datos de cintura)',
+      nivelRiesgo: 'indeterminado',
+      whtrCategoria: 'No determinado',
+      iccCategoria: 'No determinado',
+      rangoStr: 'Sin registrar',
+      diagnosticoText: `${nombreAtleta}, no se ha registrado el perímetro de cintura en esta valoración antropométrica. Por favor incluye la medida de cintura para calcular los marcadores de riesgo cardiometabólico y salud visceral (ALAD/IDF y NCEP-ATP III).`,
+    };
+  }
 
   const whtr = (cintura > 0 && estatura > 0) ? Math.round((cintura / estatura) * 100) / 100 : 0;
   const whtrAlerta = whtr >= 0.50;
@@ -139,6 +156,7 @@ export function calculateCardiometabolicRisk(
 
   return {
     cintura,
+    cinturaRegistrada: true,
     whtr,
     whtrAlerta,
     icc,

@@ -421,25 +421,58 @@ export const AnthropometryReportPDF: React.FC<AnthropometryReportPDFProps> = ({
 
         {/* Tarjetas Destacadas de Marcadores Cardiometabólicos */}
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '14px', marginBottom: '20px' }}>
-          <div style={{ background: cardioResult.nivelRiesgo === 'alto' ? '#fef2f2' : cardioResult.nivelRiesgo === 'moderado' ? '#fffbeb' : '#f0fdf4', border: `1px solid ${cardioResult.nivelRiesgo === 'alto' ? '#fecaca' : cardioResult.nivelRiesgo === 'moderado' ? '#fef3c7' : '#bbf7d0'}`, borderRadius: '10px', padding: '12px', textAlign: 'center' }}>
+          <div style={{
+            background: !cardioResult.cinturaRegistrada ? '#f8fafc' : cardioResult.nivelRiesgo === 'alto' ? '#fef2f2' : cardioResult.nivelRiesgo === 'moderado' ? '#fffbeb' : '#f0fdf4',
+            border: `1px solid ${!cardioResult.cinturaRegistrada ? '#cbd5e1' : cardioResult.nivelRiesgo === 'alto' ? '#fecaca' : cardioResult.nivelRiesgo === 'moderado' ? '#fef3c7' : '#bbf7d0'}`,
+            borderRadius: '10px',
+            padding: '12px',
+            textAlign: 'center'
+          }}>
             <span style={{ fontSize: '10px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Perímetro de Cintura</span>
-            <div style={{ fontSize: '18px', fontWeight: 900, color: cardioResult.nivelRiesgo === 'alto' ? '#dc2626' : cardioResult.nivelRiesgo === 'moderado' ? '#d97706' : '#16a34a', marginTop: '2px' }}>
-              {cardioResult.cintura} cm
+            <div style={{
+              fontSize: !cardioResult.cinturaRegistrada ? '14px' : '18px',
+              fontWeight: 900,
+              color: !cardioResult.cinturaRegistrada ? '#64748b' : cardioResult.nivelRiesgo === 'alto' ? '#dc2626' : cardioResult.nivelRiesgo === 'moderado' ? '#d97706' : '#16a34a',
+              marginTop: '4px'
+            }}>
+              {cardioResult.cinturaRegistrada ? `${cardioResult.cintura} cm` : 'Sin registrar'}
             </div>
             <span style={{ fontSize: '9px', color: '#475569', fontWeight: 600 }}>Corte Étnico: {isFemenino ? '<80.0 cm' : '<90.0 cm'}</span>
           </div>
 
-          <div style={{ background: cardioResult.whtrAlerta ? '#fffbeb' : '#f0fdf4', border: `1px solid ${cardioResult.whtrAlerta ? '#fef3c7' : '#bbf7d0'}`, borderRadius: '10px', padding: '12px', textAlign: 'center' }}>
+          <div style={{
+            background: !cardioResult.cinturaRegistrada ? '#f8fafc' : cardioResult.whtrAlerta ? '#fffbeb' : '#f0fdf4',
+            border: `1px solid ${!cardioResult.cinturaRegistrada ? '#cbd5e1' : cardioResult.whtrAlerta ? '#fef3c7' : '#bbf7d0'}`,
+            borderRadius: '10px',
+            padding: '12px',
+            textAlign: 'center'
+          }}>
             <span style={{ fontSize: '10px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Índice Cintura / Estatura (WHtR)</span>
-            <div style={{ fontSize: '18px', fontWeight: 900, color: cardioResult.whtrAlerta ? '#d97706' : '#16a34a', marginTop: '2px' }}>
-              {cardioResult.whtr}
+            <div style={{
+              fontSize: !cardioResult.cinturaRegistrada ? '14px' : '18px',
+              fontWeight: 900,
+              color: !cardioResult.cinturaRegistrada ? '#64748b' : cardioResult.whtrAlerta ? '#d97706' : '#16a34a',
+              marginTop: '4px'
+            }}>
+              {cardioResult.cinturaRegistrada ? cardioResult.whtr : 'N/A'}
             </div>
             <span style={{ fontSize: '9px', color: '#475569', fontWeight: 600 }}>{cardioResult.whtrCategoria}</span>
           </div>
 
-          <div style={{ background: cardioResult.iccCategoria.includes('Androide') ? '#fef2f2' : '#f8fafc', border: `1px solid ${cardioResult.iccCategoria.includes('Androide') ? '#fecaca' : '#cbd5e1'}`, borderRadius: '10px', padding: '12px', textAlign: 'center' }}>
+          <div style={{
+            background: !cardioResult.cinturaRegistrada ? '#f8fafc' : cardioResult.iccCategoria.includes('Androide') ? '#fef2f2' : '#f8fafc',
+            border: `1px solid ${!cardioResult.cinturaRegistrada ? '#cbd5e1' : cardioResult.iccCategoria.includes('Androide') ? '#fecaca' : '#cbd5e1'}`,
+            borderRadius: '10px',
+            padding: '12px',
+            textAlign: 'center'
+          }}>
             <span style={{ fontSize: '10px', color: '#64748b', fontWeight: 700, textTransform: 'uppercase' }}>Índice Cintura / Cadera (ICC)</span>
-            <div style={{ fontSize: '18px', fontWeight: 900, color: cardioResult.iccCategoria.includes('Androide') ? '#dc2626' : '#0f172a', marginTop: '2px' }}>
+            <div style={{
+              fontSize: !cardioResult.cinturaRegistrada || cardioResult.icc === null ? '14px' : '18px',
+              fontWeight: 900,
+              color: !cardioResult.cinturaRegistrada ? '#64748b' : cardioResult.iccCategoria.includes('Androide') ? '#dc2626' : '#0f172a',
+              marginTop: '4px'
+            }}>
               {cardioResult.icc != null ? cardioResult.icc : 'N/A'}
             </div>
             <span style={{ fontSize: '9px', color: '#475569', fontWeight: 600 }}>{cardioResult.iccCategoria}</span>
@@ -462,17 +495,18 @@ export const AnthropometryReportPDF: React.FC<AnthropometryReportPDFProps> = ({
             </thead>
             <tbody>
               {cardioRows.map((r, i) => {
+                const isActive = cardioResult.cinturaRegistrada && r.isCurrent;
                 return (
                   <tr
                     key={i}
                     style={{
-                      background: r.isCurrent ? (i === 2 ? '#fef2f2' : i === 1 ? '#fffbeb' : '#f0fdf4') : i % 2 === 0 ? '#ffffff' : '#f8fafc',
-                      fontWeight: r.isCurrent ? 800 : 400,
-                      color: r.isCurrent ? (i === 2 ? '#dc2626' : i === 1 ? '#b45309' : '#15803d') : '#334155',
+                      background: isActive ? (i === 2 ? '#fef2f2' : i === 1 ? '#fffbeb' : '#f0fdf4') : i % 2 === 0 ? '#ffffff' : '#f8fafc',
+                      fontWeight: isActive ? 800 : 400,
+                      color: isActive ? (i === 2 ? '#dc2626' : i === 1 ? '#b45309' : '#15803d') : '#334155',
                       borderBottom: '1px solid #f1f5f9',
                     }}
                   >
-                    <td style={{ padding: '8px 10px' }}>{r.isCurrent ? `👉 ${r.cat}` : r.cat}</td>
+                    <td style={{ padding: '8px 10px' }}>{isActive ? `👉 ${r.cat}` : r.cat}</td>
                     <td style={{ padding: '8px 10px', textAlign: 'center' }}>{r.range}</td>
                     <td style={{ padding: '8px 10px', textAlign: 'center' }}>{r.whtr}</td>
                     <td style={{ padding: '8px 10px', textAlign: 'right', fontSize: '10px', color: '#64748b' }}>{r.fuente}</td>
@@ -484,11 +518,31 @@ export const AnthropometryReportPDF: React.FC<AnthropometryReportPDFProps> = ({
         </div>
 
         {/* Recuadro de Diagnóstico Metabólico Poblacional Explicativo */}
-        <div style={{ background: cardioResult.nivelRiesgo === 'alto' ? '#fef2f2' : cardioResult.nivelRiesgo === 'moderado' ? '#fffbeb' : '#f0fdf4', border: `1px solid ${cardioResult.nivelRiesgo === 'alto' ? '#fecaca' : cardioResult.nivelRiesgo === 'moderado' ? '#fef3c7' : '#bbf7d0'}`, borderRadius: '12px', padding: '16px', marginBottom: '24px' }}>
-          <h4 style={{ margin: '0 0 8px', fontSize: '13px', fontWeight: 800, color: cardioResult.nivelRiesgo === 'alto' ? '#991b1b' : cardioResult.nivelRiesgo === 'moderado' ? '#92400e' : '#166534', fontFamily: 'Orbitron, sans-serif', display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <div style={{
+          background: !cardioResult.cinturaRegistrada ? '#f8fafc' : cardioResult.nivelRiesgo === 'alto' ? '#fef2f2' : cardioResult.nivelRiesgo === 'moderado' ? '#fffbeb' : '#f0fdf4',
+          border: `1px solid ${!cardioResult.cinturaRegistrada ? '#cbd5e1' : cardioResult.nivelRiesgo === 'alto' ? '#fecaca' : cardioResult.nivelRiesgo === 'moderado' ? '#fef3c7' : '#bbf7d0'}`,
+          borderRadius: '12px',
+          padding: '16px',
+          marginBottom: '24px'
+        }}>
+          <h4 style={{
+            margin: '0 0 8px',
+            fontSize: '13px',
+            fontWeight: 800,
+            color: !cardioResult.cinturaRegistrada ? '#475569' : cardioResult.nivelRiesgo === 'alto' ? '#991b1b' : cardioResult.nivelRiesgo === 'moderado' ? '#92400e' : '#166534',
+            fontFamily: 'Orbitron, sans-serif',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px'
+          }}>
             💡 DIAGNÓSTICO CLÍNICO POBLACIONAL DE ADIPOSIDAD VISCERAL
           </h4>
-          <p style={{ margin: 0, fontSize: '12px', color: cardioResult.nivelRiesgo === 'alto' ? '#7f1d1d' : cardioResult.nivelRiesgo === 'moderado' ? '#78350f' : '#14532d', lineHeight: '1.6' }}>
+          <p style={{
+            margin: 0,
+            fontSize: '12px',
+            color: !cardioResult.cinturaRegistrada ? '#475569' : cardioResult.nivelRiesgo === 'alto' ? '#7f1d1d' : cardioResult.nivelRiesgo === 'moderado' ? '#78350f' : '#14532d',
+            lineHeight: '1.6'
+          }}>
             {cardioResult.diagnosticoText}
           </p>
         </div>

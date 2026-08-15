@@ -294,5 +294,15 @@ describe('anthropometryEngine Library', () => {
       expect(resYuhasz.diagnosticoText).toContain('YUHASZ');
       expect(resYuhasz.diagnosticoText).toContain('Carlos');
     });
+
+    it('retorna estado neutral indeterminado cuando la cintura es 0 o undefined en lugar de disfrazarlo como riesgo bajo', () => {
+      const sinCintura = calculateCardiometabolicRisk(0, 100, 175, 'masculino', 'Ana');
+      expect(sinCintura.cinturaRegistrada).toBe(false);
+      expect(sinCintura.nivelRiesgo).toBe('indeterminado');
+      expect(sinCintura.categoria).toBe('No determinado (Sin datos de cintura)');
+      expect(sinCintura.whtrCategoria).toBe('No determinado');
+      expect(sinCintura.rangoStr).toBe('Sin registrar');
+      expect(sinCintura.diagnosticoText).toContain('no se ha registrado el perímetro de cintura');
+    });
   });
 });

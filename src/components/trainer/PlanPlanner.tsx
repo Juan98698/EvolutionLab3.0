@@ -2531,6 +2531,11 @@ export const PlanPlanner: React.FC = () => {
                                   ))}
                                 </div>
                               )}
+                              {isFunctionalExercise(ex) && (
+                                <span style={{ fontSize: '9px', color: '#60a5fa', background: 'rgba(59, 130, 246, 0.12)', border: '1px solid rgba(59, 130, 246, 0.3)', padding: '2px 8px', borderRadius: '4px', fontFamily: "'Orbitron', sans-serif", textTransform: 'uppercase', letterSpacing: '0.5px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                  ⚡ EJERCICIO FUNCIONAL / WOD
+                                </span>
+                              )}
                               {ex.nombre_original && (
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px', flexWrap: 'wrap' }}>
                                   <span style={{ fontSize: '9px', color: 'var(--theme-primary)', background: 'rgba(249, 115, 22, 0.1)', border: '1px solid rgba(249, 115, 22, 0.3)', padding: '2px 8px', borderRadius: '4px', fontFamily: "'Orbitron', sans-serif", textTransform: 'uppercase', letterSpacing: '0.5px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
@@ -2611,10 +2616,38 @@ export const PlanPlanner: React.FC = () => {
                             {globalVariables.map(v => {
                               const val = ex.variables[v.id] ?? '';
                               const uniqueVarInputId = `var-input-${day.id}-${ex.id}-${v.id.trim().replace(/\s+/g, '-')}`;
+                              const isFunc = isFunctionalExercise(ex);
+
+                              // Adaptar etiquetas y placeholders para ejercicios funcionales
+                              let displayLabel = v.label;
+                              let displayPlaceholder = v.defaultValue;
+
+                              if (isFunc) {
+                                const varKey = v.id.toLowerCase().trim();
+                                if (varKey.includes('serie') || varKey.includes('ronda')) {
+                                  displayLabel = 'RONDAS / SERIES';
+                                  displayPlaceholder = 'Ej. 4 rondas';
+                                } else if (varKey.includes('rep') || varKey.includes('trabajo')) {
+                                  displayLabel = 'TIEMPO TRABAJO / REPS';
+                                  displayPlaceholder = 'Ej. 40s / 15 reps';
+                                } else if (varKey.includes('descan') || varKey.includes('pausa')) {
+                                  displayLabel = 'TIEMPO DESCANSO';
+                                  displayPlaceholder = 'Ej. 20s / 1 min';
+                                } else if (varKey.includes('rir') || varKey.includes('rpe') || varKey.includes('intensi')) {
+                                  displayLabel = 'RPE / INTENSIDAD';
+                                  displayPlaceholder = 'Ej. RPE 8-9';
+                                } else if (varKey.includes('peso') || varKey.includes('carga')) {
+                                  displayLabel = 'CARGA (OPCIONAL)';
+                                  displayPlaceholder = 'Ej. 16 kg / Corporal';
+                                } else if (varKey.includes('tempo') || varKey.includes('estruc') || varKey.includes('forma')) {
+                                  displayLabel = 'FORMATO / ESTRUCTURA';
+                                  displayPlaceholder = 'Ej. AMRAP 12\', EMOM';
+                                }
+                              }
 
                               // ─── ReasoningTooltip para el campo Peso ────────
                               const isPesoField = v.id === 'peso';
-                              const isAutoWeight = isPesoField && typeof val === 'string' && val.startsWith('🤖');
+                              const isAutoWeight = !isFunc && isPesoField && typeof val === 'string' && val.startsWith('🤖');
 
                               let loadPrescriptionSteps = null;
                               let loadSource = '';
@@ -2652,13 +2685,15 @@ export const PlanPlanner: React.FC = () => {
                                   className="var-input"
                                   value={val}
                                   onChange={(e) => handleExerciseVarChange(day.id, ex.id, v.id, e.target.value)}
-                                  placeholder={v.defaultValue}
+                                  placeholder={displayPlaceholder}
                                 />
                               );
 
                               return (
                                 <div key={v.id} className="var-item">
-                                  <label htmlFor={uniqueVarInputId}>{v.label}</label>
+                                  <label htmlFor={uniqueVarInputId} style={{ color: isFunc ? '#60a5fa' : undefined }}>
+                                    {displayLabel}
+                                  </label>
                                   {isAutoWeight && loadPrescriptionSteps ? (
                                     <ReasoningTooltip
                                       trigger={inputEl}
