@@ -133,10 +133,24 @@ const ActiveSession: React.FC = () => {
 
         const repsKey = Object.keys(vars).find(k => {
           const kl = k.toLowerCase();
-          return kl.includes('repeticiones') || kl.includes('reps');
+          return (kl.includes('repeticiones') || kl.includes('reps')) && kl !== 'reps_objetivo';
         });
         const repsRaw = repsKey ? vars[repsKey] : undefined;
-        const numReps = parseReps(repsRaw);
+
+        // Si la periodización ya recalculó un objetivo de reps coherente con
+        // el nuevo peso (repsMin del rango, usado en la misma fórmula que
+        // calculó el peso), se usa ese valor en vez del promedio del rango.
+        // Si el ejercicio nunca tuvo un ajuste algorítmico (o el plan no usa
+        // periodización), no existe 'reps_objetivo' y se cae al comportamiento
+        // original (promedio del rango "10-12" definido por el entrenador).
+        const repsObjetivoKey = Object.keys(vars).find(k => k.toLowerCase().trim() === 'reps_objetivo');
+        const repsObjetivoRaw = repsObjetivoKey ? vars[repsObjetivoKey] : undefined;
+        const repsObjetivoNum = repsObjetivoRaw
+          ? parseInt(repsObjetivoRaw.replace(/^🤖\s*/, '').trim(), 10)
+          : NaN;
+        const numReps = (!isNaN(repsObjetivoNum) && repsObjetivoNum > 0)
+          ? repsObjetivoNum
+          : parseReps(repsRaw);
 
         const pesoKey = Object.keys(vars).find(k => k.toLowerCase().includes('peso'));
         const pesoRaw = pesoKey ? vars[pesoKey] : undefined;

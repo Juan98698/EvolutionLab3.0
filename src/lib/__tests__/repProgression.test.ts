@@ -245,6 +245,46 @@ describe('autoRegulatePlanForNextWeek — doble progresión', () => {
     expect(ex.progression_notes ?? '').not.toContain('Rango completado');
   });
 
+  // ── Coherencia peso↔reps ─────────────────────────────────────────────────
+  it('doble progresión: reps_objetivo = repsMin del rango, y el rango original no se toca', () => {
+    const plan   = makePlanWithOneRM('10-12', '1', 100, 'intermedio', 3);
+    // Hizo 12 reps (tope) con margen de sobra → dispara doble progresión
+    const logged = makeLogged([12, 12, 11], 3);
+
+    const result = autoRegulatePlanForNextWeek(plan, logged);
+    const ex     = getExFromResult(result!);
+
+    // reps_objetivo debe ser repsMin (10), marcado con 🤖 igual que el peso
+    expect(ex.variables['reps_objetivo']).toBe('🤖 10');
+    // El rango original ("10-12") debe quedar intacto — lo necesita
+    // checkRepProgressionTrigger en sesiones futuras para seguir detectando
+    // cuándo el atleta vuelve a llegar al tope.
+    expect(ex.variables['repeticiones']).toBe('10-12');
+  });
+
+  it('prescripción estándar (sin trigger): reps_objetivo también baja a repsMin, coherente con el nuevo peso', () => {
+    const plan   = makePlanWithOneRM('10-12', '2', 100, 'intermedio', 3);
+    // No llegó al tope (10 de 12) → prescripción estándar, no doble progresión
+    const logged = makeLogged([10, 10, 9], 2);
+
+    const result = autoRegulatePlanForNextWeek(plan, logged);
+    const ex     = getExFromResult(result!);
+
+    expect(ex.variables['peso']).toMatch(/🤖/);
+    expect(ex.variables['reps_objetivo']).toBe('🤖 10');
+    expect(ex.variables['repeticiones']).toBe('10-12');
+  });
+
+  it('rango de valor único ("10", sin tope superior): reps_objetivo = ese mismo valor', () => {
+    const plan   = makePlanWithOneRM('10', '2', 100, 'intermedio', 3);
+    const logged = makeLogged([10, 10, 10], 2);
+
+    const result = autoRegulatePlanForNextWeek(plan, logged);
+    const ex     = getExFromResult(result!);
+
+    expect(ex.variables['reps_objetivo']).toBe('🤖 10');
+  });
+
   // ── Ejercicio sin 1RM previo: no rompe el plan ──────────────────────────────
   it('ejercicio sin 1RM en marcas: no escribe peso ni rompe el plan', () => {
     const plan = makePlanWithOneRM('10-12', '2', 0, 'intermedio', 3);

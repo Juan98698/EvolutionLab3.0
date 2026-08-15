@@ -194,6 +194,75 @@ describe('ActiveSession Component', () => {
     expect(updatedPlan.periodizationConfig.weekly_session_feedback).toEqual([]);
   });
 
+  it('debe usar reps_objetivo (coherente con el peso 🤖 recalculado) en vez del promedio del rango', () => {
+    // Simula un ejercicio que la periodización ya ajustó: el peso subió a
+    // 65kg y, para ser coherente con ese peso (calculado para repsMin),
+    // el motor guardó reps_objetivo = 10 — aunque el rango del plan sigue
+    // siendo "10-12" (promedio 11) para que el motor lo siga usando después.
+    const mockPlan = {
+      id: 'test-plan-id',
+      periodizationConfig: { enabled: true },
+      trainingDays: [
+        {
+          name: 'Día 1: Pecho',
+          exercises: [
+            {
+              nombre: 'Press banco plano con barra',
+              grupo_muscular: 'Pecho',
+              variables: {
+                'series de trabajo': '2',
+                'repeticiones': '10-12',
+                'reps_objetivo': '🤖 10',
+                'peso': '🤖 65 kg',
+                'descanso': '180',
+                'rir': '1-2',
+              },
+            },
+          ],
+        },
+      ],
+    };
+    localStorage.setItem('pwa_client_plan', JSON.stringify(mockPlan));
+
+    render(<ActiveSession />);
+
+    // Debe mostrar 10 (reps_objetivo), no 11 (promedio de "10-12")
+    expect(screen.getByText('2 series · 10 reps objetivo · RIR 1-2')).toBeDefined();
+    const repsInputs = screen.getAllByPlaceholderText('10');
+    expect(repsInputs).toHaveLength(2);
+  });
+
+  it('sin reps_objetivo: mantiene el comportamiento original (promedio del rango)', () => {
+    const mockPlan = {
+      id: 'test-plan-id',
+      periodizationConfig: { enabled: true },
+      trainingDays: [
+        {
+          name: 'Día 1: Pecho',
+          exercises: [
+            {
+              nombre: 'Press banco plano con barra',
+              grupo_muscular: 'Pecho',
+              variables: {
+                'series de trabajo': '2',
+                'repeticiones': '10-12',
+                'peso': '60',
+                'descanso': '180',
+                'rir': '1-2',
+              },
+            },
+          ],
+        },
+      ],
+    };
+    localStorage.setItem('pwa_client_plan', JSON.stringify(mockPlan));
+
+    render(<ActiveSession />);
+
+    // Sin reps_objetivo, cae al promedio de "10-12" = round((10+12)/2) = 11
+    expect(screen.getByText('2 series · 11 reps objetivo · RIR 1-2')).toBeDefined();
+  });
+
   it('should trigger vibration pattern when rest timer starts', () => {
     render(<ActiveSession />);
 

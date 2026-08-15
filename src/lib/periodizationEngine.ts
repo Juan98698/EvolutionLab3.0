@@ -737,18 +737,29 @@ export const autoRegulatePlanForNextWeek = (
           if (progressionResult) {
             if (!ex.variables) ex.variables = {};
             ex.variables['peso']          = `🤖 ${progressionResult.newWeight} kg`;
+            // Coherencia peso↔reps: el nuevo peso fue calculado exactamente
+            // para rendir `newReps` (= repsMin del rango) al RIR objetivo —
+            // no es un descuento arbitrario, es el mismo cálculo de %1RM que
+            // produjo el peso. Se guarda aparte de 'repeticiones' (que debe
+            // seguir intacto como el rango "10-12" definido por el entrenador,
+            // ya que checkRepProgressionTrigger de la próxima sesión necesita
+            // ese rango completo, no un número fijo).
+            ex.variables['reps_objetivo'] = `🤖 ${progressionResult.newReps}`;
             ex.progression_notes          = progressionResult.note;
             appliedProgression            = true;
             doubleProgressionApplied.add(normName);
           }
         }
 
-        // Si no hubo doble progresión, prescripción estándar desde 1RM
+        // Si no hubo doble progresión, prescripción estándar desde 1RM.
+        // getPrescribedLoad también está calculado para repsMin al RIR
+        // objetivo, así que el mismo criterio de coherencia aplica aquí.
         if (!appliedProgression && repsMin > 0) {
           const newLoad = getPrescribedLoad(oneRM, repsMin, targetRIR);
           if (newLoad > 0) {
             if (!ex.variables) ex.variables = {};
-            ex.variables['peso'] = `🤖 ${newLoad} kg`;
+            ex.variables['peso']          = `🤖 ${newLoad} kg`;
+            ex.variables['reps_objetivo'] = `🤖 ${repsMin}`;
           }
         }
       }
