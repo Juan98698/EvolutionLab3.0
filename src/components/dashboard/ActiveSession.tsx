@@ -27,6 +27,7 @@ interface ActiveExercise {
   series: SeriesEntry[];
   feedback_estimulo: 'none' | 'good' | 'extreme';
   feedback_recuperacion: 'recovered' | 'just_in_time' | 'sore';
+  isFunctional?: boolean;
   video_url?: string;
   image_url?: string;
   gif_url?: string;
@@ -124,17 +125,19 @@ const ActiveSession: React.FC = () => {
 
       // Build ActiveExercise array from plan exercises
       const built: ActiveExercise[] = day.exercises.map(ex => {
+        const isFunc = isFunctionalExercise(ex);
         const vars = ex.variables || {};
         const seriesKey = Object.keys(vars).find(k => {
           const kl = k.toLowerCase();
-          return kl.includes('series de trabajo') || kl.includes('series');
+          return kl.includes('series de trabajo') || kl.includes('series') || kl.includes('ronda');
         });
         const seriesRaw = seriesKey ? vars[seriesKey] : undefined;
         const numSeries = parseSeries(seriesRaw);
 
         const repsKey = Object.keys(vars).find(k => {
           const kl = k.toLowerCase();
-          return (kl.includes('repeticiones') || kl.includes('reps')) && kl !== 'reps_objetivo';
+          if (kl === 'reps_objetivo' || kl.includes('series')) return false;
+          return kl.includes('repeticiones') || kl.includes('reps') || kl.includes('trabajo');
         });
         const repsRaw = repsKey ? vars[repsKey] : undefined;
 
@@ -153,15 +156,24 @@ const ActiveSession: React.FC = () => {
           ? repsObjetivoNum
           : parseReps(repsRaw);
 
-        const pesoKey = Object.keys(vars).find(k => k.toLowerCase().includes('peso'));
+        const pesoKey = Object.keys(vars).find(k => {
+          const kl = k.toLowerCase();
+          return kl.includes('peso') || kl.includes('carga');
+        });
         const pesoRaw = pesoKey ? vars[pesoKey] : undefined;
         const pesoSugerido = parsePeso(pesoRaw);
 
-        const descansoKey = Object.keys(vars).find(k => k.toLowerCase().includes('descanso'));
+        const descansoKey = Object.keys(vars).find(k => {
+          const kl = k.toLowerCase();
+          return kl.includes('descanso') || kl.includes('pausa');
+        });
         const descansoRaw = descansoKey ? vars[descansoKey] : undefined;
         const descanso = parseDescanso(descansoRaw);
 
-        const rirKey = Object.keys(vars).find(k => k.toLowerCase().trim() === 'rir');
+        const rirKey = Object.keys(vars).find(k => {
+          const kl = k.toLowerCase().trim();
+          return kl === 'rir' || kl === 'rpe' || kl.includes('intensi');
+        });
         const rirRaw = rirKey ? vars[rirKey] : '';
 
         const series: SeriesEntry[] = Array.from({ length: numSeries }, () => ({
@@ -180,10 +192,11 @@ const ActiveSession: React.FC = () => {
           series,
           feedback_estimulo: 'good',
           feedback_recuperacion: 'recovered',
+          isFunctional: isFunc,
           video_url: ex.video_url || '',
           image_url: ex.image_url || '',
           gif_url: ex.gif_url || '',
-          description: ex.description || '',
+          description: (ex as any).descripcion || (ex as any).description || ''
         };
       });
 
@@ -653,6 +666,11 @@ const ActiveSession: React.FC = () => {
       >
       {/* ── Exercise Name ── */}
       <div className="active-session-exercise-header">
+        {currentExercise.isFunctional && (
+          <span style={{ fontSize: '10px', color: '#60a5fa', background: 'rgba(59, 130, 246, 0.15)', border: '1px solid rgba(59, 130, 246, 0.35)', padding: '2px 10px', borderRadius: '6px', fontFamily: "'Orbitron', sans-serif", fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '6px', display: 'inline-block' }}>
+            ⚡ EJERCICIO FUNCIONAL / WOD
+          </span>
+        )}
         <h1 className="active-session-exercise-name">
           {currentExercise.nombre}
         </h1>
@@ -660,9 +678,9 @@ const ActiveSession: React.FC = () => {
           <span className="active-session-exercise-group">{currentExercise.grupo}</span>
         )}
         <div className="active-session-exercise-meta">
-          {currentExercise.series.length} series
-          {currentExercise.suggestedReps > 0 && ` · ${currentExercise.suggestedReps} reps objetivo`}
-          {currentExercise.targetRIR && ` · RIR ${currentExercise.targetRIR}`}
+          {currentExercise.series.length} {currentExercise.isFunctional ? 'rondas / bloques' : 'series'}
+          {currentExercise.suggestedReps > 0 && ` · ${currentExercise.suggestedReps} ${currentExercise.isFunctional ? 'trabajo / reps' : 'reps objetivo'}`}
+          {currentExercise.targetRIR && ` · ${currentExercise.isFunctional ? 'RPE' : 'RIR'} ${currentExercise.targetRIR}`}
         </div>
       </div>
 
@@ -670,9 +688,9 @@ const ActiveSession: React.FC = () => {
       <div className="active-session-series-container">
         {/* Header row */}
         <div className="active-session-series-header">
-          <span className="active-session-col-label">Serie</span>
-          <span className="active-session-col-label">Peso (kg)</span>
-          <span className="active-session-col-label">Reps</span>
+          <span className="active-session-col-label">{currentExercise.isFunctional ? 'Ronda' : 'Serie'}</span>
+          <span className="active-session-col-label">{currentExercise.isFunctional ? 'Carga (opc)' : 'Peso (kg)'}</span>
+          <span className="active-session-col-label">{currentExercise.isFunctional ? 'Trabajo / Reps' : 'Reps'}</span>
           <span className="active-session-col-label">✓</span>
         </div>
 

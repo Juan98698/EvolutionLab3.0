@@ -26,7 +26,7 @@ import {
   evaluateStrengthVolumeDetailed,
   detectPatternFromExerciseName, 
 } from '../../lib/strengthThresholds';
-import { isFunctionalExercise } from '../../lib/exerciseUtils';
+import { isFunctionalExercise, getFunctionalVariableLabel, getFunctionalVariablePlaceholder } from '../../lib/exerciseUtils';
 import { GeneratedSession } from '../../lib/sessionDistributor';
 import { mergeSkeletonIntoExistingPlan, mergeProtocolIntoExistingPlan } from '../../lib/planMerger';
 import {
@@ -2618,32 +2618,8 @@ export const PlanPlanner: React.FC = () => {
                               const uniqueVarInputId = `var-input-${day.id}-${ex.id}-${v.id.trim().replace(/\s+/g, '-')}`;
                               const isFunc = isFunctionalExercise(ex);
 
-                              // Adaptar etiquetas y placeholders para ejercicios funcionales
-                              let displayLabel = v.label;
-                              let displayPlaceholder = v.defaultValue;
-
-                              if (isFunc) {
-                                const varKey = v.id.toLowerCase().trim();
-                                if (varKey.includes('serie') || varKey.includes('ronda')) {
-                                  displayLabel = 'RONDAS / SERIES';
-                                  displayPlaceholder = 'Ej. 4 rondas';
-                                } else if (varKey.includes('rep') || varKey.includes('trabajo')) {
-                                  displayLabel = 'TIEMPO TRABAJO / REPS';
-                                  displayPlaceholder = 'Ej. 40s / 15 reps';
-                                } else if (varKey.includes('descan') || varKey.includes('pausa')) {
-                                  displayLabel = 'TIEMPO DESCANSO';
-                                  displayPlaceholder = 'Ej. 20s / 1 min';
-                                } else if (varKey.includes('rir') || varKey.includes('rpe') || varKey.includes('intensi')) {
-                                  displayLabel = 'RPE / INTENSIDAD';
-                                  displayPlaceholder = 'Ej. RPE 8-9';
-                                } else if (varKey.includes('peso') || varKey.includes('carga')) {
-                                  displayLabel = 'CARGA (OPCIONAL)';
-                                  displayPlaceholder = 'Ej. 16 kg / Corporal';
-                                } else if (varKey.includes('tempo') || varKey.includes('estruc') || varKey.includes('forma')) {
-                                  displayLabel = 'FORMATO / ESTRUCTURA';
-                                  displayPlaceholder = 'Ej. AMRAP 12\', EMOM';
-                                }
-                              }
+                              const displayLabel = getFunctionalVariableLabel(v.id, v.label, isFunc);
+                              const displayPlaceholder = getFunctionalVariablePlaceholder(v.id, v.defaultValue, isFunc);
 
                               // ─── ReasoningTooltip para el campo Peso ────────
                               const isPesoField = v.id === 'peso';

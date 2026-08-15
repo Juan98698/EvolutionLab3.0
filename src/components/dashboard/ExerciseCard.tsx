@@ -1,6 +1,7 @@
 import React from 'react';
 import { Exercise, GlobalVariable } from '../../types/database.types';
 import RestTimer from '../common/RestTimer';
+import { isFunctionalExercise, getFunctionalVariableLabel } from '../../lib/exerciseUtils';
 
 interface ExerciseCardProps {
   exercise: Exercise;
@@ -146,6 +147,11 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
 
         {/* Nombre del ejercicio */}
         <div className="exercise-name" style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+          {isFunctionalExercise(exercise) && (
+            <span style={{ fontSize: '9px', color: '#60a5fa', background: 'rgba(59, 130, 246, 0.12)', border: '1px solid rgba(59, 130, 246, 0.3)', padding: '2px 8px', borderRadius: '4px', fontFamily: "'Orbitron', sans-serif", textTransform: 'uppercase', letterSpacing: '0.5px', width: 'fit-content' }}>
+              ⚡ EJERCICIO FUNCIONAL / WOD
+            </span>
+          )}
           <span
             className="static-exercise-name"
             style={{ fontSize: '1.1rem', fontWeight: 600 }}
@@ -181,6 +187,7 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
           const value = String(val ?? '').trim();
           if (!value || value === '(sin definir)') return null;
 
+          const isFunc = isFunctionalExercise(exercise);
           const varId = v.id.trim().toLowerCase();
           const cleanLabel = v.label.toLowerCase().replace(/\(.*?\)/g, '').trim();
           const icon = iconMap[varId] || iconMap[cleanLabel] || defaultIcon;
@@ -202,6 +209,7 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
           }
 
           const definition = variableDefinitions[varId] || variableDefinitions[cleanLabel] || '';
+          const displayBadgeLabel = getFunctionalVariableLabel(v.id, v.label, isFunc);
 
           return (
             <div
@@ -228,7 +236,7 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
                 className="var-badge-label"
                 style={{ fontWeight: 600, color: 'rgba(255,255,255,0.6)', marginRight: '3px' }}
               >
-                {escapeHtml(v.label)}:
+                {escapeHtml(displayBadgeLabel)}:
               </span>
               {' '}{escapeHtml(displayValue)}
               {definition && (

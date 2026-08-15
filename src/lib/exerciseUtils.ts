@@ -14,7 +14,7 @@ export interface ExerciseBaseLike {
 
 /**
  * Determina si un ejercicio es de modalidad Funcional / HIIT / Cardio Metabólico.
- * Se usa para aislar el cómputo de sobrecarga progresiva (tonelaje/1RM) y el radar de hipertrofia.
+ * Se usa para aislar el cómputo de sobrecarga progresiva (tonelaje/1RM), el radar de hipertrofia y la UI.
  */
 export function isFunctionalExercise(ex: ExerciseBaseLike | null | undefined): boolean {
   if (!ex) return false;
@@ -55,4 +55,67 @@ export function isFunctionalExercise(ex: ExerciseBaseLike | null | undefined): b
  */
 export function isHypertrophyExercise(ex: ExerciseBaseLike | null | undefined): boolean {
   return !isFunctionalExercise(ex);
+}
+
+/**
+ * Devuelve la etiqueta adaptada para una variable del ejercicio.
+ * Si el ejercicio es de tipo funcional/HIIT/metabólico, adapta la etiqueta (ej. "Series" -> "RONDAS / SERIES").
+ */
+export function getFunctionalVariableLabel(varId: string, originalLabel?: string, isFunc: boolean = false): string {
+  const fallbackLabel = originalLabel || varId;
+  if (!isFunc) return fallbackLabel;
+
+  const key = (varId || originalLabel || '').toLowerCase().trim();
+
+  if (key.includes('serie') || key.includes('ronda')) {
+    return 'RONDAS / SERIES';
+  }
+  if (key.includes('rep') || key.includes('trabajo')) {
+    return 'TIEMPO TRABAJO / REPS';
+  }
+  if (key.includes('descan') || key.includes('pausa')) {
+    return 'TIEMPO DESCANSO';
+  }
+  if (key.includes('rir') || key.includes('rpe') || key.includes('intensi')) {
+    return 'RPE / INTENSIDAD';
+  }
+  if (key.includes('peso') || key.includes('carga')) {
+    return 'CARGA (OPCIONAL)';
+  }
+  if (key.includes('tempo') || key.includes('estruc') || key.includes('forma')) {
+    return 'FORMATO / ESTRUCTURA';
+  }
+
+  return fallbackLabel;
+}
+
+/**
+ * Devuelve el placeholder adaptado para la edición de variables en el planificador.
+ */
+export function getFunctionalVariablePlaceholder(varId: string, originalPlaceholder?: string, isFunc: boolean = false): string {
+  const fallbackPlaceholder = originalPlaceholder || '';
+  if (!isFunc) return fallbackPlaceholder;
+
+  const key = (varId || '').toLowerCase().trim();
+
+  if (key.includes('serie') || key.includes('ronda')) {
+    return 'Ej. 4 rondas';
+  }
+  if (key.includes('rep') || key.includes('trabajo')) {
+    return 'Ej. 40s / 15 reps';
+  }
+  if (key.includes('descan') || key.includes('pausa')) {
+    return 'Ej. 20s / 1 min';
+  }
+  if (key.includes('rir') || key.includes('rpe') || key.includes('intensi')) {
+    return 'Ej. RPE 8-9';
+  }
+  if (key.includes('peso') || key.includes('carga')) {
+    return 'Ej. 16 kg / Corporal';
+  }
+  if (key.includes('tempo') || key.includes('estruc') || key.includes('forma')) {
+    return "Ej. AMRAP 12', EMOM";
+  }
+
+  return fallbackPlaceholder;
 }
