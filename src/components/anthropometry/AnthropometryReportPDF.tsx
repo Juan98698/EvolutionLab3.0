@@ -277,20 +277,63 @@ export const AnthropometryReportPDF: React.FC<AnthropometryReportPDFProps> = ({
             </table>
           </div>
 
-          {/* Diámetros Óseos */}
+          {/* Diámetros */}
           <div style={{ border: '1px solid #cbd5e1', borderRadius: '8px', overflow: 'hidden' }}>
-            <div style={{ background: '#334155', color: 'white', padding: '6px 10px', fontSize: '11px', fontWeight: 800 }}>DIÁMETROS ÓSEOS (CM)</div>
+            <div style={{ background: '#334155', color: 'white', padding: '6px 10px', fontSize: '11px', fontWeight: 800 }}>DIÁMETROS (CM)</div>
             <table style={{ width: '100%', fontSize: '11px', borderCollapse: 'collapse' }}>
               <tbody>
-                <tr style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '4px 8px' }}>Biacromial:</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{diametros?.biacromial || 0} cm</td></tr>
-                <tr style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '4px 8px' }}>Bi-iliocrestídeo:</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{diametros?.bi_iliocrestideo || 0} cm</td></tr>
-                <tr style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '4px 8px' }}>Humeral (Biepicondilar):</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{diametros?.humeral || 0} cm</td></tr>
-                <tr style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '4px 8px' }}>Femoral (Bicondilar):</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{diametros?.femoral || 0} cm</td></tr>
-                <tr style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '4px 8px' }}>Muñeca (Biestiloideo):</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{diametros?.muneca || 0} cm</td></tr>
-                <tr><td style={{ padding: '4px 8px' }}>Tobillo (Bimaleolar):</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{diametros?.tobillo || 0} cm</td></tr>
+                <tr style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '4px 8px' }}>Codo:</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{diametros?.codo || 0} cm</td></tr>
+                <tr style={{ borderBottom: valoracion.metodo === 'ISAK' ? '1px solid #f1f5f9' : 'none' }}><td style={{ padding: '4px 8px' }}>Rodilla:</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{diametros?.rodilla || 0} cm</td></tr>
+                {valoracion.metodo === 'ISAK' ? (
+                  <>
+                    <tr style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '4px 8px' }}>Anteroposterior (Muñeca):</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{diametros?.anteroposterior || 0} cm</td></tr>
+                    <tr style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '4px 8px' }}>Biiliocrestal:</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{diametros?.biiliocrestal || 0} cm</td></tr>
+                    <tr style={{ borderBottom: '1px solid #f1f5f9' }}><td style={{ padding: '4px 8px' }}>Biacromial:</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{diametros?.biacromial || 0} cm</td></tr>
+                    <tr><td style={{ padding: '4px 8px' }}>Transversal:</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{diametros?.transversal || 0} cm</td></tr>
+                  </>
+                ) : (
+                  <tr><td style={{ padding: '4px 8px' }}>Anteroposterior (Muñeca):</td><td style={{ padding: '4px 8px', textAlign: 'right', fontWeight: 700 }}>{diametros?.anteroposterior || 0} cm</td></tr>
+                )}
               </tbody>
             </table>
           </div>
+        </div>
+
+        {/* Índice de Masa Corporal (IMC) — OMS */}
+        <div style={{ marginBottom: '20px' }}>
+          <h4 style={{ margin: '0 0 6px', fontSize: '12px', fontWeight: 800, color: '#0f172a' }}>Índice de Masa Corporal (IMC) — OMS</h4>
+          <table style={{ width: '100%', fontSize: '11px', borderCollapse: 'collapse', border: '1px solid #cbd5e1' }}>
+            <thead>
+              <tr style={{ background: '#334155', color: 'white' }}>
+                <th style={{ padding: '5px 8px', textAlign: 'left' }}>Clasificación</th>
+                <th style={{ padding: '5px 8px', textAlign: 'left' }}>Rango IMC (kg/m²)</th>
+                <th style={{ padding: '5px 8px', textAlign: 'left' }}>Valoración</th>
+              </tr>
+            </thead>
+            <tbody>
+              {[
+                { cat: 'Bajo peso', range: '< 18.5', min: 0, max: 18.49 },
+                { cat: 'Normal', range: '18.5 – 24.9', min: 18.5, max: 24.99 },
+                { cat: 'Sobrepeso', range: '25.0 – 29.9', min: 25.0, max: 29.99 },
+                { cat: 'Obesidad grado I', range: '30.0 – 34.9', min: 30.0, max: 34.99 },
+                { cat: 'Obesidad grado II', range: '35.0 – 39.9', min: 35.0, max: 39.99 },
+                { cat: 'Obesidad grado III', range: '≥ 40.0', min: 40.0, max: 999 },
+              ].map((row, i) => {
+                const isMatch = valoracion.clasificacion_imc
+                  ? row.cat.toLowerCase() === valoracion.clasificacion_imc.toLowerCase()
+                  : (valoracion.imc || 0) >= row.min && (valoracion.imc || 0) <= row.max;
+                return (
+                  <tr key={i} style={{ background: isMatch ? '#e0f2fe' : 'transparent', fontWeight: isMatch ? 800 : 400, borderBottom: '1px solid #e2e8f0' }}>
+                    <td style={{ padding: '4px 8px' }}>{row.cat}</td>
+                    <td style={{ padding: '4px 8px' }}>{row.range}</td>
+                    <td style={{ padding: '4px 8px', color: isMatch ? '#0284c7' : '#64748b' }}>
+                      {isMatch ? `◄ ${atletaNombre} (${valoracion.imc || 0})` : ''}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
 
         {/* Tablas Normativas: % Grasa vs % Músculo */}
