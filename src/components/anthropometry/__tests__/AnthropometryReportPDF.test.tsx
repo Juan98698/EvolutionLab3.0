@@ -132,4 +132,55 @@ describe('AnthropometryReportPDF — tabla de % de masa muscular', () => {
     expect(p3?.textContent).toContain('👉 🟡 Riesgo Elevado (ALAD / IDF / WHtR)');
     expect(p3?.textContent).toContain('DIAGNÓSTICO CLÍNICO POBLACIONAL DE ADIPOSIDAD VISCERAL');
   });
+
+  it('muestra estado neutral "Cintura no registrada" en la Página 3 cuando cintura es 0 o ausente sin badge verde falso', () => {
+    const valoracionSinCintura = buildValoracion({
+      perimetros: { cintura: 0, cadera: 0 },
+      estatura: 170,
+      genero: 'femenino',
+    });
+
+    const { container } = render(
+      <AnthropometryReportPDF valoracion={valoracionSinCintura} atletaNombre="Laura Test" trainerProfile={null} />
+    );
+
+    const p3 = container.querySelector('#anthropometry-pdf-page-3');
+    expect(p3?.textContent).toContain('Sin registrar');
+    expect(p3?.textContent).not.toContain('👉 🟢 Óptimo / Bajo Riesgo');
+    expect(p3?.textContent).toContain('no se ha registrado el perímetro de cintura');
+  });
+
+  it('resalta correctamente la fila correspondiente en la tabla IMC de la OMS (ej. Sobrepeso 28.4)', () => {
+    const valoracionIMC = buildValoracion({
+      imc: 28.4,
+      clasificacion_imc: 'Sobrepeso',
+    });
+
+    const { container } = render(
+      <AnthropometryReportPDF valoracion={valoracionIMC} atletaNombre="Mariano Test" trainerProfile={null} />
+    );
+
+    const p2 = container.querySelector('#anthropometry-pdf-page-2');
+    expect(p2?.textContent).toContain('Índice de Masa Corporal (IMC) — OMS');
+    expect(p2?.textContent).toContain('◄ Mariano Test (28.4)');
+  });
+
+  it('renderiza la marca del entrenador y branding en el encabezado de las páginas cuando se provee trainerProfile', () => {
+    const mockTrainer = {
+      nombre: 'Coach Alejandro Smith',
+      marca: {
+        nombre_display: 'Apex Performance Lab',
+        eslogan: 'Ciencia del Alto Rendimiento',
+      },
+    };
+
+    const valoracion = buildValoracion({});
+    const { container } = render(
+      <AnthropometryReportPDF valoracion={valoracion} atletaNombre="Diego Test" trainerProfile={mockTrainer as any} />
+    );
+
+    expect(container.textContent).toContain('Apex Performance Lab');
+    expect(container.textContent).toContain('Coach Alejandro Smith');
+  });
 });
+

@@ -304,5 +304,47 @@ describe('anthropometryEngine Library', () => {
       expect(sinCintura.rangoStr).toBe('Sin registrar');
       expect(sinCintura.diagnosticoText).toContain('no se ha registrado el perímetro de cintura');
     });
+
+    it('utiliza lenguaje clínico prudente y asociativo (asociación poblacional en lugar de diagnóstico individual tajante)', () => {
+      const moderado = calculateCardiometabolicRisk(94, 100, 175, 'masculino', 'Carlos');
+      expect(moderado.diagnosticoText).toContain('se asocia a mayor riesgo de desbordamiento lipídico y resistencia a la insulina');
+      expect(moderado.diagnosticoText).toContain('por lo que conviene vigilar marcadores metabólicos junto a tu médico');
+
+      const optimo = calculateCardiometabolicRisk(80, 95, 175, 'masculino', 'María');
+      expect(optimo.diagnosticoText).toContain('un patrón habitualmente asociado a mejor protección metabólica y mejor sensibilidad a la insulina');
+    });
+  });
+
+  describe('Soporte de Esquema ISAK para Diámetros Óseos (biliocrestal vs biiliocrestal)', () => {
+    it('soporta tanto biiliocrestal como biliocrestal en la estructura de datos antropométrica', () => {
+      const val1 = processFullAnthropometry({
+        cliente_id: 'client-isak-1',
+        fecha: '2026-08-01',
+        edad: 25,
+        peso: 70,
+        estatura: 175,
+        metodo: 'Yuhasz',
+        genero: 'masculino',
+        pliegues: { triceps: 10, subescapular: 10, suprailiaco: 10, abdominal: 10, muslo: 10, pantorrilla: 10 },
+        diametros: { codo: 7, rodilla: 9, muneca: 5.5, biiliocrestal: 28, biacromial: 38 },
+      });
+
+      const val2 = processFullAnthropometry({
+        cliente_id: 'client-isak-2',
+        fecha: '2026-08-01',
+        edad: 25,
+        peso: 70,
+        estatura: 175,
+        metodo: 'Yuhasz',
+        genero: 'masculino',
+        pliegues: { triceps: 10, subescapular: 10, suprailiaco: 10, abdominal: 10, muslo: 10, pantorrilla: 10 },
+        diametros: { codo: 7, rodilla: 9, muneca: 5.5, biliocrestal: 28, biacromial: 38 },
+      });
+
+      expect(val1.diametros?.biiliocrestal).toBe(28);
+      expect(val2.diametros?.biliocrestal).toBe(28);
+      expect(val1.pct_oseo).toBeCloseTo(val2.pct_oseo || 0, 1);
+    });
   });
 });
+
