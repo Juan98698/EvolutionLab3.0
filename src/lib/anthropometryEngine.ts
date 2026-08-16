@@ -148,10 +148,10 @@ export function calculateCardiometabolicRisk(
     if (whtrAlerta && cintura < limitElevado) {
       diagnosticoText = `${nombreAtleta}, aunque tu cintura absoluta en cm (${cintura} cm) se encuentra por debajo del umbral estándar, tu Índice Cintura/Estatura (WHtR = ${whtr}) supera el límite de seguridad de 0.50. Debido a la menor capacidad de expansión subcutánea en nuestra población, este valor indica alerta temprana de grasa visceral. Se recomienda monitorear la composición corporal de forma periódica.`;
     } else {
-      diagnosticoText = `${nombreAtleta}, tu perímetro de cintura de ${cintura} cm (WHtR = ${whtr}) te sitúa en RIESGO ELEVADO bajo los consensos latinoamericanos ALAD / IDF. Esta franja señala desbordamiento lipídico e inminente resistencia a la insulina. El método ${metodoLabel} evalúa adiposidad subcutánea, por lo que este parámetro funcional ayuda a proteger tu salud metabólica de forma oportuna.`;
+      diagnosticoText = `${nombreAtleta}, tu perímetro de cintura de ${cintura} cm (WHtR = ${whtr}) te sitúa en RIESGO ELEVADO bajo los consensos latinoamericanos ALAD / IDF. Esta franja se asocia a mayor riesgo de desbordamiento lipídico y resistencia a la insulina, por lo que conviene vigilar marcadores metabólicos junto a tu médico. El método ${metodoLabel} evalúa adiposidad subcutánea, por lo que este parámetro funcional ayuda a proteger tu salud metabólica de forma oportuna.`;
     }
   } else {
-    diagnosticoText = `${nombreAtleta}, tu perímetro de cintura (${cintura} cm) e Índice Cintura/Estatura (WHtR = ${whtr}) se encuentran en rangos óptimos de protección metabólica y sensibilidad a la insulina según la ALAD/IDF.`;
+    diagnosticoText = `${nombreAtleta}, tu perímetro de cintura (${cintura} cm) e Índice Cintura/Estatura (WHtR = ${whtr}) se encuentran en rangos óptimos, un patrón habitualmente asociado a mejor protección metabólica y mejor sensibilidad a la insulina según la ALAD/IDF.`;
   }
 
   return {
