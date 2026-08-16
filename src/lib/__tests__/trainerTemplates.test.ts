@@ -310,8 +310,9 @@ describe('trainerTemplates Module', () => {
       expect(ex.gif_url).toBe('https://cdn.fit/banca.gif');
       expect(ex.video_url).toBe('https://youtube.com/watch?v=123');
 
-      // Auto-cálculo de 80% de 100kg = 80kg
-      expect(ex.variables['peso']).toBe('80');
+      // Auto-cálculo de 80% de 100kg = 80kg y reps_objetivo = 5
+      expect(ex.variables['peso']).toBe('🤖 80 kg');
+      expect(ex.variables['reps_objetivo']).toBe('🤖 5');
     });
   });
 });

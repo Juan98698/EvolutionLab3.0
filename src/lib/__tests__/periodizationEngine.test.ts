@@ -7,6 +7,8 @@ import {
   calcTargetRIRForWeek,
   calculateNextMicrocycleVolume,
   autoRegulatePlanForNextWeek,
+  applyPrescribedWeightToExercise,
+  recalculatePlanWeights,
 } from '../periodizationEngine';
 import { PlanData } from '../../types/database.types';
 
@@ -109,4 +111,64 @@ describe('periodizationEngine Library', () => {
       expect(updatedPlan?.periodizationConfig?.semana_actual).toBe(2);
     });
   });
+
+  describe('applyPrescribedWeightToExercise & recalculatePlanWeights', () => {
+    it('escribe tanto peso (🤖 X kg) como reps_objetivo (🤖 repsMin) de forma coherente', () => {
+      const inputEx = {
+        id: 'ex-bench',
+        nombre: 'Press de Banca',
+        variables: {
+          'repeticiones': '10-12',
+          'rir': '2',
+        },
+      };
+
+      const updatedEx = applyPrescribedWeightToExercise(inputEx, 100, 'epley', 2.5);
+
+      expect(updatedEx.variables['peso']).toMatch(/^🤖 \d+(\.\d+)? kg$/);
+      expect(updatedEx.variables['reps_objetivo']).toBe('🤖 10');
+    });
+
+    it('recalculatePlanWeights actualiza de forma coherente peso y reps_objetivo en todos los días del plan', () => {
+      const days = [
+        {
+          id: 'day-1',
+          name: 'Día 1',
+          exercises: [
+            {
+              id: 'ex-squat',
+              nombre: 'Sentadilla Libre con Barra',
+              variables: { 'repeticiones': '8-10', 'rir': '2' },
+            },
+          ],
+        },
+      ];
+
+      const marcas = { sentadilla: 140 };
+      const updatedDays = recalculatePlanWeights(days, marcas, 'epley', 2.5);
+
+      const ex = updatedDays[0].exercises[0];
+      expect(ex.variables['peso']).toMatch(/^🤖 \d+(\.\d+)? kg$/);
+      expect(ex.variables['reps_objetivo']).toBe('🤖 8');
+    });
+
+    it('limpia las variables autogeneradas por el motor (🤖) cuando el 1RM es 0 o indefinido', () => {
+      const inputEx = {
+        id: 'ex-bench',
+        nombre: 'Press de Banca',
+        variables: {
+          'repeticiones': '10-12',
+          'rir': '2',
+          'peso': '🤖 75 kg',
+          'reps_objetivo': '🤖 10',
+        },
+      };
+
+      const cleanedEx = applyPrescribedWeightToExercise(inputEx, 0);
+
+      expect(cleanedEx.variables['peso']).toBeUndefined();
+      expect(cleanedEx.variables['reps_objetivo']).toBeUndefined();
+    });
+  });
 });
+

@@ -7,7 +7,7 @@ import { Profile, PlanData, TrainingDay, Exercise, GlobalVariable, EjercicioGlob
 import Toast from '../common/Toast';
 import { InfoTooltip } from '../common/InfoTooltip';
 import ReasoningTooltip, { buildLoadReasoningSteps, buildVolumeReasoningSteps } from '../common/ReasoningTooltip';
-import { getPrescribedLoadDetailed, mapExerciseToLiftKey } from '../../lib/periodizationEngine';
+import { getPrescribedLoadDetailed, mapExerciseToLiftKey, recalculatePlanWeights as recalculatePlanWeightsEngine } from '../../lib/periodizationEngine';
 import { PeriodizationHelpModal } from '../common/PeriodizationHelpModal';
 import { filterExercisesByQuery } from '../../lib/exerciseSearch';
 import { getThresholdsForMuscleGroup } from '../../lib/volumeThresholds';
@@ -134,63 +134,7 @@ export const PlanPlanner: React.FC = () => {
     const formula = formulaOverride || periodizationConfig?.formula_preferida || 'epley';
     const rounding = roundingOverride ?? periodizationConfig?.redondeo_peso ?? 2.5;
 
-    return days.map(day => ({
-      ...day,
-      exercises: day.exercises.map(ex => {
-        if (!ex.nombre) return ex;
-        const normName = ex.nombre.toLowerCase().trim();
-        
-        // Buscar 1RM para este ejercicio con fallback robusto a marcas base
-        let oneRM = marcas[normName];
-        if (oneRM === undefined || oneRM === null || Number(oneRM) === 0 || String(oneRM).trim() === '' || isNaN(Number(oneRM))) {
-          const alias = mapExerciseToLiftKey(normName);
-          if (alias) {
-            const aliasVal = marcas[alias];
-            if (aliasVal && !isNaN(Number(aliasVal)) && Number(aliasVal) > 0) {
-              oneRM = Number(aliasVal);
-            }
-          }
-        }
-        
-        const numericOneRM = Number(oneRM) || 0;
-        
-        // Si hay 1RM, calcular peso sugerido usando la fórmula y redondeo preferidos
-        if (numericOneRM && numericOneRM > 0) {
-          const repsStr = ex.variables?.['repeticiones'] || '';
-          const repsMatch = repsStr.match(/\d+/);
-          const reps = repsMatch ? parseInt(repsMatch[0], 10) : 0;
-          
-          const rirStr = ex.variables?.['rir'] || '0';
-          const rirMatch = rirStr.match(/\d+/);
-          const targetRIR = rirMatch ? parseFloat(rirMatch[0]) : 0;
-          
-          if (reps > 0) {
-            const lp = getPrescribedLoadDetailed(numericOneRM, reps, targetRIR, formula, rounding);
-            const newLoad = lp.weight;
-            if (newLoad > 0) {
-              return {
-                ...ex,
-                variables: {
-                  ...ex.variables,
-                  'peso': `🤖 ${newLoad} kg`
-                }
-              };
-            }
-          }
-        } else {
-          // Si no hay 1RM o es 0, y el peso era uno autogenerado anteriormente, lo limpiamos
-          if (ex.variables && ex.variables['peso'] && ex.variables['peso'].startsWith('🤖')) {
-            const updatedVars = { ...ex.variables };
-            delete updatedVars['peso'];
-            return {
-              ...ex,
-              variables: updatedVars
-            };
-          }
-        }
-        return ex;
-      })
-    }));
+    return recalculatePlanWeightsEngine(days, marcas, formula, rounding);
   };
 
   // Estado para el menú de automatización de progresión (Smart Block Builder)

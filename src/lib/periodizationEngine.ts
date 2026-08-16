@@ -754,15 +754,13 @@ export const autoRegulatePlanForNextWeek = (
         }
 
         // Si no hubo doble progresión, prescripción estándar desde 1RM.
-        // getPrescribedLoad también está calculado para repsMin al RIR
-        // objetivo, así que el mismo criterio de coherencia aplica aquí.
-        if (!appliedProgression && repsMin > 0) {
-          const newLoad = getPrescribedLoad(oneRM, repsMin, targetRIR);
-          if (newLoad > 0) {
-            if (!ex.variables) ex.variables = {};
-            ex.variables['peso']          = `🤖 ${newLoad} kg`;
-            ex.variables['reps_objetivo'] = `🤖 ${repsMin}`;
-          }
+        // applyPrescribedWeightToExercise calcula el peso para repsMin al RIR
+        // objetivo y guarda peso + reps_objetivo juntos de forma coherente.
+        if (!appliedProgression) {
+          const rounding = config.redondeo_peso ?? 2.5;
+          const formula = config.formula_preferida || 'epley';
+          const updatedEx = applyPrescribedWeightToExercise(ex, oneRM, formula, rounding);
+          ex.variables = updatedEx.variables;
         }
       }
     });
@@ -1118,8 +1116,62 @@ export const evaluateStrengthPlanVolume = (
   return result;
 };
 
+
 /**
- * Recalcula los pesos sugeridos en kg para una lista de días de entrenamiento
+ * Aplica de forma coherente el peso prescripto y el objetivo de reps (reps_objetivo)
+ * a las variables de un ejercicio basándose en su 1RM, RIR target, fórmula y redondeo.
+ *
+ * Sincroniza 'peso' (ej. "🤖 87.5 kg") y 'reps_objetivo' (ej. "🤖 10") en un solo lugar,
+ * garantizando que el modo inmersivo (ActiveSession) y el planificador (PlanPlanner)
+ * compartan exactamente la misma meta de repeticiones sin divergencias ni sobrecargas.
+ */
+export const applyPrescribedWeightToExercise = (
+  ex: any,
+  oneRM: number,
+  formula: FormulaType = 'epley',
+  roundingIncrement: number = 2.5
+): any => {
+  if (!ex || !ex.nombre || isFunctionalExercise(ex)) return ex;
+
+  const updatedVars = { ...(ex.variables || {}) };
+
+  if (!oneRM || oneRM <= 0) {
+    // Si no hay 1RM válido, limpiar variables autogeneradas por el motor (🤖)
+    let changed = false;
+    if (updatedVars['peso'] && String(updatedVars['peso']).startsWith('🤖')) {
+      delete updatedVars['peso'];
+      changed = true;
+    }
+    if (updatedVars['reps_objetivo'] && String(updatedVars['reps_objetivo']).startsWith('🤖')) {
+      delete updatedVars['reps_objetivo'];
+      changed = true;
+    }
+    return changed ? { ...ex, variables: updatedVars } : ex;
+  }
+
+  const repsStr = updatedVars['repeticiones'] || updatedVars['reps'] || '';
+  const parsedRange = parseRepsRange(repsStr);
+  const repsMin = parsedRange ? parsedRange.repsMin : 0;
+  if (repsMin <= 0) return ex;
+
+  const rirStr = updatedVars['rir'] || '2';
+  const rirMatch = String(rirStr).match(/\d+/);
+  const targetRIR = rirMatch ? parseFloat(rirMatch[0]) : 2;
+
+  const prescribed = getPrescribedLoadDetailed(oneRM, repsMin, targetRIR, formula, roundingIncrement);
+  if (prescribed.weight <= 0) return ex;
+
+  updatedVars['peso'] = `🤖 ${prescribed.weight} kg`;
+  updatedVars['reps_objetivo'] = `🤖 ${repsMin}`;
+
+  return {
+    ...ex,
+    variables: updatedVars,
+  };
+};
+
+/**
+ * Recalcula los pesos sugeridos en kg y reps_objetivo para una lista de días de entrenamiento
  * basándose en las marcas de 1RM del atleta y las fórmulas científicas.
  */
 export const recalculatePlanWeights = (
@@ -1131,41 +1183,28 @@ export const recalculatePlanWeights = (
   const formula = formulaOverride || 'epley';
   const rounding = roundingOverride ?? 2.5;
 
-  return days.map((day: any) => ({
+  return (days || []).map((day: any) => ({
     ...day,
     exercises: (day.exercises || []).map((ex: any) => {
-      if (!ex.nombre) return ex;
+      if (!ex.nombre || isFunctionalExercise(ex)) return ex;
       const normName = ex.nombre.toLowerCase().trim();
-      const liftKey = mapExerciseToLiftKey(normName);
-      if (!liftKey) return ex;
-      const oneRm = marcas[liftKey] ||
-                    marcas[liftKey.replace(/ /g, '_')] ||
-                    marcas[liftKey.replace(/_/g, ' ')] ||
-                    (liftKey.includes('banca') ? (marcas['press_banca'] || marcas['press de banca']) : undefined);
-      if (!oneRm) return ex;
-      const repsStr = ex.variables?.['repeticiones'] || ex.variables?.['reps'] || '10';
-      const repsMatch = String(repsStr).match(/\d+/);
-      const reps = repsMatch ? parseInt(repsMatch[0], 10) : 10;
-      const rirStr = ex.variables?.['rir'] || '2';
-      const rir = parseInt(String(rirStr), 10) || 2;
 
-      const prescribed = getPrescribedLoadDetailed(
-        oneRm,
-        reps,
-        rir,
-        formula,
-        rounding
-      );
-
-      const updatedVariables = { ...(ex.variables || {}) };
-      if (prescribed.weight > 0) {
-        updatedVariables['peso'] = String(prescribed.weight);
+      let oneRM = marcas[normName] || marcas[normName.replace(/ /g, '_')];
+      if (oneRM === undefined || oneRM === null || Number(oneRM) === 0 || String(oneRM).trim() === '' || isNaN(Number(oneRM))) {
+        const alias = mapExerciseToLiftKey(normName);
+        if (alias) {
+          const aliasVal = marcas[alias] ||
+                           marcas[alias.replace(/ /g, '_')] ||
+                           marcas[alias.replace(/_/g, ' ')] ||
+                           (alias.includes('banca') ? (marcas['press_banca'] || marcas['press de banca']) : undefined);
+          if (aliasVal && !isNaN(Number(aliasVal)) && Number(aliasVal) > 0) {
+            oneRM = Number(aliasVal);
+          }
+        }
       }
 
-      return {
-        ...ex,
-        variables: updatedVariables
-      };
+      const numericOneRM = Number(oneRM) || 0;
+      return applyPrescribedWeightToExercise(ex, numericOneRM, formula, rounding);
     })
   }));
 };
