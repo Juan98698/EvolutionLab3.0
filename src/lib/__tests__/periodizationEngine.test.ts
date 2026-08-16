@@ -170,5 +170,100 @@ describe('periodizationEngine Library', () => {
       expect(cleanedEx.variables['reps_objetivo']).toBeUndefined();
     });
   });
+
+  describe('End-to-End RIR & Overload Integration', () => {
+    const buildBasePlan = (): PlanData => ({
+      periodizationConfig: {
+        enabled: true,
+        objetivo: 'hipertrofia',
+        nivel_atleta: 'intermedio',
+        semana_actual: 1,
+        total_semanas: 4,
+        marcas_1rm: { 'press de banca': 100 },
+        redondeo_peso: 2.5,
+        formula_preferida: 'epley',
+      },
+      trainingDays: [
+        {
+          id: 'day-1',
+          name: 'Día 1: Torso',
+          exercises: [
+            {
+              id: 'ex-1',
+              nombre: 'Press de Banca',
+              grupo_muscular: 'Pecho',
+              variables: { 'series de trabajo': '3', repeticiones: '10-12', rir: '2', peso: '🤖 72.5 kg' },
+            },
+          ],
+        },
+      ],
+    });
+
+    it('dispara doble progresión y escribe notas cuando el atleta completa el tope de reps con margen de RIR (12 reps @ RIR 4)', () => {
+      const plan = buildBasePlan();
+      const logged = [
+        {
+          nombre: 'Press de Banca',
+          repsArray: [12, 12, 12],
+          peso: 72.5,
+          rir: 4, // rirLogrado > targetRIR + 1 (4 > 2 + 1)
+          feedback_estimulo: 'good' as const,
+          feedback_recuperacion: 'recovered' as const,
+        },
+      ];
+
+      const updatedPlan = autoRegulatePlanForNextWeek(plan, logged);
+      const ex = updatedPlan!.trainingDays![0].exercises![0];
+
+      expect(ex!.variables!['peso']).toBe('🤖 85 kg');
+      expect(ex!.variables!['reps_objetivo']).toBe('🤖 10');
+      expect(ex!.progression_notes).toContain('Rango completado');
+    });
+
+    it('ajusta la marca 1RM vía EMA (0.85*prev + 0.15*new) cuando el atleta reporta un RIR real flojo y escribe nota de ajuste estándar', () => {
+      const plan = buildBasePlan();
+      // Atleta levantó 60kg x 8 reps con RIR 0 (1RM estimado = 60 * (1 + 8/30) = 76 kg)
+      // Marca previa era 100 kg. Nueva marca EMA = 0.85 * 100 + 0.15 * 76 = 96.4 kg (o 96.3 kg).
+      const logged = [
+        {
+          nombre: 'Press de Banca',
+          repsArray: [8, 8, 8],
+          peso: 60,
+          rir: 0,
+          feedback_estimulo: 'good' as const,
+          feedback_recuperacion: 'recovered' as const,
+        },
+      ];
+
+      const updatedPlan = autoRegulatePlanForNextWeek(plan, logged);
+      const updated1RM = updatedPlan?.periodizationConfig?.marcas_1rm?.['press de banca'];
+      const ex = updatedPlan!.trainingDays![0].exercises![0];
+
+      expect(updated1RM).toBeLessThan(100);
+      expect(updated1RM).toBeCloseTo(96.3, 1);
+      expect(ex!.progression_notes).toContain('🤖 Peso ajustado a');
+    });
+
+    it('mantiene retrocompatibilidad perfecta cuando rirLogrado es igual a targetRIR (comportamiento de sesiones legacy)', () => {
+      const plan = buildBasePlan();
+      const logged = [
+        {
+          nombre: 'Press de Banca',
+          repsArray: [10, 10, 10], // 10 reps (no llegó al tope de 12)
+          peso: 72.5,
+          rir: 2, // Igual a targetRIR (2)
+          feedback_estimulo: 'good' as const,
+          feedback_recuperacion: 'recovered' as const,
+        },
+      ];
+
+      const updatedPlan = autoRegulatePlanForNextWeek(plan, logged);
+      const ex = updatedPlan!.trainingDays![0].exercises![0];
+
+      // No dispara doble progresión porque no completó repsMax (12)
+      expect(ex!.variables!['peso']).toBe('🤖 72.5 kg');
+    });
+  });
 });
+
 

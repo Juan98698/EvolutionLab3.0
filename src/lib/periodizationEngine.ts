@@ -759,8 +759,14 @@ export const autoRegulatePlanForNextWeek = (
         if (!appliedProgression) {
           const rounding = config.redondeo_peso ?? 2.5;
           const formula = config.formula_preferida || 'epley';
+          const prevWeight = ex.variables?.['peso'];
           const updatedEx = applyPrescribedWeightToExercise(ex, oneRM, formula, rounding);
           ex.variables = updatedEx.variables;
+          if (prevWeight && ex.variables?.['peso'] && prevWeight !== ex.variables['peso']) {
+            const cleanNewWeight = String(ex.variables['peso']).replace(/^🤖\s*/, '');
+            const rounded1RM = Math.round(oneRM * 10) / 10;
+            ex.progression_notes = `🤖 Peso ajustado a ${cleanNewWeight} según tu 1RM actualizado (${rounded1RM} kg).`;
+          }
         }
       }
     });
@@ -973,7 +979,9 @@ export const autoRegulatePlanForNextWeek = (
 
         if (!foundEx.variables) foundEx.variables = {};
         foundEx.variables['series de trabajo'] = String(finalSets);
-        foundEx.progression_notes = finalNotes;
+        foundEx.progression_notes = foundEx.progression_notes
+          ? `${foundEx.progression_notes} | ${finalNotes}`
+          : finalNotes;
       });
     });
   }

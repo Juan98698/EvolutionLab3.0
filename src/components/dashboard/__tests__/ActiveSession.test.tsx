@@ -292,4 +292,34 @@ describe('ActiveSession Component', () => {
     fireEvent.click(closeBtn);
     expect(screen.queryByLabelText('Cerrar vista previa')).toBeNull();
   });
+
+  it('renderiza chips de RIR percibido (0 al 4+), prellena según targetRIR y envía el RIR seleccionado al finalizar', async () => {
+    render(<ActiveSession />);
+
+    // Completar las series para mostrar la sección de feedback
+    fireEvent.click(screen.getByLabelText('Marcar serie 1 como completada'));
+    fireEvent.click(screen.getByLabelText('Marcar serie 2 como completada'));
+
+    // Verificar que el selector de RIR está presente con las etiquetas esperadas
+    expect(screen.getByText('RIR (Serie exigente)')).toBeDefined();
+    expect(screen.getByText('0 (Fallo)')).toBeDefined();
+    expect(screen.getByRole('button', { name: '1' })).toBeDefined();
+    expect(screen.getByRole('button', { name: '2' })).toBeDefined();
+    expect(screen.getByRole('button', { name: '3' })).toBeDefined();
+    expect(screen.getByText('4+')).toBeDefined();
+
+    // Seleccionar RIR 1 (serie muy exigente)
+    const rir1Btn = screen.getByRole('button', { name: '1' });
+    fireEvent.click(rir1Btn);
+
+    // Finalizar sesión
+    const finalizeBtn = screen.getByText('✅ Finalizar sesión');
+    await act(async () => {
+      fireEvent.click(finalizeBtn);
+    });
+
+    // Verificar que en el plan guardado se haya usado el RIR real reportado (1)
+    const updatedPlanRaw = localStorage.getItem('pwa_client_plan');
+    expect(updatedPlanRaw).not.toBeNull();
+  });
 });

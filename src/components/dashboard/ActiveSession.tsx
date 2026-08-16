@@ -27,6 +27,7 @@ interface ActiveExercise {
   series: SeriesEntry[];
   feedback_estimulo: 'none' | 'good' | 'extreme';
   feedback_recuperacion: 'recovered' | 'just_in_time' | 'sore';
+  rirPercibido?: number;
   isFunctional?: boolean;
   video_url?: string;
   image_url?: string;
@@ -192,6 +193,7 @@ const ActiveSession: React.FC = () => {
           series,
           feedback_estimulo: 'good',
           feedback_recuperacion: 'recovered',
+          rirPercibido: !isNaN(parseFloat(rirRaw)) ? Math.min(4, Math.max(0, Math.round(parseFloat(rirRaw)))) : 2,
           isFunctional: isFunc,
           video_url: ex.video_url || '',
           image_url: ex.image_url || '',
@@ -434,7 +436,7 @@ const ActiveSession: React.FC = () => {
             grupo: ex.grupo,
             peso: pesoNum,
             repsArray,
-            rpe: isFunc ? null : (parseFloat(ex.targetRIR) || 2),
+            rpe: isFunc ? null : (ex.rirPercibido ?? (parseFloat(ex.targetRIR) || 2)),
             descanso: ex.descanso,
             notas_ej: '',
             feedback_estimulo: ex.feedback_estimulo,
@@ -960,6 +962,34 @@ const ActiveSession: React.FC = () => {
                     <li><strong style={{ color: '#fff' }}>😫 Llegué Agotado:</strong> Tenías agujetas o una fatiga acumulada notable que afectó tu fuerza al iniciar.</li>
                   </ul>
                 </div>
+              </div>
+            </div>
+          )}
+
+          {!currentExercise.isFunctional && (
+            <div className="active-session-feedback-row">
+              <span className="active-session-feedback-label">RIR (Serie exigente)</span>
+              <div className="active-session-feedback-options">
+                {([0, 1, 2, 3, 4] as const).map(val => {
+                  const label = val === 0 ? '0 (Fallo)' : val === 4 ? '4+' : `${val}`;
+                  const isSelected = (currentExercise.rirPercibido ?? 2) === val;
+                  return (
+                    <button
+                      key={val}
+                      type="button"
+                      className={`active-session-feedback-btn${isSelected ? ' selected' : ''}`}
+                      onClick={() => {
+                        setExercises(prev => {
+                          const copy = [...prev];
+                          copy[currentIdx] = { ...copy[currentIdx], rirPercibido: val };
+                          return copy;
+                        });
+                      }}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
               </div>
             </div>
           )}
