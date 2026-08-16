@@ -326,7 +326,7 @@ describe('anthropometryEngine Library', () => {
         metodo: 'Yuhasz',
         genero: 'masculino',
         pliegues: { triceps: 10, subescapular: 10, suprailiaco: 10, abdominal: 10, muslo: 10, pantorrilla: 10 },
-        diametros: { codo: 7, rodilla: 9, muneca: 5.5, biiliocrestal: 28, biacromial: 38 },
+        diametros: { codo: 7, rodilla: 9, biiliocrestal: 28, biacromial: 38 },
       });
 
       const val2 = processFullAnthropometry({
@@ -338,7 +338,7 @@ describe('anthropometryEngine Library', () => {
         metodo: 'Yuhasz',
         genero: 'masculino',
         pliegues: { triceps: 10, subescapular: 10, suprailiaco: 10, abdominal: 10, muslo: 10, pantorrilla: 10 },
-        diametros: { codo: 7, rodilla: 9, muneca: 5.5, biliocrestal: 28, biacromial: 38 },
+        diametros: { codo: 7, rodilla: 9, biliocrestal: 28, biacromial: 38 },
       });
 
       expect(val1.diametros?.biiliocrestal).toBe(28);
