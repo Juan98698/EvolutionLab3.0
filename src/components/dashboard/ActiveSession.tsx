@@ -476,9 +476,9 @@ const ActiveSession: React.FC = () => {
           const isFunc = isFunctionalExercise(ej);
           const totalReps = ej.repsArray.reduce((a, b) => a + b, 0);
           const vol = isFunc || ej.peso == null ? null : ej.peso * totalReps;
-          const maxReps = Math.max(...ej.repsArray);
-          const epley = isFunc || ej.peso == null ? null : ej.peso * (1 + maxReps / 30);
-          const brzyckiDenominator = 1.0278 - 0.0278 * maxReps;
+          const lastSetReps = ej.repsArray.length > 0 ? ej.repsArray[ej.repsArray.length - 1] : 0;
+          const epley = isFunc || ej.peso == null ? null : ej.peso * (1 + lastSetReps / 30);
+          const brzyckiDenominator = 1.0278 - 0.0278 * lastSetReps;
           const brzycki = isFunc || ej.peso == null ? null : (brzyckiDenominator > 0.01 ? ej.peso / brzyckiDenominator : ej.peso);
           const rmEst = (epley != null && brzycki != null) ? Math.round(((epley + brzycki) / 2) * 10) / 10 : null;
           return {

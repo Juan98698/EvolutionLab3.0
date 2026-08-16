@@ -263,6 +263,31 @@ describe('periodizationEngine Library', () => {
       // No dispara doble progresión porque no completó repsMax (12)
       expect(ex!.variables!['peso']).toBe('🤖 72.5 kg');
     });
+
+    it('empareja el RIR percibido con las reps de la última serie (serie más exigente, ej. 12, 12, 10 @ RIR 0) evitando sobreestimar el 1RM con repsMax', () => {
+      const plan = buildBasePlan();
+      // Atleta hizo 12, 12, 10 reps con 80kg y su serie más dura (la última) fue RIR 0.
+      // El 1RM debe calcularse con las 10 reps de la última serie: 80 * (1 + (10+0)/30) = 106.67 kg.
+      // NO con las 12 reps de la primera serie fresca: 80 * (1 + (12+0)/30) = 112 kg (que sobreestimaría +5%).
+      const logged = [
+        {
+          nombre: 'Press de Banca',
+          repsArray: [12, 12, 10],
+          peso: 80,
+          rir: 0,
+          feedback_estimulo: 'good' as const,
+          feedback_recuperacion: 'recovered' as const,
+        },
+      ];
+
+      const updatedPlan = autoRegulatePlanForNextWeek(plan, logged);
+      const updated1RM = updatedPlan?.periodizationConfig?.marcas_1rm?.['press de banca'];
+
+      // 1RM estimado = 80 * (1 + 10/30) = 106.67 kg.
+      // Si hubiera usado maxReps (12): 80 * (1 + 12/30) = 112 kg (sobreestimación peligrosa).
+      expect(updated1RM).toBeCloseTo(106.7, 1);
+      expect(updated1RM).toBeLessThan(112.0);
+    });
   });
 });
 

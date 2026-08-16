@@ -633,10 +633,11 @@ export const autoRegulatePlanForNextWeek = (
   loggedExercises.forEach(logged => {
     const normName = logged.nombre.toLowerCase().trim();
     const actualRIR = logged.rir;
-    const maxReps = Math.max(...(logged.repsArray || []), 0);
+    const repsArr = logged.repsArray || [];
+    const lastSetReps = repsArr.length > 0 ? repsArr[repsArr.length - 1] : 0;
 
-    if (maxReps > 0 && logged.peso != null && logged.peso > 0 && !isFunctionalExercise(logged)) {
-      const currentEstimated1RM = calculate1RM(logged.peso, maxReps, actualRIR ?? undefined);
+    if (lastSetReps > 0 && logged.peso != null && logged.peso > 0 && !isFunctionalExercise(logged)) {
+      const currentEstimated1RM = calculate1RM(logged.peso, lastSetReps, actualRIR ?? undefined);
       if (currentEstimated1RM > 0) {
         updateMarca1RM(marcas, normName, currentEstimated1RM);
         const aliasKey = mapExerciseToLiftKey(normName);
@@ -723,11 +724,11 @@ export const autoRegulatePlanForNextWeek = (
         // Doble progresión: solo si fue loggeado en esta sesión Y no se aplicó
         // ya en otro día del mismo plan (ejercicio repetido en múltiples días)
         if (loggedEntry && loggedEntry.repsArray.length > 0 && !doubleProgressionApplied.has(normName)) {
-          const loggedMaxReps = Math.max(...loggedEntry.repsArray);
-          const rirLogrado    = loggedEntry.rir;
+          const loggedLastSetReps = loggedEntry.repsArray[loggedEntry.repsArray.length - 1];
+          const rirLogrado        = loggedEntry.rir;
 
           const progressionResult = checkRepProgressionTrigger(
-            loggedMaxReps,
+            loggedLastSetReps,
             repsMax,
             repsMin,
             rirLogrado,
