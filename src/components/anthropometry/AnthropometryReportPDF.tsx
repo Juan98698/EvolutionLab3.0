@@ -336,73 +336,78 @@ export const AnthropometryReportPDF: React.FC<AnthropometryReportPDFProps> = ({
           </table>
         </div>
 
-        {/* Tablas Normativas: % Grasa vs % Músculo */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
-          {/* Tabla Normativa Grasa */}
-          <div style={{ border: '1px solid #cbd5e1', borderRadius: '8px', overflow: 'hidden' }}>
-            <div style={{ background: '#0284c7', color: 'white', padding: '6px 10px', fontSize: '11px', fontWeight: 800 }}>
-              % GRASA CORPORAL — {generoStr.toUpperCase()} (ACE)
-            </div>
-            <table style={{ width: '100%', fontSize: '10px', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ background: '#f1f5f9', borderBottom: '1px solid #cbd5e1' }}>
-                  <th style={{ padding: '4px 8px', textAlign: 'left' }}>Categoría</th>
-                  <th style={{ padding: '4px 8px', textAlign: 'right' }}>Rango</th>
-                </tr>
-              </thead>
-              <tbody>
-                {fatRows.map((r, i) => {
-                  const isCurrent = pctGrasa >= r.min && pctGrasa <= r.max;
-                  return (
-                    <tr
-                      key={i}
-                      style={{
-                        background: isCurrent ? '#bae6fd' : i % 2 === 0 ? '#ffffff' : '#f8fafc',
-                        fontWeight: isCurrent ? 800 : 400,
-                        color: isCurrent ? '#0369a1' : '#334155',
-                      }}
-                    >
-                      <td style={{ padding: '4px 8px' }}>{isCurrent ? `👉 ${r.cat}` : r.cat}</td>
-                      <td style={{ padding: '4px 8px', textAlign: 'right' }}>{r.range}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+        {/* Clasificación del % de Grasa Corporal — ACE */}
+        <div style={{ marginBottom: '20px' }}>
+          <h4 style={{ margin: '0 0 6px', fontSize: '12px', fontWeight: 800, color: '#0f172a' }}>
+            Clasificación del % de Grasa Corporal — ACE ({generoStr})
+          </h4>
+          <table style={{ width: '100%', fontSize: '11px', borderCollapse: 'collapse', border: '1px solid #cbd5e1' }}>
+            <thead>
+              <tr style={{ background: '#334155', color: 'white' }}>
+                <th style={{ padding: '5px 8px', textAlign: 'left' }}>Clasificación</th>
+                <th style={{ padding: '5px 8px', textAlign: 'left' }}>Rango % Grasa</th>
+                <th style={{ padding: '5px 8px', textAlign: 'left' }}>Valoración</th>
+              </tr>
+            </thead>
+            <tbody>
+              {fatRows.map((r, i) => {
+                const isMatch = pctGrasa >= r.min && pctGrasa <= r.max;
+                return (
+                  <tr
+                    key={i}
+                    style={{
+                      background: isMatch ? '#fef3c7' : 'transparent',
+                      fontWeight: isMatch ? 800 : 400,
+                      borderBottom: '1px solid #e2e8f0',
+                    }}
+                  >
+                    <td style={{ padding: '4px 8px' }}>{r.cat}</td>
+                    <td style={{ padding: '4px 8px' }}>{r.range}</td>
+                    <td style={{ padding: '4px 8px', color: isMatch ? '#d97706' : '#64748b', fontWeight: isMatch ? 800 : 400 }}>
+                      {isMatch ? `◄ ${atletaNombre} (${pctGrasa}%)` : ''}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
 
-          {/* Tabla Normativa Músculo */}
-          <div style={{ border: '1px solid #cbd5e1', borderRadius: '8px', overflow: 'hidden' }}>
-            <div style={{ background: '#16a34a', color: 'white', padding: '6px 10px', fontSize: '11px', fontWeight: 800 }}>
-              % MASA MUSCULAR — {generoStr.toUpperCase()}
-            </div>
-            <table style={{ width: '100%', fontSize: '10px', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ background: '#f1f5f9', borderBottom: '1px solid #cbd5e1' }}>
-                  <th style={{ padding: '4px 8px', textAlign: 'left' }}>Categoría</th>
-                  <th style={{ padding: '4px 8px', textAlign: 'right' }}>Rango</th>
-                </tr>
-              </thead>
-              <tbody>
-                {muscleRows.map((r, i) => {
-                  const isCurrent = pctMusculo >= r.min && pctMusculo <= r.max;
-                  return (
-                    <tr
-                      key={i}
-                      style={{
-                        background: isCurrent ? '#bbf7d0' : i % 2 === 0 ? '#ffffff' : '#f8fafc',
-                        fontWeight: isCurrent ? 800 : 400,
-                        color: isCurrent ? '#15803d' : '#334155',
-                      }}
-                    >
-                      <td style={{ padding: '4px 8px' }}>{isCurrent ? `👉 ${r.cat}` : r.cat}</td>
-                      <td style={{ padding: '4px 8px', textAlign: 'right' }}>{r.range}</td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+        {/* Clasificación del % de Masa Muscular */}
+        <div style={{ marginBottom: '20px' }}>
+          <h4 style={{ margin: '0 0 6px', fontSize: '12px', fontWeight: 800, color: '#0f172a' }}>
+            Clasificación del % de Masa Muscular ({generoStr})
+          </h4>
+          <table style={{ width: '100%', fontSize: '11px', borderCollapse: 'collapse', border: '1px solid #cbd5e1' }}>
+            <thead>
+              <tr style={{ background: '#334155', color: 'white' }}>
+                <th style={{ padding: '5px 8px', textAlign: 'left' }}>Clasificación</th>
+                <th style={{ padding: '5px 8px', textAlign: 'left' }}>Rango % Muscular</th>
+                <th style={{ padding: '5px 8px', textAlign: 'left' }}>Valoración</th>
+              </tr>
+            </thead>
+            <tbody>
+              {muscleRows.map((r, i) => {
+                const isMatch = pctMusculo >= r.min && pctMusculo <= r.max;
+                return (
+                  <tr
+                    key={i}
+                    style={{
+                      background: isMatch ? '#dcfce7' : 'transparent',
+                      fontWeight: isMatch ? 800 : 400,
+                      borderBottom: '1px solid #e2e8f0',
+                    }}
+                  >
+                    <td style={{ padding: '4px 8px' }}>{r.cat}</td>
+                    <td style={{ padding: '4px 8px' }}>{r.range}</td>
+                    <td style={{ padding: '4px 8px', color: isMatch ? '#15803d' : '#64748b', fontWeight: isMatch ? 800 : 400 }}>
+                      {isMatch ? `◄ ${atletaNombre} (${pctMusculo}%)` : ''}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
 
         {/* Sección de Prescripción Nutricional / Macronutrientes */}

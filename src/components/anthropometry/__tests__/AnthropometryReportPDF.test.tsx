@@ -56,7 +56,7 @@ function getTablaPorTitulo(container: HTMLElement, tituloParcial: string): HTMLE
 
 /** Cuenta cuántas filas de la tabla están marcadas como activas (contienen 👉 o font-weight 800). */
 function contarFilasMarcadas(tabla: HTMLElement): number {
-  return Array.from(tabla.querySelectorAll('tbody tr')).filter((tr) => tr.textContent?.includes('👉')).length;
+  return Array.from(tabla.querySelectorAll('tbody tr')).filter((tr) => tr.textContent?.includes('◄') || tr.textContent?.includes('👉')).length;
 }
 
 describe('AnthropometryReportPDF — tabla de % de masa muscular', () => {
