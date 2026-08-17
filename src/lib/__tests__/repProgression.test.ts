@@ -182,7 +182,7 @@ describe('autoRegulatePlanForNextWeek — doble progresión', () => {
   it('doble progresión activa: peso y nota se escriben en el plan', () => {
     const plan   = makePlanWithOneRM('10-12', '1', 100, 'intermedio', 3);
     // Hizo 12 reps con RIR 3, target RIR 1 → margen=2 → trigger activo
-    const logged = makeLogged([12, 12, 11], 3);
+    const logged = makeLogged([12, 12, 12], 3);
 
     // Sesión intermedia (1 de 3): peso sí se recalcula aunque no cierre semana
     const result = autoRegulatePlanForNextWeek(plan, logged);
