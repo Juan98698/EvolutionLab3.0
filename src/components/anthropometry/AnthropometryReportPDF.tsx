@@ -76,12 +76,12 @@ export const AnthropometryReportPDF: React.FC<AnthropometryReportPDFProps> = ({
     ? [
         { cat: '🟢 Óptimo / Bajo Riesgo', range: '< 80.0 cm', whtr: '< 0.50', fuente: 'ALAD / IDF', isCurrent: cardioResult.categoria === 'Óptimo / Bajo Riesgo' },
         { cat: '🟡 Riesgo Elevado (ALAD / IDF / WHtR)', range: '80.0 – 87.9 cm', whtr: '≥ 0.50', fuente: 'ALAD / IDF / WHtR', isCurrent: cardioResult.categoria === 'Riesgo Elevado (ALAD / IDF / WHtR)' },
-        { cat: '🔴 Riesgo Muy Elevado (ATP III / OMS)', range: '≥ 88.0 cm', whtr: 'Cualquiera', fuente: 'NCEP-ATP III / OMS', isCurrent: cardioResult.categoria === 'Riesgo Muy Elevado (ATP III / OMS)' },
+        { cat: '🔴 Riesgo Muy Elevado (ATP III / OMS)', range: '≥ 88.0 cm', whtr: 'Independiente', fuente: 'NCEP-ATP III / OMS', isCurrent: cardioResult.categoria === 'Riesgo Muy Elevado (ATP III / OMS)' },
       ]
     : [
         { cat: '🟢 Óptimo / Bajo Riesgo', range: '< 90.0 cm', whtr: '< 0.50', fuente: 'ALAD / IDF', isCurrent: cardioResult.categoria === 'Óptimo / Bajo Riesgo' },
         { cat: '🟡 Riesgo Elevado (ALAD / IDF / WHtR)', range: '90.0 – 101.9 cm', whtr: '≥ 0.50', fuente: 'ALAD / IDF / WHtR', isCurrent: cardioResult.categoria === 'Riesgo Elevado (ALAD / IDF / WHtR)' },
-        { cat: '🔴 Riesgo Muy Elevado (ATP III / OMS)', range: '≥ 102.0 cm', whtr: 'Cualquiera', fuente: 'NCEP-ATP III / OMS', isCurrent: cardioResult.categoria === 'Riesgo Muy Elevado (ATP III / OMS)' },
+        { cat: '🔴 Riesgo Muy Elevado (ATP III / OMS)', range: '≥ 102.0 cm', whtr: 'Independiente', fuente: 'NCEP-ATP III / OMS', isCurrent: cardioResult.categoria === 'Riesgo Muy Elevado (ATP III / OMS)' },
       ];
 
   // Diagnóstico del somatotipo para el cliente
@@ -557,7 +557,7 @@ export const AnthropometryReportPDF: React.FC<AnthropometryReportPDFProps> = ({
                       borderBottom: '1px solid #e2e8f0',
                     }}
                   >
-                    <td style={{ padding: '6px 8px' }}>{isActive ? `👉 ${r.cat}` : r.cat}</td>
+                    <td style={{ padding: '6px 8px' }}>{r.cat}</td>
                     <td style={{ padding: '6px 8px', textAlign: 'center' }}>{r.range}</td>
                     <td style={{ padding: '6px 8px', textAlign: 'center' }}>{r.whtr}</td>
                     <td style={{ padding: '6px 8px', textAlign: 'center', fontSize: '10px', color: '#64748b' }}>{r.fuente}</td>

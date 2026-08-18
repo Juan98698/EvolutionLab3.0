@@ -129,7 +129,8 @@ describe('AnthropometryReportPDF — tabla de % de masa muscular', () => {
     expect(p2?.textContent).toContain('Página 2 de 3');
     expect(p3?.textContent).toContain('Página 3 de 3');
     expect(p3?.textContent).toContain('SALUD CARDIOMETABÓLICA Y VISCERAL');
-    expect(p3?.textContent).toContain('👉 🟡 Riesgo Elevado (ALAD / IDF / WHtR)');
+    expect(p3?.textContent).toContain('🟡 Riesgo Elevado (ALAD / IDF / WHtR)');
+    expect(p3?.textContent).toContain('◄ Carlos Test (94 cm)');
     expect(p3?.textContent).toContain('DIAGNÓSTICO CLÍNICO POBLACIONAL DE ADIPOSIDAD VISCERAL');
   });
 
@@ -146,7 +147,7 @@ describe('AnthropometryReportPDF — tabla de % de masa muscular', () => {
 
     const p3 = container.querySelector('#anthropometry-pdf-page-3');
     expect(p3?.textContent).toContain('Sin registrar');
-    expect(p3?.textContent).not.toContain('👉 🟢 Óptimo / Bajo Riesgo');
+    expect(p3?.textContent).not.toContain('◄ Laura Test');
     expect(p3?.textContent).toContain('no se ha registrado el perímetro de cintura');
   });
 
