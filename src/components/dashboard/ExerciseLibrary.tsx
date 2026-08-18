@@ -183,9 +183,11 @@ export const ExerciseLibrary: React.FC = () => {
     }
     if (filterText === 'piernas') {
       return matchesSearch && (
-        muscleGroup.includes('pierna') || muscleGroup.includes('cuadriceps') || 
-        muscleGroup.includes('isquio') || muscleGroup.includes('gluteo') || 
-        muscleGroup.includes('pantorrilla') || hasSecMuscle
+        muscleGroup.includes('pierna') || muscleGroup.includes('cuadriceps') ||
+        muscleGroup.includes('cudriceps') || muscleGroup.includes('femoral') ||
+        muscleGroup.includes('isquio') || muscleGroup.includes('gluteo') ||
+        muscleGroup.includes('pantorrilla') || muscleGroup.includes('pantorilla') ||
+        muscleGroup.includes('aductor') || muscleGroup.includes('abductor') || hasSecMuscle
       );
     }
     return matchesSearch && (muscleGroup.includes(filterText) || filterText.includes(muscleGroup) || hasSecMuscle);

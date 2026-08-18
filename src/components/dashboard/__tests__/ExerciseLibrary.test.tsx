@@ -13,6 +13,7 @@ vi.mock('../../common/BodyMuscleMap', () => ({
   default: ({ onSelectMuscle }: { onSelectMuscle: (m: string | null) => void }) => (
     <div data-testid="body-muscle-map">
       <button onClick={() => onSelectMuscle('Pecho')}>Filtrar Pecho</button>
+      <button onClick={() => onSelectMuscle('Piernas')}>Filtrar Piernas</button>
       <button onClick={() => onSelectMuscle(null)}>Todos</button>
     </div>
   ),
@@ -41,6 +42,22 @@ const mockExercises = [
     imagen_url: 'https://cdn.fit/squat.jpg',
     gif_url: 'https://cdn.fit/squat.gif',
     descripcion: 'Dominante de rodilla básico para cuádriceps.',
+  },
+  {
+    id: '3',
+    nombre: 'Máquina de Aductores',
+    grupo_muscular: 'Aductor',
+    imagen_url: 'https://cdn.fit/aductor.jpg',
+    gif_url: 'https://cdn.fit/aductor.gif',
+    descripcion: 'Aislamiento de aductores en máquina.',
+  },
+  {
+    id: '4',
+    nombre: 'Elevación de Talones de Pie',
+    grupo_muscular: 'Pantorilla',
+    imagen_url: 'https://cdn.fit/calf.jpg',
+    gif_url: 'https://cdn.fit/calf.gif',
+    descripcion: 'Aislamiento de gemelos de pie.',
   },
 ];
 
@@ -128,6 +145,27 @@ describe('ExerciseLibrary Component', () => {
     await waitFor(() => {
       expect(screen.getByText('Press de Banca Plano con Barra')).toBeInTheDocument();
       expect(screen.queryByText('Sentadilla Libre con Barra')).not.toBeInTheDocument();
+    });
+  });
+
+  it('filtra por "Piernas" incluyendo ejercicios con grupo_muscular en variantes/typos legacy (aductor, pantorrilla mal escrita)', async () => {
+    renderLibrary();
+
+    await waitFor(() => {
+      expect(screen.getByText('Máquina de Aductores')).toBeInTheDocument();
+    });
+
+    const piernasBtn = screen.getByRole('button', { name: /Filtrar Piernas/i });
+    fireEvent.click(piernasBtn);
+
+    await waitFor(() => {
+      // Cuádriceps (grupo_muscular exacto) sigue matcheando
+      expect(screen.getByText('Sentadilla Libre con Barra')).toBeInTheDocument();
+      // Aductor y la variante con typo de pantorrilla deben matchear con "piernas"
+      expect(screen.getByText('Máquina de Aductores')).toBeInTheDocument();
+      expect(screen.getByText('Elevación de Talones de Pie')).toBeInTheDocument();
+      // Pecho no debe aparecer al filtrar por piernas
+      expect(screen.queryByText('Press de Banca Plano con Barra')).not.toBeInTheDocument();
     });
   });
 
