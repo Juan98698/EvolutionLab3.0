@@ -182,5 +182,48 @@ describe('AnthropometryReportPDF — tabla de % de masa muscular', () => {
     expect(container.textContent).toContain('Apex Performance Lab');
     expect(container.textContent).toContain('Coach Alejandro Smith');
   });
+
+  it('coloca el nombre del atleta y su valor entre paréntesis en la columna Valoración de la tabla cardiometabólica', () => {
+    const valoracion = buildValoracion({
+      perimetros: { cintura: 84, cadera: 96 },
+      estatura: 172,
+      genero: 'masculino',
+    });
+    const { container } = render(
+      <AnthropometryReportPDF valoracion={valoracion} atletaNombre="Jose Martinez" trainerProfile={null} />
+    );
+
+    const p3 = container.querySelector('#anthropometry-pdf-page-3');
+    expect(p3?.textContent).toContain('TABLA NORMATIVA DE SALUD CARDIOMETABÓLICA Y VISCERAL');
+    expect(p3?.textContent).toContain('◄ Jose Martinez (84 cm)');
+  });
+
+  it('renderiza el glosario de siglas con ALAD, WHtR, ATP III / OMS, NCEP-ATP, ACE, IOF / IDF, TMB y TDEE en la Página 3', () => {
+    const valoracion = buildValoracion({
+      perimetros: { cintura: 84, cadera: 96 },
+      estatura: 172,
+      genero: 'masculino',
+    });
+    const { container } = render(
+      <AnthropometryReportPDF valoracion={valoracion} atletaNombre="Jose Martinez" trainerProfile={null} />
+    );
+
+    const p3 = container.querySelector('#anthropometry-pdf-page-3');
+    expect(p3?.textContent).toContain('GLOSARIO DE SIGLAS & ESTÁNDARES CIENTÍFICOS');
+    expect(p3?.textContent).toContain('ALAD');
+    expect(p3?.textContent).toContain('Asoc. Latinoamericana Diabetes');
+    expect(p3?.textContent).toContain('WHtR');
+    expect(p3?.textContent).toContain('Waist-to-Height Ratio');
+    expect(p3?.textContent).toContain('ATP III / OMS');
+    expect(p3?.textContent).toContain('NCEP-ATP');
+    expect(p3?.textContent).toContain('ACE');
+    expect(p3?.textContent).toContain('American Council Exercise');
+    expect(p3?.textContent).toContain('IOF / IDF');
+    expect(p3?.textContent).toContain('TMB (BMR)');
+    expect(p3?.textContent).toContain('TDEE');
+    expect(p3?.textContent).toContain('Tasa Metabólica Basal');
+    expect(p3?.textContent).toContain('Gasto Energético Diario');
+  });
 });
+
 

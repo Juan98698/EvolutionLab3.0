@@ -528,36 +528,42 @@ export const AnthropometryReportPDF: React.FC<AnthropometryReportPDFProps> = ({
         </div>
 
         {/* Tabla Normativa de Riesgo Visceral & Étnico */}
-        <div style={{ border: '1px solid #cbd5e1', borderRadius: '10px', overflow: 'hidden', marginBottom: '20px' }}>
+        <div style={{ border: '1px solid #cbd5e1', borderRadius: '10px', overflow: 'hidden', marginBottom: '16px' }}>
           <div style={{ background: '#0f172a', color: 'white', padding: '8px 12px', fontSize: '12px', fontWeight: 800, fontFamily: 'Orbitron, sans-serif' }}>
             🫀 TABLA NORMATIVA DE SALUD CARDIOMETABÓLICA Y VISCERAL ({generoStr.toUpperCase()})
           </div>
           <table style={{ width: '100%', fontSize: '11px', borderCollapse: 'collapse' }}>
             <thead>
-              <tr style={{ background: '#f1f5f9', borderBottom: '2px solid #cbd5e1', textTransform: 'uppercase', fontSize: '10px' }}>
-                <th style={{ padding: '8px 10px', textAlign: 'left' }}>Categoría de Riesgo</th>
-                <th style={{ padding: '8px 10px', textAlign: 'center' }}>Cintura Absoluta</th>
-                <th style={{ padding: '8px 10px', textAlign: 'center' }}>Criterio WHtR</th>
-                <th style={{ padding: '8px 10px', textAlign: 'right' }}>Fuente de Referencia</th>
+              <tr style={{ background: '#334155', color: 'white', textTransform: 'uppercase', fontSize: '10px' }}>
+                <th style={{ padding: '6px 8px', textAlign: 'left' }}>Categoría de Riesgo</th>
+                <th style={{ padding: '6px 8px', textAlign: 'center' }}>Cintura Absoluta</th>
+                <th style={{ padding: '6px 8px', textAlign: 'center' }}>Criterio WHtR</th>
+                <th style={{ padding: '6px 8px', textAlign: 'center' }}>Fuente</th>
+                <th style={{ padding: '6px 8px', textAlign: 'left' }}>Valoración</th>
               </tr>
             </thead>
             <tbody>
               {cardioRows.map((r, i) => {
                 const isActive = cardioResult.cinturaRegistrada && r.isCurrent;
+                const activeColor = i === 2 ? '#dc2626' : i === 1 ? '#d97706' : '#15803d';
+                const activeBg = i === 2 ? '#fef2f2' : i === 1 ? '#fffbeb' : '#f0fdf4';
                 return (
                   <tr
                     key={i}
                     style={{
-                      background: isActive ? (i === 2 ? '#fef2f2' : i === 1 ? '#fffbeb' : '#f0fdf4') : i % 2 === 0 ? '#ffffff' : '#f8fafc',
+                      background: isActive ? activeBg : i % 2 === 0 ? '#ffffff' : '#f8fafc',
                       fontWeight: isActive ? 800 : 400,
-                      color: isActive ? (i === 2 ? '#dc2626' : i === 1 ? '#b45309' : '#15803d') : '#334155',
-                      borderBottom: '1px solid #f1f5f9',
+                      color: isActive ? activeColor : '#334155',
+                      borderBottom: '1px solid #e2e8f0',
                     }}
                   >
-                    <td style={{ padding: '8px 10px' }}>{isActive ? `👉 ${r.cat}` : r.cat}</td>
-                    <td style={{ padding: '8px 10px', textAlign: 'center' }}>{r.range}</td>
-                    <td style={{ padding: '8px 10px', textAlign: 'center' }}>{r.whtr}</td>
-                    <td style={{ padding: '8px 10px', textAlign: 'right', fontSize: '10px', color: '#64748b' }}>{r.fuente}</td>
+                    <td style={{ padding: '6px 8px' }}>{isActive ? `👉 ${r.cat}` : r.cat}</td>
+                    <td style={{ padding: '6px 8px', textAlign: 'center' }}>{r.range}</td>
+                    <td style={{ padding: '6px 8px', textAlign: 'center' }}>{r.whtr}</td>
+                    <td style={{ padding: '6px 8px', textAlign: 'center', fontSize: '10px', color: '#64748b' }}>{r.fuente}</td>
+                    <td style={{ padding: '6px 8px', color: isActive ? activeColor : '#64748b', fontWeight: isActive ? 800 : 400 }}>
+                      {isActive ? `◄ ${atletaNombre} (${cardioResult.cintura} cm)` : ''}
+                    </td>
                   </tr>
                 );
               })}
@@ -569,13 +575,13 @@ export const AnthropometryReportPDF: React.FC<AnthropometryReportPDFProps> = ({
         <div style={{
           background: !cardioResult.cinturaRegistrada ? '#f8fafc' : cardioResult.nivelRiesgo === 'alto' ? '#fef2f2' : cardioResult.nivelRiesgo === 'moderado' ? '#fffbeb' : '#f0fdf4',
           border: `1px solid ${!cardioResult.cinturaRegistrada ? '#cbd5e1' : cardioResult.nivelRiesgo === 'alto' ? '#fecaca' : cardioResult.nivelRiesgo === 'moderado' ? '#fef3c7' : '#bbf7d0'}`,
-          borderRadius: '12px',
-          padding: '16px',
-          marginBottom: '24px'
+          borderRadius: '10px',
+          padding: '12px 14px',
+          marginBottom: '16px'
         }}>
           <h4 style={{
-            margin: '0 0 8px',
-            fontSize: '13px',
+            margin: '0 0 6px',
+            fontSize: '12px',
             fontWeight: 800,
             color: !cardioResult.cinturaRegistrada ? '#475569' : cardioResult.nivelRiesgo === 'alto' ? '#991b1b' : cardioResult.nivelRiesgo === 'moderado' ? '#92400e' : '#166534',
             fontFamily: 'Orbitron, sans-serif',
@@ -587,12 +593,118 @@ export const AnthropometryReportPDF: React.FC<AnthropometryReportPDFProps> = ({
           </h4>
           <p style={{
             margin: 0,
-            fontSize: '12px',
+            fontSize: '11px',
             color: !cardioResult.cinturaRegistrada ? '#475569' : cardioResult.nivelRiesgo === 'alto' ? '#7f1d1d' : cardioResult.nivelRiesgo === 'moderado' ? '#78350f' : '#14532d',
-            lineHeight: '1.6'
+            lineHeight: '1.5'
           }}>
             {cardioResult.diagnosticoText}
           </p>
+        </div>
+
+        {/* Glosario de Siglas y Estándares Científicos Internacionales */}
+        <div style={{
+          background: '#f8fafc',
+          border: '1px solid #cbd5e1',
+          borderRadius: '10px',
+          padding: '12px 14px',
+          marginBottom: '20px',
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', borderBottom: '1px solid #e2e8f0', paddingBottom: '6px' }}>
+            <h4 style={{ margin: 0, fontSize: '11px', fontWeight: 800, color: '#0f172a', fontFamily: 'Orbitron, sans-serif', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              📚 GLOSARIO DE SIGLAS & ESTÁNDARES CIENTÍFICOS
+            </h4>
+            <span style={{ fontSize: '9px', color: '#64748b', fontWeight: 600 }}>Guía de Interpretación Clínica</span>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '7px' }}>
+            {/* ALAD */}
+            <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '6px 8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '2px' }}>
+                <span style={{ background: '#e0f2fe', color: '#0369a1', fontSize: '8.5px', fontWeight: 900, padding: '1px 4px', borderRadius: '3px' }}>ALAD</span>
+                <strong style={{ fontSize: '9.5px', color: '#0f172a' }}>Asoc. Latinoamericana Diabetes</strong>
+              </div>
+              <p style={{ margin: 0, fontSize: '8.5px', color: '#475569', lineHeight: '1.3' }}>
+                Cortes de cintura específicos (&lt;80 cm ♀ / &lt;90 cm ♂) por mayor predisposición hispana a grasa visceral.
+              </p>
+            </div>
+
+            {/* WHtR */}
+            <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '6px 8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '2px' }}>
+                <span style={{ background: '#fef3c7', color: '#b45309', fontSize: '8.5px', fontWeight: 900, padding: '1px 4px', borderRadius: '3px' }}>WHtR</span>
+                <strong style={{ fontSize: '9.5px', color: '#0f172a' }}>Waist-to-Height Ratio</strong>
+              </div>
+              <p style={{ margin: 0, fontSize: '8.5px', color: '#475569', lineHeight: '1.3' }}>
+                Índice Cintura/Estatura. Regla universal: cintura menor a la mitad de la estatura (&lt;0.50) para proteger el corazón.
+              </p>
+            </div>
+
+            {/* ATP III / OMS */}
+            <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '6px 8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '2px' }}>
+                <span style={{ background: '#fee2e2', color: '#b91c1c', fontSize: '8.5px', fontWeight: 900, padding: '1px 4px', borderRadius: '3px' }}>ATP III / OMS</span>
+                <strong style={{ fontSize: '9.5px', color: '#0f172a' }}>Adult Treatment & OMS</strong>
+              </div>
+              <p style={{ margin: 0, fontSize: '8.5px', color: '#475569', lineHeight: '1.3' }}>
+                Criterios internacionales para detectar síndrome metabólico y riesgo visceral elevado (≥88 cm ♀ / ≥102 cm ♂).
+              </p>
+            </div>
+
+            {/* NCEP-ATP */}
+            <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '6px 8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '2px' }}>
+                <span style={{ background: '#f1f5f9', color: '#334155', fontSize: '8.5px', fontWeight: 900, padding: '1px 4px', borderRadius: '3px' }}>NCEP-ATP</span>
+                <strong style={{ fontSize: '9.5px', color: '#0f172a' }}>Natl. Cholesterol Program</strong>
+              </div>
+              <p style={{ margin: 0, fontSize: '8.5px', color: '#475569', lineHeight: '1.3' }}>
+                Comité de referencia en estratificación del riesgo coronario, aterogénico y adiposidad intraabdominal.
+              </p>
+            </div>
+
+            {/* ACE */}
+            <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '6px 8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '2px' }}>
+                <span style={{ background: '#dcfce7', color: '#15803d', fontSize: '8.5px', fontWeight: 900, padding: '1px 4px', borderRadius: '3px' }}>ACE</span>
+                <strong style={{ fontSize: '9.5px', color: '#0f172a' }}>American Council Exercise</strong>
+              </div>
+              <p style={{ margin: 0, fontSize: '8.5px', color: '#475569', lineHeight: '1.3' }}>
+                Escala estándar para clasificar los rangos de % de grasa corporal según sexo y condición física atlética.
+              </p>
+            </div>
+
+            {/* IOF / IDF */}
+            <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '6px 8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '2px' }}>
+                <span style={{ background: '#f3e8ff', color: '#7e22ce', fontSize: '8.5px', fontWeight: 900, padding: '1px 4px', borderRadius: '3px' }}>IOF / IDF</span>
+                <strong style={{ fontSize: '9.5px', color: '#0f172a' }}>Intl. Osteoporosis & IDF</strong>
+              </div>
+              <p style={{ margin: 0, fontSize: '8.5px', color: '#475569', lineHeight: '1.3' }}>
+                Consensos mundiales de salud metabólica y ósea para evaluar la distribución adiposa y proteger la masa magra.
+              </p>
+            </div>
+
+            {/* TMB / BMR */}
+            <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '6px 8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '2px' }}>
+                <span style={{ background: '#e0f2fe', color: '#0284c7', fontSize: '8.5px', fontWeight: 900, padding: '1px 4px', borderRadius: '3px' }}>TMB (BMR)</span>
+                <strong style={{ fontSize: '9.5px', color: '#0f172a' }}>Tasa Metabólica Basal</strong>
+              </div>
+              <p style={{ margin: 0, fontSize: '8.5px', color: '#475569', lineHeight: '1.3' }}>
+                Gasto calórico mínimo en reposo absoluto para funciones vitales (Katch-McArdle según tu masa magra libre de grasa).
+              </p>
+            </div>
+
+            {/* TDEE */}
+            <div style={{ background: '#ffffff', border: '1px solid #e2e8f0', borderRadius: '6px', padding: '6px 8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '2px' }}>
+                <span style={{ background: '#dcfce7', color: '#16a34a', fontSize: '8.5px', fontWeight: 900, padding: '1px 4px', borderRadius: '3px' }}>TDEE</span>
+                <strong style={{ fontSize: '9.5px', color: '#0f172a' }}>Gasto Energético Diario</strong>
+              </div>
+              <p style={{ margin: 0, fontSize: '8.5px', color: '#475569', lineHeight: '1.3' }}>
+                Calorías totales quemadas al día (TMB + actividad física). Base para calcular déficit, superávit o mantenimiento.
+              </p>
+            </div>
+          </div>
         </div>
 
         <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '12px', textAlign: 'center', fontSize: '10px', color: '#94a3b8' }}>
