@@ -1,4 +1,5 @@
 // @vitest-environment happy-dom
+import React from 'react';
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, act, fireEvent, cleanup } from '@testing-library/react';
 import { SupabaseProvider, useSupabase } from '../SupabaseContext';
@@ -14,10 +15,11 @@ let mockProfileResponse: any = {
   error: null
 };
 
-const mockRpcResponse: any = {
+let mockRpcResponse: any = {
   data: { id: 'test-user-id', rol: 'entrenador', suscripcion_plan: 'free' },
   error: null
 };
+let mockRpcShouldReject = false;
 
 vi.mock('../../lib/supabaseClient', () => ({
   supabase: {
@@ -63,7 +65,11 @@ vi.mock('../../lib/supabaseClient', () => ({
         }))
       }))
     })),
-    rpc: vi.fn((_fnName, _args) => Promise.resolve(mockRpcResponse))
+    rpc: vi.fn((_fnName, _args) =>
+      mockRpcShouldReject
+        ? Promise.reject(new Error('network error'))
+        : Promise.resolve(mockRpcResponse)
+    )
   }
 }));
 
@@ -79,6 +85,7 @@ const TestConsumer = () => {
     loading,
     signOut
   } = useSupabase();
+  const [roleError, setRoleError] = React.useState<string | null>(null);
 
   if (loading) return <span data-testid="loading-state">loading...</span>;
   return (
@@ -89,9 +96,15 @@ const TestConsumer = () => {
       <span data-testid="is-solo">{isSoloClient ? 'yes' : 'no'}</span>
       <span data-testid="is-trainer">{isTrainer ? 'yes' : 'no'}</span>
       <span data-testid="needs-role-selection">{needsRoleSelection ? 'yes' : 'no'}</span>
+      <span data-testid="role-error">{roleError || 'no-error'}</span>
       <button
         data-testid="choose-trainer-btn"
-        onClick={() => completeRoleSelection('entrenador', { whatsapp: '+1234', instagram: 'coach' })}
+        onClick={() => {
+          setRoleError(null);
+          completeRoleSelection('entrenador', { whatsapp: '+1234', instagram: 'coach' }).catch(
+            (err: any) => setRoleError(err.message || 'error desconocido')
+          );
+        }}
       >
         Choose Trainer
       </button>
@@ -108,6 +121,11 @@ describe('SupabaseContext Provider', () => {
       data: { id: 'test-user-id', rol: 'cliente', suscripcion_plan: 'free', entrenador_id: null },
       error: null
     };
+    mockRpcResponse = {
+      data: { id: 'test-user-id', rol: 'entrenador', suscripcion_plan: 'free' },
+      error: null
+    };
+    mockRpcShouldReject = false;
   });
 
   afterEach(cleanup);
@@ -217,6 +235,48 @@ describe('SupabaseContext Provider', () => {
 
     expect(screen.getByTestId('needs-role-selection').textContent).toBe('no');
     expect(screen.getByTestId('is-trainer').textContent).toBe('yes');
+  });
+
+  it('should surface a real error and keep needsRoleSelection = yes when the RPC fails (no fake local success)', async () => {
+    mockProfileResponse = {
+      data: { id: 'test-user-id', nombre: 'Nuevo Atleta', rol: 'cliente', suscripcion_plan: 'free', onboarding_completado: false },
+      error: null
+    };
+    // Simula el escenario real: el RPC falla (red, o RLS bloqueando en algún entorno).
+    mockRpcShouldReject = true;
+
+    render(
+      <SupabaseProvider>
+        <TestConsumer />
+      </SupabaseProvider>
+    );
+
+    const mockUser = {
+      id: 'test-user-id',
+      email: 'test@example.com',
+      app_metadata: { provider: 'google' }
+    };
+    const mockSession = { user: mockUser };
+
+    await act(async () => {
+      await authCallback('INITIAL_SESSION', mockSession);
+    });
+
+    expect(screen.getByTestId('needs-role-selection').textContent).toBe('yes');
+
+    const chooseTrainerBtn = screen.getByTestId('choose-trainer-btn');
+    await act(async () => {
+      fireEvent.click(chooseTrainerBtn);
+    });
+
+    // El error debe llegar al llamador (no quedar silencioso)...
+    expect(screen.getByTestId('role-error').textContent).not.toBe('no-error');
+    // ...y el estado no debe fingir que el onboarding se completó: el
+    // modal debe seguir mostrándose para que el usuario pueda reintentar,
+    // y el rol NO debe cambiar en el estado local sin haberse persistido.
+    expect(screen.getByTestId('needs-role-selection').textContent).toBe('yes');
+    expect(screen.getByTestId('is-trainer').textContent).toBe('no');
+    expect(screen.getByTestId('profile-role').textContent).toBe('cliente');
   });
 
   it('should clear data on signOut', async () => {

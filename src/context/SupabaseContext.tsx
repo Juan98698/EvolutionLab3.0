@@ -148,9 +148,25 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const whatsapp = trainerData?.whatsapp?.trim() || '';
     const instagram = trainerData?.instagram?.trim() || '';
 
+    // NOTA IMPORTANTE: no existe una vía alternativa viable a esta RPC.
+    // Las políticas RLS de 'profiles' solo permiten UPDATE cuando
+    // es_entrenador(auth.uid()) es verdadero (ver supabase_setup.sql y
+    // supabase_migration_v9.sql) — ni siquiera para el propio perfil. Un
+    // 'cliente' recién creado por OAuth (que es exactamente a quien esta
+    // función atiende) nunca cumple esa condición, así que un UPDATE
+    // directo desde el cliente jamás puede tener éxito para él.
+    //
+    // Antes había un "fallback" que intentaba ese UPDATE directo y, si no
+    // conseguía persistir nada, igual armaba un perfil "exitoso" solo en
+    // memoria/localStorage. Como RLS no lanza excepción al bloquear un
+    // UPDATE (devuelve 0 filas afectadas en silencio, no un error), ese
+    // fallback nunca podía detectar el fallo: el atleta veía el modal
+    // cerrarse como si hubiera terminado, mientras la fila real en la
+    // base de datos no cambiaba — hasta el próximo refresh, donde
+    // reaparecía el modal sin explicación. Por eso se removió: es mejor
+    // mostrar el error real y dejar reintentar que fingir un éxito que
+    // no existe.
     let updatedProfile: Profile | null = null;
-
-    // 1. Intentar ejecutar la RPC SECURITY DEFINER para actualizar con permisos elevados
     try {
       const { data, error } = await supabase.rpc('complete_role_selection', {
         p_rol: rol,
@@ -159,74 +175,19 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         p_instagram: instagram
       });
 
-      if (!error && data) {
-        updatedProfile = data as Profile;
-      }
-    } catch (rpcErr) {
-      console.warn('RPC complete_role_selection no disponible, usando fallback directo:', rpcErr);
+      if (error) throw error;
+      if (!data) throw new Error('La operación no devolvió un perfil actualizado.');
+
+      updatedProfile = data as Profile;
+    } catch (rpcErr: any) {
+      console.error('Error al completar la selección de rol vía RPC:', rpcErr);
+      throw new Error(
+        'No se pudo guardar tu rol. Revisa tu conexión e intenta nuevamente en unos segundos.'
+      );
     }
 
-    // 2. Fallback: Actualización directa por tabla si la RPC aún no ha sido migrada o en testing
-    if (!updatedProfile) {
-      const updatePayload: Partial<Profile> = {
-        rol,
-        nombre: displayName,
-        suscripcion_plan: 'free',
-        suscripcion_estado: 'activo',
-        vigencia_dias: 30,
-        suscripcion_expira_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-        onboarding_completado: true
-      };
-
-      if (rol === 'entrenador') {
-        updatePayload.marca = {
-          nombre_display: displayName,
-          color_primario: '#00d4ff',
-          color_secundario: '#0070a0',
-          tipografia: 'Inter',
-          eslogan: '',
-          whatsapp,
-          instagram
-        };
-      }
-
-      const { data, error } = await supabase
-        .from('profiles')
-        .update(updatePayload)
-        .eq('id', targetUser.id)
-        .select()
-        .maybeSingle();
-
-      if (error) {
-        const { data: upsertData, error: upsertErr } = await supabase
-          .from('profiles')
-          .upsert({
-            id: targetUser.id,
-            email: targetUser.email || '',
-            ...updatePayload
-          })
-          .select()
-          .maybeSingle();
-
-        if (upsertErr) throw upsertErr;
-        if (upsertData) updatedProfile = upsertData as Profile;
-      } else if (data) {
-        updatedProfile = data as Profile;
-      }
-
-      if (!updatedProfile) {
-        updatedProfile = {
-          ...(profile || { id: targetUser.id, email: targetUser.email || '' }),
-          ...updatePayload
-        } as Profile;
-      }
-    }
-
-    // 3. Sincronizar estado local y caché
-    if (updatedProfile) {
-      setProfile(updatedProfile);
-      localStorage.setItem('pwa_user_profile', JSON.stringify(updatedProfile));
-    }
+    setProfile(updatedProfile);
+    localStorage.setItem('pwa_user_profile', JSON.stringify(updatedProfile));
     setNeedsRoleSelection(false);
   };
 
