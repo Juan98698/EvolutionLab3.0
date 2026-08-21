@@ -2962,31 +2962,7 @@ export const Login: React.FC = () => {
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '-10px', marginBottom: '-4px' }}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsForgotMode(true);
-                      setErrorMsg(null);
-                      setInfoMsg(null);
-                    }}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      color: 'rgba(255, 255, 255, 0.45)',
-                      fontFamily: "'Orbitron', sans-serif",
-                      fontSize: '10px',
-                      cursor: 'pointer',
-                      padding: '4px 0',
-                      transition: 'color 0.2s ease',
-                      letterSpacing: '0.4px'
-                    }}
-                    onMouseEnter={(e) => (e.currentTarget.style.color = pri)}
-                    onMouseLeave={(e) => (e.currentTarget.style.color = 'rgba(255, 255, 255, 0.45)')}
-                  >
-                    ¿Olvidaste tu contraseña?
-                  </button>
-                </div>
+                {/* Botón ¿Olvidaste tu contraseña? deshabilitado temporalmente */}
 
                 <button type="submit" className="btn-submit" disabled={loading} style={{ marginTop: '2px', width: '100%' }}>
                   <span style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
