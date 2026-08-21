@@ -155,9 +155,11 @@ describe('SupabaseContext Provider', () => {
     expect(screen.getByTestId('needs-role-selection').textContent).toBe('no');
   });
 
-  it('should flag needsRoleSelection = yes for new Google OAuth user with no suscripcion_plan', async () => {
+  it('should flag needsRoleSelection = yes for new Google OAuth user with onboarding_completado = false', async () => {
+    // suscripcion_plan viene siempre en 'free' desde el trigger (DEFAULT de columna),
+    // nunca null — por eso la señal real es onboarding_completado, no suscripcion_plan.
     mockProfileResponse = {
-      data: { id: 'test-user-id', nombre: 'Nuevo Atleta', rol: 'cliente', suscripcion_plan: null },
+      data: { id: 'test-user-id', nombre: 'Nuevo Atleta', rol: 'cliente', suscripcion_plan: 'free', onboarding_completado: false },
       error: null
     };
 
@@ -184,7 +186,7 @@ describe('SupabaseContext Provider', () => {
 
   it('should complete role selection and update profile state', async () => {
     mockProfileResponse = {
-      data: { id: 'test-user-id', nombre: 'Nuevo Atleta', rol: 'cliente', suscripcion_plan: null },
+      data: { id: 'test-user-id', nombre: 'Nuevo Atleta', rol: 'cliente', suscripcion_plan: 'free', onboarding_completado: false },
       error: null
     };
 

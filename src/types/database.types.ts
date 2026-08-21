@@ -19,6 +19,7 @@ export interface Profile {
   insignias_custom?: any[] | null;
   modalidad?: 'remoto' | 'presencial';
   sexo?: 'masculino' | 'femenino';
+  onboarding_completado?: boolean;
 }
 
 export interface FilosofiaPilar {

@@ -47,18 +47,6 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [loading]);
 
-  const isOAuthUser = (currentUser: User | null): boolean => {
-    if (!currentUser) return false;
-    const provider = currentUser.app_metadata?.provider;
-    const providers = currentUser.app_metadata?.providers;
-    const identities = currentUser.identities;
-    return (
-      provider === 'google' ||
-      (Array.isArray(providers) && providers.includes('google')) ||
-      (Array.isArray(identities) && identities.some(i => i.provider === 'google'))
-    );
-  };
-
   const fetchProfile = async (userId: string, currentUser?: User | null): Promise<Profile | null> => {
     try {
       const { data, error } = await supabase
@@ -74,17 +62,12 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         setProfile(profileData);
         localStorage.setItem('pwa_user_profile', JSON.stringify(data));
 
-        // Detectar si el usuario fue creado por OAuth y aún no tiene suscripción o rol explícito asignado
-        const targetUser = currentUser || user;
-        const userIsOAuth = isOAuthUser(targetUser);
-        const isNewOAuthProfile =
-          !profileData.suscripcion_plan && (userIsOAuth || profileData.nombre === 'Nuevo Atleta');
-
-        if (isNewOAuthProfile) {
-          setNeedsRoleSelection(true);
-        } else {
-          setNeedsRoleSelection(false);
-        }
+        // onboarding_completado es un flag dedicado (migración 20260821_fix_onboarding_completado_flag.sql)
+        // que el trigger handle_new_user() marca en false SOLO cuando el perfil se creó sin
+        // un 'rol' explícito en raw_user_meta_data (el caso de OAuth). El registro manual
+        // siempre manda 'rol', así que nunca lo dispara. No depende de suscripcion_plan,
+        // que tiene DEFAULT 'free' a nivel de columna y por eso nunca sirvió como señal.
+        setNeedsRoleSelection(profileData.onboarding_completado === false);
 
         return profileData;
       } else {
@@ -106,7 +89,8 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
               vigencia_dias: 30,
               suscripcion_plan: 'free',
               suscripcion_estado: 'activo',
-              suscripcion_expira_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+              suscripcion_expira_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+              onboarding_completado: false
             };
             const { data: createdProfile } = await supabase
               .from('profiles')
@@ -190,7 +174,8 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         suscripcion_plan: 'free',
         suscripcion_estado: 'activo',
         vigencia_dias: 30,
-        suscripcion_expira_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+        suscripcion_expira_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        onboarding_completado: true
       };
 
       if (rol === 'entrenador') {
