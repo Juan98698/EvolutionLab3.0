@@ -9,6 +9,16 @@ const mockSubscription = {
   unsubscribe: vi.fn(),
 };
 
+let mockProfileResponse: any = {
+  data: { id: 'test-user-id', rol: 'cliente', suscripcion_plan: 'free', entrenador_id: null },
+  error: null
+};
+
+let mockRpcResponse: any = {
+  data: { id: 'test-user-id', rol: 'entrenador', suscripcion_plan: 'free' },
+  error: null
+};
+
 vi.mock('../../lib/supabaseClient', () => ({
   supabase: {
     auth: {
@@ -16,23 +26,60 @@ vi.mock('../../lib/supabaseClient', () => ({
         authCallback = cb;
         return { data: { subscription: mockSubscription } };
       }),
-      signOut: vi.fn().mockResolvedValue({ error: null })
+      signOut: vi.fn().mockResolvedValue({ error: null }),
+      getUser: vi.fn().mockResolvedValue({
+        data: {
+          user: {
+            id: 'test-user-id',
+            email: 'test@example.com',
+            user_metadata: { full_name: 'Test Athlete' },
+            app_metadata: { provider: 'google' }
+          }
+        }
+      })
     },
     from: vi.fn(() => ({
       select: vi.fn(() => ({
         eq: vi.fn(() => ({
+          maybeSingle: vi.fn().mockImplementation(() => Promise.resolve(mockProfileResponse))
+        }))
+      })),
+      update: vi.fn(() => ({
+        eq: vi.fn(() => ({
+          select: vi.fn(() => ({
+            maybeSingle: vi.fn().mockResolvedValue({
+              data: { id: 'test-user-id', rol: 'entrenador', suscripcion_plan: 'free' },
+              error: null
+            })
+          }))
+        }))
+      })),
+      upsert: vi.fn(() => ({
+        select: vi.fn(() => ({
           maybeSingle: vi.fn().mockResolvedValue({
-            data: { id: 'test-user-id', rol: 'cliente', entrenador_id: null },
+            data: { id: 'test-user-id', rol: 'entrenador', suscripcion_plan: 'free' },
             error: null
           })
         }))
       }))
-    }))
+    })),
+    rpc: vi.fn((_fnName, _args) => Promise.resolve(mockRpcResponse))
   }
 }));
 
 const TestConsumer = () => {
-  const { user, profile, isAuthenticated, isTrainer, isSoloClient, loading, signOut } = useSupabase();
+  const {
+    user,
+    profile,
+    isAuthenticated,
+    isTrainer,
+    isSoloClient,
+    needsRoleSelection,
+    completeRoleSelection,
+    loading,
+    signOut
+  } = useSupabase();
+
   if (loading) return <span data-testid="loading-state">loading...</span>;
   return (
     <div>
@@ -41,6 +88,13 @@ const TestConsumer = () => {
       <span data-testid="profile-role">{profile?.rol || 'no-role'}</span>
       <span data-testid="is-solo">{isSoloClient ? 'yes' : 'no'}</span>
       <span data-testid="is-trainer">{isTrainer ? 'yes' : 'no'}</span>
+      <span data-testid="needs-role-selection">{needsRoleSelection ? 'yes' : 'no'}</span>
+      <button
+        data-testid="choose-trainer-btn"
+        onClick={() => completeRoleSelection('entrenador', { whatsapp: '+1234', instagram: 'coach' })}
+      >
+        Choose Trainer
+      </button>
       <button data-testid="sign-out-btn" onClick={signOut}>Sign Out</button>
     </div>
   );
@@ -50,6 +104,10 @@ describe('SupabaseContext Provider', () => {
   beforeEach(() => {
     localStorage.clear();
     mockSubscription.unsubscribe.mockClear();
+    mockProfileResponse = {
+      data: { id: 'test-user-id', rol: 'cliente', suscripcion_plan: 'free', entrenador_id: null },
+      error: null
+    };
   });
 
   afterEach(cleanup);
@@ -94,6 +152,69 @@ describe('SupabaseContext Provider', () => {
     expect(screen.getByTestId('user-email').textContent).toBe('test@example.com');
     expect(screen.getByTestId('profile-role').textContent).toBe('cliente');
     expect(screen.getByTestId('is-solo').textContent).toBe('yes');
+    expect(screen.getByTestId('needs-role-selection').textContent).toBe('no');
+  });
+
+  it('should flag needsRoleSelection = yes for new Google OAuth user with no suscripcion_plan', async () => {
+    mockProfileResponse = {
+      data: { id: 'test-user-id', nombre: 'Nuevo Atleta', rol: 'cliente', suscripcion_plan: null },
+      error: null
+    };
+
+    render(
+      <SupabaseProvider>
+        <TestConsumer />
+      </SupabaseProvider>
+    );
+
+    const mockUser = {
+      id: 'test-user-id',
+      email: 'test@example.com',
+      app_metadata: { provider: 'google' }
+    };
+    const mockSession = { user: mockUser };
+
+    await act(async () => {
+      await authCallback('INITIAL_SESSION', mockSession);
+    });
+
+    expect(screen.getByTestId('auth-state').textContent).toBe('logged-in');
+    expect(screen.getByTestId('needs-role-selection').textContent).toBe('yes');
+  });
+
+  it('should complete role selection and update profile state', async () => {
+    mockProfileResponse = {
+      data: { id: 'test-user-id', nombre: 'Nuevo Atleta', rol: 'cliente', suscripcion_plan: null },
+      error: null
+    };
+
+    render(
+      <SupabaseProvider>
+        <TestConsumer />
+      </SupabaseProvider>
+    );
+
+    const mockUser = {
+      id: 'test-user-id',
+      email: 'test@example.com',
+      app_metadata: { provider: 'google' }
+    };
+    const mockSession = { user: mockUser };
+
+    await act(async () => {
+      await authCallback('INITIAL_SESSION', mockSession);
+    });
+
+    expect(screen.getByTestId('needs-role-selection').textContent).toBe('yes');
+
+    // Choose Trainer
+    const chooseTrainerBtn = screen.getByTestId('choose-trainer-btn');
+    await act(async () => {
+      fireEvent.click(chooseTrainerBtn);
+    });
+
+    expect(screen.getByTestId('needs-role-selection').textContent).toBe('no');
+    expect(screen.getByTestId('is-trainer').textContent).toBe('yes');
   });
 
   it('should clear data on signOut', async () => {
@@ -121,6 +242,7 @@ describe('SupabaseContext Provider', () => {
 
     expect(screen.getByTestId('auth-state').textContent).toBe('logged-out');
     expect(screen.getByTestId('user-email').textContent).toBe('no-email');
+    expect(screen.getByTestId('needs-role-selection').textContent).toBe('no');
     expect(localStorage.getItem('pwa_user_profile')).toBeNull();
   });
 

@@ -1072,7 +1072,7 @@ const AUDIENCE_DATA = {
 export const Login: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { isAuthenticated, isTrainer, loading: authLoading } = useSupabase();
+  const { isAuthenticated, isTrainer, loading: authLoading, needsRoleSelection } = useSupabase();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -1274,16 +1274,16 @@ export const Login: React.FC = () => {
   };
 
   // Redirigir si ya está autenticado (excepto durante el flujo de recuperación de contraseña,
-  // que crea una sesión temporal para permitir setear la nueva clave)
+  // que crea una sesión temporal para permitir setear la nueva clave, o cuando necesita elegir rol)
   useEffect(() => {
-    if (!authLoading && isAuthenticated && !skipAutoRedirect.current && !isRecoveryMode) {
+    if (!authLoading && isAuthenticated && !skipAutoRedirect.current && !isRecoveryMode && !needsRoleSelection) {
       if (isTrainer) {
         navigate('/trainer', { replace: true });
       } else {
         navigate('/dashboard', { replace: true });
       }
     }
-  }, [isAuthenticated, isTrainer, authLoading, navigate, isRecoveryMode]);
+  }, [isAuthenticated, isTrainer, authLoading, navigate, isRecoveryMode, needsRoleSelection]);
 
 
 

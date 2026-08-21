@@ -11,6 +11,11 @@ interface SupabaseContextType {
   isTrainer: boolean;
   isAdmin: boolean;
   isSoloClient: boolean;
+  needsRoleSelection: boolean;
+  completeRoleSelection: (
+    rol: 'cliente' | 'entrenador',
+    trainerData?: { whatsapp?: string; instagram?: string; nombre?: string }
+  ) => Promise<void>;
   refreshProfile: () => Promise<void>;
   signOut: () => Promise<void>;
 }
@@ -30,6 +35,7 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     return null;
   });
   const [loading, setLoading] = useState<boolean>(true);
+  const [needsRoleSelection, setNeedsRoleSelection] = useState<boolean>(false);
 
   // Ref para evitar doble inicialización de la sesión por la carrera entre initSession y onAuthStateChange
   const initDone = useRef(false);
@@ -41,7 +47,19 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [loading]);
 
-  const fetchProfile = async (userId: string): Promise<Profile | null> => {
+  const isOAuthUser = (currentUser: User | null): boolean => {
+    if (!currentUser) return false;
+    const provider = currentUser.app_metadata?.provider;
+    const providers = currentUser.app_metadata?.providers;
+    const identities = currentUser.identities;
+    return (
+      provider === 'google' ||
+      (Array.isArray(providers) && providers.includes('google')) ||
+      (Array.isArray(identities) && identities.some(i => i.provider === 'google'))
+    );
+  };
+
+  const fetchProfile = async (userId: string, currentUser?: User | null): Promise<Profile | null> => {
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -55,19 +73,34 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         const profileData = data as Profile;
         setProfile(profileData);
         localStorage.setItem('pwa_user_profile', JSON.stringify(data));
+
+        // Detectar si el usuario fue creado por OAuth y aún no tiene suscripción o rol explícito asignado
+        const targetUser = currentUser || user;
+        const userIsOAuth = isOAuthUser(targetUser);
+        const isNewOAuthProfile =
+          !profileData.suscripcion_plan && (userIsOAuth || profileData.nombre === 'Nuevo Atleta');
+
+        if (isNewOAuthProfile) {
+          setNeedsRoleSelection(true);
+        } else {
+          setNeedsRoleSelection(false);
+        }
+
         return profileData;
       } else {
-        // Si el usuario acaba de registrarse con Google OAuth y no tiene perfil aún
+        // Si el usuario acaba de registrarse con Google OAuth y no tiene perfil aún en BD
         try {
           const { data: authUserData } = await supabase.auth.getUser();
-          if (authUserData?.user && authUserData.user.id === userId) {
+          const targetAuthUser = authUserData?.user || currentUser || user;
+          if (targetAuthUser && targetAuthUser.id === userId) {
             const googleName =
-              authUserData.user.user_metadata?.full_name ||
-              authUserData.user.user_metadata?.name ||
-              authUserData.user.email?.split('@')[0] ||
+              targetAuthUser.user_metadata?.full_name ||
+              targetAuthUser.user_metadata?.name ||
+              targetAuthUser.email?.split('@')[0] ||
               'Atleta';
             const newProfileData = {
               id: userId,
+              email: targetAuthUser.email || '',
               nombre: googleName,
               rol: 'cliente' as const,
               vigencia_dias: 30,
@@ -85,6 +118,7 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
               const profileData = createdProfile as Profile;
               setProfile(profileData);
               localStorage.setItem('pwa_user_profile', JSON.stringify(profileData));
+              setNeedsRoleSelection(true);
               return profileData;
             }
           }
@@ -112,9 +146,108 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   };
 
+  const completeRoleSelection = async (
+    rol: 'cliente' | 'entrenador',
+    trainerData?: { whatsapp?: string; instagram?: string; nombre?: string }
+  ) => {
+    const targetUser = user || (await supabase.auth.getUser()).data?.user;
+    if (!targetUser) throw new Error('No hay usuario autenticado');
+
+    const displayName =
+      trainerData?.nombre?.trim() ||
+      targetUser.user_metadata?.full_name ||
+      targetUser.user_metadata?.name ||
+      profile?.nombre ||
+      targetUser.email?.split('@')[0] ||
+      'Atleta';
+
+    const whatsapp = trainerData?.whatsapp?.trim() || '';
+    const instagram = trainerData?.instagram?.trim() || '';
+
+    let updatedProfile: Profile | null = null;
+
+    // 1. Intentar ejecutar la RPC SECURITY DEFINER para actualizar con permisos elevados
+    try {
+      const { data, error } = await supabase.rpc('complete_role_selection', {
+        p_rol: rol,
+        p_nombre: displayName,
+        p_whatsapp: whatsapp,
+        p_instagram: instagram
+      });
+
+      if (!error && data) {
+        updatedProfile = data as Profile;
+      }
+    } catch (rpcErr) {
+      console.warn('RPC complete_role_selection no disponible, usando fallback directo:', rpcErr);
+    }
+
+    // 2. Fallback: Actualización directa por tabla si la RPC aún no ha sido migrada o en testing
+    if (!updatedProfile) {
+      const updatePayload: Partial<Profile> = {
+        rol,
+        nombre: displayName,
+        suscripcion_plan: 'free',
+        suscripcion_estado: 'activo',
+        vigencia_dias: 30,
+        suscripcion_expira_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+      };
+
+      if (rol === 'entrenador') {
+        updatePayload.marca = {
+          nombre_display: displayName,
+          color_primario: '#00d4ff',
+          color_secundario: '#0070a0',
+          tipografia: 'Inter',
+          eslogan: '',
+          whatsapp,
+          instagram
+        };
+      }
+
+      const { data, error } = await supabase
+        .from('profiles')
+        .update(updatePayload)
+        .eq('id', targetUser.id)
+        .select()
+        .maybeSingle();
+
+      if (error) {
+        const { data: upsertData, error: upsertErr } = await supabase
+          .from('profiles')
+          .upsert({
+            id: targetUser.id,
+            email: targetUser.email || '',
+            ...updatePayload
+          })
+          .select()
+          .maybeSingle();
+
+        if (upsertErr) throw upsertErr;
+        if (upsertData) updatedProfile = upsertData as Profile;
+      } else if (data) {
+        updatedProfile = data as Profile;
+      }
+
+      if (!updatedProfile) {
+        updatedProfile = {
+          ...(profile || { id: targetUser.id, email: targetUser.email || '' }),
+          ...updatePayload
+        } as Profile;
+      }
+    }
+
+    // 3. Sincronizar estado local y caché
+    if (updatedProfile) {
+      setProfile(updatedProfile);
+      localStorage.setItem('pwa_user_profile', JSON.stringify(updatedProfile));
+    }
+    setNeedsRoleSelection(false);
+  };
+
   const refreshProfile = async () => {
     if (user) {
-      await fetchProfile(user.id);
+      await fetchProfile(user.id, user);
     }
   };
 
@@ -123,6 +256,7 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     // Esto previene que la interfaz se congele esperando la red
     setUser(null);
     setProfile(null);
+    setNeedsRoleSelection(false);
     document.body.classList.remove('auth-ready');
 
     try {
@@ -165,10 +299,7 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           if (session) {
             setUser(session.user);
             // Cargar el perfil en segundo plano de inmediato.
-            // Al no hacer 'await' aquí, la PWA inicializa la interfaz instantáneamente (0ms)
-            // utilizando el perfil previamente restaurado de caché síncrona en useState,
-            // haciéndola sumamente robusta ante redes lentas, interrupciones o modo offline.
-            fetchProfile(session.user.id);
+            fetchProfile(session.user.id, session.user);
           } else {
             setUser(null);
             // No borrar profile cacheado aquí; podría ser útil para UX offline
@@ -181,10 +312,11 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         if (session) {
           setUser(session.user);
           // fetchProfile en segundo plano sin bloquear
-          fetchProfile(session.user.id);
+          fetchProfile(session.user.id, session.user);
         } else {
           setUser(null);
           setProfile(null);
+          setNeedsRoleSelection(false);
           if (event === 'SIGNED_OUT') {
             document.body.classList.remove('auth-ready');
           }
@@ -218,6 +350,8 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         isTrainer,
         isAdmin,
         isSoloClient,
+        needsRoleSelection,
+        completeRoleSelection,
         refreshProfile,
         signOut
       }}

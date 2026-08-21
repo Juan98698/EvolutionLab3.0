@@ -6,6 +6,7 @@ import { PWAInstallBanner } from './components/common/PWAInstallBanner';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { ConfirmDialogProvider } from './context/ConfirmDialogContext';
 import Login from './components/auth/Login';
+import RoleSelectionModal from './components/auth/RoleSelectionModal';
 // Lazy-loaded: AthleteDashboard, Historial y Analytics importan chart.js (~204 KB).
 // Al cargarlos bajo demanda se elimina ese peso del bundle principal (index.js),
 // que bajó de 1,042 KB → ~650 KB. Antes estaban estáticos por error — todos los
@@ -56,9 +57,9 @@ const LoadingFallback = () => (
 );
 
 const HomeDispatcher = () => {
-  const { isAuthenticated, isTrainer, isAdmin, loading } = useSupabase();
+  const { isAuthenticated, isTrainer, isAdmin, loading, needsRoleSelection } = useSupabase();
 
-  if (loading) return null; // ProtectedRoute ya se encarga de la pantalla de carga principal
+  if (loading || needsRoleSelection) return null; // ProtectedRoute y RoleSelectionModal se encargan
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
@@ -85,6 +86,8 @@ const ProtectedPage: React.FC<{
 );
 
 export const App: React.FC = () => {
+  const { isAuthenticated, needsRoleSelection } = useSupabase();
+
   React.useEffect(() => {
     const handleContextMenu = (e: MouseEvent) => {
       const target = e.target as HTMLElement | null;
@@ -120,13 +123,6 @@ export const App: React.FC = () => {
         e.preventDefault();
       }
     };
-
-    // Nota: se eliminó el bloqueo de atajos de DevTools (F12 / Ctrl+Shift+I / Ctrl+U) que
-    // existía acá. Era trivial de sortear (menú del navegador, view-source:, etc.), se
-    // aplicaba a TODA la app en vez de solo a los componentes de ejercicios, y podía
-    // interferir con debugging legítimo o extensiones de accesibilidad. La protección real
-    // contra copia casual de las imágenes/GIFs sigue activa vía contextmenu/dragstart abajo,
-    // que sí están acotados a los componentes de contenido protegido.
 
     document.addEventListener('contextmenu', handleContextMenu);
     document.addEventListener('dragstart', handleDragStart);
@@ -274,6 +270,7 @@ export const App: React.FC = () => {
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </React.Suspense>
+      {isAuthenticated && needsRoleSelection && <RoleSelectionModal />}
       <PWAInstallBanner />
     </BrowserRouter>
     </ConfirmDialogProvider>
