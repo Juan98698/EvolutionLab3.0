@@ -363,22 +363,22 @@ export const AdminDashboard: React.FC = () => {
   };
 
   return (
-    <div style={{ background: 'transparent', minHeight: '100vh', color: 'white', paddingBottom: '60px' }}>
+    <div style={{ background: 'transparent', minHeight: '100vh', color: 'white', paddingBottom: '60px', width: '100%', maxWidth: '100vw', overflowX: 'hidden', boxSizing: 'border-box' }}>
       {/* HEADER */}
-      <div className="top-bar" style={{ marginBottom: '10px', padding: '12px 0' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px', maxWidth: '1200px', margin: '0 auto', padding: '0 20px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <div style={{ width: '32px', height: '32px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #ef4444, #dc2626)', boxShadow: '0 0 15px rgba(239, 68, 68, 0.35)' }}>
+      <div className="top-bar" style={{ marginBottom: '10px', padding: '12px 0', width: '100%', boxSizing: 'border-box' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', maxWidth: '1200px', margin: '0 auto', padding: isMobile ? '0 12px' : '0 20px', width: '100%', boxSizing: 'border-box' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
+            <div style={{ width: '32px', height: '32px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #ef4444, #dc2626)', boxShadow: '0 0 15px rgba(239, 68, 68, 0.35)', flexShrink: 0 }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
               </svg>
             </div>
-            <div>
+            <div style={{ minWidth: 0 }}>
               <h1 style={{ fontFamily: 'Orbitron, sans-serif', fontSize: '15px', fontWeight: 800, margin: 0, letterSpacing: '1px', display: 'flex', alignItems: 'baseline', gap: '6px', flexWrap: 'wrap' }}>
                 <span style={{ color: '#ffffff' }}>EVOLUTION</span>{' '}
                 <span style={{ background: 'linear-gradient(90deg, #ef4444, #f97316)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>ADMIN</span>
               </h1>
-              <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', marginTop: '2px' }}>
+              <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 Panel de Control — <span style={{ color: '#f87171', fontWeight: 600 }}>{profile?.nombre || 'Admin'}</span>
               </div>
             </div>
@@ -390,7 +390,7 @@ export const AdminDashboard: React.FC = () => {
               fontSize: '11px', fontFamily: "'Orbitron', sans-serif", fontWeight: 700,
               background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.25)',
               borderRadius: '10px', color: '#fca5a5', padding: '8px 14px', cursor: 'pointer',
-              display: 'flex', alignItems: 'center', gap: '6px', transition: 'all 0.2s'
+              display: 'flex', alignItems: 'center', gap: '6px', transition: 'all 0.2s', flexShrink: 0
             }}
           >
             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" /><polyline points="16 17 21 12 16 7" /><line x1="21" y1="12" x2="9" y2="12" /></svg>
@@ -404,19 +404,22 @@ export const AdminDashboard: React.FC = () => {
         background: 'rgba(255, 255, 255, 0.02)',
         borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
         borderTop: '1px solid rgba(255, 255, 255, 0.02)',
-        padding: '6px 20px',
+        padding: '6px 14px',
         textAlign: 'center',
         fontSize: '9px',
         fontFamily: "'Orbitron', sans-serif",
         fontWeight: 600,
-        letterSpacing: '1.2px',
+        letterSpacing: '1px',
         color: 'rgba(255, 255, 255, 0.65)',
         textTransform: 'uppercase',
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
         gap: '8px',
-        marginBottom: '20px'
+        flexWrap: 'wrap',
+        marginBottom: '20px',
+        width: '100%',
+        boxSizing: 'border-box'
       }}>
         <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#ef4444' }} />
         <span>PLAN ACTUAL: ADMINISTRADOR DEL SISTEMA | ACCESO ILIMITADO</span>
@@ -455,7 +458,8 @@ export const AdminDashboard: React.FC = () => {
           justifyContent: 'center',
           alignItems: 'center',
           zIndex: 9999,
-          padding: '20px'
+          padding: '20px',
+          boxSizing: 'border-box'
         }} onClick={() => setShowPlanInfoModal(false)}>
           {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events -- ya tiene role="dialog" + Escape/foco atrapado vía useModalA11y; este onClick solo evita que el click se propague al backdrop */}
           <div
@@ -509,31 +513,47 @@ export const AdminDashboard: React.FC = () => {
         </div>
       )}
 
-      <div className="container stagger-3" style={{ padding: '0 20px', maxWidth: '1200px', margin: '0 auto' }}>
+      <div className="container stagger-3" style={{ padding: isMobile ? '0 12px' : '0 20px', maxWidth: '1200px', margin: '0 auto', width: '100%', boxSizing: 'border-box', overflowX: 'hidden' }}>
         {/* STATS OVERVIEW CARDS */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px', marginBottom: '28px' }}>
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(auto-fit, minmax(180px, 1fr))',
+          gap: isMobile ? '10px' : '16px',
+          marginBottom: '20px',
+          width: '100%',
+          boxSizing: 'border-box'
+        }}>
           {[
             { label: 'Total Usuarios', value: stats.total, color: '#94a3b8', bg: 'rgba(148, 163, 184, 0.08)', border: 'rgba(148, 163, 184, 0.2)', icon: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75' },
             { label: 'Administradores', value: stats.admins, color: '#f87171', bg: ROLE_COLORS.admin.bg, border: ROLE_COLORS.admin.border, icon: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z' },
             { label: 'Entrenadores', value: stats.trainers, color: '#a5b4fc', bg: ROLE_COLORS.entrenador.bg, border: ROLE_COLORS.entrenador.border, icon: 'M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5' },
             { label: 'Clientes', value: stats.clients, color: '#5eead4', bg: ROLE_COLORS.cliente.bg, border: ROLE_COLORS.cliente.border, icon: 'M18 8h1a4 4 0 0 1 0 8h-1M2 8h16v8H2zM6 12h4' },
           ].map((stat) => (
-            <div key={stat.label} className="mcard" style={{ background: stat.bg, borderColor: stat.border, boxShadow: 'none' }}>
-              <div className="mcard-label" style={{ color: stat.color, display: 'flex', alignItems: 'center', gap: '6px', fontSize: '10px' }}>
+            <div key={stat.label} className="mcard" style={{ background: stat.bg, borderColor: stat.border, boxShadow: 'none', padding: isMobile ? '12px' : '16px' }}>
+              <div className="mcard-label" style={{ color: stat.color, display: 'flex', alignItems: 'center', gap: '6px', fontSize: isMobile ? '9px' : '10px' }}>
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                   <path d={stat.icon} />
                 </svg>
                 {stat.label}
               </div>
-              <div className="mcard-value" style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '26px', fontWeight: 800 }}>{stat.value}</div>
+              <div className="mcard-value" style={{ fontFamily: "'Orbitron', sans-serif", fontSize: isMobile ? '20px' : '26px', fontWeight: 800 }}>{stat.value}</div>
             </div>
           ))}
         </div>
 
         {/* SEARCH, FILTER & ACTION BAR */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '15px', marginBottom: '24px' }}>
-          <div style={{ display: 'flex', flex: 1, gap: '12px', flexWrap: 'wrap', minWidth: '280px' }}>
-            <div style={{ position: 'relative', flex: 1, maxWidth: '400px', minWidth: '220px' }}>
+        <div style={{
+          display: 'flex',
+          flexDirection: isMobile ? 'column' : 'row',
+          justifyContent: 'space-between',
+          alignItems: isMobile ? 'stretch' : 'center',
+          gap: '12px',
+          marginBottom: '20px',
+          width: '100%',
+          boxSizing: 'border-box'
+        }}>
+          <div style={{ display: 'flex', flex: 1, gap: '10px', flexWrap: 'wrap', width: '100%' }}>
+            <div style={{ position: 'relative', flex: 1, minWidth: isMobile ? '100%' : '200px' }}>
               <input
                 type="text"
                 placeholder="Buscar por nombre o email..."
@@ -541,7 +561,7 @@ export const AdminDashboard: React.FC = () => {
                 onChange={(e) => setSearchQuery(e.target.value)}
                 style={{
                   width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.08)',
-                  borderRadius: '10px', color: 'white', padding: '12px 16px', fontSize: '13px'
+                  borderRadius: '10px', color: 'white', padding: '10px 14px', fontSize: '13px', boxSizing: 'border-box'
                 }}
               />
             </div>
@@ -550,27 +570,40 @@ export const AdminDashboard: React.FC = () => {
               style={{
                 background: 'linear-gradient(135deg, #ef4444, #dc2626)',
                 border: 'none', borderRadius: '10px', color: 'white',
-                padding: '12px 20px', fontSize: '12px', fontFamily: "'Orbitron', sans-serif",
-                fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px',
-                boxShadow: '0 4px 14px rgba(239, 68, 68, 0.25)'
+                padding: '10px 16px', fontSize: '11px', fontFamily: "'Orbitron', sans-serif",
+                fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                boxShadow: '0 4px 14px rgba(239, 68, 68, 0.25)', width: isMobile ? '100%' : 'auto'
               }}
             >
               <span style={{ fontSize: '14px' }}>➕</span> Registrar Usuario
             </button>
           </div>
 
-          <div style={{ display: 'flex', gap: '6px', background: 'rgba(255,255,255,0.03)', padding: '4px', borderRadius: '10px' }}>
+          <div style={{
+            display: 'flex',
+            gap: '4px',
+            background: 'rgba(255,255,255,0.03)',
+            padding: '4px',
+            borderRadius: '10px',
+            overflowX: 'auto',
+            WebkitOverflowScrolling: 'touch',
+            width: isMobile ? '100%' : 'auto',
+            boxSizing: 'border-box'
+          }}>
             {(['todos', 'admin', 'entrenador', 'cliente'] as const).map((f) => (
               <button
                 key={f}
                 onClick={() => setFilterRole(f)}
                 style={{
-                  fontSize: '10px', padding: '8px 14px', borderRadius: '8px',
+                  fontSize: '10px', padding: '8px 10px', borderRadius: '8px',
                   border: 'none', cursor: 'pointer', fontFamily: "'Orbitron', sans-serif",
-                  fontWeight: filterRole === f ? 700 : 500, letterSpacing: '0.5px',
-                  background: filterRole === f ? 'rgba(255,255,255,0.1)' : 'transparent',
-                  color: filterRole === f ? 'white' : 'rgba(255,255,255,0.5)',
-                  transition: 'all 0.2s'
+                  fontWeight: filterRole === f ? 700 : 500, letterSpacing: '0.4px',
+                  background: filterRole === f ? 'rgba(255,255,255,0.12)' : 'transparent',
+                  color: filterRole === f ? 'white' : 'rgba(255,255,255,0.55)',
+                  transition: 'all 0.2s',
+                  flex: isMobile ? '1 1 auto' : 'none',
+                  textAlign: 'center',
+                  whiteSpace: 'nowrap'
                 }}
               >
                 {f === 'todos' ? 'Todos' : ROLE_COLORS[f].label + 's'}
@@ -590,7 +623,7 @@ export const AdminDashboard: React.FC = () => {
           </div>
         ) : isMobile ? (
           /* MOBILE CARDS VIEW */
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '16px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '14px', width: '100%', boxSizing: 'border-box' }}>
             {filteredUsers.map((u) => {
               const roleStyle = ROLE_COLORS[u.rol as RolOption] || ROLE_COLORS.cliente;
               const isSelf = u.id === profile?.id;
@@ -598,62 +631,63 @@ export const AdminDashboard: React.FC = () => {
                 <div
                   key={u.id}
                   style={{
-                    background: 'rgba(15, 23, 42, 0.45)',
-                    border: `1px solid ${isSelf ? 'rgba(239, 68, 68, 0.2)' : 'rgba(255,255,255,0.06)'}`,
-                    borderRadius: '16px', padding: '20px',
-                    display: 'flex', flexDirection: 'column', gap: '14px',
-                    position: 'relative'
+                    background: 'rgba(15, 23, 42, 0.65)',
+                    border: `1px solid ${isSelf ? 'rgba(239, 68, 68, 0.3)' : 'rgba(255,255,255,0.08)'}`,
+                    borderRadius: '14px', padding: '14px',
+                    display: 'flex', flexDirection: 'column', gap: '12px',
+                    position: 'relative', width: '100%', boxSizing: 'border-box',
+                    overflow: 'hidden'
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', width: '100%' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: 1 }}>
                       <div style={{
                         width: '32px', height: '32px', borderRadius: '50%',
                         background: `linear-gradient(135deg, ${roleStyle.bg}, ${roleStyle.border})`,
                         display: 'flex', alignItems: 'center', justifyContent: 'center',
                         fontSize: '13px', fontWeight: 700, color: roleStyle.text,
-                        border: `1px solid ${roleStyle.border}`
+                        border: `1px solid ${roleStyle.border}`, flexShrink: 0
                       }}>
                         {(u.nombre || 'U').charAt(0).toUpperCase()}
                       </div>
-                      <div>
-                        <div style={{ fontSize: '14px', fontWeight: 700, color: 'white' }}>
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <div style={{ fontSize: '13px', fontWeight: 700, color: 'white', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           {u.nombre || 'Sin Nombre'}
                           {isSelf && <span style={{ fontSize: '9px', color: '#f87171', marginLeft: '6px', fontWeight: 700 }}>(Tú)</span>}
                         </div>
-                        <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)', marginTop: '2px' }}>
+                        <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           {u.email || 'Sin Email'}
                         </div>
                       </div>
                     </div>
                     <span style={{
-                      display: 'inline-flex', alignItems: 'center', gap: '5px',
-                      padding: '4px 10px', borderRadius: '20px', fontSize: '9px',
+                      display: 'inline-flex', alignItems: 'center', gap: '4px',
+                      padding: '3px 8px', borderRadius: '20px', fontSize: '9px',
                       fontWeight: 700, fontFamily: "'Orbitron', sans-serif",
                       background: roleStyle.bg, border: `1px solid ${roleStyle.border}`,
-                      color: roleStyle.text
+                      color: roleStyle.text, flexShrink: 0
                     }}>
                       {roleStyle.label}
                     </span>
                   </div>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', background: 'rgba(255,255,255,0.02)', padding: '12px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.04)', fontSize: '12px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                      <span style={{ color: 'rgba(255,255,255,0.45)' }}>Vigencia:</span>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', background: 'rgba(255,255,255,0.03)', padding: '10px 12px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.05)', fontSize: '11px', width: '100%', boxSizing: 'border-box' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span style={{ color: 'rgba(255,255,255,0.5)' }}>Vigencia:</span>
                       <span style={{ fontWeight: 600, color: 'white', fontFamily: "'Orbitron', sans-serif" }}>{u.vigencia_dias !== undefined ? `${u.vigencia_dias} días` : 'No asignada'}</span>
                     </div>
                     {u.rol === 'cliente' && (
                       <>
-                        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <span style={{ color: 'rgba(255,255,255,0.45)' }}>Tipo Cliente:</span>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ color: 'rgba(255,255,255,0.5)' }}>Tipo Cliente:</span>
                           <span style={{ fontWeight: 600, color: u.entrenador_id ? '#a5b4fc' : '#2dd4bf' }}>
                             {u.entrenador_id ? 'Asignado (Guiado)' : 'Autónomo (Solo)'}
                           </span>
                         </div>
                         {u.entrenador_id && (
-                          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <span style={{ color: 'rgba(255,255,255,0.45)' }}>Entrenador:</span>
-                            <span style={{ fontWeight: 600, color: 'white' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ color: 'rgba(255,255,255,0.5)' }}>Entrenador:</span>
+                            <span style={{ fontWeight: 600, color: 'white', maxWidth: '60%', textAlign: 'right', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                               {trainers.find(t => t.id === u.entrenador_id)?.nombre || 'Asignado'}
                             </span>
                           </div>
@@ -661,8 +695,8 @@ export const AdminDashboard: React.FC = () => {
                       </>
                     )}
                     {(u.rol === 'entrenador' || (u.rol === 'cliente' && !u.entrenador_id)) && (
-                      <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: '6px' }}>
-                        <span style={{ color: 'rgba(255,255,255,0.45)' }}>Suscripción:</span>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: '6px' }}>
+                        <span style={{ color: 'rgba(255,255,255,0.5)' }}>Suscripción:</span>
                         <span style={{ fontWeight: 600, color: u.suscripcion_estado === 'activo' ? '#2de484' : '#fca5a5' }}>
                           {u.suscripcion_plan?.toUpperCase() || 'FREE'} ({u.suscripcion_estado || 'activo'})
                         </span>
@@ -670,12 +704,12 @@ export const AdminDashboard: React.FC = () => {
                     )}
                   </div>
 
-                  <div style={{ display: 'flex', gap: '10px', marginTop: '4px' }}>
+                  <div style={{ display: 'flex', gap: '8px', marginTop: '2px', width: '100%' }}>
                     <button
                       onClick={() => handleEditClick(u)}
                       style={{
-                        flex: 1, padding: '10px', background: 'rgba(255,255,255,0.04)',
-                        border: '1px solid rgba(255,255,255,0.1)', borderRadius: '10px',
+                        flex: 1, padding: '9px', background: 'rgba(255,255,255,0.04)',
+                        border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px',
                         color: 'white', fontSize: '11px', fontWeight: 600,
                         fontFamily: "'Orbitron', sans-serif", cursor: 'pointer',
                         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px'
@@ -687,8 +721,8 @@ export const AdminDashboard: React.FC = () => {
                       <button
                         onClick={() => handleDeleteUser(u.id, u.nombre || 'Usuario')}
                         style={{
-                          padding: '10px 14px', background: 'rgba(239, 68, 68, 0.08)',
-                          border: '1px solid rgba(239, 68, 68, 0.25)', borderRadius: '10px',
+                          padding: '9px 12px', background: 'rgba(239, 68, 68, 0.1)',
+                          border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '8px',
                           color: '#fca5a5', cursor: 'pointer', display: 'inline-flex',
                           alignItems: 'center', justifyContent: 'center'
                         }}
@@ -703,8 +737,9 @@ export const AdminDashboard: React.FC = () => {
           </div>
         ) : (
           /* DESKTOP TABLE VIEW */
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {/* Table header */}
+          <div style={{ width: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch', boxSizing: 'border-box' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', minWidth: '700px' }}>
+              {/* Table header */}
             <div style={{
               display: 'grid', gridTemplateColumns: '1.2fr 1.3fr 1.1fr 90px 80px 60px',
               padding: '10px 20px', background: 'rgba(255,255,255,0.02)',
@@ -897,6 +932,7 @@ export const AdminDashboard: React.FC = () => {
                 </div>
               );
             })}
+            </div>
           </div>
         )}
       </div>
