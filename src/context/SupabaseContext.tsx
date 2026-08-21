@@ -57,6 +57,41 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         localStorage.setItem('pwa_user_profile', JSON.stringify(data));
         return profileData;
       } else {
+        // Si el usuario acaba de registrarse con Google OAuth y no tiene perfil aún
+        try {
+          const { data: authUserData } = await supabase.auth.getUser();
+          if (authUserData?.user && authUserData.user.id === userId) {
+            const googleName =
+              authUserData.user.user_metadata?.full_name ||
+              authUserData.user.user_metadata?.name ||
+              authUserData.user.email?.split('@')[0] ||
+              'Atleta';
+            const newProfileData = {
+              id: userId,
+              nombre: googleName,
+              rol: 'cliente' as const,
+              vigencia_dias: 30,
+              suscripcion_plan: 'free',
+              suscripcion_estado: 'activo',
+              suscripcion_expira_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString()
+            };
+            const { data: createdProfile } = await supabase
+              .from('profiles')
+              .upsert(newProfileData)
+              .select()
+              .maybeSingle();
+
+            if (createdProfile) {
+              const profileData = createdProfile as Profile;
+              setProfile(profileData);
+              localStorage.setItem('pwa_user_profile', JSON.stringify(profileData));
+              return profileData;
+            }
+          }
+        } catch (createErr) {
+          console.error('Error al auto-crear perfil para OAuth:', createErr);
+        }
+
         setProfile(null);
         return null;
       }
