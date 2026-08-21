@@ -114,7 +114,7 @@ describe('Login Component - UX & Validation Features', () => {
     fireEvent.change(passInput, { target: { value: 'clave123' } });
     fireEvent.change(confirmInput, { target: { value: 'claveErrada' } });
 
-    const submitBtn = screen.getByRole('button', { name: /REGISTRARSE/i });
+    const submitBtn = screen.getByRole('button', { name: /^REGISTRARSE$/i });
     fireEvent.click(submitBtn);
 
     expect(await screen.findByText(/Las contraseñas no coinciden/i)).toBeTruthy();
