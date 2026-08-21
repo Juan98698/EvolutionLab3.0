@@ -1,4 +1,4 @@
-﻿-- =====================================================================
+-- =====================================================================
 -- MIGRATION: complete_role_selection RPC function
 -- =====================================================================
 -- Propósito: Permitir que los nuevos usuarios que ingresan vía Google OAuth
@@ -14,7 +14,7 @@ CREATE OR REPLACE FUNCTION public.complete_role_selection(
   p_whatsapp text DEFAULT '',
   p_instagram text DEFAULT ''
 )
-RETURNS jsonb AS \$\$
+RETURNS jsonb AS $$
 DECLARE
   _profile jsonb;
   _user_id uuid := auth.uid();
@@ -104,7 +104,7 @@ BEGIN
   SELECT to_jsonb(p.*) INTO _profile FROM public.profiles p WHERE p.id = _user_id;
   RETURN _profile;
 END;
-\$\$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Otorgar permiso de ejecución a usuarios autenticados
 GRANT EXECUTE ON FUNCTION public.complete_role_selection(text, text, text, text) TO authenticated;

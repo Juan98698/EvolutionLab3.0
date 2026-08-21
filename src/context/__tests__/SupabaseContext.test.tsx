@@ -14,7 +14,7 @@ let mockProfileResponse: any = {
   error: null
 };
 
-let mockRpcResponse: any = {
+const mockRpcResponse: any = {
   data: { id: 'test-user-id', rol: 'entrenador', suscripcion_plan: 'free' },
   error: null
 };
