@@ -20,6 +20,33 @@ import {
   MovementPattern,
 } from './strengthThresholds';
 import { isFunctionalExercise } from './exerciseUtils';
+import { applyRuleBasedProgression } from './ruleBasedProgression';
+
+// ─── Despachador de motor de progresión (por ejercicio) ──────────────────────
+// Cada ejercicio del plan elige, vía su campo `progression_type` (configurado
+// hoy en SmartBlockBuilderModal), cuál de los dos motores lo gobierna:
+//
+// - undefined (default)                        → motor RIR/1RM de este archivo
+//   (requiere periodizationConfig.enabled=true y ex.variables['rir'] en el
+//   ejercicio — el comportamiento que ya existía antes de este despachador).
+// - 'linear' | 'double' | 'undulating' | 'deload' → motor de reglas fijas
+//   (ruleBasedProgression.ts — incrementos por %/kg basados en tendencias
+//   de sesiones, sin necesitar que el atleta reporte RIR).
+//
+// Nunca corren los dos para el mismo ejercicio en el mismo ciclo — evita el
+// problema de "dos motores escribiendo el mismo campo" que existía cuando
+// overload.ts solo generaba notificaciones en paralelo sin saber del motor
+// de periodización.
+export type ProgressionEngineKind = 'rir_auto' | 'rules';
+
+const RULE_BASED_PROGRESSION_TYPES: ReadonlySet<string> = new Set([
+  'linear', 'double', 'undulating', 'deload',
+]);
+
+export const resolveProgressionEngine = (ex: { progression_type?: string }): ProgressionEngineKind =>
+  ex.progression_type && RULE_BASED_PROGRESSION_TYPES.has(ex.progression_type)
+    ? 'rules'
+    : 'rir_auto';
 
 // ─── Strength NL weighting (Opción B) ────────────────────────────────────────
 // Pondera NL por intensidad estimada desde RIR, igual que VolumeTracker.
@@ -700,6 +727,35 @@ export const autoRegulatePlanForNextWeek = (
     day.exercises?.forEach(ex => {
       if (!ex.nombre || isFunctionalExercise(ex)) return;
       const normName = ex.nombre.toLowerCase().trim();
+
+      // ── Despachador: reglas fijas en vez de RIR/1RM para este ejercicio ────
+      if (resolveProgressionEngine(ex) === 'rules') {
+        const loggedEntry = loggedMap.get(normName);
+        if (!loggedEntry || !loggedEntry.repsArray?.length || loggedEntry.peso == null) return;
+
+        const totalReps = loggedEntry.repsArray.reduce((a, b) => a + b, 0);
+        const volumen = loggedEntry.peso * totalReps;
+
+        if (!config.ruleProgressionState) config.ruleProgressionState = {};
+        const prevState = config.ruleProgressionState[normName] || {};
+
+        const result = applyRuleBasedProgression({
+          peso: loggedEntry.peso,
+          volumen,
+          rirLogrado: loggedEntry.rir ?? null,
+          state: prevState,
+        });
+
+        config.ruleProgressionState[normName] = result.newState;
+
+        if (result.newWeight != null) {
+          if (!ex.variables) ex.variables = {};
+          ex.variables['peso'] = `🤖 ${result.newWeight} kg`;
+          if (result.note) ex.progression_notes = result.note;
+        }
+        return; // este ejercicio no pasa por el motor de RIR/1RM de abajo
+      }
+
       let oneRM = marcas[normName];
       if (!oneRM) {
         const alias = mapExerciseToLiftKey(normName);
@@ -893,6 +949,12 @@ export const autoRegulatePlanForNextWeek = (
     // Aplicar ajuste por ejercicio usando el feedback consolidado de la semana
     updatedPlan.trainingDays?.forEach(day => {
       day.exercises?.forEach((foundEx: any) => {
+        // Ejercicios gobernados por el motor de reglas fijas quedan fuera del
+        // ajuste semanal de series/RIR de la periodización — la idea del
+        // despachador es que un motor u otro gobierne el ejercicio por
+        // completo, no que ambos lo toquen parcialmente.
+        if (resolveProgressionEngine(foundEx) === 'rules') return;
+
         const normName = (foundEx.nombre || '').toLowerCase().trim();
         const feedback = consolidatedFeedback[normName];
         if (!feedback) return; // Ejercicio sin feedback esta semana — no tocar
@@ -1007,6 +1069,7 @@ export const autoRegulatePlanForNextWeek = (
     // Deload: reducir series a la mitad, RIR conservador
     updatedPlan.trainingDays?.forEach(day => {
       day.exercises?.forEach(ex => {
+        if (resolveProgressionEngine(ex) === 'rules') return;
         if (!ex.variables) ex.variables = {};
         const originalSets = parseInt(ex.variables['series de trabajo'] || '3', 10) || 3;
         ex.variables['series de trabajo'] = String(Math.max(MIN_SETS_DELOAD, Math.round(originalSets / 2)));
@@ -1044,6 +1107,7 @@ export const autoRegulatePlanForNextWeek = (
 
       updatedPlan.trainingDays?.forEach(day => {
         day.exercises?.forEach(ex => {
+          if (resolveProgressionEngine(ex) === 'rules') return;
           if (!ex.variables) ex.variables = {};
           ex.variables['rir'] = String(newTargetRIR);
         });

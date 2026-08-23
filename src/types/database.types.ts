@@ -168,6 +168,30 @@ export interface PeriodizationConfig {
    * Ejemplo: ['pecho', 'hombros'] — bíceps, espalda, pierna → MV fijo.
    */
   muscle_groups_in_focus?: string[];
+  /**
+   * Estado incremental por ejercicio para el motor de reglas de sobrecarga
+   * (progression_type: 'linear' | 'double' | 'undulating' | 'deload').
+   * Se actualiza sesión a sesión — igual que marcas_1rm — para no depender
+   * de re-consultar el historial completo de sesiones en cada cálculo.
+   * Clave: nombre del ejercicio normalizado (lowercase + trim).
+   */
+  ruleProgressionState?: Record<string, RuleProgressionState>;
+}
+
+/**
+ * Estado incremental de racha por ejercicio, usado por applyRuleBasedProgression
+ * (src/lib/ruleBasedProgression.ts) para decidir cuándo subir o bajar peso
+ * según tendencias de varias sesiones, sin re-derivar todo el historial.
+ */
+export interface RuleProgressionState {
+  /** Volumen (peso × reps totales) de la última sesión registrada, para comparar tendencia. */
+  ultimoVolumen?: number;
+  /** Sesiones consecutivas con RIR alto y sin caída de volumen (candidato a subir peso). */
+  rirAltoStreak?: number;
+  /** Sesiones consecutivas con caída de volumen, sin importar el RIR (candidato a bajar peso por regresión). */
+  regresionStreak?: number;
+  /** Sesiones consecutivas con RIR muy bajo Y caída de volumen a la vez (candidato a bajar peso por fatiga/sobreentrenamiento). */
+  rirBajoRegresionStreak?: number;
 }
 
 export interface GlobalVariable {

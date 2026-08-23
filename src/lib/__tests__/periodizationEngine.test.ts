@@ -289,6 +289,114 @@ describe('periodizationEngine Library', () => {
       expect(updated1RM).toBeLessThan(112.0);
     });
   });
+
+  describe('resolveProgressionEngine — despachador por ejercicio (motor de reglas vs RIR/1RM)', () => {
+    const buildDispatchPlan = (progressionType?: 'linear' | 'double' | 'undulating' | 'deload'): PlanData => ({
+      periodizationConfig: {
+        enabled: true,
+        objetivo: 'hipertrofia',
+        nivel_atleta: 'intermedio',
+        semana_actual: 1,
+        total_semanas: 4,
+        // Sin marcas_1rm: el motor de reglas no lo necesita para funcionar,
+        // a diferencia del motor RIR/1RM.
+      },
+      trainingDays: [
+        {
+          id: 'day-1',
+          name: 'Día 1: Torso',
+          exercises: [
+            {
+              id: 'ex-1',
+              nombre: 'Curl de Bíceps',
+              grupo_muscular: 'Bíceps',
+              // Sin variables['rir'] a propósito: el motor de reglas no lo lee.
+              variables: { 'series de trabajo': '3', repeticiones: '10-12', peso: '20 kg' },
+              progression_type: progressionType,
+            },
+          ],
+        },
+      ],
+    });
+
+    const logSession = (peso: number, reps: number[], rir: number) => ([{
+      nombre: 'Curl de Bíceps',
+      repsArray: reps,
+      peso,
+      rir,
+      feedback_estimulo: 'good' as const,
+      feedback_recuperacion: 'recovered' as const,
+    }]);
+
+    it('sin progression_type (default): usa el motor RIR/1RM (reps_objetivo) y nunca crea ruleProgressionState', () => {
+      const plan = buildDispatchPlan(undefined);
+      const result = autoRegulatePlanForNextWeek(plan, logSession(20, [12, 12, 12], 4));
+      const ex = result!.trainingDays![0].exercises![0];
+
+      // reps_objetivo es una firma exclusiva del motor RIR/1RM (checkRepProgressionTrigger
+      // / applyPrescribedWeightToExercise) — su presencia confirma que el
+      // despachador usó ese motor y no el de reglas.
+      expect(ex.variables['reps_objetivo']).toBeDefined();
+      expect(result!.periodizationConfig?.ruleProgressionState).toBeUndefined();
+    });
+
+    it("progression_type: 'linear' — usa el motor de reglas y SÍ actualiza el plan tras 3 sesiones consecutivas de RIR alto, sin necesitar marcas_1rm ni variables['rir']", () => {
+      const plan = buildDispatchPlan('linear');
+
+      let current = plan;
+      let result: PlanData | null = null;
+      // La 1ra sesión solo establece la línea base de volumen (no cuenta para
+      // la racha) — hacen falta 3 sesiones MÁS con RIR alto para disparar,
+      // por eso son 4 llamadas en total.
+      for (const reps of [[12, 12, 12], [12, 12, 12], [12, 12, 13], [12, 13, 13]]) {
+        result = autoRegulatePlanForNextWeek(current, logSession(20, reps, 4));
+        current = result!;
+      }
+
+      const ex = result!.trainingDays![0].exercises![0];
+      expect(ex.variables['peso']).not.toBe('20 kg');
+      expect(ex.variables['peso']).toMatch(/^🤖 .+ kg$/);
+      expect(ex.progression_notes).toContain('📈');
+
+      // El estado incremental quedó persistido en el plan, listo para la
+      // próxima sesión — igual que marcas_1rm para el motor RIR.
+      expect(result!.periodizationConfig?.ruleProgressionState?.['curl de bíceps']).toBeDefined();
+
+      // El motor RIR/1RM nunca corrió para este ejercicio: sin reps_objetivo,
+      // y sin que el ajuste semanal de series/RIR de la periodización lo haya
+      // tocado (rir nunca aparece, ya que el motor de reglas no lo usa).
+      expect(ex.variables['reps_objetivo']).toBeUndefined();
+    });
+
+    it("progression_type: 'double' también enruta al motor de reglas y baja el peso tras 4 sesiones con volumen cayendo (la 1ra solo establece línea base)", () => {
+      const plan = buildDispatchPlan('double');
+
+      let current = plan;
+      let result: PlanData | null = null;
+      // peso=40kg fijo, reps bajando cada sesión -> volumen 880, 800, 720, 640
+      for (const reps of [22, 20, 18, 16]) {
+        result = autoRegulatePlanForNextWeek(current, logSession(40, [reps], 2));
+        current = result!;
+      }
+
+      const ex = result!.trainingDays![0].exercises![0];
+      expect(ex.variables['peso']).toBe('🤖 37.5 kg'); // 40 * (1 - 7%) = 37.2 -> redondeado a 2.5 -> 37.5
+    });
+
+    it('ambos motores nunca corren a la vez para el mismo ejercicio: con progression_type de reglas, el ajuste semanal de la periodización (series/rir) tampoco lo toca', () => {
+      const plan = buildDispatchPlan('linear');
+      // Fuerza el cierre de semana (sessions_per_week=1 con este plan de 1 día)
+      // para confirmar que ni el ajuste de series ni la progresión de RIR
+      // semanal tocan a un ejercicio gobernado por el motor de reglas.
+      const result = autoRegulatePlanForNextWeek(plan, logSession(20, [12, 12, 12], 4));
+      const ex = result!.trainingDays![0].exercises![0];
+
+      expect(ex.variables['reps_objetivo']).toBeUndefined();
+      // El motor de reglas nunca escribe 'rir' — si apareciera, sería porque
+      // el ajuste semanal de periodización (que sí lo hace) no fue excluido.
+      expect(ex.variables['rir']).toBeUndefined();
+    });
+  });
 });
 
 
