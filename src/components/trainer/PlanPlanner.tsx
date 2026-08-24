@@ -2990,6 +2990,8 @@ export const PlanPlanner: React.FC = () => {
         setTrainingDays={setTrainingDays}
         setExerciseHistory={setExerciseHistory}
         showToast={showToast}
+        periodizationConfig={periodizationConfig}
+        setPeriodizationConfig={setPeriodizationConfig}
       />
 
       <Toast message={toastState.message} type={toastState.type} visible={toastState.visible} />

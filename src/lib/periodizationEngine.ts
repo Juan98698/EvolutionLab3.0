@@ -40,7 +40,19 @@ import { applyRuleBasedProgression } from './ruleBasedProgression';
 export type ProgressionEngineKind = 'rir_auto' | 'rules';
 
 const RULE_BASED_PROGRESSION_TYPES: ReadonlySet<string> = new Set([
-  'linear', 'double', 'undulating', 'deload',
+  'linear', 'double',
+  // NOTA: 'undulating' y 'deload' se seleccionan en SmartBlockBuilderModal
+  // pero deliberadamente NO enrutan acá todavía:
+  // - 'undulating' promete alternar semanas de fuerza/hipertrofia (así lo
+  //   dice su propio formulario), pero el motor de reglas de este archivo
+  //   solo aplica streaks genéricos de subir/bajar — no implementa esa
+  //   alternancia real. Enrutarlo daría una falsa sensación de automatización.
+  // - 'deload' en ese modal es un marcador de bloque TEMPORAL ("descarga
+  //   las próximas N semanas"), no una elección permanente de motor — no es
+  //   lo mismo que la regla 'deload_sugerido' de ruleBasedProgression.ts
+  //   (que sí es parte del motor de reglas y se dispara sola por racha).
+  // Ambos siguen bajo el motor RIR/1RM por default hasta que se implemente
+  // la lógica real correspondiente.
 ]);
 
 export const resolveProgressionEngine = (ex: { progression_type?: string }): ProgressionEngineKind =>
