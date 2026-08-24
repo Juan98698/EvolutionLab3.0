@@ -192,6 +192,16 @@ export interface RuleProgressionState {
   regresionStreak?: number;
   /** Sesiones consecutivas con RIR muy bajo Y caída de volumen a la vez (candidato a bajar peso por fatiga/sobreentrenamiento). */
   rirBajoRegresionStreak?: number;
+  /** Fecha ISO (yyyy-mm-dd) de la última sesión registrada — para 'descanso_excesivo' (días desde la última) y 'deload_sugerido'. */
+  ultimaFecha?: string;
+  /** Fecha ISO de inicio de la racha de entrenamiento actual sin cortes largos (>14 días) — para 'deload_sugerido'. */
+  deloadStreakInicio?: string;
+  /** Sesiones consecutivas cumpliendo el objetivo de reps en suficientes series (candidato a subir peso — 'subir_peso_reps_objetivo'). */
+  repsObjetivoStreak?: number;
+  /** Sesiones consecutivas con crecimiento de volumen por encima del umbral (candidato a sumar reps antes de subir peso — 'subir_reps_antes_peso'). */
+  volumenCrecioStreak?: number;
+  /** Igual que rirAltoStreak pero para ejercicios de autocarga (peso 0) — candidato a sumar reps en vez de peso ('autocarga_subir_reps'). */
+  autocargaRirAltoStreak?: number;
 }
 
 export interface GlobalVariable {
@@ -321,7 +331,10 @@ export interface LocalSesionEjercicio {
   repsArray: number[];
   rpe: number | null;
   descanso: number;
+  fecha?: string;
   notas_ej?: string;
+  feedback_estimulo?: 'none' | 'good' | 'extreme';
+  feedback_recuperacion?: 'recovered' | 'just_in_time' | 'sore';
 }
 
 export interface EjercicioGlobal {

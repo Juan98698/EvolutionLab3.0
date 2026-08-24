@@ -117,6 +117,11 @@ export interface LoggedExerciseInput {
   repsArray: number[];
   peso: number | null;
   rir?: number | null;
+  /** Fecha ISO (yyyy-mm-dd) de esta sesión. Usada por el motor de reglas fijas
+   * para 'descanso_excesivo' (días desde la última sesión) y 'deload_sugerido'
+   * (semanas consecutivas entrenando sin cortes largos). Si no se provee, esas
+   * dos reglas simplemente no se evalúan — no rompen nada. */
+  fecha?: string;
   feedback_estimulo?: 'none' | 'good' | 'extreme';
   feedback_recuperacion?: 'recovered' | 'just_in_time' | 'sore';
 }
@@ -733,24 +738,41 @@ export const autoRegulatePlanForNextWeek = (
         const loggedEntry = loggedMap.get(normName);
         if (!loggedEntry || !loggedEntry.repsArray?.length || loggedEntry.peso == null) return;
 
-        const totalReps = loggedEntry.repsArray.reduce((a, b) => a + b, 0);
-        const volumen = loggedEntry.peso * totalReps;
-
         if (!config.ruleProgressionState) config.ruleProgressionState = {};
         const prevState = config.ruleProgressionState[normName] || {};
 
+        // Objetivo de reps explícito del entrenador, si lo configuró — mismo
+        // criterio que usaba overload.ts, para que 'subir_peso_reps_objetivo'
+        // compare contra una meta real y no contra el propio valor de la
+        // sesión (lo cual la volvería trivial y le robaría el turno a
+        // 'subir_reps_antes_peso', que debe evaluarse con una meta genuina).
+        let repsObjetivo: number | undefined;
+        const params = (ex as any).progression_params;
+        if (ex.progression_type === 'double' && params?.repsMaximas) {
+          repsObjetivo = parseInt(params.repsMaximas, 10) || undefined;
+        } else if (ex.progression_type === 'linear' && params?.repeticiones) {
+          const repsStr = String(params.repeticiones);
+          repsObjetivo = repsStr.includes('-')
+            ? (parseInt(repsStr.split('-')[1], 10) || undefined)
+            : (parseInt(repsStr, 10) || undefined);
+        }
+
         const result = applyRuleBasedProgression({
           peso: loggedEntry.peso,
-          volumen,
+          repsArray: loggedEntry.repsArray,
           rirLogrado: loggedEntry.rir ?? null,
+          fecha: loggedEntry.fecha,
+          repsObjetivo,
           state: prevState,
         });
 
         config.ruleProgressionState[normName] = result.newState;
 
-        if (result.newWeight != null) {
+        if (result.newWeight != null || result.newRepsObjetivo != null || result.newSeries != null) {
           if (!ex.variables) ex.variables = {};
-          ex.variables['peso'] = `🤖 ${result.newWeight} kg`;
+          if (result.newWeight != null) ex.variables['peso'] = `🤖 ${result.newWeight} kg`;
+          if (result.newRepsObjetivo != null) ex.variables['reps_objetivo'] = `🤖 ${result.newRepsObjetivo}`;
+          if (result.newSeries != null) ex.variables['series de trabajo'] = String(result.newSeries);
           if (result.note) ex.progression_notes = result.note;
         }
         return; // este ejercicio no pasa por el motor de RIR/1RM de abajo

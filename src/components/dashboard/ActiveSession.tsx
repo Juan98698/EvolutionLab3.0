@@ -438,6 +438,7 @@ const ActiveSession: React.FC = () => {
             repsArray,
             rpe: isFunc ? null : (ex.rirPercibido ?? (parseFloat(ex.targetRIR) || 2)),
             descanso: ex.descanso,
+            fecha,
             notas_ej: '',
             feedback_estimulo: ex.feedback_estimulo,
             feedback_recuperacion: ex.feedback_recuperacion,
@@ -510,6 +511,7 @@ const ActiveSession: React.FC = () => {
               repsArray: e.repsArray,
               peso: e.peso,
               rir: e.rpe,
+              fecha: e.fecha,
               feedback_estimulo: e.feedback_estimulo,
               feedback_recuperacion: e.feedback_recuperacion,
             }))

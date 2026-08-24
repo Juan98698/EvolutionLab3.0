@@ -319,11 +319,12 @@ describe('periodizationEngine Library', () => {
       ],
     });
 
-    const logSession = (peso: number, reps: number[], rir: number) => ([{
+    const logSession = (peso: number, reps: number[], rir: number, fecha?: string) => ([{
       nombre: 'Curl de Bíceps',
       repsArray: reps,
       peso,
       rir,
+      fecha,
       feedback_estimulo: 'good' as const,
       feedback_recuperacion: 'recovered' as const,
     }]);
@@ -395,6 +396,71 @@ describe('periodizationEngine Library', () => {
       // El motor de reglas nunca escribe 'rir' — si apareciera, sería porque
       // el ajuste semanal de periodización (que sí lo hace) no fue excluido.
       expect(ex.variables['rir']).toBeUndefined();
+    });
+
+    it("descanso_excesivo: baja el peso al volver de un corte de más de 14 días, con máxima prioridad", () => {
+      const plan = buildDispatchPlan('linear');
+      let current = plan;
+
+      let result = autoRegulatePlanForNextWeek(current, logSession(40, [10, 10], 2, '2026-01-01'));
+      current = result!;
+
+      // 20 días después
+      result = autoRegulatePlanForNextWeek(current, logSession(40, [10, 10], 2, '2026-01-21'));
+      const ex = result!.trainingDays![0].exercises![0];
+
+      expect(ex.variables['peso']).toBe('🤖 35 kg'); // 40*0.9=36 -> redondeado a 2.5 -> 35
+      expect(ex.progression_notes).toContain('días');
+    });
+
+    it("subir_peso_reps_objetivo: sube el peso cuando el plan trae progression_params.repeticiones y el atleta lo cumple sostenido", () => {
+      const plan = buildDispatchPlan('linear');
+      plan.trainingDays![0].exercises![0].progression_params = { repeticiones: '10-12' };
+
+      let current = plan;
+      let result: PlanData | null = null;
+      // 3 series por sesión, objetivo=12 (tope del rango) -> necesita al menos
+      // ceil(3*0.75)=3 series en 12+. La 1ra sesión solo establece línea base
+      // (no cuenta para la racha), así que hacen falta 3 llamadas para 2
+      // evaluaciones reales consecutivas cumpliendo el objetivo.
+      for (const reps of [[13, 13, 13], [13, 13, 13], [13, 13, 13]]) {
+        result = autoRegulatePlanForNextWeek(current, logSession(40, reps, 2));
+        current = result!;
+      }
+
+      const ex = result!.trainingDays![0].exercises![0];
+      expect(ex.variables['peso']).toBe('🤖 42.5 kg'); // 40 + max(2.5, 5%=2)=42.5
+      expect(ex.progression_notes).toContain('🚀');
+    });
+
+    it("subir_reps_antes_peso: suma reps en vez de peso cuando el volumen crece sostenido y no hay objetivo de reps configurado que dispare antes", () => {
+      const plan = buildDispatchPlan('linear');
+      plan.trainingDays![0].exercises![0].progression_params = { repeticiones: '20' }; // meta alta a propósito
+
+      let current = plan;
+      let result: PlanData | null = null;
+      for (const reps of [[10], [11], [12]]) {
+        result = autoRegulatePlanForNextWeek(current, logSession(40, reps, 2));
+        current = result!;
+      }
+
+      const ex = result!.trainingDays![0].exercises![0];
+      expect(ex.variables['reps_objetivo']).toBe('🤖 13'); // max reps logueadas (12) + 1
+      expect(ex.variables['peso']).toBe('20 kg'); // sin cambios — esta regla nunca toca el peso
+    });
+
+    it("autocarga_subir_reps: para un ejercicio de autocarga (peso 0) suma reps en vez de peso tras RIR alto sostenido", () => {
+      const plan = buildDispatchPlan('linear');
+      let current = plan;
+      let result: PlanData | null = null;
+      for (const reps of [[15, 15], [16, 16]]) {
+        result = autoRegulatePlanForNextWeek(current, logSession(0, reps, 4));
+        current = result!;
+      }
+
+      const ex = result!.trainingDays![0].exercises![0];
+      expect(ex.variables['reps_objetivo']).toBe('🤖 17'); // max reps (16) + 1
+      expect(ex.progression_notes).toContain('🤸');
     });
   });
 });
