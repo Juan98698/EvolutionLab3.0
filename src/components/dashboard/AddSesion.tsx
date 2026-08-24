@@ -284,6 +284,7 @@ export const AddSesion: React.FC<AddSesionProps> = ({
           repsArray: ej.repsArray,
           rpe: isFunc ? null : (Number(ej.rpe) || 2),
           descanso: Number(ej.descanso),
+          fecha,
           notas_ej: ej.notas_ej || '',
           feedback_estimulo: ej.feedback_estimulo || 'good',
           feedback_recuperacion: ej.feedback_recuperacion || 'recovered'
@@ -383,6 +384,7 @@ export const AddSesion: React.FC<AddSesionProps> = ({
             repsArray: e.repsArray,
             peso: e.peso,
             rir: e.rpe,
+            fecha: e.fecha,
             feedback_estimulo: e.feedback_estimulo,
             feedback_recuperacion: e.feedback_recuperacion
           })));
