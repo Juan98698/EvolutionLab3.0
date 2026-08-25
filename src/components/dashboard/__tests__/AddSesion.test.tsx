@@ -73,6 +73,8 @@ vi.mock('../../../lib/periodizationEngine', () => ({
   autoRegulatePlanForNextWeek: vi.fn().mockReturnValue(null),
 }));
 
+import { autoRegulatePlanForNextWeek } from '../../../lib/periodizationEngine';
+
 // ── Plan fixture ───────────────────────────────────────────────────────────
 const PLAN = {
   portada: { planName: 'Test', userName: 'T', startDate: '2099-01-01', whatsappLink: '', instagramLink: '' },
@@ -314,6 +316,37 @@ describe('AddSesion — registro de sesión', () => {
 
     // Solo queda 1, el botón ya no aparece
     expect(screen.queryByText(/✕ Eliminar/i)).toBeNull();
+  });
+
+  // ── 13. Propagación de fecha al motor de periodización ──
+  it('pasa la fecha seleccionada del formulario a autoRegulatePlanForNextWeek (necesaria para descanso_excesivo/deload_sugerido)', async () => {
+    const planConPeriodizacion = {
+      ...PLAN,
+      periodizationConfig: { enabled: true },
+    };
+    await act(async () => { renderAddSesion(planConPeriodizacion); });
+
+    // Cambiar la fecha a una distinta de "hoy", para confirmar que viaja la
+    // fecha elegida por el usuario y no un valor por defecto/actual.
+    const dateInput = document.getElementById('fecha-sesion') as HTMLInputElement;
+    await act(async () => {
+      fireEvent.change(dateInput, { target: { value: '2026-08-10' } });
+    });
+
+    await fillExercise(0, 'Sentadilla', '100', '2', '120');
+
+    await act(async () => {
+      fireEvent.click(screen.getByText(/Guardar sesión/i));
+    });
+
+    await waitFor(() => {
+      expect(autoRegulatePlanForNextWeek).toHaveBeenCalled();
+    }, { timeout: 3000 });
+
+    const [, loggedExercises] = (autoRegulatePlanForNextWeek as any).mock.calls[0];
+    expect(loggedExercises).toEqual(
+      expect.arrayContaining([expect.objectContaining({ fecha: '2026-08-10' })])
+    );
   });
 
 });
