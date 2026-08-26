@@ -324,6 +324,28 @@ describe('analizarSobrecargaProgresiva', () => {
       expect(result).toHaveLength(0);
     });
 
+    it("con progression_type 'linear' en autocarga: silencia autocarga_descanso_densidad (regla agregada en este mismo commit al motor real — quedó fuera del set de silenciamiento por un descuido)", () => {
+      const exerciseAutocargaLinear: any = {
+        nombre: 'Fondos',
+        progression_type: 'linear',
+        progression_params: { series: '3', repeticiones: '8-10', rir: '2' },
+      };
+      // peso=0 → autocarga. minSesiones default es 3 (se necesita esa base
+      // para que el ejercicio entre siquiera a evaluarse). Descanso 95s
+      // (≥ umbral_descanso_alto default 90) en las últimas 2 sesiones
+      // (sesiones_consecutivas default de la regla).
+      const sessions = [
+        sesion('1', '2023-01-01', 'Fondos', 0, [10, 10, 10], 2, 60),
+        sesion('2', '2023-01-08', 'Fondos', 0, [10, 10, 10], 2, 95),
+        sesion('3', '2023-01-15', 'Fondos', 0, [10, 10, 10], 2, 95),
+      ];
+      const normalResult = analizarSobrecargaProgresiva(sessions, onlyRule('autocarga_descanso_densidad'), {});
+      expect(normalResult).toHaveLength(1);
+
+      const result = analizarSobrecargaProgresiva(sessions, onlyRule('autocarga_descanso_densidad'), {}, [exerciseAutocargaLinear]);
+      expect(result).toHaveLength(0);
+    });
+
     it('sin exercises[] (llamado legacy, sin lista de ejercicios): no silencia nada, comportamiento previo intacto', () => {
       const sessions = [
         sesion('1', '2023-01-01', 'Squat', 100, [5, 5, 5], 4),

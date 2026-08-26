@@ -19,6 +19,7 @@ const REGLAS_YA_CUBIERTAS_POR_MOTOR_REAL: ReadonlySet<string> = new Set([
   'descanso_excesivo',
   'deload_sugerido',
   'autocarga_subir_reps',
+  'autocarga_descanso_densidad',
 ]);
 
 export interface Session {
@@ -520,7 +521,7 @@ export function analizarSobrecargaProgresiva(
             ejercicio: nombre,
             valor: Math.round(avgDesc),
             nuevo_descanso: Math.max(45, Math.round(avgDesc - 15)),
-          });
+          }, motorReal);
         }
       }
 
