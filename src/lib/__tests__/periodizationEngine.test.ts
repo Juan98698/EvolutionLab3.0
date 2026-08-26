@@ -462,6 +462,83 @@ describe('periodizationEngine Library', () => {
       expect(ex.variables['reps_objetivo']).toBe('🤖 17'); // max reps (16) + 1
       expect(ex.progression_notes).toContain('🤸');
     });
+
+    it("autocarga_descanso_densidad: reduce el descanso prescrito cuando el descanso REAL medido en ActiveSession viene alto sostenido", () => {
+      const plan = buildDispatchPlan('linear');
+      let current = plan;
+      let result: PlanData | null = null;
+      for (const descansoReal of [100, 95]) {
+        result = autoRegulatePlanForNextWeek(
+          current,
+          [{
+            nombre: 'Curl de Bíceps', repsArray: [12], peso: 0, rir: 2, descansoReal,
+            feedback_estimulo: 'good', feedback_recuperacion: 'recovered',
+          }]
+        );
+        current = result!;
+      }
+
+      const ex = result!.trainingDays![0].exercises![0];
+      expect(ex.variables['descanso']).toBe('🤖 80'); // 95 - 15
+      expect(ex.progression_notes).toContain('⏱️');
+    });
+
+    it("progression_type: 'undulating' alterna fuerza/hipertrofia según la semana del plan (semana_actual)", () => {
+      const plan = buildDispatchPlan('undulating');
+      plan.trainingDays![0].exercises![0].progression_params = {
+        seriesFuerza: '4', repsFuerza: '5', rirFuerza: '1',
+        seriesHipertrofia: '3', repsHipertrofia: '10', rirHipertrofia: '2',
+      };
+
+      // Semana 1 (currentWeek inicial = 1) -> perfil de fuerza
+      let result = autoRegulatePlanForNextWeek(plan, logSession(40, [5, 5, 5], 1));
+      let ex = result!.trainingDays![0].exercises![0];
+      expect(ex.variables['series de trabajo']).toBe('4');
+      expect(ex.variables['repeticiones']).toBe('5');
+      expect(ex.variables['rir']).toBe('1');
+      expect(ex.progression_notes).toContain('FUERZA');
+
+      // El plan (con este helper de 1 día) cierra semana en cada llamada ->
+      // semana_actual avanza a 2 -> próxima sesión, perfil de hipertrofia
+      result = autoRegulatePlanForNextWeek(result!, logSession(40, [10, 10, 10], 2));
+      ex = result!.trainingDays![0].exercises![0];
+      expect(ex.variables['series de trabajo']).toBe('3');
+      expect(ex.variables['repeticiones']).toBe('10');
+      expect(ex.variables['rir']).toBe('2');
+      expect(ex.progression_notes).toContain('HIPERTROFIA');
+
+      // No pasa por el motor RIR/1RM (sin reps_objetivo)
+      expect(ex.variables['reps_objetivo']).toBeUndefined();
+    });
+
+    it("progression_type: 'deload' reduce series/RIR mientras el bloque está vigente, y se revierte solo al terminar su duración", () => {
+      const plan = buildDispatchPlan('deload');
+      plan.trainingDays![0].exercises![0].progression_params = {
+        duracion: 2, series: '2', rir: '3-4',
+      };
+
+      // Semana 1 del bloque (recién aplicado): vigente
+      let result = autoRegulatePlanForNextWeek(plan, logSession(40, [10, 10], 3));
+      let ex = result!.trainingDays![0].exercises![0];
+      expect(ex.variables['series de trabajo']).toBe('2');
+      expect(ex.variables['rir']).toBe('3-4');
+      expect(ex.progression_notes).toContain('Semana 1 de 2');
+      expect(ex.progression_type).toBe('deload'); // todavía vigente
+
+      // Semana 2 del bloque: sigue vigente (duracion=2)
+      result = autoRegulatePlanForNextWeek(result!, logSession(40, [10, 10], 3));
+      ex = result!.trainingDays![0].exercises![0];
+      expect(ex.progression_notes).toContain('Semana 2 de 2');
+      expect(ex.progression_type).toBe('deload');
+
+      // Semana 3: el bloque ya terminó -> se revierte solo, sin que el
+      // entrenador tenga que acordarse de cambiarlo a mano
+      result = autoRegulatePlanForNextWeek(result!, logSession(40, [10, 10], 3));
+      ex = result!.trainingDays![0].exercises![0];
+      expect(ex.progression_notes).toContain('Descarga completada');
+      expect(ex.progression_type).toBeUndefined();
+      expect(ex.progression_params).toBeUndefined();
+    });
   });
 });
 

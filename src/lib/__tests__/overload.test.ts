@@ -248,4 +248,90 @@ describe('analizarSobrecargaProgresiva', () => {
       expect(synergyResult).toHaveLength(0);
     });
   });
+
+  describe('motor real (linear/double) silencia notificaciones que él mismo ya aplicó de verdad', () => {
+    const exerciseLinear: any = {
+      nombre: 'Squat',
+      progression_type: 'linear',
+      progression_params: { series: '3', repeticiones: '8-10', rir: '2' },
+    };
+    const exerciseDouble: any = {
+      nombre: 'Squat',
+      progression_type: 'double',
+      progression_params: { series: '3', repsIniciales: '8', repsMaximas: '12' },
+    };
+    // 'undulating' y 'deload' NO enrutan al motor real (ver resolveProgressionEngine
+    // en periodizationEngine.ts) — las notificaciones deben seguir mostrándose
+    // normal para estos dos, sin el silenciamiento nuevo.
+    const exerciseUndulating: any = { nombre: 'Squat', progression_type: 'undulating' };
+    const exerciseDeloadTemplate: any = { nombre: 'Squat', progression_type: 'deload' };
+
+    it("con progression_type 'linear': silencia bajar_peso_regresion (regla que el motor real ya cubre)", () => {
+      const sessions = [
+        sesion('1', '2023-01-01', 'Squat', 100, [10, 10, 10], 2),
+        sesion('2', '2023-01-08', 'Squat', 100, [8, 8, 8], 1),
+        sesion('3', '2023-01-15', 'Squat', 100, [6, 6, 6], 1),
+        sesion('4', '2023-01-22', 'Squat', 100, [5, 5, 5], 0),
+      ];
+      const normalResult = analizarSobrecargaProgresiva(sessions, onlyRule('bajar_peso_regresion'), {});
+      expect(normalResult).toHaveLength(1);
+
+      const result = analizarSobrecargaProgresiva(sessions, onlyRule('bajar_peso_regresion'), {}, [exerciseLinear]);
+      expect(result).toHaveLength(0);
+    });
+
+    it("con progression_type 'double': silencia descanso_excesivo (regla que el motor real ya cubre)", () => {
+      const sessions = [
+        sesion('1', '2023-01-01', 'Squat', 100, [8, 8, 8], 2),
+        sesion('2', '2023-01-05', 'Squat', 100, [8, 8, 8], 2),
+        sesion('3', '2023-02-01', 'Squat', 100, [8, 8, 8], 2), // 27 días de corte
+      ];
+      const normalResult = analizarSobrecargaProgresiva(sessions, onlyRule('descanso_excesivo'), {});
+      expect(normalResult).toHaveLength(1);
+
+      const result = analizarSobrecargaProgresiva(sessions, onlyRule('descanso_excesivo'), {}, [exerciseDouble]);
+      expect(result).toHaveLength(0);
+    });
+
+    it("con progression_type 'linear': NO silencia reglas informativas que el motor real no cubre (mantener_peso)", () => {
+      const sessions = [
+        sesion('1', '2023-01-01', 'Squat', 100, [10, 10, 10], 2),
+        sesion('2', '2023-01-08', 'Squat', 100, [10, 10, 10], 2),
+        sesion('3', '2023-01-15', 'Squat', 100, [10, 10, 10], 2),
+      ];
+      const result = analizarSobrecargaProgresiva(sessions, onlyRule('mantener_peso'), {}, [exerciseLinear]);
+      expect(result).toHaveLength(1);
+    });
+
+    it("con progression_type 'undulating': ahora SÍ silencia (el motor ondulante determinístico ya gobierna este ejercicio)", () => {
+      const sessions = [
+        sesion('1', '2023-01-01', 'Squat', 100, [10, 10, 10], 2),
+        sesion('2', '2023-01-08', 'Squat', 100, [8, 8, 8], 1),
+        sesion('3', '2023-01-15', 'Squat', 100, [6, 6, 6], 1),
+        sesion('4', '2023-01-22', 'Squat', 100, [5, 5, 5], 0),
+      ];
+      const result = analizarSobrecargaProgresiva(sessions, onlyRule('bajar_peso_regresion'), {}, [exerciseUndulating]);
+      expect(result).toHaveLength(0);
+    });
+
+    it("con progression_type 'deload' (plantilla del modal): ahora SÍ silencia (el bloque de descarga temporal ya gobierna este ejercicio mientras está vigente)", () => {
+      const sessions = [
+        sesion('1', '2023-01-01', 'Squat', 100, [8, 8, 8], 2),
+        sesion('2', '2023-01-05', 'Squat', 100, [8, 8, 8], 2),
+        sesion('3', '2023-02-01', 'Squat', 100, [8, 8, 8], 2), // 27 días de corte
+      ];
+      const result = analizarSobrecargaProgresiva(sessions, onlyRule('descanso_excesivo'), {}, [exerciseDeloadTemplate]);
+      expect(result).toHaveLength(0);
+    });
+
+    it('sin exercises[] (llamado legacy, sin lista de ejercicios): no silencia nada, comportamiento previo intacto', () => {
+      const sessions = [
+        sesion('1', '2023-01-01', 'Squat', 100, [5, 5, 5], 4),
+        sesion('2', '2023-01-08', 'Squat', 100, [5, 5, 5], 4),
+        sesion('3', '2023-01-15', 'Squat', 100, [5, 5, 5], 4),
+      ];
+      const result = analizarSobrecargaProgresiva(sessions, onlyRule('subir_peso_reps'));
+      expect(result).toHaveLength(1);
+    });
+  });
 });

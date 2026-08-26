@@ -88,6 +88,65 @@ describe('applyRuleBasedProgression', () => {
     });
   });
 
+  describe('autocarga_descanso_densidad — descanso real alto sostenido (autocarga)', () => {
+    it('dispara tras 2 sesiones (default) con descanso real >= 90s, reduciendo el descanso en 15s', () => {
+      let state: RuleProgressionState = {};
+      let r = applyRuleBasedProgression({ peso: 0, repsArray: [12], rirLogrado: 2, descansoReal: 100, state });
+      state = r.newState;
+      expect(r.ruleApplied).toBeNull();
+      expect(state.descansoAltoStreak).toBe(1);
+
+      r = applyRuleBasedProgression({ peso: 0, repsArray: [12], rirLogrado: 2, descansoReal: 95, state });
+      expect(r.ruleApplied).toBe('autocarga_descanso_densidad');
+      expect(r.newDescanso).toBe(80); // 95 - 15 = 80
+      expect(r.newWeight).toBeNull();
+      expect(r.note).toContain('⏱️');
+    });
+
+    it('NO dispara si el descanso real está por debajo del umbral (ej. 60s)', () => {
+      let state: RuleProgressionState = {};
+      let r;
+      for (let i = 0; i < 3; i++) {
+        r = applyRuleBasedProgression({ peso: 0, repsArray: [12], rirLogrado: 2, descansoReal: 60, state });
+        state = r.newState;
+      }
+      expect(r!.ruleApplied).not.toBe('autocarga_descanso_densidad');
+      expect(state.descansoAltoStreak).toBe(0);
+    });
+
+    it('sin descansoReal (no medido): no dispara, no rompe, mantiene la racha previa intacta', () => {
+      const state: RuleProgressionState = { descansoAltoStreak: 1 };
+      const r = applyRuleBasedProgression({ peso: 0, repsArray: [12], rirLogrado: 2, state }); // sin descansoReal
+      expect(r.ruleApplied).not.toBe('autocarga_descanso_densidad');
+      expect(r.newState.descansoAltoStreak).toBe(1); // no se resetea ni avanza sin dato
+    });
+
+    it('respeta el mínimo de 45s aunque el recorte de 15s lo bajaría más (con un umbral custom más bajo)', () => {
+      // Con el umbral default (90s) restar 15 nunca puede llegar a 45 —
+      // se aísla el piso con una regla custom de umbral más bajo.
+      const rulesCustom: Rule[] = [
+        { id: 'autocarga_descanso_densidad', tipo: 'descanso', activa: true, titulo: '', mensaje: '', umbral_descanso_alto: 50, sesiones_consecutivas: 2 },
+      ];
+      let state: RuleProgressionState = {};
+      let r = applyRuleBasedProgression({ peso: 0, repsArray: [12], rirLogrado: 2, descansoReal: 55, state, rules: rulesCustom });
+      state = r.newState;
+      r = applyRuleBasedProgression({ peso: 0, repsArray: [12], rirLogrado: 2, descansoReal: 55, state, rules: rulesCustom }); // 55-15=40 < 45
+      expect(r.newDescanso).toBe(45);
+    });
+
+    it('puede disparar en la misma sesión que autocarga_subir_reps (afectan campos distintos, no compiten)', () => {
+      let state: RuleProgressionState = {};
+      let r = applyRuleBasedProgression({ peso: 0, repsArray: [12, 12], rirLogrado: 4, descansoReal: 100, state });
+      state = r.newState;
+      r = applyRuleBasedProgression({ peso: 0, repsArray: [13, 13], rirLogrado: 4, descansoReal: 95, state });
+
+      expect(r.newRepsObjetivo).toBe(14); // autocarga_subir_reps
+      expect(r.newDescanso).toBe(80);     // autocarga_descanso_densidad
+      expect(r.note).toContain('🤸');
+      expect(r.note).toContain('⏱️');
+    });
+  });
+
   describe('bajar_peso_regresion — volumen cayendo, sin importar el RIR', () => {
     // peso=100, reps sumando 10 -> 9 -> 8 -> 7 => volumen 1000 -> 900 -> 800 -> 700 (limpio, decreciente)
     it('dispara tras 3 caídas de volumen consecutivas, incluso con RIR medio (no bajo)', () => {

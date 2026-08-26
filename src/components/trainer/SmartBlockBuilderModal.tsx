@@ -18,14 +18,12 @@ export interface ExerciseHistoryEntry {
   progression_params?: any;
 }
 
-// Plantillas cuyo comportamiento SÍ está implementado de punta a punta en el
-// motor automático (src/lib/ruleBasedProgression.ts, vía el despachador de
-// periodizationEngine.ts). 'undulating' y 'deload' siguen existiendo como
-// opciones porque generan una nota de referencia útil para el entrenador,
-// pero el ejercicio permanece bajo el motor de RIR/1RM hasta que se
-// implemente esa lógica — ver la nota junto a RULE_BASED_PROGRESSION_TYPES
-// en periodizationEngine.ts para el detalle de por qué.
-const TEMPLATES_CON_AUTOMATIZACION_REAL: ReadonlySet<string> = new Set(['linear', 'double']);
+// Las 4 plantillas ya están implementadas de punta a punta en el motor
+// automático (periodizationEngine.ts despacha a ruleBasedProgression.ts
+// para 'linear'/'double', y a templateBasedProgression.ts para
+// 'undulating'/'deload' — este último aplica un bloque temporal que se
+// revierte solo al terminar la duración configurada).
+const TEMPLATES_CON_AUTOMATIZACION_REAL: ReadonlySet<string> = new Set(['linear', 'double', 'undulating', 'deload']);
 
 interface SmartBlockBuilderModalProps {
   progModal: ProgModalState | null;
@@ -110,20 +108,33 @@ export const SmartBlockBuilderModal: React.FC<SmartBlockBuilderModalProps> = ({
         }
       }));
 
-      // El motor de reglas guarda estado incremental (rachas de sesiones,
-      // fechas) por ejercicio en periodizationConfig.ruleProgressionState —
-      // separado del ejercicio mismo, así que handleRevertProgression no lo
-      // toca. Si el entrenador está reconfigurando la plantilla de un
-      // ejercicio que ya venía acumulando rachas (bajo esta u otra
-      // plantilla), esas rachas ya no corresponden a la nueva configuración
-      // — se limpian para que arranque de cero, igual que arrancaría un
-      // ejercicio nuevo.
+      // El motor de reglas y el de plantilla determinística guardan estado
+      // incremental por ejercicio en periodizationConfig (ruleProgressionState
+      // para 'linear'/'double', deloadBlockState para 'deload') — separado
+      // del ejercicio mismo, así que handleRevertProgression no lo toca. Si
+      // el entrenador está reconfigurando la plantilla de un ejercicio que
+      // ya venía acumulando estado (bajo esta u otra plantilla), ese estado
+      // ya no corresponde a la nueva configuración — se limpia para que
+      // arranque de cero, igual que arrancaría un ejercicio nuevo. Esto
+      // también cubre el caso de reaplicar 'deload' tras uno anterior ya
+      // vencido: sin esto, seguiría contando semanas desde el bloque viejo.
       if (setPeriodizationConfig && originalEx.nombre) {
         const normName = originalEx.nombre.toLowerCase().trim();
         setPeriodizationConfig(prev => {
-          if (!prev?.ruleProgressionState?.[normName]) return prev;
-          const { [normName]: _omit, ...rest } = prev.ruleProgressionState;
-          return { ...prev, ruleProgressionState: rest };
+          const tieneRuleState = !!prev?.ruleProgressionState?.[normName];
+          const tieneDeloadState = !!prev?.deloadBlockState?.[normName];
+          if (!tieneRuleState && !tieneDeloadState) return prev;
+
+          const next = { ...prev } as typeof prev;
+          if (tieneRuleState) {
+            const { [normName]: _omit, ...rest } = prev!.ruleProgressionState!;
+            next!.ruleProgressionState = rest;
+          }
+          if (tieneDeloadState) {
+            const { [normName]: _omit2, ...restDeload } = prev!.deloadBlockState!;
+            next!.deloadBlockState = restDeload;
+          }
+          return next;
         });
       }
     }
@@ -230,10 +241,21 @@ export const SmartBlockBuilderModal: React.FC<SmartBlockBuilderModalProps> = ({
             borderRadius: '10px', padding: '10px 12px', fontSize: '11px', lineHeight: 1.5,
             color: 'rgba(255,255,255,0.75)'
           }}>
-            <strong style={{ color: '#4ade80' }}>🤖 Esto activa automatización real:</strong> a partir de
-            ahora, el peso y las reps de este ejercicio los va a ajustar solo el motor de reglas fijas
-            (según cómo evolucionen las sesiones del atleta) — no es solo una nota de referencia. Este
-            ejercicio deja de recibir los ajustes semanales de RIR/volumen de la periodización normal.
+            <strong style={{ color: '#4ade80' }}>🤖 Esto activa automatización real:</strong>{' '}
+            {progModal.template === 'linear' || progModal.template === 'double' ? (
+              <>a partir de ahora, el peso y las reps de este ejercicio los ajusta solo el motor de reglas
+              fijas, según cómo evolucionen las sesiones del atleta.</>
+            ) : progModal.template === 'undulating' ? (
+              <>a partir de ahora, series/reps/RIR de este ejercicio alternan solos cada semana entre tu
+              perfil de fuerza (semanas impares) e hipertrofia (semanas pares) — sin que tengas que
+              editarlo manualmente semana a semana.</>
+            ) : (
+              <>a partir de ahora, series y RIR de este ejercicio bajan solos durante el bloque de
+              descarga configurado. Al terminar la duración que pusiste, el ejercicio vuelve solo a su
+              progresión normal por RIR — no hace falta que te acuerdes de revertirlo.</>
+            )}{' '}
+            No es solo una nota de referencia — este ejercicio deja de recibir los ajustes semanales de
+            RIR/volumen de la periodización normal mientras esta plantilla esté activa.
             {!periodizationConfig?.enabled && (
               <div style={{ marginTop: '6px', color: '#fbbf24' }}>
                 ⚠️ La periodización todavía no está activada para este plan — sin eso, el motor
@@ -241,16 +263,7 @@ export const SmartBlockBuilderModal: React.FC<SmartBlockBuilderModalProps> = ({
               </div>
             )}
           </div>
-        ) : (
-          <div style={{
-            background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-            borderRadius: '10px', padding: '10px 12px', fontSize: '11px', lineHeight: 1.5,
-            color: 'rgba(255,255,255,0.55)'
-          }}>
-            ℹ️ Esta plantilla todavía genera solo una nota de referencia para vos — el motor automático
-            no la aplica aún. El ejercicio sigue manejándose con el motor de RIR/1RM normal.
-          </div>
-        )}
+        ) : null}
 
         {/* Formulario e Inputs de Criterios */}
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', maxHeight: '280px', overflowY: 'auto', paddingRight: '4px' }}>

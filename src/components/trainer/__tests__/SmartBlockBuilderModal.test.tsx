@@ -96,15 +96,16 @@ describe('SmartBlockBuilderModal', () => {
       expect(screen.queryByText(/no está activada para este plan/i)).not.toBeInTheDocument();
     });
 
-    it("plantilla 'undulating': muestra el aviso de que solo genera una nota, no automatización real", () => {
-      renderModal({ template: 'undulating' });
-      expect(screen.getByText(/solo una nota de referencia/i)).toBeInTheDocument();
-      expect(screen.queryByText(/Esto activa automatización real/i)).not.toBeInTheDocument();
+    it("plantilla 'undulating': muestra el aviso de automatización real, con el texto específico de alternancia por semana", () => {
+      renderModal({ template: 'undulating', periodizationConfig: { enabled: true } as PeriodizationConfig });
+      expect(screen.getByText(/Esto activa automatización real/i)).toBeInTheDocument();
+      expect(screen.getByText(/alternan solos cada semana/i)).toBeInTheDocument();
     });
 
-    it("plantilla 'deload': muestra el aviso de que solo genera una nota, no automatización real", () => {
-      renderModal({ template: 'deload' });
-      expect(screen.getByText(/solo una nota de referencia/i)).toBeInTheDocument();
+    it("plantilla 'deload': muestra el aviso de automatización real, con el texto específico de reversión automática al terminar el bloque", () => {
+      renderModal({ template: 'deload', periodizationConfig: { enabled: true } as PeriodizationConfig });
+      expect(screen.getByText(/Esto activa automatización real/i)).toBeInTheDocument();
+      expect(screen.getByText(/vuelve solo a su progresión normal/i)).toBeInTheDocument();
     });
   });
 
@@ -146,6 +147,29 @@ describe('SmartBlockBuilderModal', () => {
       expect(updated.ruleProgressionState['press de banca']).toBeUndefined();
       // El estado de otros ejercicios no se toca
       expect(updated.ruleProgressionState['sentadilla']).toBeDefined();
+    });
+
+    it('al reconfigurar un ejercicio que ya tenía un bloque de descarga vencido (deloadBlockState), lo limpia para que un nuevo deload cuente semanas desde cero', () => {
+      const periodizationConfig: PeriodizationConfig = {
+        enabled: true,
+        deloadBlockState: {
+          'press de banca': { semanaInicio: 3 },
+          'sentadilla': { semanaInicio: 5 }, // de otro ejercicio, no debe tocarse
+        },
+      } as PeriodizationConfig;
+
+      const { setPeriodizationConfigCalls } = renderModal({
+        template: 'deload',
+        progression_type: 'deload', // reconfigurando el mismo tipo de plantilla
+        periodizationConfig,
+      });
+
+      fireEvent.click(screen.getByText('APLICAR PROGRESIÓN'));
+
+      expect(setPeriodizationConfigCalls.length).toBeGreaterThan(0);
+      const updated = setPeriodizationConfigCalls[setPeriodizationConfigCalls.length - 1];
+      expect(updated.deloadBlockState['press de banca']).toBeUndefined();
+      expect(updated.deloadBlockState['sentadilla']).toBeDefined();
     });
 
     it('si el ejercicio no tenía rachas acumuladas todavía, no llama a setPeriodizationConfig innecesariamente', () => {

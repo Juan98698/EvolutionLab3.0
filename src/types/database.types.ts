@@ -170,12 +170,17 @@ export interface PeriodizationConfig {
   muscle_groups_in_focus?: string[];
   /**
    * Estado incremental por ejercicio para el motor de reglas de sobrecarga
-   * (progression_type: 'linear' | 'double' | 'undulating' | 'deload').
+   * (progression_type: 'linear' | 'double').
    * Se actualiza sesión a sesión — igual que marcas_1rm — para no depender
    * de re-consultar el historial completo de sesiones en cada cálculo.
    * Clave: nombre del ejercicio normalizado (lowercase + trim).
    */
   ruleProgressionState?: Record<string, RuleProgressionState>;
+  /** Semana (semana_actual del plan) en la que se aplicó por última vez un
+   * bloque de descarga temporal (progression_type: 'deload') para cada
+   * ejercicio — permite calcular cuántas semanas lleva vigente el bloque y
+   * revertirlo solo cuando termina. Clave: nombre del ejercicio normalizado. */
+  deloadBlockState?: Record<string, { semanaInicio: number }>;
 }
 
 /**
@@ -202,6 +207,8 @@ export interface RuleProgressionState {
   volumenCrecioStreak?: number;
   /** Igual que rirAltoStreak pero para ejercicios de autocarga (peso 0) — candidato a sumar reps en vez de peso ('autocarga_subir_reps'). */
   autocargaRirAltoStreak?: number;
+  /** Sesiones consecutivas de autocarga con descanso real alto — candidato a reducir el descanso prescrito ('autocarga_descanso_densidad'). */
+  descansoAltoStreak?: number;
 }
 
 export interface GlobalVariable {

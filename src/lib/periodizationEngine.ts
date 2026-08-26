@@ -21,6 +21,7 @@ import {
 } from './strengthThresholds';
 import { isFunctionalExercise } from './exerciseUtils';
 import { applyRuleBasedProgression } from './ruleBasedProgression';
+import { applyUndulatingWeek, applyDeloadBlock } from './templateBasedProgression';
 
 // ─── Despachador de motor de progresión (por ejercicio) ──────────────────────
 // Cada ejercicio del plan elige, vía su campo `progression_type` (configurado
@@ -37,28 +38,20 @@ import { applyRuleBasedProgression } from './ruleBasedProgression';
 // problema de "dos motores escribiendo el mismo campo" que existía cuando
 // overload.ts solo generaba notificaciones en paralelo sin saber del motor
 // de periodización.
-export type ProgressionEngineKind = 'rir_auto' | 'rules';
+export type ProgressionEngineKind = 'rir_auto' | 'rules' | 'undulating' | 'deload_block';
 
-const RULE_BASED_PROGRESSION_TYPES: ReadonlySet<string> = new Set([
-  'linear', 'double',
-  // NOTA: 'undulating' y 'deload' se seleccionan en SmartBlockBuilderModal
-  // pero deliberadamente NO enrutan acá todavía:
-  // - 'undulating' promete alternar semanas de fuerza/hipertrofia (así lo
-  //   dice su propio formulario), pero el motor de reglas de este archivo
-  //   solo aplica streaks genéricos de subir/bajar — no implementa esa
-  //   alternancia real. Enrutarlo daría una falsa sensación de automatización.
-  // - 'deload' en ese modal es un marcador de bloque TEMPORAL ("descarga
-  //   las próximas N semanas"), no una elección permanente de motor — no es
-  //   lo mismo que la regla 'deload_sugerido' de ruleBasedProgression.ts
-  //   (que sí es parte del motor de reglas y se dispara sola por racha).
-  // Ambos siguen bajo el motor RIR/1RM por default hasta que se implemente
-  // la lógica real correspondiente.
-]);
+const RULE_BASED_PROGRESSION_TYPES: ReadonlySet<string> = new Set(['linear', 'double']);
+// 'undulating' y 'deload' se despachan a sus propios motores (más abajo,
+// ver templateBasedProgression.ts) — a diferencia de 'linear'/'double', no
+// son streaks de tendencia sino un valor determinístico según la semana del
+// bloque, así que viven en un archivo y un tipo de motor separados.
 
-export const resolveProgressionEngine = (ex: { progression_type?: string }): ProgressionEngineKind =>
-  ex.progression_type && RULE_BASED_PROGRESSION_TYPES.has(ex.progression_type)
-    ? 'rules'
-    : 'rir_auto';
+export const resolveProgressionEngine = (ex: { progression_type?: string }): ProgressionEngineKind => {
+  if (ex.progression_type === 'undulating') return 'undulating';
+  if (ex.progression_type === 'deload') return 'deload_block';
+  if (ex.progression_type && RULE_BASED_PROGRESSION_TYPES.has(ex.progression_type)) return 'rules';
+  return 'rir_auto';
+};
 
 // ─── Strength NL weighting (Opción B) ────────────────────────────────────────
 // Pondera NL por intensidad estimada desde RIR, igual que VolumeTracker.
@@ -134,6 +127,10 @@ export interface LoggedExerciseInput {
    * (semanas consecutivas entrenando sin cortes largos). Si no se provee, esas
    * dos reglas simplemente no se evalúan — no rompen nada. */
   fecha?: string;
+  /** Descanso REAL medido entre series de este ejercicio (segundos, promedio
+   * de la sesión) — no el prescrito por el plan. Usado por 'autocarga_descanso_densidad'
+   * en el motor de reglas fijas. Sin esto, esa regla no se evalúa. */
+  descansoReal?: number;
   feedback_estimulo?: 'none' | 'good' | 'extreme';
   feedback_recuperacion?: 'recovered' | 'just_in_time' | 'sore';
 }
@@ -774,20 +771,73 @@ export const autoRegulatePlanForNextWeek = (
           repsArray: loggedEntry.repsArray,
           rirLogrado: loggedEntry.rir ?? null,
           fecha: loggedEntry.fecha,
+          descansoReal: loggedEntry.descansoReal,
           repsObjetivo,
           state: prevState,
         });
 
         config.ruleProgressionState[normName] = result.newState;
 
-        if (result.newWeight != null || result.newRepsObjetivo != null || result.newSeries != null) {
+        if (result.newWeight != null || result.newRepsObjetivo != null || result.newSeries != null || result.newDescanso != null) {
           if (!ex.variables) ex.variables = {};
           if (result.newWeight != null) ex.variables['peso'] = `🤖 ${result.newWeight} kg`;
           if (result.newRepsObjetivo != null) ex.variables['reps_objetivo'] = `🤖 ${result.newRepsObjetivo}`;
           if (result.newSeries != null) ex.variables['series de trabajo'] = String(result.newSeries);
+          if (result.newDescanso != null) ex.variables['descanso'] = `🤖 ${result.newDescanso}`;
           if (result.note) ex.progression_notes = result.note;
         }
         return; // este ejercicio no pasa por el motor de RIR/1RM de abajo
+      }
+
+      if (resolveProgressionEngine(ex) === 'undulating') {
+        const loggedEntry = loggedMap.get(normName);
+        if (!loggedEntry) return;
+
+        const params = (ex as any).progression_params || {};
+        // El bloque ondulante no tiene "semana de inicio" propia — simplemente
+        // sigue la semana global del plan (currentWeek), alternando fuerza en
+        // impares e hipertrofia en pares. Es una progresión continua, igual
+        // que 'linear'/'double' — no expira sola.
+        const result = applyUndulatingWeek(currentWeek, params);
+
+        if (!ex.variables) ex.variables = {};
+        ex.variables['series de trabajo'] = result.series;
+        ex.variables['repeticiones'] = result.repeticiones;
+        ex.variables['rir'] = result.rir;
+        ex.progression_notes = result.note;
+        return;
+      }
+
+      if (resolveProgressionEngine(ex) === 'deload_block') {
+        const loggedEntry = loggedMap.get(normName);
+        if (!loggedEntry) return;
+
+        if (!config.deloadBlockState) config.deloadBlockState = {};
+        // Primera vez que se ve este ejercicio como 'deload': la semana en
+        // que se aplicó (currentWeek) es la semana 0 del bloque de descarga.
+        if (!config.deloadBlockState[normName]) {
+          config.deloadBlockState[normName] = { semanaInicio: currentWeek };
+        }
+        const semanaInicio = config.deloadBlockState[normName].semanaInicio;
+        const semanasTranscurridas = Math.max(0, currentWeek - semanaInicio);
+
+        const params = (ex as any).progression_params || {};
+        const result = applyDeloadBlock(semanasTranscurridas, params);
+
+        if (!ex.variables) ex.variables = {};
+        ex.variables['series de trabajo'] = result.series;
+        ex.variables['rir'] = result.rir;
+        ex.progression_notes = result.note;
+
+        if (!result.vigente) {
+          // El bloque terminó: se revierte solo — el ejercicio vuelve al
+          // motor de RIR/1RM la próxima vez que se evalúe, sin que el
+          // entrenador tenga que acordarse de cambiarlo a mano.
+          ex.progression_type = undefined;
+          ex.progression_params = undefined;
+          delete config.deloadBlockState[normName];
+        }
+        return;
       }
 
       let oneRM = marcas[normName];
@@ -983,11 +1033,11 @@ export const autoRegulatePlanForNextWeek = (
     // Aplicar ajuste por ejercicio usando el feedback consolidado de la semana
     updatedPlan.trainingDays?.forEach(day => {
       day.exercises?.forEach((foundEx: any) => {
-        // Ejercicios gobernados por el motor de reglas fijas quedan fuera del
-        // ajuste semanal de series/RIR de la periodización — la idea del
-        // despachador es que un motor u otro gobierne el ejercicio por
-        // completo, no que ambos lo toquen parcialmente.
-        if (resolveProgressionEngine(foundEx) === 'rules') return;
+        // Ejercicios gobernados por cualquier motor que no sea el RIR/1RM
+        // default quedan fuera del ajuste semanal de series/RIR de la
+        // periodización — la idea del despachador es que un motor u otro
+        // gobierne el ejercicio por completo, no que varios lo toquen parcialmente.
+        if (resolveProgressionEngine(foundEx) !== 'rir_auto') return;
 
         const normName = (foundEx.nombre || '').toLowerCase().trim();
         const feedback = consolidatedFeedback[normName];
@@ -1103,7 +1153,7 @@ export const autoRegulatePlanForNextWeek = (
     // Deload: reducir series a la mitad, RIR conservador
     updatedPlan.trainingDays?.forEach(day => {
       day.exercises?.forEach(ex => {
-        if (resolveProgressionEngine(ex) === 'rules') return;
+        if (resolveProgressionEngine(ex) !== 'rir_auto') return;
         if (!ex.variables) ex.variables = {};
         const originalSets = parseInt(ex.variables['series de trabajo'] || '3', 10) || 3;
         ex.variables['series de trabajo'] = String(Math.max(MIN_SETS_DELOAD, Math.round(originalSets / 2)));
@@ -1141,7 +1191,7 @@ export const autoRegulatePlanForNextWeek = (
 
       updatedPlan.trainingDays?.forEach(day => {
         day.exercises?.forEach(ex => {
-          if (resolveProgressionEngine(ex) === 'rules') return;
+          if (resolveProgressionEngine(ex) !== 'rir_auto') return;
           if (!ex.variables) ex.variables = {};
           ex.variables['rir'] = String(newTargetRIR);
         });

@@ -24,6 +24,11 @@ interface ActiveExercise {
   suggestedReps: number;   // Ghost value from plan variables
   targetRIR: string;
   descanso: number;        // in seconds
+  /** Descanso real medido entre series consecutivas de este ejercicio (segundos).
+   * A diferencia de `descanso` (el prescrito por el plan), esto refleja lo
+   * que el atleta realmente hizo — necesario para 'autocarga_descanso_densidad'
+   * en ruleBasedProgression.ts, que evalúa comportamiento real, no lo prescrito. */
+  descansosReales: number[];
   series: SeriesEntry[];
   feedback_estimulo: 'none' | 'good' | 'extreme';
   feedback_recuperacion: 'recovered' | 'just_in_time' | 'sore';
@@ -111,6 +116,10 @@ const ActiveSession: React.FC = () => {
   // ─── Rest timer ──────────────────────────────────────────────────────────
   const [restSecondsLeft, setRestSecondsLeft] = useState<number | null>(null);
   const restIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  /** Marca de tiempo (ms) de cuándo arrancó el descanso más reciente, por
+   * índice de ejercicio — para medir cuánto descansó realmente el atleta
+   * entre series (no lo prescrito). Ver ActiveExercise.descansosReales. */
+  const restStartedAtRef = useRef<Record<number, number>>({});
 
   // ─── Load plan from localStorage ─────────────────────────────────────────
   useEffect(() => {
@@ -190,6 +199,7 @@ const ActiveSession: React.FC = () => {
           suggestedReps: numReps,
           targetRIR: rirRaw || '',
           descanso,
+          descansosReales: [],
           series,
           feedback_estimulo: 'good',
           feedback_recuperacion: 'recovered',
@@ -362,6 +372,24 @@ const ActiveSession: React.FC = () => {
 
       // Start rest timer only if marked as done (was not done previously)
       if (!isCurrentlyDone) {
+        // Si ya había un descanso en curso para este ejercicio (de la serie
+        // anterior), medir cuánto duró realmente antes de reiniciar el timer
+        // con la próxima serie — esto es lo que se guarda como descanso real,
+        // a diferencia de `descanso` (el prescrito por el plan).
+        const startedAt = restStartedAtRef.current[exIdx];
+        if (startedAt) {
+          const elapsedSeconds = Math.round((Date.now() - startedAt) / 1000);
+          if (elapsedSeconds > 0) {
+            setExercises(prev => {
+              const copy = [...prev];
+              const descansosReales = [...(copy[exIdx].descansosReales || []), elapsedSeconds];
+              copy[exIdx] = { ...copy[exIdx], descansosReales };
+              return copy;
+            });
+          }
+        }
+        restStartedAtRef.current[exIdx] = Date.now();
+
         const descanso = exercises[exIdx]?.descanso || 90;
         startRestTimer(descanso);
       }
@@ -430,6 +458,9 @@ const ActiveSession: React.FC = () => {
             });
           const pesoRaw = (ex.series.find(s => s.done)?.peso || '').trim().toLowerCase();
           const pesoNum = isFunc ? null : ((pesoRaw === '' || pesoRaw === 'autocarga') ? 0 : parseFloat(pesoRaw) ?? 0);
+          const descansoReal = ex.descansosReales?.length
+            ? Math.round(ex.descansosReales.reduce((a, b) => a + b, 0) / ex.descansosReales.length)
+            : undefined;
           return {
             id_ej: 1000 + index,
             nombre: ex.nombre.trim().charAt(0).toUpperCase() + ex.nombre.trim().slice(1),
@@ -438,6 +469,7 @@ const ActiveSession: React.FC = () => {
             repsArray,
             rpe: isFunc ? null : (ex.rirPercibido ?? (parseFloat(ex.targetRIR) || 2)),
             descanso: ex.descanso,
+            descansoReal,
             fecha,
             notas_ej: '',
             feedback_estimulo: ex.feedback_estimulo,
@@ -512,6 +544,7 @@ const ActiveSession: React.FC = () => {
               peso: e.peso,
               rir: e.rpe,
               fecha: e.fecha,
+              descansoReal: e.descansoReal,
               feedback_estimulo: e.feedback_estimulo,
               feedback_recuperacion: e.feedback_recuperacion,
             }))

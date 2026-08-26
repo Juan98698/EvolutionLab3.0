@@ -7,16 +7,22 @@
  * estado incremental persistido sesión a sesión (no se re-consulta el
  * historial completo cada vez).
  *
- * Reglas migradas (8 de 17 — ver el resto en el bloque "Reglas NO migradas"
+ * Reglas migradas (9 de 17 — ver el resto en el bloque "Reglas NO migradas"
  * al final de este archivo):
- * - descanso_excesivo        → volviste tras un corte largo → baja peso (prioridad máxima).
- * - deload_sugerido          → muchas semanas seguidas sin cortes → baja peso y series (descarga).
- * - bajar_peso_rir_alto      → RIR muy bajo (cerca del fallo) Y volumen cayendo a la vez → baja peso.
- * - bajar_peso_regresion     → volumen cayendo varias sesiones seguidas → baja peso.
- * - subir_peso_reps_objetivo → llegaste a un objetivo de reps concreto en suficientes series → sube peso.
- * - subir_peso_reps          → RIR alto (poco esfuerzo real) varias sesiones seguidas → sube peso.
- * - subir_reps_antes_peso    → volumen creciendo sostenido, sin llegar al objetivo de reps aún → suma 1 rep antes de tocar el peso.
- * - autocarga_subir_reps     → mismo criterio que subir_peso_reps pero para ejercicios sin peso externo (peso === 0) → suma reps en vez de peso.
+ * - descanso_excesivo          → volviste tras un corte largo → baja peso (prioridad máxima).
+ * - deload_sugerido            → muchas semanas seguidas sin cortes → baja peso y series (descarga).
+ * - bajar_peso_rir_alto        → RIR muy bajo (cerca del fallo) Y volumen cayendo a la vez → baja peso.
+ * - bajar_peso_regresion       → volumen cayendo varias sesiones seguidas → baja peso.
+ * - subir_peso_reps_objetivo   → llegaste a un objetivo de reps concreto en suficientes series → sube peso.
+ * - subir_peso_reps            → RIR alto (poco esfuerzo real) varias sesiones seguidas → sube peso.
+ * - subir_reps_antes_peso      → volumen creciendo sostenido, sin llegar al objetivo de reps aún → suma 1 rep antes de tocar el peso.
+ * - autocarga_subir_reps       → mismo criterio que subir_peso_reps pero para ejercicios sin peso externo (peso === 0) → suma reps en vez de peso.
+ * - autocarga_descanso_densidad → descanso REAL alto varias sesiones seguidas (autocarga) → reduce el descanso prescrito.
+ *
+ * autocarga_subir_reps y autocarga_descanso_densidad afectan campos
+ * distintos (reps_objetivo vs descanso) y pueden disparar juntas en la
+ * misma sesión sin conflicto — no forman parte de la cadena de prioridad
+ * de abajo, que es exclusiva de los ejercicios con peso externo.
  *
  * Prioridad cuando más de una condición se cumple a la vez en la misma
  * sesión (de mayor a menor):
@@ -53,6 +59,8 @@ export interface RuleProgressionInput {
   state: RuleProgressionState;
   /** Fecha ISO (yyyy-mm-dd) de esta sesión. Sin esto, 'descanso_excesivo' y 'deload_sugerido' no se evalúan. */
   fecha?: string;
+  /** Descanso REAL medido entre series (segundos, promedio de la sesión) — no el prescrito por el plan. Sin esto, 'autocarga_descanso_densidad' no se evalúa. */
+  descansoReal?: number;
   /** Objetivo de reps específico para este ejercicio. Si no se provee, se usa la primera reps de la sesión como objetivo implícito. */
   repsObjetivo?: number;
   /** Reglas a evaluar — por defecto las de rules.ts. */
@@ -68,6 +76,7 @@ export type RuleProgressionApplied =
   | 'subir_peso_reps'
   | 'subir_reps_antes_peso'
   | 'autocarga_subir_reps'
+  | 'autocarga_descanso_densidad'
   | null;
 
 export interface RuleProgressionResult {
@@ -77,6 +86,8 @@ export interface RuleProgressionResult {
   newRepsObjetivo: number | null;
   /** Nuevas series de trabajo a escribir (solo lo usa deload_sugerido), o null si no cambia. */
   newSeries: number | null;
+  /** Nuevo descanso (segundos) a escribir (solo lo usa autocarga_descanso_densidad), o null si no cambia. */
+  newDescanso: number | null;
   /** Nota explicativa para progression_notes, o null si no hubo cambio. */
   note: string | null;
   /** Estado a persistir en config.ruleProgressionState[normName] para la próxima sesión. */
@@ -101,6 +112,7 @@ const sinCambios = (state: RuleProgressionState): RuleProgressionResult => ({
   newWeight: null,
   newRepsObjetivo: null,
   newSeries: null,
+  newDescanso: null,
   note: null,
   newState: state,
   ruleApplied: null,
@@ -114,7 +126,7 @@ const sinCambios = (state: RuleProgressionState): RuleProgressionResult => ({
 export function applyRuleBasedProgression(
   input: RuleProgressionInput
 ): RuleProgressionResult {
-  const { peso, repsArray, rirLogrado, rules = DEFAULT_RULES, fecha } = input;
+  const { peso, repsArray, rirLogrado, rules = DEFAULT_RULES, fecha, descansoReal } = input;
   const prevState = input.state || {};
   const volumen = peso * repsArray.reduce((a, b) => a + b, 0);
   const esAutocarga = peso <= 0;
@@ -132,6 +144,7 @@ export function applyRuleBasedProgression(
         newWeight,
         newRepsObjetivo: null,
         newSeries: null,
+        newDescanso: null,
         note: `⚡ Peso ajustado a ${newWeight} kg — volviste tras ${diasDesdeUltima} días sin entrenar este ejercicio. Retomamos con menos carga para restaurar la memoria motora.`,
         newState: {
           ultimoVolumen: volumen,
@@ -164,6 +177,7 @@ export function applyRuleBasedProgression(
           newWeight,
           newRepsObjetivo: null,
           newSeries: Math.max(1, Math.round(currentSeries * 0.6)),
+          newDescanso: null,
           note: `💤 Descarga sugerida — llevas ${semanasConsecutivas} semanas seguidas entrenando este ejercicio sin cortes. Reducimos volumen y peso ~40% esta semana para disipar fatiga.`,
           newState: {
             ...prevState,
@@ -177,37 +191,64 @@ export function applyRuleBasedProgression(
     }
   }
 
-  // A partir de acá, ejercicios de autocarga siguen un camino aparte (reps,
-  // no peso) — ver bloque autocarga_subir_reps más abajo.
+  // A partir de acá, ejercicios de autocarga siguen un camino aparte (reps y
+  // descanso, no peso). autocarga_subir_reps y autocarga_descanso_densidad
+  // afectan campos distintos (reps_objetivo vs descanso) y no compiten entre
+  // sí — ambas pueden disparar en la misma sesión si corresponde.
   if (esAutocarga) {
     const rAutocarga = findRule(rules, 'autocarga_subir_reps');
     const rirUmbral = rAutocarga?.rir_umbral ?? 3;
-    const streakNecesario = rAutocarga?.sesiones_consecutivas ?? 2;
+    const streakRirNecesario = rAutocarga?.sesiones_consecutivas ?? 2;
 
-    if (rirLogrado === null) {
-      return sinCambios({ ...prevState, ultimoVolumen: volumen, ultimaFecha: fecha ?? prevState.ultimaFecha, deloadStreakInicio });
-    }
+    const rDescansoDensidad = findRule(rules, 'autocarga_descanso_densidad');
+    const descansoUmbral = rDescansoDensidad?.umbral_descanso_alto ?? 90;
+    const streakDescansoNecesario = rDescansoDensidad?.sesiones_consecutivas ?? 2;
 
-    const autocargaRirAltoStreak = rirLogrado >= rirUmbral
+    const autocargaRirAltoStreak = rirLogrado !== null && rirLogrado >= rirUmbral
       ? (prevState.autocargaRirAltoStreak ?? 0) + 1
-      : 0;
+      : (rirLogrado !== null ? 0 : (prevState.autocargaRirAltoStreak ?? 0));
 
-    const newState: RuleProgressionState = {
+    const descansoAltoStreak = descansoReal !== undefined
+      ? (descansoReal >= descansoUmbral ? (prevState.descansoAltoStreak ?? 0) + 1 : 0)
+      : (prevState.descansoAltoStreak ?? 0);
+
+    let newState: RuleProgressionState = {
       ultimoVolumen: volumen,
       ultimaFecha: fecha ?? prevState.ultimaFecha,
       deloadStreakInicio,
       autocargaRirAltoStreak,
+      descansoAltoStreak,
     };
 
-    if (rAutocarga?.activa && autocargaRirAltoStreak >= streakNecesario) {
+    let newRepsObjetivo: number | null = null;
+    let newDescanso: number | null = null;
+    const notas: string[] = [];
+    let ruleApplied: RuleProgressionApplied = null;
+
+    if (rAutocarga?.activa && rirLogrado !== null && autocargaRirAltoStreak >= streakRirNecesario) {
       const maxRepsActual = Math.max(...repsArray, 0);
+      newRepsObjetivo = maxRepsActual + 1;
+      notas.push(`🤸 Reps objetivo ajustadas a ${maxRepsActual + 1} — mantuviste RIR alto varias sesiones seguidas en este ejercicio de autocarga.`);
+      newState = { ...newState, autocargaRirAltoStreak: 0 };
+      ruleApplied = 'autocarga_subir_reps';
+    }
+
+    if (rDescansoDensidad?.activa && descansoReal !== undefined && descansoAltoStreak >= streakDescansoNecesario) {
+      newDescanso = Math.max(45, Math.round(descansoReal - 15));
+      notas.push(`⏱️ Descanso ajustado a ${newDescanso}s — venías descansando ${Math.round(descansoReal)}s en promedio varias sesiones seguidas; con más densidad podés seguir progresando.`);
+      newState = { ...newState, descansoAltoStreak: 0 };
+      if (!ruleApplied) ruleApplied = 'autocarga_descanso_densidad';
+    }
+
+    if (newRepsObjetivo != null || newDescanso != null) {
       return {
         newWeight: null,
-        newRepsObjetivo: maxRepsActual + 1,
+        newRepsObjetivo,
         newSeries: null,
-        note: `🤸 Reps objetivo ajustadas a ${maxRepsActual + 1} — mantuviste RIR alto varias sesiones seguidas en este ejercicio de autocarga.`,
-        newState: { ...newState, autocargaRirAltoStreak: 0 },
-        ruleApplied: 'autocarga_subir_reps',
+        newDescanso,
+        note: notas.join(' ') || null,
+        newState,
+        ruleApplied,
       };
     }
 
@@ -287,6 +328,7 @@ export function applyRuleBasedProgression(
       newWeight,
       newRepsObjetivo: null,
       newSeries: null,
+      newDescanso: null,
       note: `📉 Peso ajustado a ${newWeight} kg — tu RIR se mantuvo muy bajo (cerca del fallo) mientras tu volumen caía varias sesiones seguidas. Se prioriza recuperación antes de seguir cargando.`,
       newState: { ...baseNewState, rirBajoRegresionStreak: 0, regresionStreak: 0 },
       ruleApplied: 'bajar_peso_rir_alto',
@@ -301,6 +343,7 @@ export function applyRuleBasedProgression(
       newWeight,
       newRepsObjetivo: null,
       newSeries: null,
+      newDescanso: null,
       note: `📉 Peso ajustado a ${newWeight} kg — tu volumen viene cayendo varias sesiones seguidas en este ejercicio.`,
       newState: { ...baseNewState, regresionStreak: 0 },
       ruleApplied: 'bajar_peso_regresion',
@@ -316,6 +359,7 @@ export function applyRuleBasedProgression(
       newWeight,
       newRepsObjetivo: null,
       newSeries: null,
+      newDescanso: null,
       note: `🚀 Peso ajustado a ${newWeight} kg — llegaste a ${repsObjetivo} reps en suficientes series varias sesiones seguidas.`,
       newState: { ...baseNewState, repsObjetivoStreak: 0 },
       ruleApplied: 'subir_peso_reps_objetivo',
@@ -331,6 +375,7 @@ export function applyRuleBasedProgression(
       newWeight,
       newRepsObjetivo: null,
       newSeries: null,
+      newDescanso: null,
       note: `📈 Peso ajustado a ${newWeight} kg — tuviste margen de esfuerzo real (RIR alto) varias sesiones seguidas en este ejercicio.`,
       newState: { ...baseNewState, rirAltoStreak: 0 },
       ruleApplied: 'subir_peso_reps',
@@ -345,6 +390,7 @@ export function applyRuleBasedProgression(
       newWeight: null,
       newRepsObjetivo: maxRepsActual + 1,
       newSeries: null,
+      newDescanso: null,
       note: `🎯 Reps objetivo ajustadas a ${maxRepsActual + 1} — tu volumen viene creciendo varias sesiones seguidas en este ejercicio. Consolidamos con más reps antes de subir peso.`,
       newState: { ...baseNewState, volumenCrecioStreak: 0 },
       ruleApplied: 'subir_reps_antes_peso',
@@ -363,12 +409,6 @@ export function applyRuleBasedProgression(
  * - descanso_largo: tipo:'info' en rules.ts (a diferencia de las demás
  *   reglas de descanso que sí son tipo:'descanso'/'bajar') — el propio
  *   dato ya la marca como puramente informativa, no una acción a aplicar.
- * - autocarga_descanso_densidad: requeriría el descanso REAL usado por el
- *   atleta durante la sesión (no el prescrito por el plan), dato que hoy
- *   ActiveSession no registra — el atleta no tipea cuánto descansó, se
- *   maneja con un timer automático. Necesita un cambio de captura de datos
- *   más grande antes de poder migrarse; queda pendiente para una vuelta
- *   futura si se agrega esa captura.
  * - estancamiento / autocarga_evolucion_mecanica: recomiendan CAMBIAR de
  *   ejercicio o variante — no hay ningún campo numérico que ajustar; es una
  *   decisión de coaching, no un ajuste de carga. Quedan como notificación.

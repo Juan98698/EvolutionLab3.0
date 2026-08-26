@@ -1,5 +1,25 @@
 import { Rule, SugerenciaPreWorkout, Exercise } from '../types/database.types';
 import { DEFAULT_RULES } from './rules';
+import { resolveProgressionEngine } from './periodizationEngine';
+
+// Reglas cuya acción (subir/bajar peso, sumar reps) ahora también aplica de
+// verdad el motor de reglas fijas (ruleBasedProgression.ts) para cualquier
+// ejercicio con progression_type 'linear' o 'double' — ver el despachador en
+// periodizationEngine.ts. Mostrarlas acá también sería la misma
+// notificación duplicada (con un número calculado distinto, ya que usan
+// fórmulas separadas) que motivó centralizar esto en primer lugar. Para esos
+// ejercicios, se omiten; el resto de reglas (informativas, o las que el
+// motor real todavía no cubre) se siguen mostrando igual.
+const REGLAS_YA_CUBIERTAS_POR_MOTOR_REAL: ReadonlySet<string> = new Set([
+  'subir_peso_reps',
+  'subir_peso_reps_objetivo',
+  'subir_reps_antes_peso',
+  'bajar_peso_rir_alto',
+  'bajar_peso_regresion',
+  'descanso_excesivo',
+  'deload_sugerido',
+  'autocarga_subir_reps',
+]);
 
 export interface Session {
   id: string;
@@ -115,8 +135,12 @@ const pushNotif = (
   notifs: Notification[],
   rule: Rule,
   ejercicio: string,
-  vars: Record<string, string | number>
+  vars: Record<string, string | number>,
+  motorReal: boolean = false
 ) => {
+  // Si el motor de reglas real ya gobierna este ejercicio, no duplicar acá
+  // la misma decisión con un número calculado por una fórmula distinta.
+  if (motorReal && REGLAS_YA_CUBIERTAS_POR_MOTOR_REAL.has(rule.id)) return;
   notifs.push({
     id: rule.id,
     ejercicio,
@@ -154,6 +178,13 @@ export function analizarSobrecargaProgresiva(
     const hasDeload = exConfig?.progression_type === 'deload';
     const hasDouble = exConfig?.progression_type === 'double';
     const hasUndulating = exConfig?.progression_type === 'undulating';
+    // Este ejercicio ya lo gobierna de verdad algún motor automático (reglas
+    // fijas, ondulante determinístico, o bloque de descarga temporal — ver
+    // resolveProgressionEngine en periodizationEngine.ts) — no solo genera
+    // una nota, ajusta peso/reps/series directo en el plan. Las
+    // notificaciones que duplicarían esa misma decisión (con un número
+    // calculado distinto, porque usan una fórmula separada) se omiten acá.
+    const motorReal = exConfig ? resolveProgressionEngine(exConfig) !== 'rir_auto' : false;
 
     if (n === 1) {
       const rule = rules.find((r) => r.id === 'primer_sesion');
@@ -231,7 +262,7 @@ export function analizarSobrecargaProgresiva(
         valor: diasDesdeUltima,
         porciento: redPct,
         peso: pesoNuevo,
-      });
+      }, motorReal);
       continue;
     }
 
@@ -245,7 +276,7 @@ export function analizarSobrecargaProgresiva(
         valor: regresionCount,
         porciento: Math.abs(deltaPct ?? 0).toFixed(1),
         peso: pesoNuevo,
-      });
+      }, motorReal);
     }
 
     // 3. RIR bajo + volumen cayendo → bajar peso
@@ -264,7 +295,7 @@ export function analizarSobrecargaProgresiva(
         valor: avgRIR.toFixed(1),
         porciento: redPct,
         peso: pesoNuevo,
-      });
+      }, motorReal);
     }
 
     // 4. RIR alto → subir peso
@@ -287,7 +318,7 @@ export function analizarSobrecargaProgresiva(
           valor: avgRIR.toFixed(1),
           porciento: incPct,
           peso: pesoNuevo,
-        });
+        }, motorReal);
       }
     }
 
@@ -336,7 +367,7 @@ export function analizarSobrecargaProgresiva(
           sesiones_consecutivas: rRepsObj.sesiones_consecutivas ?? 2,
           porciento: incPct,
           peso: pesoNuevo,
-        });
+        }, motorReal);
       }
     }
 
@@ -355,7 +386,7 @@ export function analizarSobrecargaProgresiva(
         valor: ultima.peso,
         porciento: deltaPct.toFixed(1),
         peso: ultima.peso,
-      });
+      }, motorReal);
     }
 
     // 7. Volumen estable → mantener
@@ -450,7 +481,7 @@ export function analizarSobrecargaProgresiva(
             ejercicio: nombre,
             valor: avgRIR.toFixed(1),
             sesiones_consecutivas: consecutivas,
-          });
+          }, motorReal);
         }
       }
 
@@ -538,7 +569,7 @@ export function analizarSobrecargaProgresiva(
           valor: semanasConsecutivas,
           porciento: 0,
           peso: ultima.peso,
-        });
+        }, motorReal);
       }
     }
   }
