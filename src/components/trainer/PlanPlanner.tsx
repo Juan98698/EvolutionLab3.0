@@ -1617,7 +1617,7 @@ export const PlanPlanner: React.FC = () => {
   }
 
   return (
-    <div style={{ background: 'transparent', minHeight: '100vh', color: 'white', paddingBottom: '60px' }}>
+    <div style={{ background: 'transparent', minHeight: '100vh', color: 'white', paddingBottom: '60px', width: '100%', maxWidth: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch' }}>
 
       {/* ── Guided Setup — primer plan ─────────────────────────────────────── */}
       {showGuidedSetup && (
@@ -1797,7 +1797,7 @@ export const PlanPlanner: React.FC = () => {
       <div className="container stagger-3" style={{ padding: '0 20px', maxWidth: '1200px', margin: '0 auto' }}>
         
         {/* ACTION BAR: Herramientas de Planificación */}
-        <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', overflowX: 'auto', paddingBottom: '4px' }}>
+        <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', overflowX: 'auto', WebkitOverflowScrolling: 'touch', paddingBottom: '6px', scrollbarWidth: 'none' }}>
           <button 
             onClick={() => setProtocolModalOpen(true)} 
             className="btn" 
@@ -1939,7 +1939,7 @@ export const PlanPlanner: React.FC = () => {
             Asigna qué día de entrenamiento le corresponde a cada día calendario de la semana.
           </p>
 
-          <div className="weekday-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px' }}>
+          <div className="weekday-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 130px), 1fr))', gap: '10px' }}>
             {['Dom', 'Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab'].map((dayName, idx) => {
               const currentVal = weekdayMapping[String(idx)] ?? -1;
               return (
@@ -2175,7 +2175,7 @@ export const PlanPlanner: React.FC = () => {
 
           {/* DAY TABS BAR (Igual que en el perfil del cliente) */}
           {trainingDays.length > 0 && (
-            <div className="day-tabs-bar" style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '20px', padding: '4px', background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '12px', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
+            <div className="day-tabs-bar" style={{ display: 'flex', flexWrap: 'nowrap', overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', gap: '6px', marginBottom: '20px', padding: '6px 8px', background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '12px', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
               {trainingDays.map((day, idx) => {
                 const dayName = (day.name || `Día ${idx + 1}`).trim();
                 const shortName = dayName.length > 28 ? dayName.substring(0, 25) + '…' : dayName;
@@ -2285,7 +2285,7 @@ export const PlanPlanner: React.FC = () => {
                       boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.2)',
                       animation: 'fadeIn 0.25s ease'
                     }}>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '24px' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: '24px' }}>
                         {/* Gráfico Radar */}
                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '260px', background: 'rgba(0,0,0,0.15)', borderRadius: '12px', padding: '12px', border: '1px solid rgba(255, 255, 255, 0.04)' }}>
                           {totalActiveDayVolume > 0 ? (
