@@ -24,6 +24,10 @@ interface ReasoningTooltipProps {
   result?: string;
   /** Optional recommendation text */
   recommendation?: string;
+  /** Optional custom icon (default: '∑') */
+  icon?: string;
+  /** Optional flag to show/hide the trailing trigger icon (default: true) */
+  showTriggerIcon?: boolean;
 }
 
 /**
@@ -45,6 +49,8 @@ export const ReasoningTooltip: React.FC<ReasoningTooltipProps> = React.memo(({
   confidence,
   result,
   recommendation,
+  icon = '∑',
+  showTriggerIcon = true,
 }) => {
   const [open, setOpen] = useState(false);
   const panelRef = useRef<HTMLDivElement>(null);
@@ -89,7 +95,9 @@ export const ReasoningTooltip: React.FC<ReasoningTooltipProps> = React.memo(({
         aria-label={`Ver razonamiento: ${title}`}
       >
         {trigger}
-        <span className="reasoning-tooltip-icon" aria-hidden="true">∑</span>
+        {showTriggerIcon && (
+          <span className="reasoning-tooltip-icon" aria-hidden="true">{icon}</span>
+        )}
       </div>
 
       {open && (
@@ -101,7 +109,7 @@ export const ReasoningTooltip: React.FC<ReasoningTooltipProps> = React.memo(({
         >
           {/* Header */}
           <div className="reasoning-panel-header">
-            <span className="reasoning-panel-icon">∑</span>
+            <span className="reasoning-panel-icon">{icon}</span>
             <span className="reasoning-panel-title">{title}</span>
             {confidence && (
               <span className={`reasoning-confidence reasoning-confidence-${confidence}`}>

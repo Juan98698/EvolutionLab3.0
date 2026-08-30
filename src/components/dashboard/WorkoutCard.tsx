@@ -1,5 +1,5 @@
 import React from 'react';
-import { TrainingDay, GlobalVariable } from '../../types/database.types';
+import { TrainingDay, GlobalVariable, PeriodizationConfig } from '../../types/database.types';
 import ExerciseList from './ExerciseList';
 
 interface WorkoutCardProps {
@@ -13,6 +13,7 @@ interface WorkoutCardProps {
   onRemoveDay?: (dayId: string) => void;
   onChangeDayName?: (dayId: string, newName: string) => void;
   onAddExercise?: (dayId: string) => void;
+  periodizationConfig?: PeriodizationConfig;
 }
 
 /**
@@ -29,7 +30,8 @@ export const WorkoutCard: React.FC<WorkoutCardProps> = ({
   isTrainerMode = false,
   onRemoveDay,
   onChangeDayName,
-  onAddExercise
+  onAddExercise,
+  periodizationConfig
 }) => {
   return (
     <div className="day-card" data-day-id={day.id}>
@@ -111,6 +113,7 @@ export const WorkoutCard: React.FC<WorkoutCardProps> = ({
         checkedExerciseIds={checkedExerciseIds}
         onToggleCheck={onToggleCheck}
         onShowGuide={onShowGuide}
+        periodizationConfig={periodizationConfig}
       />
 
       {/* Render placeholders for missing exercises to ensure three slots per day */}

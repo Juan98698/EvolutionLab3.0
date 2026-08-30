@@ -2725,7 +2725,7 @@ html, body {
       border: 1px solid rgba(167, 139, 250, 0.25);
       border-radius: 14px; padding: 14px 16px 12px;
       box-shadow: 0 12px 40px rgba(0,0,0,0.7), 0 0 0 1px rgba(167,139,250,0.08);
-      min-width: 280px; max-width: 380px;
+      min-width: 280px; max-width: min(380px, calc(100vw - 32px));
       animation: reasoningPanelIn 0.2s cubic-bezier(0.32, 0.94, 0.6, 1) both;
     }
     @keyframes reasoningPanelIn {
@@ -2817,6 +2817,15 @@ html, body {
     .var-badge-label {
       color: rgba(255,255,255,0.4); font-weight: 500;
       text-transform: uppercase; font-size: 10px; letter-spacing: 0.03em;
+    }
+    .var-badge.badge-auto-calibrated {
+      background: rgba(0, 212, 255, 0.08);
+      border: 1px solid rgba(0, 212, 255, 0.35);
+      box-shadow: 0 0 10px rgba(0, 212, 255, 0.15);
+    }
+    .var-badge.badge-auto-calibrated:hover {
+      border-color: #00d4ff;
+      box-shadow: 0 0 14px rgba(0, 212, 255, 0.3);
     }
     /* ===== FILOSOFÃA COLAPSABLE ===== */
     .philosophy-toggle {

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Exercise, GlobalVariable } from '../../types/database.types';
+import { Exercise, GlobalVariable, PeriodizationConfig } from '../../types/database.types';
 import ExerciseCard from './ExerciseCard';
 
 interface ExerciseListProps {
@@ -10,6 +10,7 @@ interface ExerciseListProps {
   checkedExerciseIds: string[];
   onToggleCheck: (exerciseId: string) => void;
   onShowGuide?: (name: string, description: string) => void;
+  periodizationConfig?: PeriodizationConfig;
 }
 
 /**
@@ -22,7 +23,8 @@ export const ExerciseList: React.FC<ExerciseListProps> = ({
   variableDefinitions,
   checkedExerciseIds,
   onToggleCheck,
-  onShowGuide
+  onShowGuide,
+  periodizationConfig
 }) => {
   if (!exercises || exercises.length === 0) {
     return (
@@ -47,6 +49,7 @@ export const ExerciseList: React.FC<ExerciseListProps> = ({
             isChecked={isChecked}
             onToggleCheck={onToggleCheck}
             onShowGuide={onShowGuide}
+            periodizationConfig={periodizationConfig}
           />
         );
       })}

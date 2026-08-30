@@ -1724,6 +1724,7 @@ export const AthleteDashboard: React.FC = () => {
                 checkedExerciseIds={checkedIds}
                 onToggleCheck={handleToggleCheck}
                 onShowGuide={(title, content) => setGuideModal({ open: true, title, content })}
+                periodizationConfig={plan?.periodizationConfig}
               />
             </ErrorBoundary>
           ) : loadingPlan ? (

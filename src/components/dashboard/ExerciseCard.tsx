@@ -1,7 +1,9 @@
 import React from 'react';
-import { Exercise, GlobalVariable } from '../../types/database.types';
+import { Exercise, GlobalVariable, PeriodizationConfig } from '../../types/database.types';
 import RestTimer from '../common/RestTimer';
 import { isFunctionalExercise, getFunctionalVariableLabel } from '../../lib/exerciseUtils';
+import ReasoningTooltip, { buildLoadReasoningSteps, ReasoningStep } from '../common/ReasoningTooltip';
+import { getPrescribedLoadDetailed, mapExerciseToLiftKey } from '../../lib/periodizationEngine';
 
 interface ExerciseCardProps {
   exercise: Exercise;
@@ -12,6 +14,7 @@ interface ExerciseCardProps {
   onToggleCheck: (exerciseId: string) => void;
   onShowGuide?: (name: string, description: string) => void;
   index?: number;
+  periodizationConfig?: PeriodizationConfig;
 }
 
 /**
@@ -19,6 +22,7 @@ interface ExerciseCardProps {
  * Incluye:
  * - Checkbox de completado con persistencia en localStorage
  * - Badges de variables (series, reps, tempo, RIR, descanso, peso)
+ * - Calibración inteligente y razonamiento del robot interactivo (ReasoningTooltip)
  * - Imagen/GIF del ejercicio
  * - Enlace a video explicativo
  * - Botón de guía teórica
@@ -32,7 +36,8 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
   isChecked,
   onToggleCheck,
   onShowGuide,
-  index
+  index,
+  periodizationConfig
 }) => {
   // Detectar dinámicamente si está online u offline
   const [isOnline, setIsOnline] = React.useState<boolean>(() => navigator.onLine);
@@ -211,20 +216,88 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
           const definition = variableDefinitions[varId] || variableDefinitions[cleanLabel] || '';
           const displayBadgeLabel = getFunctionalVariableLabel(v.id, v.label, isFunc);
 
+          // 🤖 REASONING / CALIBRACIÓN INTELIGENTE DEL ROBOT 🤖
+          const isAuto = typeof value === 'string' && value.includes('🤖');
+          const isPesoField = varId === 'peso' || cleanLabel.includes('peso');
+
+          let reasoningSteps: ReasoningStep[] | null = null;
+          let reasoningSource = 'Evolution Lab AI - Periodización Científica';
+          let reasoningResult = displayValue.replace(/^🤖\s*/, '');
+          const reasoningRecommendation = exercise.progression_notes || undefined;
+          let reasoningConfidence: 'high' | 'medium' = 'high';
+
+          if (isAuto) {
+            if (isPesoField && !isFunc) {
+              try {
+                const normName = (exercise.nombre || '').toLowerCase().trim();
+                const marcas = periodizationConfig?.marcas_1rm || {};
+                let oneRM = marcas[normName];
+                if (!oneRM) {
+                  const alias = mapExerciseToLiftKey(normName);
+                  if (alias) oneRM = marcas[alias];
+                }
+                const repsStr = exercise.variables?.['repeticiones'] || '';
+                const repsMatch = repsStr.match(/\d+/);
+                const reps = repsMatch ? parseInt(repsMatch[0], 10) : 0;
+                const rirStr = exercise.variables?.['rir'] || '0';
+                const rirMatch = rirStr.match(/\d+/);
+                const targetRIR = rirMatch ? parseFloat(rirMatch[0]) : 0;
+
+                if (oneRM && oneRM > 0 && reps > 0) {
+                  const formula = periodizationConfig?.formula_preferida || 'epley';
+                  const rounding = periodizationConfig?.redondeo_peso || 2.5;
+                  const lp = getPrescribedLoadDetailed(oneRM, reps, targetRIR, formula, rounding);
+                  reasoningSteps = buildLoadReasoningSteps(lp);
+                  reasoningSource = lp.source;
+                  reasoningResult = `${lp.weight} kg`;
+                  reasoningConfidence = 'high';
+                }
+              } catch (_) { /* noop */ }
+            }
+
+            // Si no tiene pasos de fórmula de 1RM directa (ej. ajustado por sobrecarga progresiva/doble progresión/densidad):
+            if (!reasoningSteps) {
+              reasoningSteps = [
+                {
+                  label: 'Variable Calibrada',
+                  value: displayBadgeLabel,
+                  highlight: true,
+                },
+                {
+                  label: 'Valor Sugerido',
+                  value: displayValue.replace(/^🤖\s*/, ''),
+                  highlight: true,
+                },
+                {
+                  label: 'Motor Inteligente',
+                  value: 'Sobrecarga Progresiva Evolution Lab',
+                  formula: 'Ajuste adaptativo según tu registro y rendimiento reciente',
+                }
+              ];
+              if (exercise.progression_notes) {
+                reasoningSteps.push({
+                  label: 'Pauta del Motor',
+                  value: exercise.progression_notes.length > 60 ? exercise.progression_notes.substring(0, 57) + '...' : exercise.progression_notes,
+                });
+              }
+            }
+          }
+
           return (
             <div
               key={v.id}
-              className={`var-badge${isDescanso ? ' badge-descanso' : ''}`}
+              className={`var-badge${isDescanso ? ' badge-descanso' : ''}${isAuto ? ' badge-auto-calibrated' : ''}`}
               data-descanso-val={isDescanso ? value : undefined}
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                background: 'rgba(255,255,255,0.05)',
-                border: '1px solid rgba(255,255,255,0.08)',
+                background: isAuto ? 'rgba(0, 212, 255, 0.08)' : 'rgba(255,255,255,0.05)',
+                border: isAuto ? '1px solid rgba(0, 212, 255, 0.35)' : '1px solid rgba(255,255,255,0.08)',
                 padding: '4px 10px',
                 borderRadius: '12px',
                 fontSize: '12px',
-                color: 'white'
+                color: 'white',
+                position: 'relative'
               }}
             >
               <span
@@ -234,11 +307,47 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
               />
               <span
                 className="var-badge-label"
-                style={{ fontWeight: 600, color: 'rgba(255,255,255,0.6)', marginRight: '3px' }}
+                style={{ fontWeight: 600, color: isAuto ? '#67e8f9' : 'rgba(255,255,255,0.6)', marginRight: '3px' }}
               >
                 {escapeHtml(displayBadgeLabel)}:
               </span>
-              {' '}{escapeHtml(displayValue)}
+              {' '}
+              {isAuto && reasoningSteps ? (
+                <ReasoningTooltip
+                  icon="🤖"
+                  showTriggerIcon={false}
+                  title={`Calibración Inteligente — ${v.label}`}
+                  steps={reasoningSteps}
+                  source={reasoningSource}
+                  result={reasoningResult}
+                  confidence={reasoningConfidence}
+                  recommendation={reasoningRecommendation}
+                  trigger={
+                    <button
+                      type="button"
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        padding: 0,
+                        margin: 0,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px',
+                        cursor: 'pointer',
+                        fontWeight: 700,
+                        color: '#c2ff00',
+                        font: 'inherit'
+                      }}
+                      title="Toca para ver el desglose científico y la fórmula del robot"
+                    >
+                      <span style={{ fontSize: '13px', filter: 'drop-shadow(0 0 5px rgba(194, 255, 0, 0.6))' }}>🤖</span>
+                      <span>{escapeHtml(displayValue.replace(/^🤖\s*/, ''))}</span>
+                    </button>
+                  }
+                />
+              ) : (
+                <span>{escapeHtml(displayValue)}</span>
+              )}
               {definition && (
                 <button
                   type="button"
@@ -251,7 +360,7 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
                     cursor: 'pointer',
                     fontSize: '10px',
                     color: '#f97316',
-                    marginLeft: '2px',
+                    marginLeft: '4px',
                     fontWeight: 'bold'
                   }}
                 >
