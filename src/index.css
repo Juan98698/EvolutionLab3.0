@@ -2731,6 +2731,7 @@ html, body {
       padding: 16px;
       box-sizing: border-box;
       animation: reasoningFadeIn 0.2s ease;
+      white-space: normal !important;
     }
     @keyframes reasoningFadeIn {
       from { opacity: 0; }
@@ -2743,14 +2744,31 @@ html, body {
       -webkit-backdrop-filter: blur(20px);
       border: 1px solid rgba(0, 212, 255, 0.3);
       border-radius: 20px;
-      padding: 20px 22px 18px;
+      padding: 20px 18px 18px;
       box-shadow: 0 20px 50px rgba(0,0,0,0.8), 0 0 30px rgba(0, 212, 255, 0.2);
       width: 100%;
       max-width: 440px;
       max-height: 85vh;
       overflow-y: auto;
       box-sizing: border-box;
+      white-space: normal !important;
+      word-break: break-word;
+      overflow-wrap: break-word;
       animation: reasoningPanelIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+    .reasoning-panel * {
+      box-sizing: border-box;
+    }
+    .reasoning-panel p,
+    .reasoning-panel div,
+    .reasoning-panel span {
+      white-space: normal;
+    }
+    .reasoning-panel .reasoning-step-value {
+      white-space: nowrap !important;
+    }
+    .reasoning-panel .reasoning-confidence {
+      white-space: nowrap !important;
     }
     @keyframes reasoningPanelIn {
       from { opacity: 0; transform: scale(0.92) translateY(8px); }

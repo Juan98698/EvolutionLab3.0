@@ -196,7 +196,9 @@ export const ReasoningTooltip: React.FC<ReasoningTooltipProps> = React.memo(({
                   marginBottom: '12px',
                   display: 'flex',
                   alignItems: 'center',
-                  justifyContent: 'space-between'
+                  justifyContent: 'space-between',
+                  width: '100%',
+                  boxSizing: 'border-box'
                 }}
               >
                 <span style={{ fontSize: '11px', fontWeight: 800, color: '#67e8f9', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
@@ -215,12 +217,15 @@ export const ReasoningTooltip: React.FC<ReasoningTooltipProps> = React.memo(({
                 border: '1px solid rgba(255, 255, 255, 0.08)',
                 borderRadius: '12px',
                 padding: '12px 14px',
-                marginBottom: '10px'
+                marginBottom: '10px',
+                width: '100%',
+                boxSizing: 'border-box',
+                whiteSpace: 'normal'
               }}>
                 <div style={{ fontSize: '10px', fontWeight: 700, color: '#38bdf8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' }}>
                   💬 ¿Por qué este valor?
                 </div>
-                <div style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.92)', lineHeight: 1.5 }}>
+                <div style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.92)', lineHeight: 1.5, whiteSpace: 'normal', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
                   {humanExplanation}
                 </div>
               </div>
@@ -233,12 +238,15 @@ export const ReasoningTooltip: React.FC<ReasoningTooltipProps> = React.memo(({
                 border: '1px solid rgba(234, 179, 8, 0.25)',
                 borderRadius: '12px',
                 padding: '12px 14px',
-                marginBottom: '10px'
+                marginBottom: '10px',
+                width: '100%',
+                boxSizing: 'border-box',
+                whiteSpace: 'normal'
               }}>
                 <div style={{ fontSize: '10px', fontWeight: 700, color: '#facc15', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' }}>
                   ⚡ Objetivo de la Sesión
                 </div>
-                <div style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.9)', lineHeight: 1.5 }}>
+                <div style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.9)', lineHeight: 1.5, whiteSpace: 'normal', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
                   {sessionGoal}
                 </div>
               </div>
@@ -256,7 +264,12 @@ export const ReasoningTooltip: React.FC<ReasoningTooltipProps> = React.memo(({
                   padding: '8px 12px',
                   background: 'rgba(251, 191, 36, 0.08)',
                   borderRadius: '8px',
-                  borderLeft: '3px solid #f59e0b'
+                  borderLeft: '3px solid #f59e0b',
+                  width: '100%',
+                  boxSizing: 'border-box',
+                  whiteSpace: 'normal',
+                  wordBreak: 'break-word',
+                  overflowWrap: 'break-word'
                 }}
               >
                 💡 <strong>Pauta:</strong> {recommendation}
