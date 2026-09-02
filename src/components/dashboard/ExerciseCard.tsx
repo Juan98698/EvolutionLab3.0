@@ -218,13 +218,19 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
 
           // 🤖 REASONING / CALIBRACIÓN INTELIGENTE DEL ROBOT 🤖
           const isAuto = typeof value === 'string' && value.includes('🤖');
+          const cleanValue = displayValue.replace(/^🤖\s*/, '').trim();
           const isPesoField = varId === 'peso' || cleanLabel.includes('peso');
+          const isRepsField = varId === 'repeticiones' || varId === 'reps' || varId === 'reps_objetivo' || cleanLabel.includes('repeticion') || cleanLabel.includes('reps');
+          const isDescansoField = varId === 'descanso' || cleanLabel.includes('descanso');
 
           let reasoningSteps: ReasoningStep[] | null = null;
           let reasoningSource = 'Evolution Lab AI - Periodización Científica';
-          let reasoningResult = displayValue.replace(/^🤖\s*/, '');
+          let reasoningResult = cleanValue;
           const reasoningRecommendation = exercise.progression_notes || undefined;
           let reasoningConfidence: 'high' | 'medium' = 'high';
+          let reasoningTitle = `Ajuste Automático de ${v.label.replace(/\(.*?\)/g, '').trim()}`;
+          let reasoningHumanExplanation = '';
+          let reasoningSessionGoal = '';
 
           if (isAuto) {
             if (isPesoField && !isFunc) {
@@ -251,11 +257,37 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
                   reasoningSource = lp.source;
                   reasoningResult = `${lp.weight} kg`;
                   reasoningConfidence = 'high';
+                  reasoningTitle = 'Ajuste Automático de Carga';
+                  reasoningHumanExplanation = `Para tu objetivo de ${reps} repeticiones dejando ${targetRIR} en reserva (RIR ${targetRIR}), la app calibró automáticamente tu carga al ${(lp.pct1RM * 100).toFixed(0)}% de tu fuerza máxima estimada (${lp.oneRM} kg), lo que equivale a ${lp.weight} kg en los discos.`;
+                  reasoningSessionGoal = `Realiza tus series con estos ${lp.weight} kg manteniendo una técnica controlada. Si hoy completas las ${reps} reps con RIR ${targetRIR}, la app calibrará automáticamente tu próximo aumento para la siguiente semana.`;
                 }
               } catch (_) { /* noop */ }
+
+              if (!reasoningHumanExplanation) {
+                reasoningTitle = 'Sobrecarga Progresiva de Carga';
+                reasoningHumanExplanation = exercise.progression_notes || `La app incrementó automáticamente tu peso a ${cleanValue} para asegurar un estímulo efectivo de fuerza e hipertrofia basado en tu registro previo.`;
+                reasoningSessionGoal = `Busca completar tus series programadas con estos ${cleanValue} manteniendo una ejecución sólida y buena velocidad de movimiento.`;
+              }
+            } else if (isRepsField) {
+              reasoningTitle = 'Ajuste Automático de Repeticiones';
+              if (isFunc) {
+                reasoningHumanExplanation = exercise.progression_notes || `En este ejercicio funcional, la app incrementó las repeticiones a ${cleanValue} para aumentar la capacidad de trabajo y resistencia muscular.`;
+                reasoningSessionGoal = `Completa las ${cleanValue} repeticiones manteniendo cadencia uniforme en cada ronda.`;
+              } else {
+                reasoningHumanExplanation = exercise.progression_notes || `La app aumentó tus repeticiones a ${cleanValue} para acumular mayor volumen de trabajo con buena técnica antes de subir los kilos en los discos (Doble Progresión).`;
+                reasoningSessionGoal = `Mantén tu peso actual y busca completar todas las series en este nuevo objetivo de ${cleanValue} repeticiones. Cuando lo logres, la app aumentará automáticamente el peso.`;
+              }
+            } else if (isDescansoField) {
+              reasoningTitle = 'Ajuste Inteligente de Densidad';
+              reasoningHumanExplanation = exercise.progression_notes || `La app optimizó tu tiempo de descanso a ${cleanValue} para incrementar la densidad del estímulo de acuerdo con tu recuperación.`;
+              reasoningSessionGoal = 'Respeta el temporizador de descanso entre cada serie para maximizar la adaptación muscular.';
+            } else {
+              reasoningTitle = `Ajuste Automático — ${v.label.replace(/\(.*?\)/g, '').trim()}`;
+              reasoningHumanExplanation = exercise.progression_notes || `La app ajustó ${displayBadgeLabel} a ${cleanValue} según tu rendimiento y las reglas de sobrecarga progresiva.`;
+              reasoningSessionGoal = 'Sigue las pautas del plan para sostener una progresión constante y sin estancamientos.';
             }
 
-            // Si no tiene pasos de fórmula de 1RM directa (ej. ajustado por sobrecarga progresiva/doble progresión/densidad):
+            // Pasos matemáticos de fallback si no provinieron de 1RM directo
             if (!reasoningSteps) {
               reasoningSteps = [
                 {
@@ -264,8 +296,8 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
                   highlight: true,
                 },
                 {
-                  label: 'Valor Sugerido',
-                  value: displayValue.replace(/^🤖\s*/, ''),
+                  label: 'Valor Automático',
+                  value: cleanValue,
                   highlight: true,
                 },
                 {
@@ -277,7 +309,7 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
               if (exercise.progression_notes) {
                 reasoningSteps.push({
                   label: 'Pauta del Motor',
-                  value: exercise.progression_notes.length > 60 ? exercise.progression_notes.substring(0, 57) + '...' : exercise.progression_notes,
+                  value: exercise.progression_notes.length > 70 ? exercise.progression_notes.substring(0, 67) + '...' : exercise.progression_notes,
                 });
               }
             }
@@ -316,7 +348,10 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
                 <ReasoningTooltip
                   icon="🤖"
                   showTriggerIcon={false}
-                  title={`Calibración Inteligente — ${v.label}`}
+                  title={reasoningTitle}
+                  exerciseSubtitle={displayName}
+                  humanExplanation={reasoningHumanExplanation}
+                  sessionGoal={reasoningSessionGoal}
                   steps={reasoningSteps}
                   source={reasoningSource}
                   result={reasoningResult}
@@ -338,10 +373,10 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
                         color: '#c2ff00',
                         font: 'inherit'
                       }}
-                      title="Toca para ver el desglose científico y la fórmula del robot"
+                      title="Toca para ver el motivo del ajuste y tu objetivo"
                     >
                       <span style={{ fontSize: '13px', filter: 'drop-shadow(0 0 5px rgba(194, 255, 0, 0.6))' }}>🤖</span>
-                      <span>{escapeHtml(displayValue.replace(/^🤖\s*/, ''))}</span>
+                      <span>{escapeHtml(cleanValue)}</span>
                     </button>
                   }
                 />

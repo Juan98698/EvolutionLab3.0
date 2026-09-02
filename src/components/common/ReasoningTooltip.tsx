@@ -14,6 +14,12 @@ interface ReasoningTooltipProps {
   trigger: React.ReactNode;
   /** Title shown at the top of the reasoning panel */
   title: string;
+  /** Optional exercise / subtitle name (e.g. "Press plano en máquina hammer") */
+  exerciseSubtitle?: string;
+  /** Optional human-friendly explanation for the athlete */
+  humanExplanation?: string;
+  /** Optional actionable mission / session goal for the athlete */
+  sessionGoal?: string;
   /** Array of reasoning steps showing the calculation breakdown */
   steps: ReasoningStep[];
   /** Scientific source/citation for the formula used */
@@ -33,17 +39,15 @@ interface ReasoningTooltipProps {
 /**
  * ReasoningTooltip — Displays transparent calculation reasoning.
  * 
- * Unlike InfoTooltip (which explains general concepts), this component
- * shows athlete-specific data and the exact formulas applied.
- * 
- * - Desktop: Click to toggle an inline panel below the trigger
- * - Mobile: Click to toggle the same inline panel
- * - Design: Dark semi-transparent background, monospaced numbers,
- *   formula icon (∑) instead of info icon (ⓘ)
+ * Shows clear human explanations for athletes while providing an optional
+ * collapsible accordion for exact mathematical formulas and scientific citations.
  */
 export const ReasoningTooltip: React.FC<ReasoningTooltipProps> = React.memo(({
   trigger,
   title,
+  exerciseSubtitle,
+  humanExplanation,
+  sessionGoal,
   steps,
   source,
   confidence,
@@ -53,6 +57,7 @@ export const ReasoningTooltip: React.FC<ReasoningTooltipProps> = React.memo(({
   showTriggerIcon = true,
 }) => {
   const [open, setOpen] = useState(false);
+  const [showDetails, setShowDetails] = useState<boolean>(!humanExplanation);
   const panelRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLDivElement>(null);
 
@@ -157,76 +162,197 @@ export const ReasoningTooltip: React.FC<ReasoningTooltipProps> = React.memo(({
               ✕
             </button>
 
-            {/* Header */}
-            <div className="reasoning-panel-header" style={{ paddingRight: '32px' }}>
-              <span className="reasoning-panel-icon">{icon}</span>
-              <span className="reasoning-panel-title">{title}</span>
-              {confidence && (
-                <span className={`reasoning-confidence reasoning-confidence-${confidence}`}>
-                  {confidence === 'high' ? '● Directo' : '◐ Estimado'}
-                </span>
-              )}
-            </div>
-
-            {/* Steps */}
-            <div className="reasoning-panel-steps">
-              {steps.map((step, i) => (
-                <div
-                  key={i}
-                  className={`reasoning-step${step.highlight ? ' reasoning-step-highlight' : ''}`}
-                >
-                  <span className="reasoning-step-label">{step.label}</span>
-                  <span className="reasoning-step-value">{step.value}</span>
-                  {step.formula && (
-                    <span className="reasoning-step-formula">{step.formula}</span>
+            {/* Header con título y subtítulo */}
+            <div className="reasoning-panel-header" style={{ paddingRight: '36px', marginBottom: '12px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '3px', flex: 1 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                  <span className="reasoning-panel-icon" style={{ fontSize: '18px' }}>{icon}</span>
+                  <span className="reasoning-panel-title" style={{ fontSize: '13px', fontWeight: 800, letterSpacing: '0.4px', color: '#e2e8f0' }}>
+                    {title}
+                  </span>
+                  {confidence && (
+                    <span className={`reasoning-confidence reasoning-confidence-${confidence}`}>
+                      {confidence === 'high' ? '● Directo' : '◐ Estimado'}
+                    </span>
                   )}
                 </div>
-              ))}
+                {exerciseSubtitle && (
+                  <span style={{ fontSize: '11px', color: '#94a3b8', fontWeight: 600, paddingLeft: '26px' }}>
+                    {exerciseSubtitle}
+                  </span>
+                )}
+              </div>
             </div>
 
-            {/* Result */}
+            {/* Result Hero Banner */}
             {result && (
-              <div className="reasoning-panel-result">
-                <span className="reasoning-result-label">Resultado</span>
-                <span className="reasoning-result-value">{result}</span>
+              <div
+                className="reasoning-panel-result"
+                style={{
+                  background: 'linear-gradient(135deg, rgba(0, 212, 255, 0.12), rgba(167, 139, 250, 0.1))',
+                  border: '1px solid rgba(0, 212, 255, 0.35)',
+                  borderRadius: '12px',
+                  padding: '10px 14px',
+                  marginBottom: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between'
+                }}
+              >
+                <span style={{ fontSize: '11px', fontWeight: 800, color: '#67e8f9', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  🎯 Valor Calibrado
+                </span>
+                <span style={{ fontSize: '16px', fontWeight: 900, color: '#c2ff00', fontFamily: "'Orbitron', monospace", filter: 'drop-shadow(0 0 6px rgba(194, 255, 0, 0.35))' }}>
+                  {result}
+                </span>
               </div>
             )}
 
-            {/* Recommendation */}
+            {/* Explicación Humana y Clara */}
+            {humanExplanation && (
+              <div style={{
+                background: 'rgba(255, 255, 255, 0.04)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: '12px',
+                padding: '12px 14px',
+                marginBottom: '10px'
+              }}>
+                <div style={{ fontSize: '10px', fontWeight: 700, color: '#38bdf8', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' }}>
+                  💬 ¿Por qué este valor?
+                </div>
+                <div style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.92)', lineHeight: 1.5 }}>
+                  {humanExplanation}
+                </div>
+              </div>
+            )}
+
+            {/* Objetivo de la Sesión */}
+            {sessionGoal && (
+              <div style={{
+                background: 'rgba(234, 179, 8, 0.06)',
+                border: '1px solid rgba(234, 179, 8, 0.25)',
+                borderRadius: '12px',
+                padding: '12px 14px',
+                marginBottom: '10px'
+              }}>
+                <div style={{ fontSize: '10px', fontWeight: 700, color: '#facc15', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '6px' }}>
+                  ⚡ Objetivo de la Sesión
+                </div>
+                <div style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.9)', lineHeight: 1.5 }}>
+                  {sessionGoal}
+                </div>
+              </div>
+            )}
+
+            {/* Pauta del Entrenador / Motor */}
             {recommendation && (
-              <div className="reasoning-panel-recommendation">
-                💡 {recommendation}
+              <div
+                className="reasoning-panel-recommendation"
+                style={{
+                  margin: '0 0 10px 0',
+                  fontSize: '11px',
+                  color: '#fde047',
+                  lineHeight: 1.45,
+                  padding: '8px 12px',
+                  background: 'rgba(251, 191, 36, 0.08)',
+                  borderRadius: '8px',
+                  borderLeft: '3px solid #f59e0b'
+                }}
+              >
+                💡 <strong>Pauta:</strong> {recommendation}
               </div>
             )}
 
-            {/* Source */}
-            {source && (
-              <div className="reasoning-panel-source">
-                📚 {source}
+            {/* Desglose Matemático y Fórmulas (Colapsable / Opcional) */}
+            {steps && steps.length > 0 && (
+              <div style={{ marginTop: '8px' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowDetails(prev => !prev)}
+                  style={{
+                    background: 'rgba(167, 139, 250, 0.08)',
+                    border: '1px solid rgba(167, 139, 250, 0.2)',
+                    borderRadius: '8px',
+                    padding: '8px 12px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    color: '#c4b5fd',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    width: '100%',
+                    textAlign: 'left',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span>📐</span>
+                    <span>{showDetails ? 'Ocultar cálculo matemático' : 'Ver cálculo matemático y fórmula'}</span>
+                  </span>
+                  <span style={{ fontSize: '10px', transition: 'transform 0.2s', transform: showDetails ? 'rotate(90deg)' : 'rotate(0deg)' }}>
+                    ▶
+                  </span>
+                </button>
+
+                {showDetails && (
+                  <div style={{
+                    marginTop: '8px',
+                    padding: '12px 14px',
+                    background: 'rgba(0, 0, 0, 0.35)',
+                    border: '1px solid rgba(167, 139, 250, 0.25)',
+                    borderRadius: '10px',
+                    animation: 'reasoningFadeIn 0.2s ease'
+                  }}>
+                    {/* Steps */}
+                    <div className="reasoning-panel-steps">
+                      {steps.map((step, i) => (
+                        <div
+                          key={i}
+                          className={`reasoning-step${step.highlight ? ' reasoning-step-highlight' : ''}`}
+                        >
+                          <span className="reasoning-step-label">{step.label}</span>
+                          <span className="reasoning-step-value">{step.value}</span>
+                          {step.formula && (
+                            <span className="reasoning-step-formula">{step.formula}</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Source */}
+                    {source && (
+                      <div className="reasoning-panel-source" style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px solid rgba(255, 255, 255, 0.08)', fontSize: '10px', color: 'rgba(255, 255, 255, 0.4)' }}>
+                        📚 {source}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             )}
 
-            {/* Botón de acción para cerrar */}
+            {/* Botón de acción principal */}
             <button
               type="button"
               onClick={handleClose}
               style={{
                 width: '100%',
                 marginTop: '16px',
-                background: 'linear-gradient(135deg, rgba(0, 212, 255, 0.2) 0%, rgba(123, 47, 247, 0.25) 100%)',
-                border: '1px solid rgba(0, 212, 255, 0.4)',
-                borderRadius: '10px',
+                background: 'linear-gradient(135deg, rgba(0, 212, 255, 0.25) 0%, rgba(123, 47, 247, 0.35) 100%)',
+                border: '1px solid rgba(0, 212, 255, 0.5)',
+                borderRadius: '12px',
                 color: '#fff',
-                padding: '10px',
+                padding: '12px',
                 fontSize: '12px',
                 fontFamily: "'Orbitron', sans-serif",
                 fontWeight: 700,
-                letterSpacing: '0.5px',
+                letterSpacing: '0.8px',
                 cursor: 'pointer',
+                boxShadow: '0 4px 15px rgba(0, 212, 255, 0.2)',
                 transition: 'all 0.2s'
               }}
             >
-              ✓ Entendido
+              ✓ ¡A ENTRENAR!
             </button>
           </div>
         </div>
