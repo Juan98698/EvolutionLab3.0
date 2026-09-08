@@ -4,6 +4,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   syncOfflineSessions,
   loadAthleteSessions,
+  fetchAthleteSessions,
   readSessionsFromCache,
   SESSIONS_CACHE_KEY,
   SESSIONS_SYNC_FAILED_EVENT,
@@ -160,12 +161,50 @@ describe('Offline Session Synchronization and Cache Preservation', () => {
     expect(mockHistorialInsert).toHaveBeenCalledWith({
       cliente_id: 'test-user',
       fecha: '2026-06-30',
-      notas_generales: 'offline log note'
+      notas_generales: 'offline log note',
+      express_mode: false,
+      express_blocks: []
     });
     expect(mockEjerciciosInsert).toHaveBeenCalled();
 
     const cache = readSessionsFromCache();
     expect(cache[0].id).toBe('uuid-server-id'); // updated to server UUID!
+  });
+
+  it('should upload express_mode and express_blocks when syncing offline sessions', async () => {
+    const mockExpressSession = {
+      id: 2,
+      fecha: '2026-07-02',
+      notas_sesion: 'entrenamiento express en superseries',
+      express_mode: true,
+      express_blocks: [
+        { block_id: 'block-1', exercise_names: ['Press Banca', 'Remo Mancuerna'] }
+      ],
+      ejercicios: [
+        {
+          id_ej: 2001,
+          nombre: 'Press Banca',
+          grupo: 'Pecho',
+          peso: 70,
+          repsArray: [10, 10],
+          rpe: 2,
+          descanso: 60
+        }
+      ]
+    };
+    seedCache([mockExpressSession]);
+
+    await syncOfflineSessions('test-user-2');
+
+    expect(mockHistorialInsert).toHaveBeenCalledWith({
+      cliente_id: 'test-user-2',
+      fecha: '2026-07-02',
+      notas_generales: 'entrenamiento express en superseries',
+      express_mode: true,
+      express_blocks: [
+        { block_id: 'block-1', exercise_names: ['Press Banca', 'Remo Mancuerna'] }
+      ]
+    });
   });
 
   it('should keep the local numeric id and report a failure when the exercises insert fails mid-sync', async () => {
@@ -278,6 +317,43 @@ describe('Offline Session Synchronization and Cache Preservation', () => {
     const ids = result.map((s) => s.id);
     expect(ids).toContain('uuid-server-existing');
     expect(ids).toContain(2);
+  });
+
+  it('fetchAthleteSessions formats express_mode and express_blocks correctly from raw rows', async () => {
+    mockServerSessionsRows = [
+      {
+        id: 'uuid-express-1',
+        fecha: '2026-07-03',
+        notas_generales: 'sesion rápida',
+        express_mode: true,
+        express_blocks: [
+          { block_id: 'block-x', exercise_names: ['Press Militar', 'Elevaciones Laterales'] }
+        ],
+        sesiones_ejercicios: [
+          {
+            id: 'ej-1',
+            nombre_ejercicio: 'Press Militar',
+            grupo_muscular: 'Hombros',
+            series_reps: [12, 10],
+            peso: 40,
+            rpe_rir: 2,
+            descanso: 60,
+            volumen: 880,
+            rm_estimado: 55,
+            feedback_estimulo: 'bueno',
+            feedback_recuperacion: 'bueno'
+          }
+        ]
+      }
+    ];
+
+    const result = await fetchAthleteSessions('test-user');
+    expect(result).toHaveLength(1);
+    expect(result[0].express_mode).toBe(true);
+    expect(result[0].express_blocks).toEqual([
+      { block_id: 'block-x', exercise_names: ['Press Militar', 'Elevaciones Laterales'] }
+    ]);
+    expect(result[0].ejercicios[0].nombre).toBe('Press Militar');
   });
 });
 

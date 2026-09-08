@@ -208,6 +208,8 @@ if (typeof window !== 'undefined') {
               cliente_id: 'test-client-id',
               fecha: '2026-06-25',
               notas_generales: 'Rendimiento excelente',
+              express_mode: false,
+              express_blocks: [],
               sesiones_ejercicios: [
                 {
                   id: 'test-exercise-log-id',

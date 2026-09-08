@@ -711,7 +711,9 @@ const ActiveSession: React.FC = () => {
           .insert({
             cliente_id: currentUser.id,
             fecha,
-            notas_generales: finalNotes
+            notas_generales: finalNotes,
+            express_mode: expressModeActive || false,
+            express_blocks: expressBlocksAudit.length > 0 ? expressBlocksAudit : []
           })
           .select('id')
           .single();

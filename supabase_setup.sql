@@ -57,6 +57,8 @@ create table public.sesiones_historial (
     cliente_id uuid references public.profiles(id) on delete cascade not null,
     fecha date not null default current_date,
     notas_generales text,
+    express_mode boolean default false,
+    express_blocks jsonb default '[]'::jsonb,
     created_at timestamp with time zone default timezone('utc'::text, now())
 );
 

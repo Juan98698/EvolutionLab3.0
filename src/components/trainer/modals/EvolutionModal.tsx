@@ -23,6 +23,7 @@ const EvolutionModal: React.FC<EvolutionModalProps> = ({
   const [evolutionExercises, setEvolutionExercises] = useState<string[]>([]);
   const [selectedEvolutionExercise, setSelectedEvolutionExercise] = useState<string>('all');
   const [evolutionHistoryData, setEvolutionHistoryData] = useState<any[]>([]);
+  const [evolutionSessions, setEvolutionSessions] = useState<any[]>([]);
   const [loadingEvolution, setLoadingEvolution] = useState<boolean>(false);
   const [pdfDateRange, setPdfDateRange] = useState<'30' | '60' | '90' | 'custom'>('30');
   const [pdfStartDate, setPdfStartDate] = useState<string>(() => {
@@ -42,6 +43,7 @@ const EvolutionModal: React.FC<EvolutionModalProps> = ({
         setEvolutionExercises([]);
         setSelectedEvolutionExercise('all');
         setEvolutionHistoryData([]);
+        setEvolutionSessions([]);
         setPdfFeedbackText('');
         setLoadingEvolution(true);
 
@@ -52,12 +54,15 @@ const EvolutionModal: React.FC<EvolutionModalProps> = ({
               id,
               fecha,
               notas_generales,
+              express_mode,
+              express_blocks,
               sesiones_ejercicios(*)
             `)
             .eq('cliente_id', selectedAthleteForEvolution.id)
             .order('fecha', { ascending: true });
 
           if (error) throw error;
+          setEvolutionSessions(data || []);
 
           const uniqueEx = new Set<string>();
           const rows: any[] = [];
@@ -469,6 +474,89 @@ const EvolutionModal: React.FC<EvolutionModalProps> = ({
                   </div>
                 </div>
               </div>
+
+              {evolutionSessions.some(s => s.express_mode) && (
+                <div style={{
+                  background: 'rgba(234, 179, 8, 0.04)',
+                  border: '1px solid rgba(234, 179, 8, 0.2)',
+                  borderRadius: '12px',
+                  padding: '16px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '12px'
+                }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                    <span style={{ fontSize: '11px', fontWeight: 700, color: '#eab308', fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      ⚡ AUDITORÍA DE MODO EXPRESS (ADAPTACIONES EN VIVO)
+                    </span>
+                    <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)' }}>
+                      El atleta adaptó ejercicios en biseries/circuitos
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    {evolutionSessions.filter(s => s.express_mode).map((sesion: any) => (
+                      <div
+                        key={sesion.id}
+                        style={{
+                          background: 'rgba(0,0,0,0.3)',
+                          border: '1px solid rgba(255,255,255,0.06)',
+                          borderRadius: '8px',
+                          padding: '10px 12px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '6px'
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontSize: '11px', fontWeight: 600, color: 'white' }}>
+                            📅 {sesion.fecha ? sesion.fecha.split('-').reverse().join('/') : '-'}
+                          </span>
+                          <span style={{
+                            background: 'rgba(234, 179, 8, 0.2)',
+                            color: '#eab308',
+                            borderRadius: '4px',
+                            padding: '1px 6px',
+                            fontSize: '9px',
+                            fontWeight: 700,
+                            fontFamily: "'Orbitron', sans-serif"
+                          }}>
+                            MODO EXPRESS
+                          </span>
+                        </div>
+                        {Array.isArray(sesion.express_blocks) && sesion.express_blocks.length > 0 ? (
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                            {sesion.express_blocks.map((block: any, bIdx: number) => (
+                              <span
+                                key={block.block_id || bIdx}
+                                style={{
+                                  background: 'rgba(255,255,255,0.03)',
+                                  border: '1px solid rgba(234, 179, 8, 0.2)',
+                                  borderRadius: '4px',
+                                  padding: '3px 6px',
+                                  fontSize: '10px',
+                                  color: 'rgba(255,255,255,0.85)'
+                                }}
+                              >
+                                <strong style={{ color: '#eab308' }}>Bloque {String.fromCharCode(65 + bIdx)}:</strong>{' '}
+                                {Array.isArray(block.exercise_names) ? block.exercise_names.join(' + ') : 'Ejercicios agrupados'}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', fontStyle: 'italic' }}>
+                            Sin detalle de bloques registrado.
+                          </span>
+                        )}
+                        {sesion.notas_generales && (
+                          <span style={{ fontSize: '10px', fontStyle: 'italic', color: 'rgba(255,255,255,0.5)' }}>
+                            "{sesion.notas_generales}"
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </div>

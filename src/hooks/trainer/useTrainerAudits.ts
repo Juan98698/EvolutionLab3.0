@@ -40,6 +40,8 @@ export const useTrainerAudits = (
           id,
           fecha,
           notas_generales,
+          express_mode,
+          express_blocks,
           cliente_id,
           profiles!inner(id, nombre, entrenador_id),
           sesiones_ejercicios(*)

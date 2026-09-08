@@ -279,7 +279,9 @@ export const Historial: React.FC = () => {
             descanso: e.descanso,
             volumen,
             rm,
-            notas_ej: e.notas_ej || s.notas_sesion || ''
+            notas_ej: e.notas_ej || s.notas_sesion || '',
+            express_mode: s.express_mode,
+            express_blocks: s.express_blocks
           });
         }
       });
@@ -828,7 +830,31 @@ export const Historial: React.FC = () => {
 
                     return (
                       <tr key={index} style={{ borderBottom: '1px solid rgba(255,255,255,0.04)', transition: 'background 0.2s' }}>
-                        <td style={{ padding: '12px 16px', whiteSpace: 'nowrap' }}>{formattedDate}</td>
+                        <td style={{ padding: '12px 16px', whiteSpace: 'nowrap' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <span>{formattedDate}</span>
+                            {f.express_mode && (
+                              <span
+                                title={Array.isArray(f.express_blocks) && f.express_blocks.length > 0
+                                  ? `Modo Express: ${f.express_blocks.map((b: any, i: number) => `Bloque ${String.fromCharCode(65 + i)}: ${(b.exercise_names || []).join(' + ')}`).join(' | ')}`
+                                  : 'Sesión ejecutada en Modo Express'}
+                                style={{
+                                  background: 'rgba(234, 179, 8, 0.15)',
+                                  border: '1px solid rgba(234, 179, 8, 0.4)',
+                                  color: '#eab308',
+                                  borderRadius: '4px',
+                                  padding: '1px 5px',
+                                  fontSize: '9px',
+                                  fontWeight: 700,
+                                  fontFamily: "'Orbitron', sans-serif",
+                                  cursor: 'default'
+                                }}
+                              >
+                                ⚡ Express
+                              </span>
+                            )}
+                          </div>
+                        </td>
                         <td style={{ padding: '12px 16px', fontWeight: 600, whiteSpace: 'nowrap' }}>{f.ejercicio}</td>
                         <td style={{ padding: '12px 16px' }}>
                           <span className={`badge badge-${f.grupo.toLowerCase()}`} style={{ padding: '3px 8px', borderRadius: '6px', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' }}>

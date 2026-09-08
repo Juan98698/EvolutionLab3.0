@@ -1,5 +1,5 @@
 import { supabase } from './supabaseClient';
-import { LocalSesion, Rule, TrackerConfig } from '../types/database.types';
+import { LocalSesion, Rule, TrackerConfig, ExpressBlockAudit } from '../types/database.types';
 import { Session, OverloadConfig } from './overload';
 import { DEFAULT_RULES } from './rules';
 import { idbGet, idbSet, isIndexedDbAvailable } from './indexedDbStore';
@@ -18,6 +18,8 @@ const SESIONES_SELECT = `
   id,
   fecha,
   notas_generales,
+  express_mode,
+  express_blocks,
   sesiones_ejercicios (
     id,
     nombre_ejercicio,
@@ -51,6 +53,8 @@ type RawSesionRow = {
   id: string;
   fecha: string;
   notas_generales: string | null;
+  express_mode?: boolean | null;
+  express_blocks?: ExpressBlockAudit[] | null;
   sesiones_ejercicios: RawEjercicioRow[] | null;
 };
 
@@ -59,6 +63,8 @@ function formatSessions(data: RawSesionRow[]): LocalSesion[] {
     id: s.id,
     fecha: s.fecha,
     notas_sesion: s.notas_generales || '',
+    express_mode: s.express_mode ?? undefined,
+    express_blocks: s.express_blocks ?? undefined,
     ejercicios: (s.sesiones_ejercicios || []).map((e) => ({
       id_ej: e.id,
       nombre: e.nombre_ejercicio,
@@ -192,7 +198,9 @@ export async function syncOfflineSessions(userId: string): Promise<SyncResult> {
         .insert({
           cliente_id: userId,
           fecha: s.fecha,
-          notas_generales: s.notas_sesion || ''
+          notas_generales: s.notas_sesion || '',
+          express_mode: s.express_mode || false,
+          express_blocks: s.express_blocks || [],
         })
         .select('id')
         .single();

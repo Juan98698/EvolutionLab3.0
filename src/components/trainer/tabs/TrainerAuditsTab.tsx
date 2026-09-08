@@ -177,8 +177,26 @@ const TrainerAuditsTab: React.FC<TrainerAuditsTabProps> = ({
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '10px' }}>
                   <div>
-                    <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: 'white', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                      👤 {sesion.profiles?.nombre || 'Atleta desconocido'}
+                    <h3 style={{ margin: 0, fontSize: '15px', fontWeight: 700, color: 'white', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                      <span>👤 {sesion.profiles?.nombre || 'Atleta desconocido'}</span>
+                      {sesion.express_mode && (
+                        <span style={{
+                          background: 'rgba(234, 179, 8, 0.15)',
+                          border: '1px solid rgba(234, 179, 8, 0.4)',
+                          color: '#eab308',
+                          borderRadius: '6px',
+                          padding: '2px 8px',
+                          fontSize: '10px',
+                          fontWeight: 700,
+                          fontFamily: "'Orbitron', sans-serif",
+                          letterSpacing: '0.5px',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px'
+                        }}>
+                          ⚡ MODO EXPRESS
+                        </span>
+                      )}
                     </h3>
                     <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', display: 'inline-block', marginTop: '2px' }}>
                       📅 Registro: {formattedDate}
@@ -242,6 +260,51 @@ const TrainerAuditsTab: React.FC<TrainerAuditsTabProps> = ({
                 {sesion.notas_generales && (
                   <div style={{ fontSize: '12px', fontStyle: 'italic', color: 'rgba(255,255,255,0.6)', background: 'rgba(255,255,255,0.02)', padding: '10px 14px', borderRadius: '10px', borderLeft: '3px solid var(--theme-primary)' }}>
                     📝 "{sesion.notas_generales}"
+                  </div>
+                )}
+
+                {sesion.express_mode && (
+                  <div style={{
+                    background: 'rgba(234, 179, 8, 0.06)',
+                    border: '1px solid rgba(234, 179, 8, 0.25)',
+                    borderRadius: '10px',
+                    padding: '10px 14px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '6px'
+                  }}>
+                    <div style={{ fontSize: '11px', fontWeight: 700, color: '#eab308', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      ⚡ <span>Sesión ejecutada en Modo Express (Biseries / Circuitos ad-hoc)</span>
+                    </div>
+                    {Array.isArray(sesion.express_blocks) && sesion.express_blocks.length > 0 ? (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '2px' }}>
+                        <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                          Agrupaciones realizadas por el atleta:
+                        </span>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                          {sesion.express_blocks.map((block: any, bIdx: number) => (
+                            <div
+                              key={block.block_id || bIdx}
+                              style={{
+                                background: 'rgba(0,0,0,0.25)',
+                                border: '1px solid rgba(234, 179, 8, 0.25)',
+                                borderRadius: '6px',
+                                padding: '4px 8px',
+                                fontSize: '11px',
+                                color: 'rgba(255,255,255,0.85)'
+                              }}
+                            >
+                              <strong style={{ color: '#eab308' }}>Bloque {String.fromCharCode(65 + bIdx)}:</strong>{' '}
+                              {Array.isArray(block.exercise_names) ? block.exercise_names.join(' + ') : 'Ejercicios agrupados'}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
+                      <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)', fontStyle: 'italic' }}>
+                        No se registraron detalles de bloques específicos.
+                      </div>
+                    )}
                   </div>
                 )}
 
