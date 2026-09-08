@@ -251,14 +251,14 @@ describe('Exercise Block Utils & Superset Logic', () => {
       expect(step.timerType).toBe('standard');
     });
 
-    it('maneja bi-serie asimétrica (A: 4 series, B: 3 series) sin bloquear al atleta', () => {
+    it('maneja bi-serie asimétrica (A: 4 series, B: 3 series): al terminar B, A queda en solitario con descanso estándar individual', () => {
       const state: BlockExerciseState[] = [
         {
           block_id: 'block_ab',
           block_rest: 90,
           transition_rest: 10,
           descanso: 75,
-          series: [{ done: true }, { done: true }, { done: true }, { done: false }], // A tiene 4 series
+          series: [{ done: true }, { done: true }, { done: true }, { done: false }], // A tiene 4 series (falta la 4ª)
         },
         {
           block_id: 'block_ab',
@@ -269,18 +269,67 @@ describe('Exercise Block Utils & Superset Logic', () => {
         },
       ];
 
-      // Al completar B la serie 2, el siguiente paso debe ser A para su serie 3 pendiente
+      // Al completar B la serie 2 (su 3ª serie), B ya no tiene series pendientes.
+      // Queda solo A activo en el bloque: deja de haber ronda y se usa el descanso individual de A (75s), tipo 'standard'.
       const stepAfterB2 = computeNextExerciseStep(state, 1, 2);
       expect(stepAfterB2.nextIdx).toBe(0);
-      expect(stepAfterB2.timerSeconds).toBe(90);
-      expect(stepAfterB2.timerType).toBe('round');
+      expect(stepAfterB2.timerSeconds).toBe(75);
+      expect(stepAfterB2.timerType).toBe('standard');
 
-      // Ahora A ejecuta su serie 3 en solitario
+      // Ahora A ejecuta su serie 3 en solitario y la completa
       state[0].series[3].done = true;
       const stepAfterA3 = computeNextExerciseStep(state, 0, 3);
-      // B ya no tiene serie 3, por lo que A no tiene transición ni ronda siguiente -> bloque terminado
+      // Todo el bloque ha finalizado -> descanso individual de A (75s), tipo 'standard'
       expect(stepAfterA3.timerSeconds).toBe(75);
       expect(stepAfterA3.timerType).toBe('standard');
+    });
+
+    it('maneja cola solitaria larga (A: 6 series, B: 3 series): cada serie solitaria de A usa su propio descanso individual', () => {
+      const state: BlockExerciseState[] = [
+        {
+          block_id: 'block_ab',
+          block_rest: 90,
+          transition_rest: 10,
+          descanso: 120, // A es un ejercicio pesado con 120s de descanso
+          series: [
+            { done: true }, { done: true }, { done: true },
+            { done: false }, { done: false }, { done: false }
+          ],
+        },
+        {
+          block_id: 'block_ab',
+          block_rest: 90,
+          transition_rest: 10,
+          descanso: 60,
+          series: [{ done: true }, { done: true }, { done: true }], // B terminó sus 3 series
+        },
+      ];
+
+      // 1. Justo tras la 3ª serie de B: B terminó, solo queda A -> descanso individual de A (120s)
+      const stepAfterB = computeNextExerciseStep(state, 1, 2);
+      expect(stepAfterB.nextIdx).toBe(0);
+      expect(stepAfterB.timerSeconds).toBe(120);
+      expect(stepAfterB.timerType).toBe('standard');
+
+      // 2. A completa serie 4 (índice 3): le quedan series 5 y 6 -> descanso individual de A (120s)
+      state[0].series[3].done = true;
+      const stepAfterA3 = computeNextExerciseStep(state, 0, 3);
+      expect(stepAfterA3.nextIdx).toBe(0);
+      expect(stepAfterA3.timerSeconds).toBe(120);
+      expect(stepAfterA3.timerType).toBe('standard');
+
+      // 3. A completa serie 5 (índice 4): le queda serie 6 -> descanso individual de A (120s)
+      state[0].series[4].done = true;
+      const stepAfterA4 = computeNextExerciseStep(state, 0, 4);
+      expect(stepAfterA4.nextIdx).toBe(0);
+      expect(stepAfterA4.timerSeconds).toBe(120);
+      expect(stepAfterA4.timerType).toBe('standard');
+
+      // 4. A completa serie 6 (índice 5): fin de todo el bloque
+      state[0].series[5].done = true;
+      const stepAfterA5 = computeNextExerciseStep(state, 0, 5);
+      expect(stepAfterA5.timerSeconds).toBe(120);
+      expect(stepAfterA5.timerType).toBe('standard');
     });
 
     it('ejecuta circuito de 3 ejercicios con series asimétricas (A: 3, B: 2, C: 3)', () => {
@@ -308,14 +357,14 @@ describe('Exercise Block Utils & Superset Logic', () => {
         },
       ];
 
-      // En la ronda 2, A completa su serie 2. B no tiene serie 2 -> debe saltar directo a C (índice 2)
+      // En la ronda 2, A completa su serie 2. B ya terminó, pero A y C siguen activos (activeMembers = 2) -> bi-serie entre A y C
       state[0].series[2].done = true;
       const stepFromA = computeNextExerciseStep(state, 0, 2);
       expect(stepFromA.nextIdx).toBe(2);
       expect(stepFromA.timerSeconds).toBe(10);
       expect(stepFromA.timerType).toBe('transition');
 
-      // C completa su serie 2 -> fin del circuito
+      // C completa su serie 2 -> fin de todos los miembros
       state[2].series[2].done = true;
       const stepFromC = computeNextExerciseStep(state, 2, 2);
       expect(stepFromC.timerSeconds).toBe(90);

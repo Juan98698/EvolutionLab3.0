@@ -264,38 +264,68 @@ export function computeNextExerciseStep(
     .map((e, idx) => (e.block_id === blockId ? idx : -1))
     .filter(idx => idx !== -1);
 
-  // 2. Verificar si en la ronda actual (currentSetIdx) hay un compañero posterior que deba hacer la serie
+  // 2. Paso 1 (Misma Ronda): Verificar si en la ronda actual (currentSetIdx) hay un compañero posterior
+  // que aún deba ejecutar su serie de esta ronda. Si existe, es una transición rápida dentro de la ronda.
   const nextPartnerInRound = blockIndices.find(
-    idx => idx > currentExIdx && exercises[idx].series[currentSetIdx] && !exercises[idx].series[currentSetIdx].done
+    idx => idx > currentExIdx && exercises[idx]?.series[currentSetIdx] && !exercises[idx].series[currentSetIdx].done
   );
 
   if (nextPartnerInRound !== undefined) {
     return {
       nextIdx: nextPartnerInRound,
-      timerSeconds: currEx.transition_rest ?? 10,
+      timerSeconds: currEx?.transition_rest ?? 10,
       timerType: 'transition',
     };
   }
 
-  // 3. Ronda actual completa para los miembros disponibles. Verificar siguiente ronda (currentSetIdx + 1)
-  const nextRoundPartner = blockIndices.find(
-    idx => exercises[idx].series[currentSetIdx + 1] && !exercises[idx].series[currentSetIdx + 1].done
+  // 3. Paso 2 (Ronda Actual Finalizada): La ronda actual concluyó para todos los miembros disponibles.
+  // Calculamos qué miembros del bloque todavía tienen series pendientes en rondas futuras.
+  const activeMembers = blockIndices.filter(idx =>
+    exercises[idx]?.series?.some(s => !s.done)
+  );
+
+  // Caso A: Todos los miembros del bloque han concluido todas sus series (Fin del bloque completo)
+  if (activeMembers.length === 0) {
+    const maxBlockIdx = Math.max(...blockIndices);
+    const nextIdx = maxBlockIdx < exercises.length - 1 ? maxBlockIdx + 1 : currentExIdx;
+    return {
+      nextIdx,
+      timerSeconds: currEx?.descanso ?? 90,
+      timerType: 'standard',
+    };
+  }
+
+  // Caso B: Solo 1 miembro del bloque tiene series pendientes (Ejecución solitaria por asimetría)
+  // Deja de haber ronda/bloque: el atleta descansa el tiempo individual prescrito para ese ejercicio específico.
+  if (activeMembers.length === 1) {
+    const loneMemberIdx = activeMembers[0];
+    const loneEx = exercises[loneMemberIdx];
+    return {
+      nextIdx: loneMemberIdx,
+      timerSeconds: loneEx?.descanso ?? 90,
+      timerType: 'standard',
+    };
+  }
+
+  // Caso C: Al menos 2 miembros siguen activos en el bloque (Siguiente Ronda de Bi-serie / Circuito)
+  // C1. Buscar el primer miembro activo con serie pendiente en la siguiente ronda (currentSetIdx + 1)
+  const nextRoundPartner = activeMembers.find(
+    idx => exercises[idx]?.series[currentSetIdx + 1] && !exercises[idx].series[currentSetIdx + 1].done
   );
 
   if (nextRoundPartner !== undefined) {
     return {
       nextIdx: nextRoundPartner,
-      timerSeconds: currEx.block_rest ?? 90,
+      timerSeconds: currEx?.block_rest ?? 90,
       timerType: 'round',
     };
   }
 
-  // 4. Todo el bloque ha terminado
-  const maxBlockIdx = Math.max(...blockIndices);
-  const nextIdx = maxBlockIdx < exercises.length - 1 ? maxBlockIdx + 1 : currentExIdx;
+  // C2. Fallback: primer miembro activo con cualquier serie pendiente
+  const fallbackPartner = activeMembers.find(idx => exercises[idx].series.some(s => !s.done));
   return {
-    nextIdx,
-    timerSeconds: currEx.descanso ?? 90,
-    timerType: 'standard',
+    nextIdx: fallbackPartner ?? currentExIdx,
+    timerSeconds: currEx?.block_rest ?? 90,
+    timerType: 'round',
   };
 }
