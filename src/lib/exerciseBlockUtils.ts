@@ -173,6 +173,17 @@ export function linkExercisesWithReorder(
     };
   }
 
+  // Si ya comparten bloque, no hay nada que mover ni fusionar: sin este guard,
+  // el bloque completo terminaría reinsertado al final del día (ver más abajo,
+  // "remaining" quedaría sin ningún miembro ancla para anclar la reinserción).
+  if (anchorEx.block_id && anchorEx.block_id === targetEx.block_id) {
+    return {
+      exercises,
+      anchorName: anchorEx.nombre || '',
+      targetName: targetEx.nombre || '',
+    };
+  }
+
   // 1. Identificar miembros del bloque del objetivo (si el objetivo ya estaba en un bloque de 2+ miembros)
   const targetBlockId = targetEx.block_id;
   const targetBlockMembers = targetBlockId

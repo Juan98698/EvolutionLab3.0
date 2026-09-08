@@ -160,6 +160,21 @@ describe('Exercise Block Utils & Superset Logic', () => {
       expect(tags['ex-4']).toBe('A2');
     });
 
+    it('no hace nada si ancla y objetivo ya comparten bloque (evita reinsertar el bloque al final del día)', () => {
+      const initial: Exercise[] = [
+        { id: 'ex-0', nombre: 'Press Banca', block_id: 'block_a', block_rest: 90, transition_rest: 10, variables: {} },
+        { id: 'ex-1', nombre: 'Remo Barra', block_id: 'block_a', block_rest: 90, transition_rest: 10, variables: {} },
+        { id: 'ex-2', nombre: 'Curl Bíceps', variables: {} },
+        { id: 'ex-3', nombre: 'Extensión Tríceps', variables: {} },
+      ];
+
+      const res = linkExercisesWithReorder(initial, 'ex-0', 'ex-1', 90, 10);
+
+      // El array queda exactamente igual — no se reinserta el bloque al final
+      expect(res.exercises.map(e => e.id)).toEqual(['ex-0', 'ex-1', 'ex-2', 'ex-3']);
+      expect(res.exercises).toEqual(initial);
+    });
+
     it('expande una bi-serie existente a tri-serie insertando el nuevo miembro tras el último miembro del bloque', () => {
       const initial: Exercise[] = [
         { id: 'ex-0', nombre: 'Press Banca', block_id: 'block_a', block_rest: 90, transition_rest: 10, variables: {} },

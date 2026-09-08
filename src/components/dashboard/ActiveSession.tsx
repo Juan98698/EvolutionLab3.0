@@ -119,6 +119,9 @@ const ActiveSession: React.FC = () => {
   });
   const [showFeedbackGuide, setShowFeedbackGuide] = useState(false);
   const [showExpressModal, setShowExpressModal] = useState(false);
+  // Compañero elegido para reemplazar cuando el bloque actual tiene 3+ miembros
+  // (triset/circuito) y no basta con asumir "el primero de la lista".
+  const [selectedSwapPartnerId, setSelectedSwapPartnerId] = useState<string | null>(null);
   const expressDialogRef = useModalA11y<HTMLDivElement>({
     isOpen: showExpressModal,
     onClose: () => setShowExpressModal(false),
@@ -1504,48 +1507,95 @@ const ActiveSession: React.FC = () => {
                     <p style={{ margin: 0, fontSize: '11.5px', color: 'rgba(255,255,255,0.7)', lineHeight: 1.4 }}>
                       Estás entrenando <strong>{currentExercise.nombre}</strong> ({currentExercise.block_tag}) junto a: <em>{currentBlockPartners.map(p => p.nombre).join(', ') || 'compañero'}</em>.
                     </p>
-                    {outsideExercises.length > 0 && (
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '4px' }}>
-                        <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>
-                          Sustituir por otra máquina / ejercicio disponible:
+                    {(() => {
+                      // Si el partner elegido anteriormente ya no pertenece a este bloque
+                      // (cambiaste de ejercicio, o ya fue reemplazado), cae al primero.
+                      const effectivePartnerId =
+                        (selectedSwapPartnerId && currentBlockPartners.some(p => p.id === selectedSwapPartnerId))
+                          ? selectedSwapPartnerId
+                          : currentBlockPartners[0]?.id ?? null;
+
+                      return currentBlockPartners.length > 1 ? (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                          <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>
+                            ¿A cuál compañero reemplazas?
+                          </div>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                            {currentBlockPartners.map(p => {
+                              const isSelected = p.id === effectivePartnerId;
+                              return (
+                                <button
+                                  key={p.id}
+                                  type="button"
+                                  onClick={() => setSelectedSwapPartnerId(p.id)}
+                                  style={{
+                                    padding: '5px 10px',
+                                    borderRadius: '999px',
+                                    fontSize: '11px',
+                                    fontWeight: 600,
+                                    cursor: 'pointer',
+                                    border: isSelected ? '1px solid #fbbf24' : '1px solid rgba(255,255,255,0.15)',
+                                    background: isSelected ? 'rgba(245, 158, 11, 0.18)' : 'rgba(255,255,255,0.04)',
+                                    color: isSelected ? '#fbbf24' : 'rgba(255,255,255,0.75)',
+                                  }}
+                                >
+                                  {p.block_tag ? `${p.block_tag} · ` : ''}{p.nombre}
+                                </button>
+                              );
+                            })}
+                          </div>
                         </div>
-                        <div style={{ maxHeight: '140px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                          {outsideExercises.map(otherEx => (
-                            <button
-                              key={otherEx.id}
-                              type="button"
-                              onClick={() => {
-                                if (currentBlockPartners.length > 0) {
-                                  handleSwapPartnerInActiveSession(currentBlockPartners[0].id, otherEx.id);
-                                }
-                              }}
-                              style={{
-                                background: 'rgba(255,255,255,0.04)',
-                                border: '1px solid rgba(255,255,255,0.1)',
-                                borderRadius: '8px',
-                                padding: '8px 10px',
-                                textAlign: 'left',
-                                cursor: 'pointer',
-                                color: 'white',
-                                transition: 'all 0.15s ease',
-                              }}
-                              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(245, 158, 11, 0.15)')}
-                              onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.04)')}
-                            >
-                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                <span style={{ fontWeight: 600, fontSize: '12px' }}>{otherEx.nombre}</span>
-                                <span style={{ fontSize: '9px', color: '#60a5fa', background: 'rgba(59, 130, 246, 0.15)', padding: '1px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>
-                                  {otherEx.grupo || 'General'}
-                                </span>
-                              </div>
-                              <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', marginTop: '2px' }}>
-                                ⇄ Intercambiar por {currentBlockPartners[0]?.nombre || 'compañero'}
-                              </div>
-                            </button>
-                          ))}
+                      ) : null;
+                    })()}
+                    {outsideExercises.length > 0 && (() => {
+                      const effectivePartnerId =
+                        (selectedSwapPartnerId && currentBlockPartners.some(p => p.id === selectedSwapPartnerId))
+                          ? selectedSwapPartnerId
+                          : currentBlockPartners[0]?.id ?? null;
+                      const effectivePartner = currentBlockPartners.find(p => p.id === effectivePartnerId);
+                      return (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '4px' }}>
+                          <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>
+                            Sustituir por otra máquina / ejercicio disponible:
+                          </div>
+                          <div style={{ maxHeight: '140px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            {outsideExercises.map(otherEx => (
+                              <button
+                                key={otherEx.id}
+                                type="button"
+                                onClick={() => {
+                                  if (effectivePartnerId) {
+                                    handleSwapPartnerInActiveSession(effectivePartnerId, otherEx.id);
+                                  }
+                                }}
+                                style={{
+                                  background: 'rgba(255,255,255,0.04)',
+                                  border: '1px solid rgba(255,255,255,0.1)',
+                                  borderRadius: '8px',
+                                  padding: '8px 10px',
+                                  textAlign: 'left',
+                                  cursor: 'pointer',
+                                  color: 'white',
+                                  transition: 'all 0.15s ease',
+                                }}
+                                onMouseEnter={e => (e.currentTarget.style.background = 'rgba(245, 158, 11, 0.15)')}
+                                onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.04)')}
+                              >
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                  <span style={{ fontWeight: 600, fontSize: '12px' }}>{otherEx.nombre}</span>
+                                  <span style={{ fontSize: '9px', color: '#60a5fa', background: 'rgba(59, 130, 246, 0.15)', padding: '1px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>
+                                    {otherEx.grupo || 'General'}
+                                  </span>
+                                </div>
+                                <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', marginTop: '2px' }}>
+                                  ⇄ Intercambiar por {effectivePartner?.nombre || 'compañero'}
+                                </div>
+                              </button>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      );
+                    })()}
                     <button
                       type="button"
                       onClick={handleUngroupCurrentBlock}
