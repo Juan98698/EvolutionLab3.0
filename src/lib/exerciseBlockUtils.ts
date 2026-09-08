@@ -321,7 +321,8 @@ export function computeNextExerciseStep(
     };
   }
 
-  // C2. Fallback: primer miembro activo con cualquier serie pendiente
+  // C2. Guard defensivo: fallback por si el estado de series tiene huecos o inconsistencias no secuenciales.
+  // En flujo normal y determinista, C1 siempre se cumple cuando activeMembers.length >= 2.
   const fallbackPartner = activeMembers.find(idx => exercises[idx].series.some(s => !s.done));
   return {
     nextIdx: fallbackPartner ?? currentExIdx,
