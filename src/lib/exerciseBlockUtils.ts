@@ -127,6 +127,176 @@ export function ungroupBlock(exercises: Exercise[], blockId: string): Exercise[]
 }
 
 /**
+ * Limpia bloques huérfanos que hayan quedado con menos de 2 miembros.
+ */
+export function cleanOrphanBlocks(exercises: Exercise[]): Exercise[] {
+  const counts: Record<string, number> = {};
+  for (const ex of exercises) {
+    if (ex.block_id) {
+      counts[ex.block_id] = (counts[ex.block_id] || 0) + 1;
+    }
+  }
+
+  return exercises.map(ex => {
+    if (ex.block_id && (counts[ex.block_id] || 0) < 2) {
+      const { block_id: _bId, block_rest: _bRest, transition_rest: _tRest, ...rest } = ex;
+      return rest as Exercise;
+    }
+    return ex;
+  });
+}
+
+/**
+ * Vincula un ejercicio ancla con cualquier otro ejercicio objetivo del día,
+ * reordenando físicamente el array para colocarlos de forma contigua y preservando
+ * la integridad de los bloques existentes (moviendo bloques completos si corresponde).
+ */
+export function linkExercisesWithReorder(
+  exercises: Exercise[],
+  anchorExerciseId: string,
+  targetExerciseId: string,
+  blockRest: number = 90,
+  transitionRest: number = 10
+): {
+  exercises: Exercise[];
+  anchorName: string;
+  targetName: string;
+} {
+  const anchorEx = exercises.find(e => e.id === anchorExerciseId);
+  const targetEx = exercises.find(e => e.id === targetExerciseId);
+
+  if (!anchorEx || !targetEx || anchorExerciseId === targetExerciseId) {
+    return {
+      exercises,
+      anchorName: anchorEx?.nombre || '',
+      targetName: targetEx?.nombre || '',
+    };
+  }
+
+  // 1. Identificar miembros del bloque del objetivo (si el objetivo ya estaba en un bloque de 2+ miembros)
+  const targetBlockId = targetEx.block_id;
+  const targetBlockMembers = targetBlockId
+    ? exercises.filter(e => e.block_id === targetBlockId)
+    : [targetEx];
+  
+  const movingItems = targetBlockMembers.length >= 2 ? targetBlockMembers : [targetEx];
+  const movingIds = new Set(movingItems.map(e => e.id));
+
+  // 2. Identificar miembros del bloque del ancla
+  const anchorBlockId = anchorEx.block_id;
+  const anchorBlockMembers = anchorBlockId
+    ? exercises.filter(e => e.block_id === anchorBlockId && !movingIds.has(e.id))
+    : [anchorEx];
+
+  // 3. Determinar block_id y descansos unificados
+  const finalBlockId = anchorBlockId || targetBlockId || generateBlockUUID();
+  const finalBlockRest = anchorEx.block_rest ?? targetEx.block_rest ?? blockRest;
+  const finalTransitionRest = anchorEx.transition_rest ?? targetEx.transition_rest ?? transitionRest;
+
+  // 4. Remover los elementos a mover del array
+  const remaining = exercises.filter(e => !movingIds.has(e.id));
+
+  // 5. Encontrar el índice del último miembro del bloque del ancla en remaining
+  const anchorMemberIds = new Set(anchorBlockMembers.map(e => e.id));
+  let lastAnchorIdx = -1;
+  for (let i = 0; i < remaining.length; i++) {
+    if (anchorMemberIds.has(remaining[i].id)) {
+      lastAnchorIdx = i;
+    }
+  }
+
+  if (lastAnchorIdx === -1) {
+    lastAnchorIdx = remaining.findIndex(e => e.id === anchorExerciseId);
+  }
+
+  // 6. Insertar los elementos a mover inmediatamente después del último miembro del bloque ancla
+  const insertIdx = lastAnchorIdx !== -1 ? lastAnchorIdx + 1 : remaining.length;
+  remaining.splice(insertIdx, 0, ...movingItems);
+
+  // 7. Asignar block_id a todos los miembros combinados
+  const allJoinedIds = new Set([...anchorBlockMembers.map(e => e.id), ...movingItems.map(e => e.id)]);
+
+  let updated = remaining.map(ex => {
+    if (allJoinedIds.has(ex.id)) {
+      return {
+        ...ex,
+        block_id: finalBlockId,
+        block_rest: finalBlockRest,
+        transition_rest: finalTransitionRest,
+      };
+    }
+    return ex;
+  });
+
+  // 8. Limpiar posibles bloques huérfanos tras la reubicación
+  updated = cleanOrphanBlocks(updated);
+
+  return {
+    exercises: updated,
+    anchorName: anchorEx.nombre || 'Ejercicio',
+    targetName: targetEx.nombre || 'Ejercicio',
+  };
+}
+
+/**
+ * Sustituye un compañero de bloque por otro ejercicio del día (ej. si una máquina está ocupada).
+ * El ejercicio saliente pierde su bloque y el nuevo compañero toma su lugar en el bloque contiguo.
+ */
+export function swapBlockPartner(
+  exercises: Exercise[],
+  currentExerciseId: string,
+  oldPartnerId: string,
+  newPartnerId: string
+): Exercise[] {
+  const currentEx = exercises.find(e => e.id === currentExerciseId);
+  const oldPartner = exercises.find(e => e.id === oldPartnerId);
+  const newPartner = exercises.find(e => e.id === newPartnerId);
+
+  if (!currentEx || !oldPartner || !newPartner || currentExerciseId === newPartnerId) {
+    return exercises;
+  }
+
+  const blockId = currentEx.block_id || generateBlockUUID();
+  const blockRest = currentEx.block_rest ?? 90;
+  const transitionRest = currentEx.transition_rest ?? 10;
+
+  const oldPartnerIdx = exercises.findIndex(e => e.id === oldPartnerId);
+  const newPartnerIdx = exercises.findIndex(e => e.id === newPartnerId);
+
+  const updated = exercises.map((ex) => {
+    if (ex.id === currentExerciseId) {
+      return {
+        ...ex,
+        block_id: blockId,
+        block_rest: blockRest,
+        transition_rest: transitionRest,
+      };
+    }
+    if (ex.id === oldPartnerId) {
+      const { block_id: _b, block_rest: _br, transition_rest: _tr, ...rest } = ex;
+      return rest as Exercise;
+    }
+    if (ex.id === newPartnerId) {
+      return {
+        ...ex,
+        block_id: blockId,
+        block_rest: blockRest,
+        transition_rest: transitionRest,
+      };
+    }
+    return ex;
+  });
+
+  if (oldPartnerIdx !== -1 && newPartnerIdx !== -1) {
+    const temp = updated[oldPartnerIdx];
+    updated[oldPartnerIdx] = updated[newPartnerIdx];
+    updated[newPartnerIdx] = temp;
+  }
+
+  return cleanOrphanBlocks(updated);
+}
+
+/**
  * Actualiza los parámetros de descanso de ronda y transición para todos
  * los ejercicios pertenecientes a un bloque.
  */

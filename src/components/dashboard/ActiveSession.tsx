@@ -8,7 +8,7 @@ import { ErrorBoundary } from '../common/ErrorBoundary';
 import { useModalA11y } from '../../hooks/useModalA11y';
 import { useWakeLock } from '../../hooks/useWakeLock';
 import { isFunctionalExercise } from '../../lib/exerciseUtils';
-import { computeBlockTags, applyExpressMode, computeNextExerciseStep } from '../../lib/exerciseBlockUtils';
+import { computeBlockTags, applyExpressMode, computeNextExerciseStep, linkExercisesWithReorder, swapBlockPartner } from '../../lib/exerciseBlockUtils';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -19,6 +19,7 @@ interface SeriesEntry {
 }
 
 interface ActiveExercise {
+  id: string;
   nombre: string;
   grupo: string;
   suggestedPeso: string;   // Ghost value from plan variables
@@ -207,6 +208,7 @@ const ActiveSession: React.FC = () => {
         }));
 
         return {
+          id: ex.id || `ex_${idx}_${Date.now()}`,
           nombre: ex.nombre || 'Ejercicio',
           grupo: (ex as any).grupo_muscular || ex.grupo_muscular || '',
           suggestedPeso: pesoSugerido,
@@ -435,8 +437,8 @@ const ActiveSession: React.FC = () => {
   );
 
   const handleApplyExpressMode = useCallback((mode: 'supersets' | 'circuit' | 'reset') => {
-    const fakeExercises = exercises.map((ex, idx) => ({
-      id: `active_ex_${idx}`,
+    const fakeExercises = exercises.map(ex => ({
+      id: ex.id,
       nombre: ex.nombre,
       grupo_muscular: ex.grupo,
       series: String(ex.series.length),
@@ -456,7 +458,7 @@ const ActiveSession: React.FC = () => {
         block_id: updatedEx?.block_id,
         block_rest: updatedEx?.block_rest,
         transition_rest: updatedEx?.transition_rest,
-        block_tag: blockTags[`active_ex_${idx}`],
+        block_tag: blockTags[ex.id],
       };
     }));
 
@@ -469,6 +471,145 @@ const ActiveSession: React.FC = () => {
     }
     setShowExpressModal(false);
   }, [exercises]);
+
+  const handleLinkWithExercise = useCallback((targetExerciseId: string) => {
+    const cur = exercises[currentIdx];
+    if (!cur) return;
+
+    const fakeExercises = exercises.map(ex => ({
+      id: ex.id,
+      nombre: ex.nombre,
+      grupo_muscular: ex.grupo,
+      series: String(ex.series.length),
+      block_id: ex.block_id,
+      block_rest: ex.block_rest,
+      transition_rest: ex.transition_rest,
+      variables: {},
+    }));
+
+    const result = linkExercisesWithReorder(fakeExercises, cur.id, targetExerciseId);
+    const blockTags = computeBlockTags(result.exercises);
+    const reorderedMap = new Map(exercises.map(e => [e.id, e]));
+
+    const newActiveExercises: ActiveExercise[] = result.exercises.map(item => {
+      const original = reorderedMap.get(item.id)!;
+      return {
+        ...original,
+        block_id: item.block_id,
+        block_rest: item.block_rest,
+        transition_rest: item.transition_rest,
+        block_tag: blockTags[item.id],
+      };
+    });
+
+    setExercises(newActiveExercises);
+    const newCurrentIdx = newActiveExercises.findIndex(e => e.id === cur.id);
+    if (newCurrentIdx !== -1) setCurrentIdx(newCurrentIdx);
+
+    const blockMap: Record<string, string[]> = {};
+    result.exercises.forEach(e => {
+      if (e.block_id) {
+        if (!blockMap[e.block_id]) blockMap[e.block_id] = [];
+        blockMap[e.block_id].push(e.nombre || 'Ejercicio');
+      }
+    });
+    const audit: ExpressBlockAudit[] = Object.entries(blockMap)
+      .filter(([_, names]) => names.length >= 2)
+      .map(([bId, names]) => ({ block_id: bId, exercise_names: names }));
+
+    setExpressModeActive(true);
+    setExpressBlocksAudit(audit);
+    setShowExpressModal(false);
+  }, [exercises, currentIdx]);
+
+  const handleSwapPartnerInActiveSession = useCallback((oldPartnerId: string, newPartnerId: string) => {
+    const cur = exercises[currentIdx];
+    if (!cur) return;
+
+    const fakeExercises = exercises.map(ex => ({
+      id: ex.id,
+      nombre: ex.nombre,
+      grupo_muscular: ex.grupo,
+      series: String(ex.series.length),
+      block_id: ex.block_id,
+      block_rest: ex.block_rest,
+      transition_rest: ex.transition_rest,
+      variables: {},
+    }));
+
+    const resultExercises = swapBlockPartner(fakeExercises, cur.id, oldPartnerId, newPartnerId);
+    const blockTags = computeBlockTags(resultExercises);
+    const reorderedMap = new Map(exercises.map(e => [e.id, e]));
+
+    const newActiveExercises: ActiveExercise[] = resultExercises.map(item => {
+      const original = reorderedMap.get(item.id)!;
+      return {
+        ...original,
+        block_id: item.block_id,
+        block_rest: item.block_rest,
+        transition_rest: item.transition_rest,
+        block_tag: blockTags[item.id],
+      };
+    });
+
+    setExercises(newActiveExercises);
+    const newCurrentIdx = newActiveExercises.findIndex(e => e.id === cur.id);
+    if (newCurrentIdx !== -1) setCurrentIdx(newCurrentIdx);
+
+    const blockMap: Record<string, string[]> = {};
+    resultExercises.forEach(e => {
+      if (e.block_id) {
+        if (!blockMap[e.block_id]) blockMap[e.block_id] = [];
+        blockMap[e.block_id].push(e.nombre || 'Ejercicio');
+      }
+    });
+    const audit: ExpressBlockAudit[] = Object.entries(blockMap)
+      .filter(([_, names]) => names.length >= 2)
+      .map(([bId, names]) => ({ block_id: bId, exercise_names: names }));
+
+    setExpressModeActive(true);
+    setExpressBlocksAudit(audit);
+    setShowExpressModal(false);
+  }, [exercises, currentIdx]);
+
+  const handleUngroupCurrentBlock = useCallback(() => {
+    const cur = exercises[currentIdx];
+    if (!cur?.block_id) return;
+    const targetBlockId = cur.block_id;
+
+    const fakeExercises = exercises.map(ex => ({
+      id: ex.id,
+      nombre: ex.nombre,
+      grupo_muscular: ex.grupo,
+      series: String(ex.series.length),
+      block_id: ex.block_id,
+      block_rest: ex.block_rest,
+      transition_rest: ex.transition_rest,
+      variables: {},
+    }));
+
+    const resultExercises = fakeExercises.map(ex => {
+      if (ex.block_id === targetBlockId) {
+        const { block_id: _b, block_rest: _br, transition_rest: _tr, ...rest } = ex;
+        return rest as any;
+      }
+      return ex;
+    });
+
+    const blockTags = computeBlockTags(resultExercises);
+    setExercises(prev => prev.map(ex => {
+      if (ex.block_id === targetBlockId) {
+        const { block_id: _b, block_rest: _br, transition_rest: _tr, block_tag: _bt, ...rest } = ex;
+        return rest as ActiveExercise;
+      }
+      return {
+        ...ex,
+        block_tag: blockTags[ex.id],
+      };
+    }));
+
+    setShowExpressModal(false);
+  }, [exercises, currentIdx]);
 
   // ─── Navigation ───────────────────────────────────────────────────────────
   const currentExercise = exercises[currentIdx];
@@ -803,22 +944,28 @@ const ActiveSession: React.FC = () => {
             </span>
           )}
           {currentExercise.block_tag && (
-            <span style={{
-              fontSize: '11px',
-              color: '#f59e0b',
-              background: 'rgba(245, 158, 11, 0.15)',
-              border: '1px solid rgba(245, 158, 11, 0.4)',
-              padding: '2px 10px',
-              borderRadius: '6px',
-              fontWeight: 800,
-              fontFamily: "'Orbitron', sans-serif",
-              letterSpacing: '0.5px',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '4px'
-            }}>
+            <button
+              type="button"
+              onClick={() => setShowExpressModal(true)}
+              style={{
+                fontSize: '11px',
+                color: '#f59e0b',
+                background: 'rgba(245, 158, 11, 0.15)',
+                border: '1px solid rgba(245, 158, 11, 0.4)',
+                padding: '2px 10px',
+                borderRadius: '6px',
+                fontWeight: 800,
+                fontFamily: "'Orbitron', sans-serif",
+                letterSpacing: '0.5px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px',
+                cursor: 'pointer'
+              }}
+              title="Gestionar Bi-serie / Cambiar Compañero"
+            >
               ⚡ {currentExercise.block_tag}
-            </span>
+            </button>
           )}
         </div>
         <h1 className="active-session-exercise-name">
@@ -1318,106 +1465,231 @@ const ActiveSession: React.FC = () => {
       )}
 
       {/* ── Modo Express Modal Overlay ── */}
-      {showExpressModal && (
-        // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
-        <div className="active-session-modal-overlay" onClick={() => setShowExpressModal(false)}>
-          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events */}
-          <div
-            ref={expressDialogRef}
-            className="active-session-guide-modal-box"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="active-session-express-modal-title"
-            tabIndex={-1}
-            onClick={e => e.stopPropagation()}
-            style={{ maxWidth: '440px' }}
-          >
-            <div className="active-session-guide-modal-header">
-              <h3 className="active-session-guide-modal-title" id="active-session-express-modal-title" style={{ color: '#fbbf24' }}>
-                <span style={{ marginRight: '8px' }}>⚡</span>
-                Modo Express (Ahorro de Tiempo)
-              </h3>
-              <button className="active-session-guide-modal-close" onClick={() => setShowExpressModal(false)}>&times;</button>
-            </div>
+      {showExpressModal && (() => {
+        const currentInBlock = !!currentExercise?.block_id;
+        const currentBlockPartners = exercises.filter(e => e.block_id === currentExercise?.block_id && e.id !== currentExercise?.id);
+        const outsideExercises = exercises.filter(e => e.block_id !== currentExercise?.block_id);
+        const otherExercises = exercises.filter(e => e.id !== currentExercise?.id);
+        const hasAnyBlock = expressModeActive || exercises.some(e => e.block_id);
 
-            <div className="active-session-guide-modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              <p style={{ margin: 0, fontSize: '12.5px', color: 'rgba(255,255,255,0.7)', lineHeight: 1.5 }}>
-                ¿Tienes poco tiempo hoy? Agrupa los ejercicios de tu sesión para entrenar de forma más densa e intensa sin perder volumen:
-              </p>
+        return (
+          // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+          <div className="active-session-modal-overlay" onClick={() => setShowExpressModal(false)}>
+            {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events */}
+            <div
+              ref={expressDialogRef}
+              className="active-session-guide-modal-box"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="active-session-express-modal-title"
+              tabIndex={-1}
+              onClick={e => e.stopPropagation()}
+              style={{ maxWidth: '480px', maxHeight: '85vh', display: 'flex', flexDirection: 'column' }}
+            >
+              <div className="active-session-guide-modal-header">
+                <h3 className="active-session-guide-modal-title" id="active-session-express-modal-title" style={{ color: '#fbbf24' }}>
+                  <span style={{ marginRight: '8px' }}>⚡</span>
+                  Modo Express & Bi-series
+                </h3>
+                <button className="active-session-guide-modal-close" onClick={() => setShowExpressModal(false)}>&times;</button>
+              </div>
 
-              <button
-                type="button"
-                onClick={() => handleApplyExpressMode('supersets')}
-                style={{
-                  background: 'rgba(245, 158, 11, 0.12)',
-                  border: '1px solid rgba(245, 158, 11, 0.4)',
-                  borderRadius: '10px',
-                  padding: '12px',
-                  textAlign: 'left',
-                  cursor: 'pointer',
-                  color: 'white',
-                  transition: 'all 0.15s ease',
-                }}
-              >
-                <div style={{ fontWeight: 700, fontSize: '13px', color: '#fbbf24', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span>⚡</span> Bi-series (Por parejas)
-                </div>
-                <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.65)', lineHeight: 1.4 }}>
-                  Agrupa los ejercicios contiguos de 2 en 2 (A1 + A2, B1 + B2). Alternas 1 serie de cada uno con descanso de 10s entre ellos y 90s al completar la ronda.
-                </div>
-              </button>
+              <div className="active-session-guide-modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '14px', overflowY: 'auto', paddingRight: '4px' }}>
+                {/* 1. Contextual Block Actions for Current Exercise */}
+                {currentInBlock ? (
+                  <div style={{ background: 'rgba(245, 158, 11, 0.08)', border: '1px solid rgba(245, 158, 11, 0.3)', borderRadius: '12px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div style={{ fontWeight: 700, fontSize: '13px', color: '#fbbf24', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span>🔄</span> ¿Máquina Ocupada? Cambiar Compañero
+                    </div>
+                    <p style={{ margin: 0, fontSize: '11.5px', color: 'rgba(255,255,255,0.7)', lineHeight: 1.4 }}>
+                      Estás entrenando <strong>{currentExercise.nombre}</strong> ({currentExercise.block_tag}) junto a: <em>{currentBlockPartners.map(p => p.nombre).join(', ') || 'compañero'}</em>.
+                    </p>
+                    {outsideExercises.length > 0 && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '4px' }}>
+                        <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>
+                          Sustituir por otra máquina / ejercicio disponible:
+                        </div>
+                        <div style={{ maxHeight: '140px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          {outsideExercises.map(otherEx => (
+                            <button
+                              key={otherEx.id}
+                              type="button"
+                              onClick={() => {
+                                if (currentBlockPartners.length > 0) {
+                                  handleSwapPartnerInActiveSession(currentBlockPartners[0].id, otherEx.id);
+                                }
+                              }}
+                              style={{
+                                background: 'rgba(255,255,255,0.04)',
+                                border: '1px solid rgba(255,255,255,0.1)',
+                                borderRadius: '8px',
+                                padding: '8px 10px',
+                                textAlign: 'left',
+                                cursor: 'pointer',
+                                color: 'white',
+                                transition: 'all 0.15s ease',
+                              }}
+                              onMouseEnter={e => (e.currentTarget.style.background = 'rgba(245, 158, 11, 0.15)')}
+                              onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.04)')}
+                            >
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <span style={{ fontWeight: 600, fontSize: '12px' }}>{otherEx.nombre}</span>
+                                <span style={{ fontSize: '9px', color: '#60a5fa', background: 'rgba(59, 130, 246, 0.15)', padding: '1px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>
+                                  {otherEx.grupo || 'General'}
+                                </span>
+                              </div>
+                              <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', marginTop: '2px' }}>
+                                ⇄ Intercambiar por {currentBlockPartners[0]?.nombre || 'compañero'}
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    <button
+                      type="button"
+                      onClick={handleUngroupCurrentBlock}
+                      style={{
+                        background: 'transparent',
+                        border: '1px solid rgba(239, 68, 68, 0.3)',
+                        borderRadius: '8px',
+                        padding: '6px 10px',
+                        color: '#f87171',
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        marginTop: '4px',
+                        textAlign: 'center',
+                      }}
+                    >
+                      ✕ Desvincular este bloque (Volver a series individuales)
+                    </button>
+                  </div>
+                ) : (
+                  <div style={{ background: 'rgba(0, 212, 255, 0.06)', border: '1px solid rgba(0, 212, 255, 0.25)', borderRadius: '12px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                    <div style={{ fontWeight: 700, fontSize: '13px', color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span>🔗</span> Vincular {currentExercise.nombre} con otro ejercicio
+                    </div>
+                    <p style={{ margin: 0, fontSize: '11.5px', color: 'rgba(255,255,255,0.7)', lineHeight: 1.4 }}>
+                      Elige cualquier ejercicio de hoy para realizarlo en bi-serie alternada:
+                    </p>
+                    {otherExercises.length > 0 && (
+                      <div style={{ maxHeight: '150px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        {otherExercises.map(otherEx => (
+                          <button
+                            key={otherEx.id}
+                            type="button"
+                            onClick={() => handleLinkWithExercise(otherEx.id)}
+                            style={{
+                              background: 'rgba(255,255,255,0.04)',
+                              border: '1px solid rgba(255,255,255,0.1)',
+                              borderRadius: '8px',
+                              padding: '8px 10px',
+                              textAlign: 'left',
+                              cursor: 'pointer',
+                              color: 'white',
+                              transition: 'all 0.15s ease',
+                            }}
+                            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0, 212, 255, 0.12)')}
+                            onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.04)')}
+                          >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <span style={{ fontWeight: 600, fontSize: '12px' }}>{otherEx.nombre}</span>
+                              <span style={{ fontSize: '9px', color: otherEx.block_tag ? '#fbbf24' : '#60a5fa', background: otherEx.block_tag ? 'rgba(251, 191, 36, 0.15)' : 'rgba(59, 130, 246, 0.15)', padding: '1px 6px', borderRadius: '4px' }}>
+                                {otherEx.block_tag ? `⚡ ${otherEx.block_tag}` : (otherEx.grupo || 'General')}
+                              </span>
+                            </div>
+                            <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', marginTop: '2px' }}>
+                              {otherEx.block_tag ? '⚡ Se moverá y unirá bloques' : `Moverá este ejercicio junto a ${currentExercise.nombre}`}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
 
-              <button
-                type="button"
-                onClick={() => handleApplyExpressMode('circuit')}
-                style={{
-                  background: 'rgba(59, 130, 246, 0.12)',
-                  border: '1px solid rgba(59, 130, 246, 0.4)',
-                  borderRadius: '10px',
-                  padding: '12px',
-                  textAlign: 'left',
-                  cursor: 'pointer',
-                  color: 'white',
-                  transition: 'all 0.15s ease',
-                }}
-              >
-                <div style={{ fontWeight: 700, fontSize: '13px', color: '#60a5fa', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span>🔄</span> Circuito Completo
-                </div>
-                <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.65)', lineHeight: 1.4 }}>
-                  Agrupa todos los ejercicios de la sesión en un solo bloque continuo (A1 + A2 + A3...). 10s de transición y 120s al completar la vuelta entera.
-                </div>
-              </button>
+                {/* 2. Mass Express Mode Actions */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '2px' }}>
+                  <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>
+                    Acciones rápidas para toda la sesión:
+                  </div>
 
-              {expressModeActive && (
-                <button
-                  type="button"
-                  onClick={() => handleApplyExpressMode('reset')}
-                  style={{
-                    background: 'rgba(239, 68, 68, 0.1)',
-                    border: '1px solid rgba(239, 68, 68, 0.3)',
-                    borderRadius: '10px',
-                    padding: '10px 12px',
-                    textAlign: 'left',
-                    cursor: 'pointer',
-                    color: '#f87171',
-                    fontSize: '12px',
-                    fontWeight: 600,
-                  }}
-                >
-                  ↩️ Desactivar Modo Express (Volver a series estándar)
+                  <button
+                    type="button"
+                    onClick={() => handleApplyExpressMode('supersets')}
+                    style={{
+                      background: 'rgba(245, 158, 11, 0.12)',
+                      border: '1px solid rgba(245, 158, 11, 0.4)',
+                      borderRadius: '10px',
+                      padding: '10px 12px',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      color: 'white',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    <div style={{ fontWeight: 700, fontSize: '12.5px', color: '#fbbf24', marginBottom: '2px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span>⚡</span> Bi-series automáticas por parejas (Toda la sesión)
+                    </div>
+                    <div style={{ fontSize: '10.5px', color: 'rgba(255,255,255,0.65)', lineHeight: 1.3 }}>
+                      Agrupa todos los ejercicios de 2 en 2 (A1+A2, B1+B2) con descanso de 10s y 90s de ronda.
+                    </div>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleApplyExpressMode('circuit')}
+                    style={{
+                      background: 'rgba(59, 130, 246, 0.12)',
+                      border: '1px solid rgba(59, 130, 246, 0.4)',
+                      borderRadius: '10px',
+                      padding: '10px 12px',
+                      textAlign: 'left',
+                      cursor: 'pointer',
+                      color: 'white',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    <div style={{ fontWeight: 700, fontSize: '12.5px', color: '#60a5fa', marginBottom: '2px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span>🔄</span> Circuito Completo (Todos en 1 bloque)
+                    </div>
+                    <div style={{ fontSize: '10.5px', color: 'rgba(255,255,255,0.65)', lineHeight: 1.3 }}>
+                      Agrupa todos los ejercicios en un solo circuito continuo con descanso de 10s y 120s de vuelta.
+                    </div>
+                  </button>
+
+                  {hasAnyBlock && (
+                    <button
+                      type="button"
+                      onClick={() => handleApplyExpressMode('reset')}
+                      style={{
+                        background: 'rgba(239, 68, 68, 0.1)',
+                        border: '1px solid rgba(239, 68, 68, 0.3)',
+                        borderRadius: '10px',
+                        padding: '9px 12px',
+                        textAlign: 'left',
+                        cursor: 'pointer',
+                        color: '#f87171',
+                        fontSize: '11.5px',
+                        fontWeight: 600,
+                      }}
+                    >
+                      ↩️ Desactivar todos los bloques (Volver a series individuales)
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div className="active-session-guide-modal-footer">
+                <button className="active-session-btn-secondary" onClick={() => setShowExpressModal(false)}>
+                  Cerrar
                 </button>
-              )}
-            </div>
-
-            <div className="active-session-guide-modal-footer">
-              <button className="active-session-btn-secondary" onClick={() => setShowExpressModal(false)}>
-                Cerrar
-              </button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 };

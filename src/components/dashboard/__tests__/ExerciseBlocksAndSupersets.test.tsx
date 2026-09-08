@@ -8,6 +8,9 @@ import {
   updateBlockSettings,
   applyExpressMode,
   computeNextExerciseStep,
+  linkExercisesWithReorder,
+  swapBlockPartner,
+  cleanOrphanBlocks,
   BlockExerciseState,
 } from '../../../lib/exerciseBlockUtils';
 import { Exercise } from '../../../types/database.types';
@@ -119,6 +122,134 @@ describe('Exercise Block Utils & Superset Logic', () => {
       expect(updated[0].transition_rest).toBe(12);
       expect(updated[1].block_rest).toBe(100);
       expect(updated[1].transition_rest).toBe(12);
+    });
+  });
+
+  describe('Vinculación Arbitraria con Reordenamiento Físico (linkExercisesWithReorder & swapBlockPartner)', () => {
+    it('vincula ejercicios distantes (ej. índice 0 con índice 4) reordenando físicamente el array para dejarlos contiguos', () => {
+      const initial: Exercise[] = [
+        { id: 'ex-0', nombre: 'Press Banca', variables: {} },
+        { id: 'ex-1', nombre: 'Sentadilla', variables: {} },
+        { id: 'ex-2', nombre: 'Prensa', variables: {} },
+        { id: 'ex-3', nombre: 'Curl Bíceps', variables: {} },
+        { id: 'ex-4', nombre: 'Remo Barra', variables: {} },
+      ];
+
+      // Vincular Press Banca (0) con Remo Barra (4)
+      const res = linkExercisesWithReorder(initial, 'ex-0', 'ex-4', 90, 10);
+      const list = res.exercises;
+
+      expect(res.anchorName).toBe('Press Banca');
+      expect(res.targetName).toBe('Remo Barra');
+
+      // Remo Barra (ex-4) se movió inmediatamente después de Press Banca (ex-0)
+      expect(list.map(e => e.id)).toEqual(['ex-0', 'ex-4', 'ex-1', 'ex-2', 'ex-3']);
+
+      // Ambos comparten el mismo block_id
+      expect(list[0].block_id).toBeTruthy();
+      expect(list[0].block_id).toBe(list[1].block_id);
+      expect(list[0].block_rest).toBe(90);
+      expect(list[0].transition_rest).toBe(10);
+
+      // Los demás no tienen bloque
+      expect(list[2].block_id).toBeUndefined();
+
+      // Las etiquetas computadas son A1 y A2 contiguas
+      const tags = computeBlockTags(list);
+      expect(tags['ex-0']).toBe('A1');
+      expect(tags['ex-4']).toBe('A2');
+    });
+
+    it('expande una bi-serie existente a tri-serie insertando el nuevo miembro tras el último miembro del bloque', () => {
+      const initial: Exercise[] = [
+        { id: 'ex-0', nombre: 'Press Banca', block_id: 'block_a', block_rest: 90, transition_rest: 10, variables: {} },
+        { id: 'ex-1', nombre: 'Remo Barra', block_id: 'block_a', block_rest: 90, transition_rest: 10, variables: {} },
+        { id: 'ex-2', nombre: 'Sentadilla', variables: {} },
+        { id: 'ex-3', nombre: 'Pájaros Deltoides', variables: {} },
+      ];
+
+      // Vincular ex-0 (Bloque A) con ex-3 (lejano)
+      const res = linkExercisesWithReorder(initial, 'ex-0', 'ex-3');
+      const list = res.exercises;
+
+      // ex-3 se coloca justo tras ex-1 (el último miembro de Bloque A)
+      expect(list.map(e => e.id)).toEqual(['ex-0', 'ex-1', 'ex-3', 'ex-2']);
+      expect(list[0].block_id).toBe('block_a');
+      expect(list[1].block_id).toBe('block_a');
+      expect(list[2].block_id).toBe('block_a');
+
+      const tags = computeBlockTags(list);
+      expect(tags['ex-0']).toBe('A1');
+      expect(tags['ex-1']).toBe('A2');
+      expect(tags['ex-3']).toBe('A3');
+    });
+
+    it('fusiona dos bloques existentes moviendo todo el bloque objetivo junto al bloque ancla sin dejar huérfanos', () => {
+      const initial: Exercise[] = [
+        { id: 'a1', nombre: 'Press Banca', block_id: 'b_chest', variables: {} },
+        { id: 'a2', nombre: 'Aperturas', block_id: 'b_chest', variables: {} },
+        { id: 'mid', nombre: 'Abdominales', variables: {} },
+        { id: 'b1', nombre: 'Remo Barra', block_id: 'b_back', variables: {} },
+        { id: 'b2', nombre: 'Jalón Pecho', block_id: 'b_back', variables: {} },
+      ];
+
+      // Vincular Bloque Pecho con Bloque Espalda
+      const res = linkExercisesWithReorder(initial, 'a1', 'b1');
+      const list = res.exercises;
+
+      // Todo el Bloque Espalda (b1 + b2) se traslada contiguo tras a2
+      expect(list.map(e => e.id)).toEqual(['a1', 'a2', 'b1', 'b2', 'mid']);
+
+      // Todos los 4 miembros quedan bajo el mismo block_id
+      const bId = list[0].block_id;
+      expect(bId).toBeTruthy();
+      expect(list[1].block_id).toBe(bId);
+      expect(list[2].block_id).toBe(bId);
+      expect(list[3].block_id).toBe(bId);
+
+      const tags = computeBlockTags(list);
+      expect(tags['a1']).toBe('A1');
+      expect(tags['a2']).toBe('A2');
+      expect(tags['b1']).toBe('A3');
+      expect(tags['b2']).toBe('A4');
+    });
+
+    it('sustituye un compañero de bi-serie en caliente cuando una máquina está ocupada (swapBlockPartner)', () => {
+      const initial: Exercise[] = [
+        { id: 'ex-0', nombre: 'Press Banca', block_id: 'b_super', block_rest: 90, transition_rest: 10, variables: {} },
+        { id: 'ex-1', nombre: 'Prensa (Ocupada)', block_id: 'b_super', block_rest: 90, transition_rest: 10, variables: {} },
+        { id: 'ex-2', nombre: 'Elevaciones Laterales', variables: {} },
+        { id: 'ex-3', nombre: 'Extensiones Tríceps (Disponible)', variables: {} },
+      ];
+
+      // El atleta sustituye ex-1 (Prensa ocupada) por ex-3 (Extensiones)
+      const swapped = swapBlockPartner(initial, 'ex-0', 'ex-1', 'ex-3');
+
+      // ex-3 pasa a la posición de ex-1 y toma el block_id; ex-1 pasa a la posición 3 y queda sin bloque
+      expect(swapped[0].id).toBe('ex-0');
+      expect(swapped[1].id).toBe('ex-3');
+      expect(swapped[1].nombre).toBe('Extensiones Tríceps (Disponible)');
+      expect(swapped[1].block_id).toBe('b_super');
+
+      expect(swapped[3].id).toBe('ex-1');
+      expect(swapped[3].block_id).toBeUndefined();
+
+      const tags = computeBlockTags(swapped);
+      expect(tags['ex-0']).toBe('A1');
+      expect(tags['ex-3']).toBe('A2');
+      expect(tags['ex-1']).toBeUndefined();
+    });
+
+    it('cleanOrphanBlocks elimina block_id si un bloque queda con menos de 2 miembros', () => {
+      const exercises: Exercise[] = [
+        { id: 'e1', nombre: 'Press', block_id: 'b_orphan', block_rest: 90, transition_rest: 10, variables: {} },
+        { id: 'e2', nombre: 'Remo', variables: {} },
+      ];
+
+      const cleaned = cleanOrphanBlocks(exercises);
+      expect(cleaned[0].block_id).toBeUndefined();
+      expect(cleaned[0].block_rest).toBeUndefined();
+      expect(cleaned[0].transition_rest).toBeUndefined();
     });
   });
 

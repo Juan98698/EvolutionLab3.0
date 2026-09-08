@@ -29,7 +29,7 @@ import {
 import { isFunctionalExercise, getFunctionalVariableLabel, getFunctionalVariablePlaceholder } from '../../lib/exerciseUtils';
 import { GeneratedSession } from '../../lib/sessionDistributor';
 import { mergeSkeletonIntoExistingPlan, mergeProtocolIntoExistingPlan } from '../../lib/planMerger';
-import { computeBlockTags, getBlockTypeLabel, groupExercisesIntoBlock, ungroupBlock, updateBlockSettings } from '../../lib/exerciseBlockUtils';
+import { computeBlockTags, getBlockTypeLabel, ungroupBlock, updateBlockSettings, linkExercisesWithReorder } from '../../lib/exerciseBlockUtils';
 import {
   Chart as ChartJS,
   RadialLinearScale,
@@ -184,7 +184,7 @@ export const PlanPlanner: React.FC = () => {
         return {
           id: `day_${generateId()}`,
           name: session.label,
-          exercises: session.muscleTargets.map(target => {
+          exercises: session.muscleTargets.map((target: any) => {
             const exVariables = { ...Object.fromEntries(globalVariables.map(gv => [gv.id, gv.defaultValue || ''])) };
             exVariables['series de trabajo'] = String(target.plannedSets);
 
@@ -1026,23 +1026,21 @@ export const PlanPlanner: React.FC = () => {
   // Bi-series & Circuitos
   const [activeSupersetMenuExId, setActiveSupersetMenuExId] = useState<string | null>(null);
 
-  const handleGroupExercises = (dayId: string, exId1: string, exId2: string) => {
+  const handleLinkExercisesWithReorderInPlanner = (dayId: string, anchorExId: string, targetExId: string) => {
+    let feedback = '';
     setTrainingDays(prev =>
       prev.map(d => {
         if (d.id !== dayId) return d;
-        const ex1 = d.exercises.find(e => e.id === exId1);
-        const ex2 = d.exercises.find(e => e.id === exId2);
-        const existingBlockId = ex1?.block_id || ex2?.block_id;
-        const blockRest = ex1?.block_rest || ex2?.block_rest || 90;
-        const transitionRest = ex1?.transition_rest || ex2?.transition_rest || 10;
+        const res = linkExercisesWithReorder(d.exercises, anchorExId, targetExId);
+        feedback = `⚡ Se movió "${res.targetName}" junto a "${res.anchorName}" en bloque.`;
         return {
           ...d,
-          exercises: groupExercisesIntoBlock(d.exercises, [exId1, exId2], blockRest, transitionRest, existingBlockId)
+          exercises: res.exercises
         };
       })
     );
     setActiveSupersetMenuExId(null);
-    showToast('⚡ Ejercicios vinculados en bloque.', 'success');
+    if (feedback) showToast(feedback, 'success');
   };
 
   const handleUngroupBlockInPlanner = (dayId: string, blockId: string) => {
@@ -3101,39 +3099,55 @@ export const PlanPlanner: React.FC = () => {
                                     background: 'linear-gradient(165deg, rgba(20,20,24,0.98), rgba(12,12,16,0.99))',
                                     backdropFilter: 'blur(30px)', WebkitBackdropFilter: 'blur(30px)',
                                     border: '1px solid rgba(255,255,255,0.12)', borderRadius: '12px',
-                                    padding: '8px', minWidth: '240px', zIndex: 100,
+                                    padding: '8px', minWidth: '280px', maxWidth: '340px', maxHeight: '300px', overflowY: 'auto', zIndex: 100,
                                     boxShadow: '0 12px 40px rgba(0,0,0,0.6)'
                                   }}>
                                     <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.4)', fontWeight: 700, fontFamily: "'Orbitron', sans-serif", padding: '4px 8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                                      VINCULAR EJERCICIO
+                                      VINCULAR CON CUALQUIER EJERCICIO
                                     </div>
-                                    {exIndex > 0 && (
-                                      <button
-                                        type="button"
-                                        onClick={() => handleGroupExercises(day.id, day.exercises[exIndex - 1].id, ex.id)}
-                                        style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 10px', borderRadius: '8px', background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.85)', cursor: 'pointer', fontSize: '11px' }}
-                                        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
-                                        onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                                      >
-                                        ⬆️ Con anterior: <strong>{day.exercises[exIndex - 1].nombre || `Ejercicio ${exIndex}`}</strong>
-                                      </button>
-                                    )}
-                                    {exIndex < day.exercises.length - 1 && (
-                                      <button
-                                        type="button"
-                                        onClick={() => handleGroupExercises(day.id, ex.id, day.exercises[exIndex + 1].id)}
-                                        style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 10px', borderRadius: '8px', background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.85)', cursor: 'pointer', fontSize: '11px' }}
-                                        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
-                                        onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-                                      >
-                                        ⬇️ Con siguiente: <strong>{day.exercises[exIndex + 1].nombre || `Ejercicio ${exIndex + 2}`}</strong>
-                                      </button>
-                                    )}
+                                    {day.exercises.filter(other => other.id !== ex.id).map(other => {
+                                      const otherTag = blockTags[other.id];
+                                      const isOtherBlocked = !!(other.block_id && otherTag);
+                                      const isSameBlock = !!(ex.block_id && other.block_id && ex.block_id === other.block_id);
+                                      if (isSameBlock) return null;
+
+                                      return (
+                                        <button
+                                          key={other.id}
+                                          type="button"
+                                          onClick={() => handleLinkExercisesWithReorderInPlanner(day.id, ex.id, other.id)}
+                                          style={{
+                                            display: 'block', width: '100%', textAlign: 'left',
+                                            padding: '8px 10px', borderRadius: '8px',
+                                            background: 'transparent', border: 'none',
+                                            color: 'rgba(255,255,255,0.85)', cursor: 'pointer',
+                                            fontSize: '11px', transition: 'background 0.15s'
+                                          }}
+                                          onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
+                                          onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                                        >
+                                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
+                                            <span style={{ fontWeight: 600, color: 'white' }}>
+                                              {other.nombre || 'Ejercicio sin nombre'}
+                                            </span>
+                                            {isOtherBlocked && (
+                                              <span style={{ fontSize: '9px', color: '#00d4ff', background: 'rgba(0,212,255,0.15)', padding: '1px 6px', borderRadius: '4px', fontWeight: 700 }}>
+                                                ⚡ {otherTag}
+                                              </span>
+                                            )}
+                                          </div>
+                                          <div style={{ fontSize: '9.5px', color: 'rgba(255,255,255,0.45)', marginTop: '2px' }}>
+                                            {other.grupo_muscular ? `${other.grupo_muscular} · ` : ''}
+                                            {isOtherBlocked ? 'Se fusionará este bloque' : 'Se moverá junto a este ejercicio'}
+                                          </div>
+                                        </button>
+                                      );
+                                    })}
                                     {isBlocked && (
                                       <button
                                         type="button"
                                         onClick={() => handleUngroupBlockInPlanner(day.id, ex.block_id!)}
-                                        style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 10px', borderRadius: '8px', background: 'rgba(239,68,68,0.1)', border: 'none', color: '#f87171', cursor: 'pointer', fontSize: '11px', marginTop: '4px' }}
+                                        style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 10px', borderRadius: '8px', background: 'rgba(239,68,68,0.1)', border: 'none', color: '#f87171', cursor: 'pointer', fontSize: '11px', marginTop: '6px', borderTop: '1px solid rgba(255,255,255,0.06)' }}
                                       >
                                         ✕ Desvincular de este bloque
                                       </button>
