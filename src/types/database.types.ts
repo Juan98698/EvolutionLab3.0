@@ -238,6 +238,9 @@ export interface Exercise {
   progression_notes?: string;
   progression_type?: 'linear' | 'double' | 'undulating' | 'deload';
   progression_params?: Record<string, any>;
+  block_id?: string;         // UUID del bloque de Bi-serie / Tri-serie / Circuito
+  block_rest?: number;       // Descanso de fin de ronda en segundos (ej. 90)
+  transition_rest?: number;  // Transición entre ejercicios del bloque en segundos (ej. 10)
 }
 
 export interface TrackerConfig {
@@ -300,12 +303,19 @@ export interface EjercicioPlan {
   created_at?: string;
 }
 
+export interface ExpressBlockAudit {
+  block_id: string;
+  exercise_names: string[];
+}
+
 export interface SesionHistorial {
   id: string; // uuid (o string temporal local en offline)
   cliente_id: string;
   fecha: string; // YYYY-MM-DD
   notas_generales?: string | null;
   created_at?: string;
+  express_mode?: boolean;              // true si el atleta usó Modo Express en esta sesión
+  express_blocks?: ExpressBlockAudit[]; // detalle auditable de los agrupamientos ad-hoc
 }
 
 export interface SesionEjercicio {
@@ -328,6 +338,8 @@ export interface LocalSesion {
   fecha: string;
   notas_sesion: string;
   ejercicios: LocalSesionEjercicio[];
+  express_mode?: boolean;
+  express_blocks?: ExpressBlockAudit[];
 }
 
 export interface LocalSesionEjercicio {

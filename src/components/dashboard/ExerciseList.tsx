@@ -1,5 +1,6 @@
 import React from 'react';
 import { Exercise, GlobalVariable, PeriodizationConfig } from '../../types/database.types';
+import { computeBlockTags } from '../../lib/exerciseBlockUtils';
 import ExerciseCard from './ExerciseCard';
 
 interface ExerciseListProps {
@@ -34,6 +35,8 @@ export const ExerciseList: React.FC<ExerciseListProps> = ({
     );
   }
 
+  const blockTags = computeBlockTags(exercises);
+
   return (
     <div className="exercises-list" data-day-id={dayId}>
       {exercises.map((exercise, index) => {
@@ -50,6 +53,7 @@ export const ExerciseList: React.FC<ExerciseListProps> = ({
             onToggleCheck={onToggleCheck}
             onShowGuide={onShowGuide}
             periodizationConfig={periodizationConfig}
+            blockTag={blockTags[exercise.id]}
           />
         );
       })}

@@ -29,6 +29,7 @@ import {
 import { isFunctionalExercise, getFunctionalVariableLabel, getFunctionalVariablePlaceholder } from '../../lib/exerciseUtils';
 import { GeneratedSession } from '../../lib/sessionDistributor';
 import { mergeSkeletonIntoExistingPlan, mergeProtocolIntoExistingPlan } from '../../lib/planMerger';
+import { computeBlockTags, getBlockTypeLabel, groupExercisesIntoBlock, ungroupBlock, updateBlockSettings } from '../../lib/exerciseBlockUtils';
 import {
   Chart as ChartJS,
   RadialLinearScale,
@@ -1018,6 +1019,54 @@ export const PlanPlanner: React.FC = () => {
           };
         }
         return d;
+      })
+    );
+  };
+
+  // Bi-series & Circuitos
+  const [activeSupersetMenuExId, setActiveSupersetMenuExId] = useState<string | null>(null);
+
+  const handleGroupExercises = (dayId: string, exId1: string, exId2: string) => {
+    setTrainingDays(prev =>
+      prev.map(d => {
+        if (d.id !== dayId) return d;
+        const ex1 = d.exercises.find(e => e.id === exId1);
+        const ex2 = d.exercises.find(e => e.id === exId2);
+        const existingBlockId = ex1?.block_id || ex2?.block_id;
+        const blockRest = ex1?.block_rest || ex2?.block_rest || 90;
+        const transitionRest = ex1?.transition_rest || ex2?.transition_rest || 10;
+        return {
+          ...d,
+          exercises: groupExercisesIntoBlock(d.exercises, [exId1, exId2], blockRest, transitionRest, existingBlockId)
+        };
+      })
+    );
+    setActiveSupersetMenuExId(null);
+    showToast('⚡ Ejercicios vinculados en bloque.', 'success');
+  };
+
+  const handleUngroupBlockInPlanner = (dayId: string, blockId: string) => {
+    setTrainingDays(prev =>
+      prev.map(d => {
+        if (d.id !== dayId) return d;
+        return {
+          ...d,
+          exercises: ungroupBlock(d.exercises, blockId)
+        };
+      })
+    );
+    setActiveSupersetMenuExId(null);
+    showToast('Bloque desvinculado a series estándar.', 'info');
+  };
+
+  const handleUpdateBlockSettingsInPlanner = (dayId: string, blockId: string, updates: { block_rest?: number; transition_rest?: number }) => {
+    setTrainingDays(prev =>
+      prev.map(d => {
+        if (d.id !== dayId) return d;
+        return {
+          ...d,
+          exercises: updateBlockSettings(d.exercises, blockId, updates)
+        };
       })
     );
   };
@@ -2350,50 +2399,140 @@ export const PlanPlanner: React.FC = () => {
 
                   {/* LISTA DE EJERCICIOS DEL DÍA SELECCIONADO */}
                   <div className="exercises-list">
-                    {day.exercises.map((ex, exIndex) => {
-                      const hasStatic = !!ex.image_url;
-                      const hasAnimated = !!ex.gif_url;
-                      const isOnline = navigator.onLine;
-                      const imageUrl = isOnline
-                        ? (ex.image_url || ex.gif_url || '')
-                        : (ex.gif_url || ex.image_url || '');
+                    {(() => {
+                      const blockTags = computeBlockTags(day.exercises);
+                      const blockCounts: Record<string, number> = {};
+                      day.exercises.forEach(e => {
+                        if (e.block_id) blockCounts[e.block_id] = (blockCounts[e.block_id] || 0) + 1;
+                      });
 
-                      return (
-                        <div
-                          key={ex.id}
-                          className="exercise-card"
-                          data-exercise-id={ex.id}
-                          data-day-id={day.id}
-                        >
-                          <div className="exercise-header">
-                            <div className="exercise-checkbox client-only-checkbox" data-ex-id={ex.id} data-day-id={day.id}></div>
-                            
-                            <div className="exercise-name" style={{ display: 'flex', flexDirection: 'column', gap: '4px', position: 'relative' }}>
-                              <input
-                                id={`ex-name-${day.id}-${ex.id}`}
-                                aria-label={`Nombre del ejercicio ${exIndex + 1}`}
-                                type="text"
-                                className="exercise-name-input"
-                                value={ex.nombre}
-                                onChange={(e) => {
-                                  handleExerciseChange(day.id, ex.id, 'nombre', e.target.value);
-                                  const query = e.target.value;
-                                  setFilteredSuggestions(filterExercisesByQuery(globalCatalog, query, 25));
-                                }}
-                                onFocus={() => {
-                                  setActiveInput({ dayId: day.id, exId: ex.id });
-                                  const query = ex.nombre || '';
-                                  setFilteredSuggestions(filterExercisesByQuery(globalCatalog, query, 25));
-                                }}
-                                onBlur={() => {
-                                  setTimeout(() => {
-                                    setActiveInput(null);
-                                  }, 250);
-                                }}
-                                placeholder={`Ejercicio ${exIndex + 1}`}
-                                style={{ width: '100%' }}
-                                autoComplete="off"
-                              />
+                      return day.exercises.map((ex, exIndex) => {
+                        const hasStatic = !!ex.image_url;
+                        const hasAnimated = !!ex.gif_url;
+                        const isOnline = navigator.onLine;
+                        const imageUrl = isOnline
+                          ? (ex.image_url || ex.gif_url || '')
+                          : (ex.gif_url || ex.image_url || '');
+
+                        const tag = blockTags[ex.id];
+                        const isBlocked = !!(ex.block_id && tag);
+                        const isFirstInBlock = isBlocked && (exIndex === 0 || day.exercises[exIndex - 1]?.block_id !== ex.block_id);
+                        const memberCount = isBlocked ? (blockCounts[ex.block_id!] || 2) : 1;
+                        const blockLabel = isBlocked ? getBlockTypeLabel(memberCount) : '';
+
+                        return (
+                          <React.Fragment key={ex.id}>
+                            {/* CABECERA DEL BLOQUE DE BI-SERIE / CIRCUITO */}
+                            {isFirstInBlock && (
+                              <div style={{
+                                background: 'linear-gradient(90deg, rgba(0, 212, 255, 0.15), rgba(167, 139, 250, 0.1))',
+                                border: '1px solid rgba(0, 212, 255, 0.4)',
+                                borderBottom: 'none',
+                                borderRadius: '14px 14px 0 0',
+                                padding: '10px 14px',
+                                marginBottom: '-4px',
+                                marginTop: exIndex > 0 ? '12px' : '0',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                flexWrap: 'wrap',
+                                gap: '10px',
+                                zIndex: 2,
+                                position: 'relative'
+                              }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <span style={{ fontSize: '12px', color: '#67e8f9', fontWeight: 800, fontFamily: "'Orbitron', sans-serif" }}>
+                                    ⚡ BLOQUE {tag.charAt(0)} — {blockLabel.toUpperCase()} ({memberCount} ejercicios)
+                                  </span>
+                                </div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                                  <label style={{ fontSize: '11px', color: 'rgba(255,255,255,0.75)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    ⏱️ Descanso ronda:
+                                    <input
+                                      type="number"
+                                      value={ex.block_rest ?? 90}
+                                      onChange={(e) => handleUpdateBlockSettingsInPlanner(day.id, ex.block_id!, { block_rest: parseInt(e.target.value, 10) || 0 })}
+                                      style={{ width: '55px', padding: '3px 6px', background: 'rgba(0,0,0,0.6)', border: '1px solid rgba(0,212,255,0.4)', borderRadius: '6px', color: '#67e8f9', fontWeight: 700, textAlign: 'center' }}
+                                    />
+                                    s
+                                  </label>
+                                  <label style={{ fontSize: '11px', color: 'rgba(255,255,255,0.75)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    ⚡ Transición:
+                                    <input
+                                      type="number"
+                                      value={ex.transition_rest ?? 10}
+                                      onChange={(e) => handleUpdateBlockSettingsInPlanner(day.id, ex.block_id!, { transition_rest: parseInt(e.target.value, 10) || 0 })}
+                                      style={{ width: '45px', padding: '3px 6px', background: 'rgba(0,0,0,0.6)', border: '1px solid rgba(196,181,253,0.4)', borderRadius: '6px', color: '#c4b5fd', fontWeight: 700, textAlign: 'center' }}
+                                    />
+                                    s
+                                  </label>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleUngroupBlockInPlanner(day.id, ex.block_id!)}
+                                    style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.35)', color: '#f87171', padding: '4px 10px', borderRadius: '6px', fontSize: '10px', fontWeight: 700, cursor: 'pointer', fontFamily: "'Orbitron', sans-serif" }}
+                                  >
+                                    ✕ Desagrupar
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+
+                            <div
+                              className="exercise-card"
+                              data-exercise-id={ex.id}
+                              data-day-id={day.id}
+                              style={{
+                                border: isBlocked ? '1px solid rgba(0, 212, 255, 0.35)' : undefined,
+                                boxShadow: isBlocked ? '0 0 15px rgba(0, 212, 255, 0.08)' : undefined,
+                                borderRadius: isFirstInBlock ? '0 0 14px 14px' : undefined
+                              }}
+                            >
+                              <div className="exercise-header">
+                                <div className="exercise-checkbox client-only-checkbox" data-ex-id={ex.id} data-day-id={day.id}></div>
+                                
+                                <div className="exercise-name" style={{ display: 'flex', flexDirection: 'column', gap: '4px', position: 'relative' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                    {tag && (
+                                      <span style={{
+                                        fontSize: '11px',
+                                        fontWeight: 800,
+                                        fontFamily: "'Orbitron', sans-serif",
+                                        color: '#00d4ff',
+                                        background: 'rgba(0, 212, 255, 0.15)',
+                                        border: '1px solid rgba(0, 212, 255, 0.4)',
+                                        padding: '2px 8px',
+                                        borderRadius: '8px',
+                                        flexShrink: 0
+                                      }}>
+                                        ⚡ {tag}
+                                      </span>
+                                    )}
+                                    <input
+                                      id={`ex-name-${day.id}-${ex.id}`}
+                                      aria-label={`Nombre del ejercicio ${exIndex + 1}`}
+                                      type="text"
+                                      className="exercise-name-input"
+                                      value={ex.nombre}
+                                      onChange={(e) => {
+                                        handleExerciseChange(day.id, ex.id, 'nombre', e.target.value);
+                                        const query = e.target.value;
+                                        setFilteredSuggestions(filterExercisesByQuery(globalCatalog, query, 25));
+                                      }}
+                                      onFocus={() => {
+                                        setActiveInput({ dayId: day.id, exId: ex.id });
+                                        const query = ex.nombre || '';
+                                        setFilteredSuggestions(filterExercisesByQuery(globalCatalog, query, 25));
+                                      }}
+                                      onBlur={() => {
+                                        setTimeout(() => {
+                                          setActiveInput(null);
+                                        }, 250);
+                                      }}
+                                      placeholder={`Ejercicio ${exIndex + 1}`}
+                                      style={{ width: '100%' }}
+                                      autoComplete="off"
+                                    />
+                                  </div>
 
                               {/* Dropdown de Sugerencias Visuales */}
                               {activeInput && activeInput.dayId === day.id && activeInput.exId === ex.id && filteredSuggestions.length > 0 && (
@@ -2937,6 +3076,71 @@ export const PlanPlanner: React.FC = () => {
                                   ↩️ Revertir
                                 </button>
                               )}
+                              {/* Botón de Vincular / Bi-serie / Circuito */}
+                              <div style={{ position: 'relative' }}>
+                                <button
+                                  type="button"
+                                  onClick={() => setActiveSupersetMenuExId(activeSupersetMenuExId === ex.id ? null : ex.id)}
+                                  style={{
+                                    display: 'inline-flex', alignItems: 'center', gap: '5px',
+                                    padding: '6px 12px', borderRadius: '8px',
+                                    background: isBlocked ? 'rgba(0, 212, 255, 0.15)' : 'rgba(255,255,255,0.04)',
+                                    border: `1px solid ${isBlocked ? 'rgba(0, 212, 255, 0.4)' : 'rgba(255,255,255,0.08)'}`,
+                                    color: isBlocked ? '#67e8f9' : 'rgba(255,255,255,0.6)',
+                                    fontSize: '10px', fontWeight: 700, fontFamily: "'Orbitron', sans-serif",
+                                    cursor: 'pointer', transition: 'all 0.2s', textTransform: 'uppercase', letterSpacing: '0.3px'
+                                  }}
+                                  title="Agrupar en Bi-serie o Circuito"
+                                >
+                                  🔗 {isBlocked ? `En Bloque (${tag})` : 'Bi-serie / Circuito'}
+                                </button>
+
+                                {activeSupersetMenuExId === ex.id && (
+                                  <div style={{
+                                    position: 'absolute', bottom: '100%', right: 0, marginBottom: '6px',
+                                    background: 'linear-gradient(165deg, rgba(20,20,24,0.98), rgba(12,12,16,0.99))',
+                                    backdropFilter: 'blur(30px)', WebkitBackdropFilter: 'blur(30px)',
+                                    border: '1px solid rgba(255,255,255,0.12)', borderRadius: '12px',
+                                    padding: '8px', minWidth: '240px', zIndex: 100,
+                                    boxShadow: '0 12px 40px rgba(0,0,0,0.6)'
+                                  }}>
+                                    <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.4)', fontWeight: 700, fontFamily: "'Orbitron', sans-serif", padding: '4px 8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                      VINCULAR EJERCICIO
+                                    </div>
+                                    {exIndex > 0 && (
+                                      <button
+                                        type="button"
+                                        onClick={() => handleGroupExercises(day.id, day.exercises[exIndex - 1].id, ex.id)}
+                                        style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 10px', borderRadius: '8px', background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.85)', cursor: 'pointer', fontSize: '11px' }}
+                                        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
+                                        onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                                      >
+                                        ⬆️ Con anterior: <strong>{day.exercises[exIndex - 1].nombre || `Ejercicio ${exIndex}`}</strong>
+                                      </button>
+                                    )}
+                                    {exIndex < day.exercises.length - 1 && (
+                                      <button
+                                        type="button"
+                                        onClick={() => handleGroupExercises(day.id, ex.id, day.exercises[exIndex + 1].id)}
+                                        style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 10px', borderRadius: '8px', background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.85)', cursor: 'pointer', fontSize: '11px' }}
+                                        onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
+                                        onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
+                                      >
+                                        ⬇️ Con siguiente: <strong>{day.exercises[exIndex + 1].nombre || `Ejercicio ${exIndex + 2}`}</strong>
+                                      </button>
+                                    )}
+                                    {isBlocked && (
+                                      <button
+                                        type="button"
+                                        onClick={() => handleUngroupBlockInPlanner(day.id, ex.block_id!)}
+                                        style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 10px', borderRadius: '8px', background: 'rgba(239,68,68,0.1)', border: 'none', color: '#f87171', cursor: 'pointer', fontSize: '11px', marginTop: '4px' }}
+                                      >
+                                        ✕ Desvincular de este bloque
+                                      </button>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
                             </div>
                             <button
                               type="button"
@@ -2947,9 +3151,11 @@ export const PlanPlanner: React.FC = () => {
                             </button>
                           </div>
                         </div>
-                      );
-                    })}
-                  </div>
+                      </React.Fragment>
+                    );
+                  });
+                })()}
+              </div>
 
                   <div className="exercise-actions" style={{ marginTop: '15px' }}>
                     <button

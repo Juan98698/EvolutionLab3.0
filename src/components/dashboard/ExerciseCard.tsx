@@ -15,6 +15,7 @@ interface ExerciseCardProps {
   onShowGuide?: (name: string, description: string) => void;
   index?: number;
   periodizationConfig?: PeriodizationConfig;
+  blockTag?: string;
 }
 
 /**
@@ -37,7 +38,8 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
   onToggleCheck,
   onShowGuide,
   index,
-  periodizationConfig
+  periodizationConfig,
+  blockTag
 }) => {
   // Detectar dinámicamente si está online u offline
   const [isOnline, setIsOnline] = React.useState<boolean>(() => navigator.onLine);
@@ -157,12 +159,29 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
               ⚡ EJERCICIO FUNCIONAL / WOD
             </span>
           )}
-          <span
-            className="static-exercise-name"
-            style={{ fontSize: '1.1rem', fontWeight: 600 }}
-          >
-            {displayName}
-          </span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+            {blockTag && (
+              <span style={{
+                fontSize: '11px',
+                fontWeight: 800,
+                fontFamily: "'Orbitron', sans-serif",
+                color: '#00d4ff',
+                background: 'rgba(0, 212, 255, 0.15)',
+                border: '1px solid rgba(0, 212, 255, 0.4)',
+                padding: '2px 8px',
+                borderRadius: '8px',
+                flexShrink: 0
+              }}>
+                ⚡ {blockTag}
+              </span>
+            )}
+            <span
+              className="static-exercise-name"
+              style={{ fontSize: '1.1rem', fontWeight: 600 }}
+            >
+              {displayName}
+            </span>
+          </div>
           {exercise.nombre_original && exercise.nombre_original.trim().toLowerCase() !== displayName.trim().toLowerCase() && (
             <span style={{ fontSize: '9px', color: 'rgba(255, 255, 255, 0.4)', fontFamily: "'Orbitron', sans-serif", textTransform: 'uppercase', letterSpacing: '0.5px' }}>
               Base: {exercise.nombre_original}

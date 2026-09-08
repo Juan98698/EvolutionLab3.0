@@ -1,13 +1,14 @@
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
-import { PlanData } from '../../types/database.types';
+import { PlanData, ExpressBlockAudit } from '../../types/database.types';
 import { writeSessionsToCache, readSessionsFromCache } from '../../lib/sessions';
 import { autoRegulatePlanForNextWeek } from '../../lib/periodizationEngine';
 import { ErrorBoundary } from '../common/ErrorBoundary';
 import { useModalA11y } from '../../hooks/useModalA11y';
 import { useWakeLock } from '../../hooks/useWakeLock';
 import { isFunctionalExercise } from '../../lib/exerciseUtils';
+import { computeBlockTags, applyExpressMode, computeNextExerciseStep } from '../../lib/exerciseBlockUtils';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -38,6 +39,10 @@ interface ActiveExercise {
   image_url?: string;
   gif_url?: string;
   description?: string;
+  block_id?: string;
+  block_rest?: number;
+  transition_rest?: number;
+  block_tag?: string;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
@@ -112,6 +117,13 @@ const ActiveSession: React.FC = () => {
     onClose: () => setShowGuideModal(false),
   });
   const [showFeedbackGuide, setShowFeedbackGuide] = useState(false);
+  const [showExpressModal, setShowExpressModal] = useState(false);
+  const expressDialogRef = useModalA11y<HTMLDivElement>({
+    isOpen: showExpressModal,
+    onClose: () => setShowExpressModal(false),
+  });
+  const [expressModeActive, setExpressModeActive] = useState(false);
+  const [expressBlocksAudit, setExpressBlocksAudit] = useState<ExpressBlockAudit[]>([]);
 
   // ─── Rest timer ──────────────────────────────────────────────────────────
   const [restSecondsLeft, setRestSecondsLeft] = useState<number | null>(null);
@@ -132,6 +144,8 @@ const ActiveSession: React.FC = () => {
       const idx = parseInt(dayIndex || '0', 10);
       const day = parsed.trainingDays?.[idx];
       if (!day) return;
+
+      const blockTags = computeBlockTags(day.exercises);
 
       // Build ActiveExercise array from plan exercises
       const built: ActiveExercise[] = day.exercises.map(ex => {
@@ -208,7 +222,11 @@ const ActiveSession: React.FC = () => {
           video_url: ex.video_url || '',
           image_url: ex.image_url || '',
           gif_url: ex.gif_url || '',
-          description: (ex as any).descripcion || (ex as any).description || ''
+          description: (ex as any).descripcion || (ex as any).description || '',
+          block_id: ex.block_id,
+          block_rest: ex.block_rest,
+          transition_rest: ex.transition_rest,
+          block_tag: blockTags[ex.id]
         };
       });
 
@@ -372,10 +390,7 @@ const ActiveSession: React.FC = () => {
 
       // Start rest timer only if marked as done (was not done previously)
       if (!isCurrentlyDone) {
-        // Si ya había un descanso en curso para este ejercicio (de la serie
-        // anterior), medir cuánto duró realmente antes de reiniciar el timer
-        // con la próxima serie — esto es lo que se guarda como descanso real,
-        // a diferencia de `descanso` (el prescrito por el plan).
+        // Guardar descanso real medido
         const startedAt = restStartedAtRef.current[exIdx];
         if (startedAt) {
           const elapsedSeconds = Math.round((Date.now() - startedAt) / 1000);
@@ -390,11 +405,22 @@ const ActiveSession: React.FC = () => {
         }
         restStartedAtRef.current[exIdx] = Date.now();
 
-        const descanso = exercises[exIdx]?.descanso || 90;
-        startRestTimer(descanso);
+        // Calculate next step in round-robin or standard progression
+        const updatedExercisesState = exercises.map((e, idx) => {
+          if (idx !== exIdx) return e;
+          const seriesCopy = [...e.series];
+          seriesCopy[sIdx] = { ...seriesCopy[sIdx], done: true };
+          return { ...e, series: seriesCopy };
+        });
+
+        const step = computeNextExerciseStep(updatedExercisesState, exIdx, sIdx);
+        startRestTimer(step.timerSeconds);
+        if (step.nextIdx !== currentIdx) {
+          setCurrentIdx(step.nextIdx);
+        }
       }
     },
-    [exercises, startRestTimer]
+    [exercises, currentIdx, startRestTimer]
   );
 
   const handleFeedbackChange = useCallback(
@@ -407,6 +433,42 @@ const ActiveSession: React.FC = () => {
     },
     []
   );
+
+  const handleApplyExpressMode = useCallback((mode: 'supersets' | 'circuit' | 'reset') => {
+    const fakeExercises = exercises.map((ex, idx) => ({
+      id: `active_ex_${idx}`,
+      nombre: ex.nombre,
+      grupo_muscular: ex.grupo,
+      series: String(ex.series.length),
+      block_id: ex.block_id,
+      block_rest: ex.block_rest,
+      transition_rest: ex.transition_rest,
+      variables: {},
+    }));
+
+    const result = applyExpressMode(fakeExercises, mode);
+    const blockTags = computeBlockTags(result.exercises);
+
+    setExercises(prev => prev.map((ex, idx) => {
+      const updatedEx = result.exercises[idx];
+      return {
+        ...ex,
+        block_id: updatedEx?.block_id,
+        block_rest: updatedEx?.block_rest,
+        transition_rest: updatedEx?.transition_rest,
+        block_tag: blockTags[`active_ex_${idx}`],
+      };
+    }));
+
+    if (mode === 'reset') {
+      setExpressModeActive(false);
+      setExpressBlocksAudit([]);
+    } else {
+      setExpressModeActive(true);
+      setExpressBlocksAudit(result.expressBlocks);
+    }
+    setShowExpressModal(false);
+  }, [exercises]);
 
   // ─── Navigation ───────────────────────────────────────────────────────────
   const currentExercise = exercises[currentIdx];
@@ -483,11 +545,17 @@ const ActiveSession: React.FC = () => {
         ? Math.max(...sesiones.map((s: any) => (typeof s.id === 'number' ? s.id : 0))) + 1
         : 1;
 
+      const finalNotes = expressModeActive
+        ? (sessionNotes ? `${sessionNotes}\n[⚡ Modo Express: Bi-series / Circuito]` : '[⚡ Modo Express: Bi-series / Circuito]')
+        : sessionNotes;
+
       const nuevaSesion = {
         id: nextSesionId,
         fecha,
-        notas_sesion: sessionNotes,
+        notas_sesion: finalNotes,
         ejercicios: ejerciciosGuardar,
+        express_mode: expressModeActive || undefined,
+        express_blocks: expressBlocksAudit.length > 0 ? expressBlocksAudit : undefined,
       };
       sesiones.push(nuevaSesion);
       writeSessionsToCache(sesiones);
@@ -496,7 +564,11 @@ const ActiveSession: React.FC = () => {
       if (navigator.onLine) {
         const { data: histData, error: histError } = await supabase
           .from('sesiones_historial')
-          .insert({ cliente_id: currentUser.id, fecha, notas_generales: sessionNotes })
+          .insert({
+            cliente_id: currentUser.id,
+            fecha,
+            notas_generales: finalNotes
+          })
           .select('id')
           .single();
 
@@ -597,7 +669,7 @@ const ActiveSession: React.FC = () => {
     } finally {
       setSaving(false);
     }
-  }, [plan, exercises, sessionNotes, navigate]);
+  }, [plan, exercises, sessionNotes, expressModeActive, expressBlocksAudit, navigate]);
 
   // ─── Guard: no plan or exercises ──────────────────────────────────────────
   if (!plan || exercises.length === 0) {
@@ -669,6 +741,27 @@ const ActiveSession: React.FC = () => {
         <div className="active-session-progress-text">
           {currentIdx + 1} / {totalExercises} ejercicios
         </div>
+        <button
+          type="button"
+          onClick={() => setShowExpressModal(true)}
+          style={{
+            background: expressModeActive ? 'rgba(251, 191, 36, 0.2)' : 'rgba(255, 255, 255, 0.06)',
+            border: `1px solid ${expressModeActive ? '#f59e0b' : 'rgba(255, 255, 255, 0.15)'}`,
+            color: expressModeActive ? '#fbbf24' : 'rgba(255, 255, 255, 0.7)',
+            borderRadius: '8px',
+            padding: '4px 10px',
+            fontSize: '11px',
+            fontWeight: 700,
+            cursor: 'pointer',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '4px',
+            transition: 'all 0.2s',
+          }}
+          title="Modo Express (Agrupar ejercicios para ahorrar tiempo)"
+        >
+          <span>⚡</span> {expressModeActive ? 'Express Activo' : 'Modo Express'}
+        </button>
         {/* Progress bar */}
         <div className="active-session-progress-bar-track">
           <div
@@ -703,11 +796,31 @@ const ActiveSession: React.FC = () => {
       >
       {/* ── Exercise Name ── */}
       <div className="active-session-exercise-header">
-        {currentExercise.isFunctional && (
-          <span style={{ fontSize: '10px', color: '#60a5fa', background: 'rgba(59, 130, 246, 0.15)', border: '1px solid rgba(59, 130, 246, 0.35)', padding: '2px 10px', borderRadius: '6px', fontFamily: "'Orbitron', sans-serif", fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '6px', display: 'inline-block' }}>
-            ⚡ EJERCICIO FUNCIONAL / WOD
-          </span>
-        )}
+        <div style={{ display: 'flex', gap: '6px', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '6px' }}>
+          {currentExercise.isFunctional && (
+            <span style={{ fontSize: '10px', color: '#60a5fa', background: 'rgba(59, 130, 246, 0.15)', border: '1px solid rgba(59, 130, 246, 0.35)', padding: '2px 10px', borderRadius: '6px', fontFamily: "'Orbitron', sans-serif", fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              ⚡ EJERCICIO FUNCIONAL / WOD
+            </span>
+          )}
+          {currentExercise.block_tag && (
+            <span style={{
+              fontSize: '11px',
+              color: '#f59e0b',
+              background: 'rgba(245, 158, 11, 0.15)',
+              border: '1px solid rgba(245, 158, 11, 0.4)',
+              padding: '2px 10px',
+              borderRadius: '6px',
+              fontWeight: 800,
+              fontFamily: "'Orbitron', sans-serif",
+              letterSpacing: '0.5px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}>
+              ⚡ {currentExercise.block_tag}
+            </span>
+          )}
+        </div>
         <h1 className="active-session-exercise-name">
           {currentExercise.nombre}
         </h1>
@@ -718,6 +831,11 @@ const ActiveSession: React.FC = () => {
           {currentExercise.series.length} {currentExercise.isFunctional ? 'rondas / bloques' : 'series'}
           {currentExercise.suggestedReps > 0 && ` · ${currentExercise.suggestedReps} ${currentExercise.isFunctional ? 'trabajo / reps' : 'reps objetivo'}`}
           {currentExercise.targetRIR && ` · ${currentExercise.isFunctional ? 'RPE' : 'RIR'} ${currentExercise.targetRIR}`}
+          {currentExercise.block_id && (
+            <span style={{ color: '#fbbf24', marginLeft: '6px' }}>
+              · Transición: {currentExercise.transition_rest ?? 10}s · Ronda: {currentExercise.block_rest ?? 90}s
+            </span>
+          )}
         </div>
       </div>
 
@@ -1193,6 +1311,108 @@ const ActiveSession: React.FC = () => {
             <div className="active-session-guide-modal-footer">
               <button className="active-session-guide-modal-btn-confirm" onClick={() => setShowGuideModal(false)}>
                 Entendido
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Modo Express Modal Overlay ── */}
+      {showExpressModal && (
+        // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
+        <div className="active-session-modal-overlay" onClick={() => setShowExpressModal(false)}>
+          {/* eslint-disable-next-line jsx-a11y/click-events-have-key-events */}
+          <div
+            ref={expressDialogRef}
+            className="active-session-guide-modal-box"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="active-session-express-modal-title"
+            tabIndex={-1}
+            onClick={e => e.stopPropagation()}
+            style={{ maxWidth: '440px' }}
+          >
+            <div className="active-session-guide-modal-header">
+              <h3 className="active-session-guide-modal-title" id="active-session-express-modal-title" style={{ color: '#fbbf24' }}>
+                <span style={{ marginRight: '8px' }}>⚡</span>
+                Modo Express (Ahorro de Tiempo)
+              </h3>
+              <button className="active-session-guide-modal-close" onClick={() => setShowExpressModal(false)}>&times;</button>
+            </div>
+
+            <div className="active-session-guide-modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <p style={{ margin: 0, fontSize: '12.5px', color: 'rgba(255,255,255,0.7)', lineHeight: 1.5 }}>
+                ¿Tienes poco tiempo hoy? Agrupa los ejercicios de tu sesión para entrenar de forma más densa e intensa sin perder volumen:
+              </p>
+
+              <button
+                type="button"
+                onClick={() => handleApplyExpressMode('supersets')}
+                style={{
+                  background: 'rgba(245, 158, 11, 0.12)',
+                  border: '1px solid rgba(245, 158, 11, 0.4)',
+                  borderRadius: '10px',
+                  padding: '12px',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  color: 'white',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                <div style={{ fontWeight: 700, fontSize: '13px', color: '#fbbf24', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span>⚡</span> Bi-series (Por parejas)
+                </div>
+                <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.65)', lineHeight: 1.4 }}>
+                  Agrupa los ejercicios contiguos de 2 en 2 (A1 + A2, B1 + B2). Alternas 1 serie de cada uno con descanso de 10s entre ellos y 90s al completar la ronda.
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleApplyExpressMode('circuit')}
+                style={{
+                  background: 'rgba(59, 130, 246, 0.12)',
+                  border: '1px solid rgba(59, 130, 246, 0.4)',
+                  borderRadius: '10px',
+                  padding: '12px',
+                  textAlign: 'left',
+                  cursor: 'pointer',
+                  color: 'white',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                <div style={{ fontWeight: 700, fontSize: '13px', color: '#60a5fa', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span>🔄</span> Circuito Completo
+                </div>
+                <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.65)', lineHeight: 1.4 }}>
+                  Agrupa todos los ejercicios de la sesión en un solo bloque continuo (A1 + A2 + A3...). 10s de transición y 120s al completar la vuelta entera.
+                </div>
+              </button>
+
+              {expressModeActive && (
+                <button
+                  type="button"
+                  onClick={() => handleApplyExpressMode('reset')}
+                  style={{
+                    background: 'rgba(239, 68, 68, 0.1)',
+                    border: '1px solid rgba(239, 68, 68, 0.3)',
+                    borderRadius: '10px',
+                    padding: '10px 12px',
+                    textAlign: 'left',
+                    cursor: 'pointer',
+                    color: '#f87171',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                  }}
+                >
+                  ↩️ Desactivar Modo Express (Volver a series estándar)
+                </button>
+              )}
+            </div>
+
+            <div className="active-session-guide-modal-footer">
+              <button className="active-session-btn-secondary" onClick={() => setShowExpressModal(false)}>
+                Cerrar
               </button>
             </div>
           </div>
