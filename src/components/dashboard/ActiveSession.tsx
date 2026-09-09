@@ -83,6 +83,11 @@ const parseDescanso = (val: string | undefined): number => {
   return Math.max(30, seconds || 90);
 };
 
+const isExerciseFinished = (ex: ActiveExercise): boolean => {
+  return Boolean(ex.series && ex.series.length > 0 && ex.series.every(s => s.done));
+};
+
+
 /**
  * ActiveSession — Ultra-minimalist workout logging screen.
  *
@@ -156,7 +161,7 @@ const ActiveSession: React.FC = () => {
       const blockTags = computeBlockTags(day.exercises);
 
       // Build ActiveExercise array from plan exercises
-      const built: ActiveExercise[] = day.exercises.map(ex => {
+      const built: ActiveExercise[] = day.exercises.map((ex, exIdx) => {
         const isFunc = isFunctionalExercise(ex);
         const vars = ex.variables || {};
         const seriesKey = Object.keys(vars).find(k => {
@@ -215,7 +220,7 @@ const ActiveSession: React.FC = () => {
         }));
 
         return {
-          id: ex.id || `ex_${idx}_${Date.now()}`,
+          id: ex.id || `ex_${idx}_${exIdx}_${Date.now()}`,
           nombre: ex.nombre || 'Ejercicio',
           grupo: (ex as any).grupo_muscular || ex.grupo_muscular || '',
           suggestedPeso: pesoSugerido,
@@ -484,7 +489,10 @@ const ActiveSession: React.FC = () => {
     if (showExpressModal && exercises[currentIdx]) {
       const cur = exercises[currentIdx];
       if (cur.block_id) {
-        const currentBlockMembers = exercises.filter(e => e.block_id === cur.block_id).map(e => e.id);
+        // Preservar el ejercicio actual y compañeros del bloque que sigan pendientes
+        const currentBlockMembers = exercises
+          .filter(e => e.block_id === cur.block_id && (e.id === cur.id || !isExerciseFinished(e)))
+          .map(e => e.id);
         setSelectedChainIds(currentBlockMembers);
       } else {
         setSelectedChainIds([cur.id]);
@@ -496,7 +504,14 @@ const ActiveSession: React.FC = () => {
 
   const handleChainSelectedExercises = useCallback(() => {
     const cur = exercises[currentIdx];
-    if (!cur || selectedChainIds.length < 2) return;
+    if (!cur) return;
+
+    // Solo permitir encadenar el ejercicio actual y ejercicios pendientes (no 100% terminados)
+    const validChainIds = selectedChainIds.filter(id => {
+      const ex = exercises.find(e => e.id === id);
+      return ex && (ex.id === cur.id || !isExerciseFinished(ex));
+    });
+    if (validChainIds.length < 2) return;
 
     const fakeExercises = exercises.map(ex => ({
       id: ex.id,
@@ -512,7 +527,7 @@ const ActiveSession: React.FC = () => {
     const result = chainExercisesWithReorder(
       fakeExercises,
       cur.id,
-      selectedChainIds,
+      validChainIds,
       customBlockRest,
       customTransitionRest
     );
@@ -1498,7 +1513,12 @@ const ActiveSession: React.FC = () => {
       {showExpressModal && (() => {
         const currentInBlock = !!currentExercise?.block_id;
         const currentBlockPartners = exercises.filter(e => e.block_id === currentExercise?.block_id && e.id !== currentExercise?.id);
-        const outsideExercises = exercises.filter(e => e.block_id !== currentExercise?.block_id);
+        const outsideExercises = exercises.filter(
+          e => e.block_id !== currentExercise?.block_id && !isExerciseFinished(e)
+        );
+        const candidateExercises = exercises.filter(
+          ex => ex.id === currentExercise?.id || !isExerciseFinished(ex)
+        );
         const hasAnyBlock = expressModeActive || exercises.some(e => e.block_id);
 
         return (
@@ -1657,8 +1677,14 @@ const ActiveSession: React.FC = () => {
                     Marca los ejercicios del día que deseas alternar de forma continua (puedes encadenar 2, 3, 4 o los que necesites):
                   </p>
 
+                  {candidateExercises.length < 2 && (
+                    <div style={{ fontSize: '11px', color: '#fbbf24', background: 'rgba(245, 158, 11, 0.12)', border: '1px solid rgba(245, 158, 11, 0.25)', padding: '8px 10px', borderRadius: '6px' }}>
+                      ℹ️ No hay otros ejercicios pendientes en esta sesión para formar una Súper Serie (los demás ejercicios ya están 100% completados).
+                    </div>
+                  )}
+
                   <div style={{ maxHeight: '180px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '6px', paddingRight: '2px' }}>
-                    {exercises.map(ex => {
+                    {candidateExercises.map(ex => {
                       const isSelected = selectedChainIds.includes(ex.id);
                       const isCurrent = ex.id === currentExercise.id;
                       return (

@@ -295,12 +295,15 @@ export function chainExercisesWithReorder(
   const selectedItems = sanitized.filter(e => selectedSet.has(e.id));
   const remaining = sanitized.filter(e => !selectedSet.has(e.id));
 
-  // Encontrar el índice de inserción en remaining basado en el primer ejercicio seleccionado en el orden original
-  const earliestOriginalIdx = sanitized.findIndex(e => selectedSet.has(e.id));
+  // Encontrar el índice de inserción en remaining basado en el ejercicio ancla si está seleccionado,
+  // o en el primer ejercicio seleccionado en el orden original como fallback
+  const anchorOriginalIdx = (anchorEx && selectedSet.has(anchorEx.id))
+    ? sanitized.findIndex(e => e.id === anchorExerciseId)
+    : sanitized.findIndex(e => selectedSet.has(e.id));
   let insertIdx = 0;
-  if (earliestOriginalIdx !== -1) {
+  if (anchorOriginalIdx !== -1) {
     const targetExerciseBefore = sanitized
-      .slice(0, earliestOriginalIdx)
+      .slice(0, anchorOriginalIdx)
       .reverse()
       .find(e => !selectedSet.has(e.id));
     if (targetExerciseBefore) {

@@ -610,5 +610,29 @@ describe('Exercise Block Utils & Superset Logic', () => {
       expect(result.exercises.find(e => e.id === 'e-1')?.block_id).toBe(result.chainedBlockId);
       expect(result.exercises.find(e => e.id === 'e-2')?.block_id).toBe(result.chainedBlockId);
     });
+
+    it('ubica el bloque contiguo en la posición del ejercicio ancla (anchorExerciseId) y no en la del más temprano', () => {
+      const exercises: Exercise[] = [
+        { id: 'A', nombre: 'Ejercicio A', variables: {} },
+        { id: 'B', nombre: 'Ejercicio B', variables: {} },
+        { id: 'C', nombre: 'Ejercicio C', variables: {} },
+        { id: 'D', nombre: 'Ejercicio D', variables: {} },
+        { id: 'E', nombre: 'Ejercicio E', variables: {} },
+      ];
+
+      // Atleta está en C (ancla = C) y selecciona A, C y E.
+      // El bloque debe anclarse en la posición de C (después de B), no saltar al inicio antes de B.
+      const resultFromC = chainExercisesWithReorder(exercises, 'C', ['A', 'C', 'E']);
+      expect(resultFromC.exercises.map(e => e.id)).toEqual(['B', 'A', 'C', 'E', 'D']);
+
+      // Si el atleta estuviese en A (ancla = A) y seleccionara los mismos [A, C, E],
+      // entonces el bloque sí se ubica al principio.
+      const resultFromA = chainExercisesWithReorder(exercises, 'A', ['A', 'C', 'E']);
+      expect(resultFromA.exercises.map(e => e.id)).toEqual(['A', 'C', 'E', 'B', 'D']);
+
+      // Si el ancla es E y selecciona B y E, el bloque se ubica al final (posición de E).
+      const resultFromE = chainExercisesWithReorder(exercises, 'E', ['B', 'E']);
+      expect(resultFromE.exercises.map(e => e.id)).toEqual(['A', 'C', 'D', 'B', 'E']);
+    });
   });
 });

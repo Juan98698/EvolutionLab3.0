@@ -322,4 +322,63 @@ describe('ActiveSession Component', () => {
     const updatedPlanRaw = localStorage.getItem('pwa_client_plan');
     expect(updatedPlanRaw).not.toBeNull();
   });
+
+  it('excluye ejercicios completados del checklist del modal de Súper Serie', async () => {
+    const multiExercisePlan = {
+      id: 'test-plan-multi',
+      trainingDays: [
+        {
+          name: 'Día 1: Push',
+          exercises: [
+            {
+              id: 'ex-bench',
+              nombre: 'Press Banca',
+              grupo_muscular: 'Pecho',
+              variables: { 'series de trabajo': '1', 'repeticiones': '10', 'peso': '60' },
+            },
+            {
+              id: 'ex-flyes',
+              nombre: 'Aperturas',
+              grupo_muscular: 'Pecho',
+              variables: { 'series de trabajo': '2', 'repeticiones': '12', 'peso': '20' },
+            },
+            {
+              id: 'ex-dips',
+              nombre: 'Fondos',
+              grupo_muscular: 'Tríceps',
+              variables: { 'series de trabajo': '2', 'repeticiones': '15', 'peso': '0' },
+            },
+          ],
+        },
+      ],
+    };
+    localStorage.setItem('pwa_client_plan', JSON.stringify(multiExercisePlan));
+
+    render(<ActiveSession />);
+
+    // 1. Completar la única serie del primer ejercicio (Press Banca)
+    const checkSet1 = screen.getByLabelText('Marcar serie 1 como completada');
+    fireEvent.click(checkSet1);
+
+    // 2. Avanzar al segundo ejercicio (Aperturas)
+    const nextBtn = screen.getByText('Siguiente →');
+    fireEvent.click(nextBtn);
+
+    // Verificar que estamos en Aperturas (ejercicio 2 de 3)
+    expect(screen.getByText('Aperturas')).toBeDefined();
+
+    // 3. Abrir el modal de Súper Serie
+    const superSerieBtn = screen.getByTitle('Entrenar en Súper Serie (Agrupar ejercicios para alternar series)');
+    fireEvent.click(superSerieBtn);
+
+    // 4. El modal debe abrirse y mostrar Aperturas (ACTUAL) y Fondos (pendiente), pero NO Press Banca (ya completado)
+    const dialog = screen.getByRole('dialog');
+    expect(dialog).toBeDefined();
+    expect(screen.getByText('Fondos')).toBeDefined();
+
+    // Press Banca NO debe aparecer dentro del modal (fue excluido por estar ya terminado)
+    expect(dialog.textContent).not.toContain('Press Banca');
+    expect(dialog.textContent).toContain('Aperturas');
+    expect(dialog.textContent).toContain('Fondos');
+  });
 });
