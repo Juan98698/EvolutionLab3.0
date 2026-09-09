@@ -140,6 +140,14 @@ const ActiveSession: React.FC = () => {
 
   // ─── Rest timer ──────────────────────────────────────────────────────────
   const [restSecondsLeft, setRestSecondsLeft] = useState<number | null>(null);
+  // Tipo del descanso en curso: 'transition' = cambio breve dentro de una
+  // Súper Serie (sin pausa real), 'round'/'standard' = descanso completo.
+  // Se usa para diferenciar visual, sonora y hápticamente cada caso.
+  const [restTimerType, setRestTimerType] = useState<'transition' | 'round' | 'standard'>('standard');
+  // Duración total del descanso que arrancó, para escalar la barra de
+  // progreso contra SU propia duración (10s de transición no debe verse
+  // como si fuera un descanso completo de 90s a medio vaciar).
+  const [restTotalSeconds, setRestTotalSeconds] = useState<number>(90);
   const restIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   /** Marca de tiempo (ms) de cuándo arrancó el descanso más reciente, por
    * índice de ejercicio — para medir cuánto descansó realmente el atleta
@@ -285,15 +293,28 @@ const ActiveSession: React.FC = () => {
   }, [currentIdx]);
 
   // ─── Rest timer audio & vibration alert ────────────────────────────────────
-  const playRestTimerStartAlert = () => {
+  // Una transición dentro de una Súper Serie es un cambio de estación, no un
+  // descanso — la señal debe sentirse breve y urgente, nunca como la fanfarria
+  // de "ya puedes relajarte" que sí corresponde a un descanso completo.
+  const playRestTimerStartAlert = (type: 'transition' | 'round' | 'standard' = 'standard') => {
     if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
       try {
-        navigator.vibrate([150, 80, 150]);
+        navigator.vibrate(type === 'transition' ? [60] : [150, 80, 150]);
       } catch (e) {}
     }
   };
 
-  const playRestTimerEndAlert = () => {
+  const playRestTimerEndAlert = (type: 'transition' | 'round' | 'standard' = 'standard') => {
+    if (type === 'transition') {
+      // Solo un toque suave: "cambia ya" — sin sonido, sin vibración larga.
+      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+        try {
+          navigator.vibrate([80]);
+        } catch (e) {}
+      }
+      return;
+    }
+
     // 1. Vibración háptica potente al terminar
     if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
       try {
@@ -332,15 +353,27 @@ const ActiveSession: React.FC = () => {
   };
 
   // ─── Rest timer logic ─────────────────────────────────────────────────────
-  const startRestTimer = useCallback((seconds: number) => {
+  const startRestTimer = useCallback((seconds: number, type: 'transition' | 'round' | 'standard' = 'standard') => {
     if (restIntervalRef.current) clearInterval(restIntervalRef.current);
+    setRestTimerType(type);
+
+    // Si no hay descanso o transición prescrita (0s o negativo, ej. circuito
+    // continuo con transition_rest = 0): no hay nada que contar. Damos el
+    // aviso háptico de arranque y avanzamos directo sin parpadeo de 0:00.
+    if (seconds <= 0) {
+      setRestSecondsLeft(null);
+      playRestTimerStartAlert(type);
+      return;
+    }
+
+    setRestTotalSeconds(seconds);
     setRestSecondsLeft(seconds);
-    playRestTimerStartAlert();
+    playRestTimerStartAlert(type);
     restIntervalRef.current = setInterval(() => {
       setRestSecondsLeft(prev => {
         if (prev === null || prev <= 1) {
           clearInterval(restIntervalRef.current!);
-          playRestTimerEndAlert();
+          playRestTimerEndAlert(type);
           return null;
         }
         return prev - 1;
@@ -428,7 +461,7 @@ const ActiveSession: React.FC = () => {
         });
 
         const step = computeNextExerciseStep(updatedExercisesState, exIdx, sIdx);
-        startRestTimer(step.timerSeconds);
+        startRestTimer(step.timerSeconds, step.timerType);
         if (step.nextIdx !== currentIdx) {
           setCurrentIdx(step.nextIdx);
         }
@@ -880,8 +913,12 @@ const ActiveSession: React.FC = () => {
     );
   }
 
-  const restPct = restSecondsLeft != null && currentExercise
-    ? (restSecondsLeft / currentExercise.descanso) * 100
+  // Se escala contra la duración real de ESTE temporizador (restTotalSeconds),
+  // no contra el descanso "normal" del ejercicio — si no, una transición de
+  // 10s dentro de una Súper Serie se vería como si apenas se hubiera vaciado
+  // una barra pensada para 90s.
+  const restPct = restSecondsLeft != null && restTotalSeconds > 0
+    ? (restSecondsLeft / restTotalSeconds) * 100
     : 0;
 
   return (
@@ -1234,28 +1271,97 @@ const ActiveSession: React.FC = () => {
       </div>
 
       {/* ── Rest Timer ── */}
-      {restSecondsLeft !== null && (
-        <div className="active-session-rest-timer">
-          <div className="active-session-rest-track">
-            <div
-              className="active-session-rest-fill"
-              style={{ width: `${restPct}%` }}
-            />
-          </div>
-          <span className="active-session-rest-label">
-            ⏱ Descanso: {Math.floor(restSecondsLeft / 60)}:{String(restSecondsLeft % 60).padStart(2, '0')}
-          </span>
-          <button
-            className="active-session-rest-skip"
-            onClick={() => {
-              if (restIntervalRef.current) clearInterval(restIntervalRef.current);
-              setRestSecondsLeft(null);
-            }}
+      {restSecondsLeft !== null && (() => {
+        const isTransition = restTimerType === 'transition';
+        const isRound = restTimerType === 'round';
+
+        let timerLabel = '⏱ Descanso';
+        if (isTransition) {
+          timerLabel = '🔄 Cambia ahora';
+        } else if (isRound) {
+          timerLabel = '⏱ Descanso de ronda';
+        }
+
+        return (
+          <div
+            className="active-session-rest-timer"
+            style={
+              isTransition
+                ? {
+                    background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.22) 0%, rgba(217, 119, 6, 0.28) 100%)',
+                    border: '1.5px solid #f59e0b',
+                    boxShadow: '0 0 22px rgba(245, 158, 11, 0.35)',
+                  }
+                : isRound
+                ? {
+                    background: 'linear-gradient(135deg, rgba(0, 212, 255, 0.16) 0%, rgba(59, 130, 246, 0.22) 100%)',
+                    border: '1.5px solid rgba(0, 212, 255, 0.5)',
+                    boxShadow: '0 0 22px rgba(0, 212, 255, 0.25)',
+                  }
+                : undefined
+            }
           >
-            Saltar
-          </button>
-        </div>
-      )}
+            <div className="active-session-rest-track">
+              <div
+                className="active-session-rest-fill"
+                style={{
+                  width: `${restPct}%`,
+                  ...(isTransition
+                    ? {
+                        background: 'linear-gradient(90deg, #f59e0b, #fbbf24)',
+                        boxShadow: '0 0 10px rgba(245, 158, 11, 0.6)',
+                        transition: 'width 0.2s linear',
+                      }
+                    : isRound
+                    ? {
+                        background: 'linear-gradient(90deg, #00d4ff, #3b82f6)',
+                        boxShadow: '0 0 10px rgba(0, 212, 255, 0.6)',
+                      }
+                    : {}),
+                }}
+              />
+            </div>
+            <span
+              className="active-session-rest-label"
+              style={
+                isTransition
+                  ? { color: '#fbbf24', textShadow: '0 0 15px rgba(245, 158, 11, 0.6)' }
+                  : isRound
+                  ? { color: '#00d4ff', textShadow: '0 0 15px rgba(0, 212, 255, 0.6)' }
+                  : undefined
+              }
+            >
+              {timerLabel}: {Math.floor(restSecondsLeft / 60)}:{String(restSecondsLeft % 60).padStart(2, '0')}
+            </span>
+            <button
+              className="active-session-rest-skip"
+              style={
+                isTransition
+                  ? {
+                      background: '#fbbf24',
+                      color: '#0f172a',
+                      border: '1px solid #f59e0b',
+                      fontWeight: 900,
+                      boxShadow: '0 0 12px rgba(251, 191, 36, 0.4)',
+                    }
+                  : isRound
+                  ? {
+                      background: 'rgba(0, 212, 255, 0.18)',
+                      color: '#00d4ff',
+                      border: '1px solid rgba(0, 212, 255, 0.5)',
+                    }
+                  : undefined
+              }
+              onClick={() => {
+                if (restIntervalRef.current) clearInterval(restIntervalRef.current);
+                setRestSecondsLeft(null);
+              }}
+            >
+              {isTransition ? 'Ya estoy listo →' : 'Saltar'}
+            </button>
+          </div>
+        );
+      })()}
 
       {/* ── Feedback (shown when all series are done) ── */}
       {allSeriesDone && (

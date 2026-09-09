@@ -381,4 +381,145 @@ describe('ActiveSession Component', () => {
     expect(dialog.textContent).toContain('Aperturas');
     expect(dialog.textContent).toContain('Fondos');
   });
+
+  it('la transición dentro de una Súper Serie se ve, suena y se vibra distinto a un descanso completo', () => {
+    const supersetPlan = {
+      id: 'test-plan-superset',
+      trainingDays: [
+        {
+          name: 'Día 1: Antagonistas',
+          exercises: [
+            {
+              id: 'ex-press',
+              nombre: 'Press Banca',
+              grupo_muscular: 'Pecho',
+              variables: { 'series de trabajo': '2', 'repeticiones': '10', 'peso': '60', 'descanso': '120' },
+              block_id: 'block_a',
+              block_rest: 90,
+              transition_rest: 15,
+            },
+            {
+              id: 'ex-remo',
+              nombre: 'Remo con Barra',
+              grupo_muscular: 'Espalda',
+              variables: { 'series de trabajo': '2', 'repeticiones': '10', 'peso': '50', 'descanso': '120' },
+              block_id: 'block_a',
+              block_rest: 90,
+              transition_rest: 15,
+            },
+          ],
+        },
+      ],
+    };
+    localStorage.setItem('pwa_client_plan', JSON.stringify(supersetPlan));
+
+    render(<ActiveSession />);
+
+    // Completar la serie 1 de Press Banca — su compañero (Remo) todavía
+    // tiene pendiente su serie 1, así que esto debe disparar una TRANSICIÓN
+    // (15s), no un descanso completo.
+    const checkSet1 = screen.getByLabelText('Marcar serie 1 como completada');
+    fireEvent.click(checkSet1);
+
+    // Vibración breve de transición, no la larga de descanso completo
+    expect(global.navigator.vibrate).toHaveBeenCalledWith([60]);
+    expect(global.navigator.vibrate).not.toHaveBeenCalledWith([150, 80, 150]);
+
+    // La etiqueta y el botón deben reflejar "transición", no "descanso"
+    expect(screen.getByText(/Cambia ahora/)).toBeDefined();
+    expect(screen.queryByText(/⏱ Descanso/)).toBeNull();
+    expect(screen.getByText('Ya estoy listo →')).toBeDefined();
+    expect(screen.queryByText('Saltar')).toBeNull();
+  });
+
+  it('circuito continuo (transition_rest = 0) no muestra temporizador, solo un toque háptico', () => {
+    const continuousCircuitPlan = {
+      id: 'test-plan-continuous',
+      trainingDays: [
+        {
+          name: 'Día 1: Circuito',
+          exercises: [
+            {
+              id: 'ex-a',
+              nombre: 'Sentadilla',
+              grupo_muscular: 'Piernas',
+              variables: { 'series de trabajo': '2', 'repeticiones': '10', 'peso': '40' },
+              block_id: 'block_c',
+              block_rest: 60,
+              transition_rest: 0,
+            },
+            {
+              id: 'ex-b',
+              nombre: 'Zancadas',
+              grupo_muscular: 'Piernas',
+              variables: { 'series de trabajo': '2', 'repeticiones': '10', 'peso': '20' },
+              block_id: 'block_c',
+              block_rest: 60,
+              transition_rest: 0,
+            },
+          ],
+        },
+      ],
+    };
+    localStorage.setItem('pwa_client_plan', JSON.stringify(continuousCircuitPlan));
+
+    render(<ActiveSession />);
+
+    const checkSet1 = screen.getByLabelText('Marcar serie 1 como completada');
+    fireEvent.click(checkSet1);
+
+    // Toque háptico breve igual, pero SIN barra de temporizador visible
+    expect(global.navigator.vibrate).toHaveBeenCalledWith([60]);
+    expect(screen.queryByText(/Cambia ahora/)).toBeNull();
+    expect(screen.queryByText(/⏱ Descanso/)).toBeNull();
+  });
+
+  it('el descanso entre rondas de una Súper Serie muestra "Descanso de ronda" y usa el descanso de bloque', () => {
+    const supersetPlan = {
+      id: 'test-plan-round-rest',
+      trainingDays: [
+        {
+          name: 'Día 1: Súper Serie',
+          exercises: [
+            {
+              id: 'ex-1',
+              nombre: 'Sentadilla',
+              grupo_muscular: 'Piernas',
+              variables: { 'series de trabajo': '2', 'repeticiones': '10', 'peso': '80', 'descanso': '180' },
+              block_id: 'block_legs',
+              block_rest: 90,
+              transition_rest: 10,
+            },
+            {
+              id: 'ex-2',
+              nombre: 'Peso Muerto Rumano',
+              grupo_muscular: 'Piernas',
+              variables: { 'series de trabajo': '2', 'repeticiones': '10', 'peso': '70', 'descanso': '180' },
+              block_id: 'block_legs',
+              block_rest: 90,
+              transition_rest: 10,
+            },
+          ],
+        },
+      ],
+    };
+    localStorage.setItem('pwa_client_plan', JSON.stringify(supersetPlan));
+
+    render(<ActiveSession />);
+
+    // 1. Completar serie 1 de Sentadilla -> Dispara Transición hacia Peso Muerto Rumano
+    const checkSet1Ex1 = screen.getByLabelText('Marcar serie 1 como completada');
+    fireEvent.click(checkSet1Ex1);
+    expect(screen.getByText(/Cambia ahora/)).toBeDefined();
+
+    // 2. Completar serie 1 de Peso Muerto Rumano -> Fin de ronda 1 -> Dispara Descanso de ronda (90s = 1:30)
+    const checkSet1Ex2 = screen.getByLabelText('Marcar serie 1 como completada');
+    fireEvent.click(checkSet1Ex2);
+
+    // Debe mostrar "Descanso de ronda" con duración de 1:30 y botón "Saltar"
+    expect(screen.getByText(/Descanso de ronda/)).toBeDefined();
+    expect(screen.getByText(/1:30/)).toBeDefined();
+    expect(screen.queryByText(/Cambia ahora/)).toBeNull();
+    expect(screen.getByText('Saltar')).toBeDefined();
+  });
 });
