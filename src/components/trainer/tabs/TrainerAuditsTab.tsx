@@ -194,7 +194,7 @@ const TrainerAuditsTab: React.FC<TrainerAuditsTabProps> = ({
                           alignItems: 'center',
                           gap: '4px'
                         }}>
-                          ⚡ MODO EXPRESS
+                          ⚡ SÚPER SERIE
                         </span>
                       )}
                     </h3>
@@ -274,7 +274,7 @@ const TrainerAuditsTab: React.FC<TrainerAuditsTabProps> = ({
                     gap: '6px'
                   }}>
                     <div style={{ fontSize: '11px', fontWeight: 700, color: '#eab308', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      ⚡ <span>Sesión ejecutada en Modo Express (Biseries / Circuitos ad-hoc)</span>
+                      ⚡ <span>Sesión ejecutada con Súper Serie (Agrupaciones ad-hoc)</span>
                     </div>
                     {Array.isArray(sesion.express_blocks) && sesion.express_blocks.length > 0 ? (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '2px' }}>

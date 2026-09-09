@@ -28,7 +28,7 @@ export function getBlockType(memberCount: number): ExerciseBlockType {
  */
 export function getBlockTypeLabel(memberCount: number): string {
   if (memberCount <= 1) return 'Serie Estándar';
-  if (memberCount === 2) return 'Bi-serie / Súper Serie';
+  if (memberCount === 2) return 'Súper Serie';
   if (memberCount === 3) return 'Tri-serie';
   return 'Circuito';
 }
@@ -246,6 +246,84 @@ export function linkExercisesWithReorder(
     exercises: updated,
     anchorName: anchorEx.nombre || 'Ejercicio',
     targetName: targetEx.nombre || 'Ejercicio',
+  };
+}
+
+/**
+ * Encadena un conjunto arbitrario de ejercicios del día (2, 3, 4, 5...) en una Súper Serie,
+ * colocándolos de forma contigua en el orden de entrenamiento alrededor de la posición
+ * del ejercicio ancla (o el primero seleccionado), asignándoles el mismo block_id
+ * y configurando los descansos de ronda y de transición.
+ */
+export function chainExercisesWithReorder(
+  exercises: Exercise[],
+  anchorExerciseId: string,
+  selectedExerciseIds: string[],
+  blockRest: number = 90,
+  transitionRest: number = 10
+): {
+  exercises: Exercise[];
+  chainedBlockId: string;
+} {
+  const existingIds = new Set(exercises.map(e => e.id));
+  const uniqueSelected = Array.from(new Set(selectedExerciseIds.filter(id => existingIds.has(id))));
+
+  if (uniqueSelected.length < 2) {
+    return { exercises, chainedBlockId: '' };
+  }
+
+  const anchorEx = exercises.find(e => e.id === anchorExerciseId);
+  const selectedSet = new Set(uniqueSelected);
+
+  // Determinar block_id: reutilizar el del ancla o de algún miembro seleccionado, o generar uno nuevo
+  let finalBlockId = anchorEx?.block_id;
+  if (!finalBlockId) {
+    const memberWithBlock = exercises.find(e => selectedSet.has(e.id) && e.block_id);
+    finalBlockId = memberWithBlock?.block_id || generateBlockUUID();
+  }
+
+  // Si el ancla pertenecía a un bloque previo, desvincular a los antiguos compañeros que NO fueron seleccionados
+  const sanitized = exercises.map(ex => {
+    if (anchorEx?.block_id && ex.block_id === anchorEx.block_id && !selectedSet.has(ex.id)) {
+      const { block_id: _b, block_rest: _br, transition_rest: _tr, ...rest } = ex;
+      return rest as Exercise;
+    }
+    return ex;
+  });
+
+  // Los ejercicios seleccionados preservando su orden original
+  const selectedItems = sanitized.filter(e => selectedSet.has(e.id));
+  const remaining = sanitized.filter(e => !selectedSet.has(e.id));
+
+  // Encontrar el índice de inserción en remaining basado en el primer ejercicio seleccionado en el orden original
+  const earliestOriginalIdx = sanitized.findIndex(e => selectedSet.has(e.id));
+  let insertIdx = 0;
+  if (earliestOriginalIdx !== -1) {
+    const targetExerciseBefore = sanitized
+      .slice(0, earliestOriginalIdx)
+      .reverse()
+      .find(e => !selectedSet.has(e.id));
+    if (targetExerciseBefore) {
+      const idxInRemaining = remaining.findIndex(e => e.id === targetExerciseBefore.id);
+      insertIdx = idxInRemaining + 1;
+    } else {
+      insertIdx = 0;
+    }
+  }
+
+  const updatedSelected = selectedItems.map(ex => ({
+    ...ex,
+    block_id: finalBlockId,
+    block_rest: blockRest,
+    transition_rest: transitionRest,
+  }));
+
+  remaining.splice(insertIdx, 0, ...updatedSelected);
+  const finalExercises = cleanOrphanBlocks(remaining);
+
+  return {
+    exercises: finalExercises,
+    chainedBlockId: finalBlockId,
   };
 }
 

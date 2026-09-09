@@ -836,8 +836,8 @@ export const Historial: React.FC = () => {
                             {f.express_mode && (
                               <span
                                 title={Array.isArray(f.express_blocks) && f.express_blocks.length > 0
-                                  ? `Modo Express: ${f.express_blocks.map((b: any, i: number) => `Bloque ${String.fromCharCode(65 + i)}: ${(b.exercise_names || []).join(' + ')}`).join(' | ')}`
-                                  : 'Sesión ejecutada en Modo Express'}
+                                  ? `Súper Serie: ${f.express_blocks.map((b: any, i: number) => `Bloque ${String.fromCharCode(65 + i)}: ${(b.exercise_names || []).join(' + ')}`).join(' | ')}`
+                                  : 'Sesión ejecutada con Súper Series'}
                                 style={{
                                   background: 'rgba(234, 179, 8, 0.15)',
                                   border: '1px solid rgba(234, 179, 8, 0.4)',
@@ -850,7 +850,7 @@ export const Historial: React.FC = () => {
                                   cursor: 'default'
                                 }}
                               >
-                                ⚡ Express
+                                ⚡ Súper Serie
                               </span>
                             )}
                           </div>

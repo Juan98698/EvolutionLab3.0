@@ -8,7 +8,7 @@ import { ErrorBoundary } from '../common/ErrorBoundary';
 import { useModalA11y } from '../../hooks/useModalA11y';
 import { useWakeLock } from '../../hooks/useWakeLock';
 import { isFunctionalExercise } from '../../lib/exerciseUtils';
-import { computeBlockTags, applyExpressMode, computeNextExerciseStep, linkExercisesWithReorder, swapBlockPartner } from '../../lib/exerciseBlockUtils';
+import { computeBlockTags, applyExpressMode, computeNextExerciseStep, chainExercisesWithReorder, swapBlockPartner } from '../../lib/exerciseBlockUtils';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -128,6 +128,10 @@ const ActiveSession: React.FC = () => {
   });
   const [expressModeActive, setExpressModeActive] = useState(false);
   const [expressBlocksAudit, setExpressBlocksAudit] = useState<ExpressBlockAudit[]>([]);
+  // Selección personalizada de ejercicios para encadenar en Súper Serie (2, 3, 4, 5...)
+  const [selectedChainIds, setSelectedChainIds] = useState<string[]>([]);
+  const [customBlockRest, setCustomBlockRest] = useState<number>(90);
+  const [customTransitionRest, setCustomTransitionRest] = useState<number>(10);
 
   // ─── Rest timer ──────────────────────────────────────────────────────────
   const [restSecondsLeft, setRestSecondsLeft] = useState<number | null>(null);
@@ -475,9 +479,24 @@ const ActiveSession: React.FC = () => {
     setShowExpressModal(false);
   }, [exercises]);
 
-  const handleLinkWithExercise = useCallback((targetExerciseId: string) => {
+  // Sincronizar selección inicial de Súper Serie al abrir el modal o cambiar de ejercicio
+  useEffect(() => {
+    if (showExpressModal && exercises[currentIdx]) {
+      const cur = exercises[currentIdx];
+      if (cur.block_id) {
+        const currentBlockMembers = exercises.filter(e => e.block_id === cur.block_id).map(e => e.id);
+        setSelectedChainIds(currentBlockMembers);
+      } else {
+        setSelectedChainIds([cur.id]);
+      }
+      setCustomBlockRest(cur.block_rest ?? 90);
+      setCustomTransitionRest(cur.transition_rest ?? 10);
+    }
+  }, [showExpressModal, currentIdx, exercises]);
+
+  const handleChainSelectedExercises = useCallback(() => {
     const cur = exercises[currentIdx];
-    if (!cur) return;
+    if (!cur || selectedChainIds.length < 2) return;
 
     const fakeExercises = exercises.map(ex => ({
       id: ex.id,
@@ -490,7 +509,13 @@ const ActiveSession: React.FC = () => {
       variables: {},
     }));
 
-    const result = linkExercisesWithReorder(fakeExercises, cur.id, targetExerciseId);
+    const result = chainExercisesWithReorder(
+      fakeExercises,
+      cur.id,
+      selectedChainIds,
+      customBlockRest,
+      customTransitionRest
+    );
     const blockTags = computeBlockTags(result.exercises);
     const reorderedMap = new Map(exercises.map(e => [e.id, e]));
 
@@ -523,7 +548,7 @@ const ActiveSession: React.FC = () => {
     setExpressModeActive(true);
     setExpressBlocksAudit(audit);
     setShowExpressModal(false);
-  }, [exercises, currentIdx]);
+  }, [exercises, currentIdx, selectedChainIds, customBlockRest, customTransitionRest]);
 
   const handleSwapPartnerInActiveSession = useCallback((oldPartnerId: string, newPartnerId: string) => {
     const cur = exercises[currentIdx];
@@ -690,7 +715,7 @@ const ActiveSession: React.FC = () => {
         : 1;
 
       const finalNotes = expressModeActive
-        ? (sessionNotes ? `${sessionNotes}\n[⚡ Modo Express: Bi-series / Circuito]` : '[⚡ Modo Express: Bi-series / Circuito]')
+        ? (sessionNotes ? `${sessionNotes}\n[⚡ Súper Serie]` : '[⚡ Súper Serie]')
         : sessionNotes;
 
       const nuevaSesion = {
@@ -904,9 +929,9 @@ const ActiveSession: React.FC = () => {
             gap: '4px',
             transition: 'all 0.2s',
           }}
-          title="Modo Express (Agrupar ejercicios para ahorrar tiempo)"
+          title="Entrenar en Súper Serie (Agrupar ejercicios para alternar series)"
         >
-          <span>⚡</span> {expressModeActive ? 'Express Activo' : 'Modo Express'}
+          <span>⚡</span> {expressModeActive ? 'Súper Serie Activa' : 'Entrenar en Súper Serie'}
         </button>
         {/* Progress bar */}
         <div className="active-session-progress-bar-track">
@@ -1474,7 +1499,6 @@ const ActiveSession: React.FC = () => {
         const currentInBlock = !!currentExercise?.block_id;
         const currentBlockPartners = exercises.filter(e => e.block_id === currentExercise?.block_id && e.id !== currentExercise?.id);
         const outsideExercises = exercises.filter(e => e.block_id !== currentExercise?.block_id);
-        const otherExercises = exercises.filter(e => e.id !== currentExercise?.id);
         const hasAnyBlock = expressModeActive || exercises.some(e => e.block_id);
 
         return (
@@ -1494,14 +1518,14 @@ const ActiveSession: React.FC = () => {
               <div className="active-session-guide-modal-header">
                 <h3 className="active-session-guide-modal-title" id="active-session-express-modal-title" style={{ color: '#fbbf24' }}>
                   <span style={{ marginRight: '8px' }}>⚡</span>
-                  Modo Express & Bi-series
+                  Entrenar en Súper Serie
                 </h3>
                 <button className="active-session-guide-modal-close" onClick={() => setShowExpressModal(false)}>&times;</button>
               </div>
 
               <div className="active-session-guide-modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '14px', overflowY: 'auto', paddingRight: '4px' }}>
                 {/* 1. Contextual Block Actions for Current Exercise */}
-                {currentInBlock ? (
+                {currentInBlock && (
                   <div style={{ background: 'rgba(245, 158, 11, 0.08)', border: '1px solid rgba(245, 158, 11, 0.3)', borderRadius: '12px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                     <div style={{ fontWeight: 700, fontSize: '13px', color: '#fbbf24', display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <span>🔄</span> ¿Máquina Ocupada? Cambiar Compañero
@@ -1510,8 +1534,6 @@ const ActiveSession: React.FC = () => {
                       Estás entrenando <strong>{currentExercise.nombre}</strong> ({currentExercise.block_tag}) junto a: <em>{currentBlockPartners.map(p => p.nombre).join(', ') || 'compañero'}</em>.
                     </p>
                     {(() => {
-                      // Si el partner elegido anteriormente ya no pertenece a este bloque
-                      // (cambiaste de ejercicio, o ya fue reemplazado), cae al primero.
                       const effectivePartnerId =
                         (selectedSwapPartnerId && currentBlockPartners.some(p => p.id === selectedSwapPartnerId))
                           ? selectedSwapPartnerId
@@ -1560,7 +1582,7 @@ const ActiveSession: React.FC = () => {
                           <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>
                             Sustituir por otra máquina / ejercicio disponible:
                           </div>
-                          <div style={{ maxHeight: '140px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          <div style={{ maxHeight: '130px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                             {outsideExercises.map(otherEx => (
                               <button
                                 key={otherEx.id}
@@ -1617,51 +1639,137 @@ const ActiveSession: React.FC = () => {
                       ✕ Desvincular este bloque (Volver a series individuales)
                     </button>
                   </div>
-                ) : (
-                  <div style={{ background: 'rgba(0, 212, 255, 0.06)', border: '1px solid rgba(0, 212, 255, 0.25)', borderRadius: '12px', padding: '12px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                    <div style={{ fontWeight: 700, fontSize: '13px', color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span>🔗</span> Vincular {currentExercise.nombre} con otro ejercicio
-                    </div>
-                    <p style={{ margin: 0, fontSize: '11.5px', color: 'rgba(255,255,255,0.7)', lineHeight: 1.4 }}>
-                      Elige cualquier ejercicio de hoy para realizarlo en bi-serie alternada:
-                    </p>
-                    {otherExercises.length > 0 && (
-                      <div style={{ maxHeight: '150px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                        {otherExercises.map(otherEx => (
-                          <button
-                            key={otherEx.id}
-                            type="button"
-                            onClick={() => handleLinkWithExercise(otherEx.id)}
-                            style={{
-                              background: 'rgba(255,255,255,0.04)',
-                              border: '1px solid rgba(255,255,255,0.1)',
-                              borderRadius: '8px',
-                              padding: '8px 10px',
-                              textAlign: 'left',
-                              cursor: 'pointer',
-                              color: 'white',
-                              transition: 'all 0.15s ease',
-                            }}
-                            onMouseEnter={e => (e.currentTarget.style.background = 'rgba(0, 212, 255, 0.12)')}
-                            onMouseLeave={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.04)')}
-                          >
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <span style={{ fontWeight: 600, fontSize: '12px' }}>{otherEx.nombre}</span>
-                              <span style={{ fontSize: '9px', color: otherEx.block_tag ? '#fbbf24' : '#60a5fa', background: otherEx.block_tag ? 'rgba(251, 191, 36, 0.15)' : 'rgba(59, 130, 246, 0.15)', padding: '1px 6px', borderRadius: '4px' }}>
-                                {otherEx.block_tag ? `⚡ ${otherEx.block_tag}` : (otherEx.grupo || 'General')}
-                              </span>
-                            </div>
-                            <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', marginTop: '2px' }}>
-                              {otherEx.block_tag ? '⚡ Se moverá y unirá bloques' : `Moverá este ejercicio junto a ${currentExercise.nombre}`}
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    )}
-                  </div>
                 )}
 
-                {/* 2. Mass Express Mode Actions */}
+                {/* 2. Custom Súper Serie Builder (Selección flexible de 2, 3, 4, 5... ejercicios) */}
+                <div style={{ background: 'rgba(0, 212, 255, 0.06)', border: '1px solid rgba(0, 212, 255, 0.25)', borderRadius: '12px', padding: '14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <div style={{ fontWeight: 700, fontSize: '13px', color: '#38bdf8', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span>🔗</span> Encadenar en Súper Serie
+                    </span>
+                    <span style={{ fontSize: '10px', color: selectedChainIds.length >= 2 ? '#34d399' : '#fbbf24', background: 'rgba(0,0,0,0.35)', padding: '2px 8px', borderRadius: '6px', fontFamily: "'Orbitron', sans-serif" }}>
+                      {selectedChainIds.length} {selectedChainIds.length === 1 ? 'ejercicio' : 'ejercicios'}
+                      {selectedChainIds.length === 2 ? ' (Súper Serie)' : selectedChainIds.length === 3 ? ' (Tri-serie)' : selectedChainIds.length >= 4 ? ' (Circuito)' : ''}
+                    </span>
+                  </div>
+
+                  <p style={{ margin: 0, fontSize: '11.5px', color: 'rgba(255,255,255,0.7)', lineHeight: 1.4 }}>
+                    Marca los ejercicios del día que deseas alternar de forma continua (puedes encadenar 2, 3, 4 o los que necesites):
+                  </p>
+
+                  <div style={{ maxHeight: '180px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '6px', paddingRight: '2px' }}>
+                    {exercises.map(ex => {
+                      const isSelected = selectedChainIds.includes(ex.id);
+                      const isCurrent = ex.id === currentExercise.id;
+                      return (
+                        <label
+                          key={ex.id}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '10px',
+                            background: isSelected ? 'rgba(0, 212, 255, 0.12)' : 'rgba(255, 255, 255, 0.03)',
+                            border: `1px solid ${isSelected ? 'rgba(0, 212, 255, 0.4)' : 'rgba(255, 255, 255, 0.08)'}`,
+                            borderRadius: '8px',
+                            padding: '8px 10px',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => {
+                              setSelectedChainIds(prev =>
+                                prev.includes(ex.id) ? prev.filter(id => id !== ex.id) : [...prev, ex.id]
+                              );
+                            }}
+                            style={{ width: '16px', height: '16px', accentColor: '#00d4ff', cursor: 'pointer' }}
+                          />
+                          <div style={{ flex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <div>
+                              <span style={{ fontWeight: 600, fontSize: '12px', color: isSelected ? 'white' : 'rgba(255,255,255,0.75)' }}>
+                                {ex.nombre}
+                              </span>
+                              {isCurrent && (
+                                <span style={{ marginLeft: '6px', fontSize: '9px', color: '#fbbf24', background: 'rgba(245, 158, 11, 0.15)', padding: '1px 5px', borderRadius: '4px', fontWeight: 700 }}>
+                                  ACTUAL
+                                </span>
+                              )}
+                              {ex.block_tag && (
+                                <span style={{ marginLeft: '6px', fontSize: '9px', color: '#00d4ff', background: 'rgba(0, 212, 255, 0.15)', padding: '1px 5px', borderRadius: '4px', fontWeight: 700 }}>
+                                  ⚡ {ex.block_tag}
+                                </span>
+                              )}
+                            </div>
+                            <span style={{ fontSize: '9px', color: '#60a5fa', background: 'rgba(59, 130, 246, 0.15)', padding: '1px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>
+                              {ex.grupo || 'General'}
+                            </span>
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
+
+                  {/* Configuración de descansos para la Súper Serie */}
+                  <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', background: 'rgba(0,0,0,0.25)', padding: '8px 12px', borderRadius: '8px' }}>
+                    <label style={{ fontSize: '11px', color: 'rgba(255,255,255,0.75)', display: 'flex', alignItems: 'center', gap: '6px', flex: 1, minWidth: '130px' }}>
+                      ⚡ Transición:
+                      <input
+                        type="number"
+                        min={0}
+                        max={120}
+                        value={customTransitionRest}
+                        onChange={e => setCustomTransitionRest(Math.max(0, parseInt(e.target.value, 10) || 0))}
+                        style={{ width: '50px', padding: '3px 6px', background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(0,212,255,0.3)', borderRadius: '6px', color: '#38bdf8', fontWeight: 700, textAlign: 'center' }}
+                      />
+                      s
+                    </label>
+                    <label style={{ fontSize: '11px', color: 'rgba(255,255,255,0.75)', display: 'flex', alignItems: 'center', gap: '6px', flex: 1, minWidth: '130px' }}>
+                      ⏱️ Descanso ronda:
+                      <input
+                        type="number"
+                        min={0}
+                        max={300}
+                        value={customBlockRest}
+                        onChange={e => setCustomBlockRest(Math.max(0, parseInt(e.target.value, 10) || 0))}
+                        style={{ width: '55px', padding: '3px 6px', background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(0,212,255,0.3)', borderRadius: '6px', color: '#38bdf8', fontWeight: 700, textAlign: 'center' }}
+                      />
+                      s
+                    </label>
+                  </div>
+
+                  {/* Botón de acción para encadenar los seleccionados */}
+                  <button
+                    type="button"
+                    onClick={handleChainSelectedExercises}
+                    disabled={selectedChainIds.length < 2}
+                    style={{
+                      background: selectedChainIds.length >= 2 ? 'var(--theme-btn-gradient)' : 'rgba(255, 255, 255, 0.06)',
+                      border: 'none',
+                      color: selectedChainIds.length >= 2 ? 'white' : 'rgba(255, 255, 255, 0.35)',
+                      borderRadius: '8px',
+                      padding: '10px 14px',
+                      fontSize: '12px',
+                      fontFamily: "'Orbitron', sans-serif",
+                      fontWeight: 700,
+                      cursor: selectedChainIds.length >= 2 ? 'pointer' : 'not-allowed',
+                      boxShadow: selectedChainIds.length >= 2 ? '0 0 12px var(--theme-btn-glow)' : 'none',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    <span>⚡</span>
+                    {selectedChainIds.length < 2
+                      ? 'Selecciona al menos 2 ejercicios'
+                      : `Encadenar ${selectedChainIds.length} Ejercicios en Súper Serie`}
+                  </button>
+                </div>
+
+                {/* 3. Mass Quick Actions */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '2px' }}>
                   <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>
                     Acciones rápidas para toda la sesión:
@@ -1682,7 +1790,7 @@ const ActiveSession: React.FC = () => {
                     }}
                   >
                     <div style={{ fontWeight: 700, fontSize: '12.5px', color: '#fbbf24', marginBottom: '2px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span>⚡</span> Bi-series automáticas por parejas (Toda la sesión)
+                      <span>⚡</span> Súper Series automáticas por parejas (Toda la sesión)
                     </div>
                     <div style={{ fontSize: '10.5px', color: 'rgba(255,255,255,0.65)', lineHeight: 1.3 }}>
                       Agrupa todos los ejercicios de 2 en 2 (A1+A2, B1+B2) con descanso de 10s y 90s de ronda.
@@ -1727,7 +1835,7 @@ const ActiveSession: React.FC = () => {
                         fontWeight: 600,
                       }}
                     >
-                      ↩️ Desactivar todos los bloques (Volver a series individuales)
+                      ↩️ Desactivar todas las Súper Series (Volver a series individuales)
                     </button>
                   )}
                 </div>

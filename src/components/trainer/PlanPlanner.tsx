@@ -3088,9 +3088,9 @@ export const PlanPlanner: React.FC = () => {
                                     fontSize: '10px', fontWeight: 700, fontFamily: "'Orbitron', sans-serif",
                                     cursor: 'pointer', transition: 'all 0.2s', textTransform: 'uppercase', letterSpacing: '0.3px'
                                   }}
-                                  title="Agrupar en Bi-serie o Circuito"
+                                  title="Agrupar en Súper Serie o Circuito"
                                 >
-                                  🔗 {isBlocked ? `En Bloque (${tag})` : 'Bi-serie / Circuito'}
+                                  🔗 {isBlocked ? `En Súper Serie (${tag})` : 'Súper Serie / Circuito'}
                                 </button>
 
                                 {activeSupersetMenuExId === ex.id && (
@@ -3103,7 +3103,7 @@ export const PlanPlanner: React.FC = () => {
                                     boxShadow: '0 12px 40px rgba(0,0,0,0.6)'
                                   }}>
                                     <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.4)', fontWeight: 700, fontFamily: "'Orbitron', sans-serif", padding: '4px 8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                                      VINCULAR CON CUALQUIER EJERCICIO
+                                      VINCULAR EN SÚPER SERIE CON OTRO EJERCICIO
                                     </div>
                                     {day.exercises.filter(other => other.id !== ex.id).map(other => {
                                       const otherTag = blockTags[other.id];

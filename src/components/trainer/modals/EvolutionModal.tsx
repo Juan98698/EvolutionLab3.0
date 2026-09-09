@@ -487,10 +487,10 @@ const EvolutionModal: React.FC<EvolutionModalProps> = ({
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
                     <span style={{ fontSize: '11px', fontWeight: 700, color: '#eab308', fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      ⚡ AUDITORÍA DE MODO EXPRESS (ADAPTACIONES EN VIVO)
+                      ⚡ AUDITORÍA DE SÚPER SERIES (ADAPTACIONES EN VIVO)
                     </span>
                     <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)' }}>
-                      El atleta adaptó ejercicios en biseries/circuitos
+                      El atleta adaptó ejercicios en súper series / circuitos
                     </span>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -520,7 +520,7 @@ const EvolutionModal: React.FC<EvolutionModalProps> = ({
                             fontWeight: 700,
                             fontFamily: "'Orbitron', sans-serif"
                           }}>
-                            MODO EXPRESS
+                            SÚPER SERIE
                           </span>
                         </div>
                         {Array.isArray(sesion.express_blocks) && sesion.express_blocks.length > 0 ? (

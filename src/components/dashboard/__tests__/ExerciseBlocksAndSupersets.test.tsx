@@ -9,6 +9,7 @@ import {
   applyExpressMode,
   computeNextExerciseStep,
   linkExercisesWithReorder,
+  chainExercisesWithReorder,
   swapBlockPartner,
   cleanOrphanBlocks,
   BlockExerciseState,
@@ -26,7 +27,7 @@ describe('Exercise Block Utils & Superset Logic', () => {
       expect(getBlockType(6)).toBe('circuit');
 
       expect(getBlockTypeLabel(1)).toBe('Serie Estándar');
-      expect(getBlockTypeLabel(2)).toBe('Bi-serie / Súper Serie');
+      expect(getBlockTypeLabel(2)).toBe('Súper Serie');
       expect(getBlockTypeLabel(3)).toBe('Tri-serie');
       expect(getBlockTypeLabel(5)).toBe('Circuito');
     });
@@ -529,6 +530,85 @@ describe('Exercise Block Utils & Superset Logic', () => {
       expect(step.nextIdx).toBe(0);
       expect(step.timerSeconds).toBe(120);
       expect(step.timerType).toBe('standard');
+    });
+  });
+
+  describe('chainExercisesWithReorder (Encadenamiento flexible de 2, 3, 4, 5... ejercicios en Súper Serie)', () => {
+    it('encadena 3 ejercicios (tri-serie) contiguamente con los descansos asignados', () => {
+      const exercises: Exercise[] = [
+        { id: 'ex-1', nombre: 'Press Banca', variables: {} },
+        { id: 'ex-2', nombre: 'Sentadilla', variables: {} },
+        { id: 'ex-3', nombre: 'Remo con Barra', variables: {} },
+        { id: 'ex-4', nombre: 'Prensa', variables: {} },
+        { id: 'ex-5', nombre: 'Elevaciones Laterales', variables: {} },
+      ];
+
+      // Atleta en ex-1 decide encadenar ex-1, ex-3 y ex-5 (3 ejercicios)
+      const result = chainExercisesWithReorder(exercises, 'ex-1', ['ex-1', 'ex-3', 'ex-5'], 90, 15);
+
+      // Deben quedar contiguos en el orden de entrenamiento
+      expect(result.exercises.map(e => e.id)).toEqual(['ex-1', 'ex-3', 'ex-5', 'ex-2', 'ex-4']);
+
+      // Todos los seleccionados tienen el mismo block_id y descansos
+      const chained = result.exercises.slice(0, 3);
+      expect(chained.every(e => e.block_id === result.chainedBlockId)).toBe(true);
+      expect(chained.every(e => e.block_rest === 90 && e.transition_rest === 15)).toBe(true);
+
+      // Los no seleccionados quedan sin block_id
+      expect(result.exercises[3].block_id).toBeUndefined();
+      expect(result.exercises[4].block_id).toBeUndefined();
+
+      // computeBlockTags genera A1, A2, A3
+      const tags = computeBlockTags(result.exercises);
+      expect(tags['ex-1']).toBe('A1');
+      expect(tags['ex-3']).toBe('A2');
+      expect(tags['ex-5']).toBe('A3');
+    });
+
+    it('encadena 4 ejercicios (serie gigante / circuito) manteniendo la posición relativa', () => {
+      const exercises: Exercise[] = [
+        { id: 'e-1', nombre: 'E1', variables: {} },
+        { id: 'e-2', nombre: 'E2', variables: {} },
+        { id: 'e-3', nombre: 'E3', variables: {} },
+        { id: 'e-4', nombre: 'E4', variables: {} },
+        { id: 'e-5', nombre: 'E5', variables: {} },
+        { id: 'e-6', nombre: 'E6', variables: {} },
+      ];
+
+      const result = chainExercisesWithReorder(exercises, 'e-2', ['e-2', 'e-3', 'e-5', 'e-6']);
+      expect(result.exercises.map(e => e.id)).toEqual(['e-1', 'e-2', 'e-3', 'e-5', 'e-6', 'e-4']);
+
+      const tags = computeBlockTags(result.exercises);
+      expect(tags['e-2']).toBe('A1');
+      expect(tags['e-3']).toBe('A2');
+      expect(tags['e-5']).toBe('A3');
+      expect(tags['e-6']).toBe('A4');
+    });
+
+    it('retorna la lista inalterada si se seleccionan menos de 2 ejercicios', () => {
+      const exercises: Exercise[] = [
+        { id: 'e-1', nombre: 'E1', variables: {} },
+        { id: 'e-2', nombre: 'E2', variables: {} },
+      ];
+
+      const result = chainExercisesWithReorder(exercises, 'e-1', ['e-1']);
+      expect(result.exercises).toEqual(exercises);
+      expect(result.chainedBlockId).toBe('');
+    });
+
+    it('desvincula miembros antiguos que no fueron re-seleccionados en el bloque', () => {
+      const exercises: Exercise[] = [
+        { id: 'e-1', nombre: 'E1', block_id: 'b-old', variables: {} },
+        { id: 'e-2', nombre: 'E2', block_id: 'b-old', variables: {} },
+        { id: 'e-3', nombre: 'E3', block_id: 'b-old', variables: {} },
+        { id: 'e-4', nombre: 'E4', variables: {} },
+      ];
+
+      // El atleta desmarca e-3 y se queda solo con e-1 y e-2
+      const result = chainExercisesWithReorder(exercises, 'e-1', ['e-1', 'e-2']);
+      expect(result.exercises.find(e => e.id === 'e-3')?.block_id).toBeUndefined();
+      expect(result.exercises.find(e => e.id === 'e-1')?.block_id).toBe(result.chainedBlockId);
+      expect(result.exercises.find(e => e.id === 'e-2')?.block_id).toBe(result.chainedBlockId);
     });
   });
 });
