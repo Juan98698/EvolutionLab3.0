@@ -138,6 +138,12 @@ const ActiveSession: React.FC = () => {
   const [customBlockRest, setCustomBlockRest] = useState<number>(90);
   const [customTransitionRest, setCustomTransitionRest] = useState<number>(10);
 
+  // Ejercicios de un bloque cuyo `currentIdx` ya avanzó (round-robin) pero que
+  // acaban de terminar TODAS sus series — sin esto, su panel de feedback
+  // (RIR/Estímulo/Recuperación) nunca alcanza a mostrarse, porque el puntero
+  // ya se movió al compañero antes del siguiente render.
+  const [pendingFeedbackIndices, setPendingFeedbackIndices] = useState<number[]>([]);
+
   // ─── Rest timer ──────────────────────────────────────────────────────────
   const [restSecondsLeft, setRestSecondsLeft] = useState<number | null>(null);
   // Tipo del descanso en curso: 'transition' = cambio breve dentro de una
@@ -435,6 +441,13 @@ const ActiveSession: React.FC = () => {
         return copy;
       });
 
+      if (isCurrentlyDone) {
+        // Se deshizo una serie que ya estaba marcada: si ese ejercicio tenía
+        // un feedback pendiente flotante (por haber terminado dentro de una
+        // Súper Serie), ya no aplica — vuelve a tener series sin completar.
+        setPendingFeedbackIndices(prev => prev.filter(i => i !== exIdx));
+      }
+
       // Start rest timer only if marked as done (was not done previously)
       if (!isCurrentlyDone) {
         // Guardar descanso real medido
@@ -462,6 +475,16 @@ const ActiveSession: React.FC = () => {
 
         const step = computeNextExerciseStep(updatedExercisesState, exIdx, sIdx);
         startRestTimer(step.timerSeconds, step.timerType);
+
+        // Si este ejercicio (dentro de una Súper Serie) acaba de terminar
+        // TODAS sus series y el motor ya se va a mover a otro (compañero o
+        // el siguiente del día), su feedback quedaría inalcanzable — se
+        // guarda como pendiente para mostrarlo aparte, sin bloquear el avance.
+        const finishedAllSeries = updatedExercisesState[exIdx].series.every(s => s.done);
+        if (finishedAllSeries && updatedExercisesState[exIdx].block_id && step.nextIdx !== exIdx) {
+          setPendingFeedbackIndices(prev => (prev.includes(exIdx) ? prev : [...prev, exIdx]));
+        }
+
         if (step.nextIdx !== currentIdx) {
           setCurrentIdx(step.nextIdx);
         }
@@ -1475,6 +1498,89 @@ const ActiveSession: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* ── Feedback pendiente de ejercicios ya terminados dentro de una
+           Súper Serie, cuyo turno ya pasó (el motor round-robin avanzó al
+           compañero antes de que este panel alcanzara a mostrarse) ── */}
+      {pendingFeedbackIndices.filter(idx => idx !== currentIdx && exercises[idx]).map(idx => {
+        const ex = exercises[idx];
+        return (
+          <div key={ex.id} className="active-session-feedback" style={{ position: 'relative' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <p className="active-session-feedback-title" style={{ margin: 0 }}>
+                ¿Cómo fue {ex.nombre}{ex.block_tag ? ` (${ex.block_tag})` : ''}?
+              </p>
+              <button
+                onClick={() => setPendingFeedbackIndices(prev => prev.filter(i => i !== idx))}
+                style={{
+                  background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
+                  color: 'rgba(255,255,255,0.6)', borderRadius: '6px', padding: '3px 10px',
+                  fontSize: '10px', fontWeight: 600, cursor: 'pointer',
+                }}
+              >
+                ✓ Listo
+              </button>
+            </div>
+
+            {!ex.isFunctional && (
+              <div className="active-session-feedback-row">
+                <span className="active-session-feedback-label">RIR (Serie exigente)</span>
+                <div className="active-session-feedback-options">
+                  {([0, 1, 2, 3, 4] as const).map(val => {
+                    const label = val === 0 ? '0 (Fallo)' : val === 4 ? '4+' : `${val}`;
+                    const isSelected = (ex.rirPercibido ?? 2) === val;
+                    return (
+                      <button
+                        key={val}
+                        type="button"
+                        className={`active-session-feedback-btn${isSelected ? ' selected' : ''}`}
+                        onClick={() => {
+                          setExercises(prev => {
+                            const copy = [...prev];
+                            copy[idx] = { ...copy[idx], rirPercibido: val };
+                            return copy;
+                          });
+                        }}
+                      >
+                        {label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            <div className="active-session-feedback-row">
+              <span className="active-session-feedback-label">Estímulo</span>
+              <div className="active-session-feedback-options">
+                {(['none', 'good', 'extreme'] as const).map(opt => (
+                  <button
+                    key={opt}
+                    className={`active-session-feedback-btn${ex.feedback_estimulo === opt ? ' selected' : ''}`}
+                    onClick={() => handleFeedbackChange(idx, 'feedback_estimulo', opt)}
+                  >
+                    {opt === 'none' ? '😐 Ninguno' : opt === 'good' ? '💪 Bueno' : '🔥 Extremo'}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="active-session-feedback-row">
+              <span className="active-session-feedback-label">Recuperación (Al llegar)</span>
+              <div className="active-session-feedback-options">
+                {(['recovered', 'just_in_time', 'sore'] as const).map(opt => (
+                  <button
+                    key={opt}
+                    className={`active-session-feedback-btn${ex.feedback_recuperacion === opt ? ' selected' : ''}`}
+                    onClick={() => handleFeedbackChange(idx, 'feedback_recuperacion', opt)}
+                  >
+                    {opt === 'recovered' ? '✅ Llegué Recuperado' : opt === 'just_in_time' ? '⚡ Llegué Justo' : '😫 Llegué Agotado'}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        );
+      })}
 
       </ErrorBoundary>
 

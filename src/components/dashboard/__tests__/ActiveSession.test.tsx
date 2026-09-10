@@ -522,4 +522,61 @@ describe('ActiveSession Component', () => {
     expect(screen.queryByText(/Cambia ahora/)).toBeNull();
     expect(screen.getByText('Saltar')).toBeDefined();
   });
+
+  it('muestra el feedback (RIR/Estímulo/Recuperación) de un ejercicio de Súper Serie aunque el puntero ya haya avanzado al compañero', () => {
+    const supersetPlan = {
+      id: 'test-plan-feedback-superset',
+      trainingDays: [
+        {
+          name: 'Día 1: Antagonistas',
+          exercises: [
+            {
+              id: 'ex-press',
+              nombre: 'Press Banca',
+              grupo_muscular: 'Pecho',
+              // Solo 1 serie: se termina por completo con el primer check,
+              // mientras Remo (2 series) todavía tiene trabajo pendiente.
+              variables: { 'series de trabajo': '1', 'repeticiones': '10', 'peso': '60', 'descanso': '120' },
+              block_id: 'block_a',
+              block_rest: 90,
+              transition_rest: 15,
+            },
+            {
+              id: 'ex-remo',
+              nombre: 'Remo con Barra',
+              grupo_muscular: 'Espalda',
+              variables: { 'series de trabajo': '2', 'repeticiones': '10', 'peso': '50', 'descanso': '120' },
+              block_id: 'block_a',
+              block_rest: 90,
+              transition_rest: 15,
+            },
+          ],
+        },
+      ],
+    };
+    localStorage.setItem('pwa_client_plan', JSON.stringify(supersetPlan));
+
+    render(<ActiveSession />);
+
+    // Completar la única serie de Press Banca — termina el ejercicio, pero
+    // el motor round-robin debe saltar de inmediato a Remo (su compañero).
+    const checkSet1 = screen.getByLabelText('Marcar serie 1 como completada');
+    fireEvent.click(checkSet1);
+
+    // El ejercicio actual ya cambió a Remo con Barra...
+    expect(screen.getByText('Remo con Barra')).toBeDefined();
+
+    // ...pero el feedback de Press Banca (RIR incluido) debe seguir
+    // disponible como panel flotante, no perderse silenciosamente.
+    expect(screen.getByText(/Cómo fue Press Banca/)).toBeDefined();
+    expect(screen.getByText('0 (Fallo)')).toBeDefined();
+    expect(screen.getByText('4+')).toBeDefined();
+
+    // Reportar RIR = 4+ para Press Banca
+    fireEvent.click(screen.getByText('4+'));
+
+    // Descartar el panel una vez reportado — debe desaparecer
+    fireEvent.click(screen.getByText('✓ Listo'));
+    expect(screen.queryByText(/Cómo fue Press Banca/)).toBeNull();
+  });
 });
