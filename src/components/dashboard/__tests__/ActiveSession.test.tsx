@@ -579,4 +579,46 @@ describe('ActiveSession Component', () => {
     fireEvent.click(screen.getByText('✓ Listo'));
     expect(screen.queryByText(/Cómo fue Press Banca/)).toBeNull();
   });
+
+  it('oculta el botón "Ya estoy listo" en transiciones muy cortas (<5s) pero mantiene la etiqueta y el color', () => {
+    const shortTransitionPlan = {
+      id: 'test-plan-short-transition',
+      trainingDays: [
+        {
+          name: 'Día 1: Antagonistas',
+          exercises: [
+            {
+              id: 'ex-press',
+              nombre: 'Press Banca',
+              grupo_muscular: 'Pecho',
+              variables: { 'series de trabajo': '2', 'repeticiones': '10', 'peso': '60', 'descanso': '120' },
+              block_id: 'block_a',
+              block_rest: 90,
+              transition_rest: 3,
+            },
+            {
+              id: 'ex-remo',
+              nombre: 'Remo con Barra',
+              grupo_muscular: 'Espalda',
+              variables: { 'series de trabajo': '2', 'repeticiones': '10', 'peso': '50', 'descanso': '120' },
+              block_id: 'block_a',
+              block_rest: 90,
+              transition_rest: 3,
+            },
+          ],
+        },
+      ],
+    };
+    localStorage.setItem('pwa_client_plan', JSON.stringify(shortTransitionPlan));
+
+    render(<ActiveSession />);
+
+    const checkSet1 = screen.getByLabelText('Marcar serie 1 como completada');
+    fireEvent.click(checkSet1);
+
+    // La etiqueta sigue mostrando la transición...
+    expect(screen.getByText(/Cambia ahora/)).toBeDefined();
+    // ...pero no hay botón, porque 3s no alcanza para leerlo y tocarlo a tiempo
+    expect(screen.queryByText('Ya estoy listo →')).toBeNull();
+  });
 });

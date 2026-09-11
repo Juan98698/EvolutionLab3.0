@@ -308,6 +308,32 @@ const ActiveSession: React.FC = () => {
         navigator.vibrate(type === 'transition' ? [60] : [150, 80, 150]);
       } catch (e) {}
     }
+
+    if (type === 'transition') {
+      // La Vibration API no existe en Safari/iOS (decisión deliberada de
+      // Apple, no un bug) — así que la vibración de arriba no le llega a
+      // buena parte de los atletas con iPhone. Este tono corto y suave (muy
+      // distinto de la fanfarria de 4 notas del descanso completo) es la
+      // señal real de "cambia ahora" para quien no sienta la vibración.
+      try {
+        const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+        if (!AudioCtx) return;
+        const ctx = new AudioCtx();
+        const now = ctx.currentTime;
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(660, now);
+        gain.gain.setValueAtTime(0.25, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.15);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(now);
+        osc.stop(now + 0.15);
+      } catch (e) {
+        console.warn('No se pudo reproducir el tono de transición:', e);
+      }
+    }
   };
 
   const playRestTimerEndAlert = (type: 'transition' | 'round' | 'standard' = 'standard') => {
@@ -1305,6 +1331,11 @@ const ActiveSession: React.FC = () => {
           timerLabel = '⏱ Descanso de ronda';
         }
 
+        // Con menos de 5s no da tiempo real de leer el botón antes de que
+        // el timer termine solo — mejor no mostrarlo que mostrar algo que
+        // no alcanza a usarse (solo color + etiqueta bastan aquí).
+        const showSkipButton = !isTransition || restTotalSeconds >= 5;
+
         return (
           <div
             className="active-session-rest-timer"
@@ -1356,32 +1387,34 @@ const ActiveSession: React.FC = () => {
             >
               {timerLabel}: {Math.floor(restSecondsLeft / 60)}:{String(restSecondsLeft % 60).padStart(2, '0')}
             </span>
-            <button
-              className="active-session-rest-skip"
-              style={
-                isTransition
-                  ? {
-                      background: '#fbbf24',
-                      color: '#0f172a',
-                      border: '1px solid #f59e0b',
-                      fontWeight: 900,
-                      boxShadow: '0 0 12px rgba(251, 191, 36, 0.4)',
-                    }
-                  : isRound
-                  ? {
-                      background: 'rgba(0, 212, 255, 0.18)',
-                      color: '#00d4ff',
-                      border: '1px solid rgba(0, 212, 255, 0.5)',
-                    }
-                  : undefined
-              }
-              onClick={() => {
-                if (restIntervalRef.current) clearInterval(restIntervalRef.current);
-                setRestSecondsLeft(null);
-              }}
-            >
-              {isTransition ? 'Ya estoy listo →' : 'Saltar'}
-            </button>
+            {showSkipButton && (
+              <button
+                className="active-session-rest-skip"
+                style={
+                  isTransition
+                    ? {
+                        background: '#fbbf24',
+                        color: '#0f172a',
+                        border: '1px solid #f59e0b',
+                        fontWeight: 900,
+                        boxShadow: '0 0 12px rgba(251, 191, 36, 0.4)',
+                      }
+                    : isRound
+                    ? {
+                        background: 'rgba(0, 212, 255, 0.18)',
+                        color: '#00d4ff',
+                        border: '1px solid rgba(0, 212, 255, 0.5)',
+                      }
+                    : undefined
+                }
+                onClick={() => {
+                  if (restIntervalRef.current) clearInterval(restIntervalRef.current);
+                  setRestSecondsLeft(null);
+                }}
+              >
+                {isTransition ? 'Ya estoy listo →' : 'Saltar'}
+              </button>
+            )}
           </div>
         );
       })()}
