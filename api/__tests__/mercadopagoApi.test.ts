@@ -1,7 +1,16 @@
 // @vitest-environment node
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import crypto from 'crypto';
 import preferenceHandler from '../create-mercadopago-preference';
 import webhookHandler from '../mercadopago-webhook';
+
+/** Firma un payload de webhook igual que lo hace MercadoPago, para los tests. */
+function signWebhook(paymentId: string, secret: string, requestId = 'req-abc') {
+  const ts = Math.floor(Date.now() / 1000).toString();
+  const manifest = `id:${paymentId};request-id:${requestId};ts:${ts};`;
+  const v1 = crypto.createHmac('sha256', secret).update(manifest).digest('hex');
+  return { 'x-signature': `ts=${ts},v1=${v1}`, 'x-request-id': requestId };
+}
 
 // Mock Supabase
 vi.mock('@supabase/supabase-js', () => ({
@@ -97,9 +106,34 @@ describe('MercadoPago API Security & Webhook Tests', () => {
 
       global.fetch = globalFetch;
     });
+
+    it('permite CORS solo para orígenes en la allowlist y bloquea orígenes no autorizados', async () => {
+      // Origen autorizado
+      const { req: reqAllowed, res: resAllowed } = mockReqRes(
+        'OPTIONS',
+        { origin: 'https://evolution-lab.vercel.app' }
+      );
+      await preferenceHandler(reqAllowed, resAllowed);
+      expect(resAllowed.headers['Access-Control-Allow-Origin']).toBe('https://evolution-lab.vercel.app');
+      expect(resAllowed.headers['Access-Control-Allow-Credentials']).toBe('true');
+
+      // Origen no autorizado
+      const { req: reqDenied, res: resDenied } = mockReqRes(
+        'OPTIONS',
+        { origin: 'https://evil-site.com' }
+      );
+      await preferenceHandler(reqDenied, resDenied);
+      expect(resDenied.headers['Access-Control-Allow-Origin']).toBeUndefined();
+      expect(resDenied.headers['Access-Control-Allow-Credentials']).toBeUndefined();
+    });
   });
 
   describe('api/mercadopago-webhook', () => {
+    beforeEach(() => {
+      process.env.MERCADOPAGO_WEBHOOK_SECRET = 'test-webhook-secret';
+      process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-role-mock';
+    });
+
     it('calcula la expiración a partir de payment.date_approved para evitar extensión en reintentos', async () => {
       const approvalDateStr = '2026-08-01T10:00:00.000Z';
       const globalFetch = global.fetch;
@@ -112,15 +146,40 @@ describe('MercadoPago API Security & Webhook Tests', () => {
         })
       }) as any;
 
-      process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-role-mock';
-
-      const { req, res } = mockReqRes('POST', {}, { type: 'payment', data: { id: 'pay_999' } });
+      const headers = signWebhook('pay_999', 'test-webhook-secret');
+      const { req, res } = mockReqRes('POST', headers, { type: 'payment', data: { id: 'pay_999' } });
       await webhookHandler(req, res);
 
       expect(res.statusCode).toBe(200);
       expect(res.responseData.updated).toBe(true);
 
       global.fetch = globalFetch;
+    });
+
+    it('rechaza con 500 si MERCADOPAGO_WEBHOOK_SECRET no está configurado (falla cerrado, no abierto)', async () => {
+      delete process.env.MERCADOPAGO_WEBHOOK_SECRET;
+
+      const { req, res } = mockReqRes('POST', {}, { type: 'payment', data: { id: 'pay_999' } });
+      await webhookHandler(req, res);
+
+      expect(res.statusCode).toBe(500);
+    });
+
+    it('rechaza con 401 si falta la cabecera x-signature', async () => {
+      const { req, res } = mockReqRes('POST', {}, { type: 'payment', data: { id: 'pay_999' } });
+      await webhookHandler(req, res);
+
+      expect(res.statusCode).toBe(401);
+      expect(res.responseData.error).toMatch(/Missing webhook signature/i);
+    });
+
+    it('rechaza con 401 si la firma x-signature es inválida', async () => {
+      const badHeaders = { 'x-signature': 'ts=1234567890,v1=firma-falsa', 'x-request-id': 'req-abc' };
+      const { req, res } = mockReqRes('POST', badHeaders, { type: 'payment', data: { id: 'pay_999' } });
+      await webhookHandler(req, res);
+
+      expect(res.statusCode).toBe(401);
+      expect(res.responseData.error).toMatch(/Invalid webhook signature/i);
     });
   });
 });

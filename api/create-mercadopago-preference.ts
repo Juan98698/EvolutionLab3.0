@@ -1,11 +1,34 @@
-import { VercelRequest, VercelResponse } from '@vercel/node';
+import type { VercelRequest, VercelResponse } from './_lib/types';
 import { createClient } from '@supabase/supabase-js';
 
+// Allowlist de orígenes autorizados a hacer requests con credenciales.
+// Antes: se reflejaba cualquier `Origin` recibido junto con
+// `Access-Control-Allow-Credentials: true`, lo que en la práctica permitía
+// requests credenciales desde cualquier dominio. Ahora: solo se permite el
+// dominio de producción, los previews de Vercel del propio proyecto y
+// localhost en desarrollo.
+// ⚠️ AJUSTAR: confirmar el/los dominio(s) real(es) de producción (p.ej. si
+// usan un dominio propio como evolutionlab.fit además de vercel.app) y
+// agregarlos acá o vía la env var EXTRA_ALLOWED_ORIGINS (coma-separado).
+const PRODUCTION_ORIGIN = process.env.APP_PRODUCTION_ORIGIN || 'https://evolution-lab.vercel.app';
+
+function isAllowedOrigin(origin: string | undefined): boolean {
+  if (!origin) return false;
+  if (origin === PRODUCTION_ORIGIN) return true;
+  // Previews y dominios de Vercel del proyecto (p.ej. evolution-lab3-0.vercel.app o evolution-lab3-0-<hash>.vercel.app)
+  if (/^https:\/\/(evolutionlab3-0|evolution-lab|evolution-lab-3)(-[a-z0-9-]+)?\.vercel\.app$/i.test(origin)) return true;
+  if (process.env.NODE_ENV !== 'production' && /^https?:\/\/localhost(:\d+)?$/i.test(origin)) return true;
+  const extra = (process.env.EXTRA_ALLOWED_ORIGINS || '').split(',').map((s) => s.trim()).filter(Boolean);
+  return extra.includes(origin);
+}
+
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  // Enable CORS securely
-  const origin = req.headers.origin || '*';
-  res.setHeader('Access-Control-Allow-Credentials', 'true');
-  res.setHeader('Access-Control-Allow-Origin', origin);
+  // Enable CORS securely — allowlist, nunca reflejar el origin recibido.
+  const origin = req.headers.origin;
+  if (isAllowedOrigin(origin)) {
+    res.setHeader('Access-Control-Allow-Credentials', 'true');
+    res.setHeader('Access-Control-Allow-Origin', origin as string);
+  }
   res.setHeader('Access-Control-Allow-Methods', 'GET,OPTIONS,PATCH,DELETE,POST,PUT');
   res.setHeader(
     'Access-Control-Allow-Headers',
@@ -103,13 +126,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       !process.env.VERCEL_ENV ||
       process.env.VERCEL_ENV === 'development';
 
-    // Determine client origin robustly
-    let clientOrigin = req.headers.origin;
+    // Determine client origin robustly — sanitizado con isAllowedOrigin para evitar open redirects
+    let clientOrigin = isAllowedOrigin(req.headers.origin) ? req.headers.origin : '';
     if (!clientOrigin || clientOrigin === 'null') {
-      clientOrigin = host ? `${protocol}://${host}` : '';
+      const candidateOrigin = host ? `${protocol}://${host}` : '';
+      clientOrigin = isAllowedOrigin(candidateOrigin) ? candidateOrigin : '';
     }
     if (!clientOrigin) {
-      clientOrigin = isLocal ? 'http://localhost:3000' : 'https://evolution-lab.vercel.app';
+      clientOrigin = isLocal ? 'http://localhost:3000' : PRODUCTION_ORIGIN;
     }
 
     const cleanOrigin = clientOrigin.endsWith('/') ? clientOrigin.slice(0, -1) : clientOrigin;

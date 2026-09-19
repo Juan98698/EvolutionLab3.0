@@ -1,4 +1,4 @@
-import { VercelRequest, VercelResponse } from '@vercel/node';
+import type { VercelRequest, VercelResponse } from './_lib/types';
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
 
@@ -38,35 +38,54 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(200).json({ received: true, ignored: true });
     }
 
-    // 1b. Validación HMAC SHA-256 de cabecera x-signature (Defensa en profundidad)
+    // 1b. Validación HMAC SHA-256 de cabecera x-signature — FALLA CERRADO.
+    // Antes: si MERCADOPAGO_WEBHOOK_SECRET no estaba configurado, o si el
+    // parseo de la firma fallaba, el código seguía de largo sin rechazar la
+    // request (fail-open). Ahora: sin secreto configurado, sin cabecera de
+    // firma, o con firma inválida ⇒ se rechaza con 401 siempre (o 500 si falta el secreto).
     const webhookSecret = process.env.MERCADOPAGO_WEBHOOK_SECRET;
     const xSignature = (req.headers['x-signature'] || req.headers['X-Signature']) as string;
     const xRequestId = (req.headers['x-request-id'] || req.headers['X-Request-Id']) as string;
 
-    if (webhookSecret && xSignature) {
-      try {
-        const parts = xSignature.split(',');
-        let ts = '';
-        let v1 = '';
-        for (const part of parts) {
-          const [key, val] = part.split('=').map((s) => s.trim());
-          if (key === 'ts') ts = val;
-          if (key === 'v1') v1 = val;
-        }
-
-        if (ts && v1) {
-          const manifest = `id:${paymentId};request-id:${xRequestId || ''};ts:${ts};`;
-          const hmac = crypto.createHmac('sha256', webhookSecret).update(manifest).digest('hex');
-          if (hmac !== v1) {
-            console.error('⚠️ Webhook MercadoPago: Firma x-signature inválida.');
-            return res.status(401).json({ error: 'Invalid webhook signature' });
-          }
-          console.log('✅ Webhook MercadoPago: Firma x-signature verificada con éxito.');
-        }
-      } catch (err: any) {
-        console.warn('⚠️ Webhook: Error al verificar firma x-signature:', err.message);
-      }
+    if (!webhookSecret) {
+      console.error('⚠️ Webhook: Environment variable MERCADOPAGO_WEBHOOK_SECRET is not configured.');
+      return res.status(500).json({ error: 'Webhook signature validation is not configured on the server.' });
     }
+
+    if (!xSignature) {
+      console.error('⚠️ Webhook MercadoPago: Falta cabecera x-signature.');
+      return res.status(401).json({ error: 'Missing webhook signature' });
+    }
+
+    let signatureValid = false;
+    try {
+      const parts = xSignature.split(',');
+      let ts = '';
+      let v1 = '';
+      for (const part of parts) {
+        const [key, val] = part.split('=').map((s) => s.trim());
+        if (key === 'ts') ts = val;
+        if (key === 'v1') v1 = val;
+      }
+
+      if (ts && v1) {
+        const manifest = `id:${paymentId};request-id:${xRequestId || ''};ts:${ts};`;
+        const hmac = crypto.createHmac('sha256', webhookSecret).update(manifest).digest('hex');
+        const hmacBuf = Buffer.from(hmac);
+        const v1Buf = Buffer.from(v1);
+        signatureValid = hmacBuf.length === v1Buf.length && crypto.timingSafeEqual(hmacBuf, v1Buf);
+      }
+    } catch (err: any) {
+      console.warn('⚠️ Webhook: Error al parsear/verificar firma x-signature:', err.message);
+      signatureValid = false;
+    }
+
+    if (!signatureValid) {
+      console.error('⚠️ Webhook MercadoPago: Firma x-signature inválida o no verificable.');
+      return res.status(401).json({ error: 'Invalid webhook signature' });
+    }
+
+    console.log('✅ Webhook MercadoPago: Firma x-signature verificada con éxito.');
 
     console.log(`🔔 MercadoPago Webhook: Verifying payment ID: ${paymentId}`);
 
