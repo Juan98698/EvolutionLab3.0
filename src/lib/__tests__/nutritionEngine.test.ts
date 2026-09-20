@@ -1,5 +1,61 @@
 import { describe, it, expect, vi } from 'vitest';
 import 'fake-indexeddb/auto';
+
+// Mock de Supabase para evitar llamadas de red y timeouts en pruebas
+const mockCustomFoodsDb: any[] = [];
+vi.mock('../supabaseClient', () => ({
+  supabase: {
+    auth: {
+      getUser: vi.fn().mockResolvedValue({
+        data: { user: { id: 'trainer-uuid-test-123', email: 'trainer@evolutionlab.test' } },
+        error: null,
+      }),
+    },
+    from: vi.fn((table: string) => ({
+      select: vi.fn().mockImplementation(() => ({
+        order: vi.fn().mockImplementation(() => {
+          if (table === 'alimentos_personalizados') {
+            return Promise.resolve({ data: [...mockCustomFoodsDb], error: null });
+          }
+          return Promise.resolve({ data: [], error: null });
+        }),
+        maybeSingle: vi.fn().mockImplementation(() => {
+          return Promise.resolve({
+            data: mockCustomFoodsDb[mockCustomFoodsDb.length - 1] || null,
+            error: null,
+          });
+        }),
+      })),
+      upsert: vi.fn().mockImplementation((payload: any) => {
+        const row = {
+          id: payload.id || '99999999-9999-4999-8999-999999999999',
+          ...payload,
+        };
+        const idx = mockCustomFoodsDb.findIndex((f) => f.id === row.id);
+        if (idx >= 0) {
+          mockCustomFoodsDb[idx] = row;
+        } else {
+          mockCustomFoodsDb.push(row);
+        }
+        return {
+          select: vi.fn().mockReturnValue({
+            maybeSingle: vi.fn().mockResolvedValue({ data: row, error: null }),
+          }),
+        };
+      }),
+      delete: vi.fn().mockReturnValue({
+        eq: vi.fn().mockImplementation((col: string, val: any) => {
+          if (col === 'id') {
+            const idx = mockCustomFoodsDb.findIndex((f) => String(f.id) === String(val));
+            if (idx >= 0) mockCustomFoodsDb.splice(idx, 1);
+          }
+          return Promise.resolve({ data: null, error: null });
+        }),
+      }),
+    })),
+  },
+}));
+
 import {
   calculatePortionMacros,
   calculateMealTotals,

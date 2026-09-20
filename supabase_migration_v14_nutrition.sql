@@ -281,8 +281,23 @@ CREATE POLICY "Gestionar alimentos personalizados propios"
 -- ----------------------------------------------------------------------------
 -- 9. PERMISOS DE TABLA (GRANT) PARA ROLES DE SUPABASE
 -- ----------------------------------------------------------------------------
-GRANT ALL ON TABLE public.planes_nutricionales TO authenticated, service_role;
-GRANT ALL ON TABLE public.plantillas_nutricionales TO authenticated, service_role;
-GRANT ALL ON TABLE public.alimentos_personalizados TO authenticated, service_role;
-GRANT ALL ON TABLE public.valoraciones_antropometricas TO authenticated, service_role;
+-- REGLA CRÍTICA DE SEGURIDAD EN POSTGRESQL:
+-- RLS NO aplica sobre sentencias TRUNCATE (limitación por diseño de Postgres).
+-- Otorgar 'ALL' a 'authenticated' permitiría a cualquier usuario ejecutar TRUNCATE
+-- y vaciar todas las valoraciones o planes ajenos ignorando el RLS.
+-- Por ello, revocamos TRUNCATE explícitamente y solo otorgamos SELECT, INSERT, UPDATE, DELETE.
+
+REVOKE ALL ON TABLE public.planes_nutricionales FROM authenticated;
+REVOKE ALL ON TABLE public.plantillas_nutricionales FROM authenticated;
+REVOKE ALL ON TABLE public.alimentos_personalizados FROM authenticated;
+REVOKE ALL ON TABLE public.valoraciones_antropometricas FROM authenticated;
+
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.planes_nutricionales TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.plantillas_nutricionales TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.alimentos_personalizados TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON TABLE public.valoraciones_antropometricas TO authenticated;
+
+-- service_role es el rol administrativo backend de confianza de Supabase
+GRANT ALL ON TABLE public.planes_nutricionales, public.plantillas_nutricionales, public.alimentos_personalizados, public.valoraciones_antropometricas TO service_role;
+
 
