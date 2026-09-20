@@ -16,18 +16,26 @@ VALUES
   ('11111111-1111-1111-1111-111111111111', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'entrenador-a-test@evolutionlab.test', crypt('test', gen_salt('bf')), now(), now(), now(), '{}', '{}'),
   ('22222222-2222-2222-2222-222222222222', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'entrenador-b-test@evolutionlab.test', crypt('test', gen_salt('bf')), now(), now(), now(), '{}', '{}'),
   ('33333333-3333-3333-3333-333333333333', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'cliente-a-test@evolutionlab.test', crypt('test', gen_salt('bf')), now(), now(), now(), '{}', '{}'),
-  ('44444444-4444-4444-4444-444444444444', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'cliente-b-test@evolutionlab.test', crypt('test', gen_salt('bf')), now(), now(), now(), '{}', '{}');
+  ('44444444-4444-4444-4444-444444444444', '00000000-0000-0000-0000-000000000000', 'authenticated', 'authenticated', 'cliente-b-test@evolutionlab.test', crypt('test', gen_salt('bf')), now(), now(), now(), '{}', '{}')
+ON CONFLICT (id) DO NOTHING;
 
--- 2. Sembrar public.profiles (cumpliendo la Foreign Key con auth.users)
+-- 2. Sembrar o actualizar public.profiles (el trigger de Supabase handle_new_user ya pudo haber auto-creado la fila)
 INSERT INTO public.profiles (id, email, nombre, rol, entrenador_id, vigencia_dias) VALUES
   ('11111111-1111-1111-1111-111111111111', 'entrenador-a-test@evolutionlab.test', 'Entrenador A', 'entrenador', NULL, 30),
   ('22222222-2222-2222-2222-222222222222', 'entrenador-b-test@evolutionlab.test', 'Entrenador B', 'entrenador', NULL, 30),
   ('33333333-3333-3333-3333-333333333333', 'cliente-a-test@evolutionlab.test', 'Cliente A (de Entrenador A)', 'cliente', '11111111-1111-1111-1111-111111111111', 30),
-  ('44444444-4444-4444-4444-444444444444', 'cliente-b-test@evolutionlab.test', 'Cliente B (de Entrenador B)', 'cliente', '22222222-2222-2222-2222-222222222222', 30);
+  ('44444444-4444-4444-4444-444444444444', 'cliente-b-test@evolutionlab.test', 'Cliente B (de Entrenador B)', 'cliente', '22222222-2222-2222-2222-222222222222', 30)
+ON CONFLICT (id) DO UPDATE 
+SET email = EXCLUDED.email,
+    nombre = EXCLUDED.nombre,
+    rol = EXCLUDED.rol,
+    entrenador_id = EXCLUDED.entrenador_id,
+    vigencia_dias = EXCLUDED.vigencia_dias;
 
 -- Sembrar un plan legítimo para Cliente B (hecho por Entrenador B)
 INSERT INTO public.planes_nutricionales (id, cliente_id, entrenador_id, nombre, target_calorias)
-VALUES ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', '44444444-4444-4444-4444-444444444444', '22222222-2222-2222-2222-222222222222', 'Dieta de Cliente B', 2200);
+VALUES ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', '44444444-4444-4444-4444-444444444444', '22222222-2222-2222-2222-222222222222', 'Dieta de Cliente B', 2200)
+ON CONFLICT (id) DO UPDATE SET target_calorias = EXCLUDED.target_calorias;
 
 -- 3. CAMBIAR A ROL AUTENTICADO COMO ENTRENADOR A (RLS ACTIVADO)
 SET LOCAL ROLE authenticated;
@@ -77,7 +85,8 @@ END $$;
 
 -- TEST 4: Entrenador A inserta legítimamente para Cliente A (Debe funcionar)
 INSERT INTO public.planes_nutricionales (id, cliente_id, nombre, target_calorias)
-VALUES ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '33333333-3333-3333-3333-333333333333', 'Dieta Legítima Cliente A', 2400);
+VALUES ('aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa', '33333333-3333-3333-3333-333333333333', 'Dieta Legítima Cliente A', 2400)
+ON CONFLICT (id) DO UPDATE SET target_calorias = EXCLUDED.target_calorias;
 
 -- TEST 5: Verificar que el trigger pobló entrenador_id automáticamente
 DO $$
