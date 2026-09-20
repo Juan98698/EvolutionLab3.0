@@ -277,3 +277,12 @@ CREATE POLICY "Gestionar alimentos personalizados propios"
   TO authenticated
   USING (auth.uid() = creador_id)
   WITH CHECK (auth.uid() = creador_id);
+
+-- ----------------------------------------------------------------------------
+-- 9. PERMISOS DE TABLA (GRANT) PARA ROLES DE SUPABASE
+-- ----------------------------------------------------------------------------
+GRANT ALL ON TABLE public.planes_nutricionales TO authenticated, service_role;
+GRANT ALL ON TABLE public.plantillas_nutricionales TO authenticated, service_role;
+GRANT ALL ON TABLE public.alimentos_personalizados TO authenticated, service_role;
+GRANT ALL ON TABLE public.valoraciones_antropometricas TO authenticated, service_role;
+

@@ -37,6 +37,10 @@ INSERT INTO public.planes_nutricionales (id, cliente_id, entrenador_id, nombre, 
 VALUES ('bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb', '44444444-4444-4444-4444-444444444444', '22222222-2222-2222-2222-222222222222', 'Dieta de Cliente B', 2200)
 ON CONFLICT (id) DO UPDATE SET target_calorias = EXCLUDED.target_calorias;
 
+-- Asegurar permisos de tabla para el rol authenticated antes de bajar privilegios
+GRANT ALL ON TABLE public.planes_nutricionales TO authenticated;
+GRANT ALL ON TABLE public.profiles TO authenticated;
+
 -- 3. CAMBIAR A ROL AUTENTICADO COMO ENTRENADOR A (RLS ACTIVADO)
 SET LOCAL ROLE authenticated;
 SET LOCAL "request.jwt.claims" = '{"sub":"11111111-1111-1111-1111-111111111111","role":"authenticated"}';
