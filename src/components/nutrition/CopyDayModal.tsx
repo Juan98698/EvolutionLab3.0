@@ -44,6 +44,7 @@ export const CopyDayModal: React.FC<CopyDayModalProps> = ({
   };
 
   return (
+    // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- backdrop de modal
     <div
       style={{
         position: 'fixed',
@@ -59,7 +60,7 @@ export const CopyDayModal: React.FC<CopyDayModalProps> = ({
         zIndex: 10000,
         padding: '16px',
       }}
-      onClick={onClose}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div
         style={{
@@ -73,7 +74,6 @@ export const CopyDayModal: React.FC<CopyDayModalProps> = ({
           color: '#ffffff',
           fontFamily: "'Inter', sans-serif",
         }}
-        onClick={(e) => e.stopPropagation()}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <h3

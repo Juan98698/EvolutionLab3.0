@@ -37,20 +37,23 @@ function getDb(): Promise<IDBPDatabase> {
   return dbPromise;
 }
 
-/** Lee un valor por su key. Devuelve `undefined` si no existe. */
+/** Lee un valor por su key. Devuelve `undefined` si no existe o si IndexedDB no está disponible. */
 export async function idbGet<T>(key: string): Promise<T | undefined> {
+  if (!isIndexedDbAvailable()) return undefined;
   const db = await getDb();
   return db.get(STORE_NAME, key);
 }
 
 /** Guarda un valor por su key (lo sobrescribe si ya existía). */
 export async function idbSet<T>(key: string, value: T): Promise<void> {
+  if (!isIndexedDbAvailable()) return;
   const db = await getDb();
   await db.put(STORE_NAME, value, key);
 }
 
 /** Borra un valor por su key. No falla si la key no existía. */
 export async function idbDelete(key: string): Promise<void> {
+  if (!isIndexedDbAvailable()) return;
   const db = await getDb();
   await db.delete(STORE_NAME, key);
 }

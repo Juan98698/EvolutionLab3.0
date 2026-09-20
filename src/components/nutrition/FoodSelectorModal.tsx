@@ -203,6 +203,7 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
   if (!isOpen) return null;
 
   return (
+    // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- backdrop de modal
     <div
       style={{
         position: 'fixed',
@@ -218,7 +219,7 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
         zIndex: 10001,
         padding: '16px',
       }}
-      onClick={onClose}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div
         style={{
@@ -235,7 +236,6 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
           fontFamily: "'Inter', sans-serif",
           overflow: 'hidden',
         }}
-        onClick={(e) => e.stopPropagation()}
       >
         {/* CABECERA */}
         <div
@@ -408,7 +408,15 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
                     return (
                       <div
                         key={f.id}
+                        role="button"
+                        tabIndex={0}
                         onClick={() => handleSelectFood(f)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            handleSelectFood(f);
+                          }
+                        }}
                         style={{
                           display: 'flex',
                           justifyContent: 'space-between',
@@ -597,7 +605,15 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
                     return (
                       <div
                         key={f.id}
+                        role="button"
+                        tabIndex={0}
                         onClick={() => handleSelectFood(f)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            handleSelectFood(f);
+                          }
+                        }}
                         style={{
                           display: 'flex',
                           justifyContent: 'space-between',

@@ -21,7 +21,8 @@ import {
 import { supabase } from '../../lib/supabaseClient';
 import FoodSelectorModal from './FoodSelectorModal';
 import CopyDayModal from './CopyDayModal';
-import NutritionReportPDF, { generateNutritionPDF } from './NutritionReportPDF';
+import NutritionReportPDF from './NutritionReportPDF';
+import { generateNutritionPDF } from '../../lib/nutritionPdf';
 
 interface NutritionPlannerModalProps {
   isOpen: boolean;
@@ -525,6 +526,7 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
   if (!isOpen) return null;
 
   return (
+    // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- backdrop de modal
     <div
       style={{
         position: 'fixed',
@@ -540,7 +542,7 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
         zIndex: 9999,
         padding: '12px',
       }}
-      onClick={onClose}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div
         style={{
@@ -557,7 +559,6 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
           fontFamily: "'Inter', sans-serif",
           overflow: 'hidden',
         }}
-        onClick={(e) => e.stopPropagation()}
       >
         {/* BARRA SUPERIOR: DATOS Y METAS NUTRICIONALES */}
         <div

@@ -9,7 +9,8 @@ import {
   DAYS_OF_WEEK,
 } from '../../lib/nutritionEngine';
 import { supabase } from '../../lib/supabaseClient';
-import { generateNutritionPDF, NutritionReportPDF } from '../nutrition/NutritionReportPDF';
+import { NutritionReportPDF } from '../nutrition/NutritionReportPDF';
+import { generateNutritionPDF } from '../../lib/nutritionPdf';
 import { useSupabase } from '../../context/SupabaseContext';
 
 interface AthleteNutritionCardProps {
@@ -395,13 +396,16 @@ export const AthleteNutritionCard: React.FC<AthleteNutritionCardProps> = ({ clie
                     {meal.foods.map((food, fIdx) => {
                       const isDone = Boolean(food.completado);
                       return (
-                        <div
+                        <button
+                          type="button"
                           key={food.id || fIdx}
                           onClick={() => handleToggleFoodComplete(mIdx, fIdx)}
                           style={{
                             display: 'flex',
                             alignItems: 'center',
                             justifyContent: 'space-between',
+                            width: '100%',
+                            textAlign: 'left',
                             padding: '6px 10px',
                             borderRadius: '6px',
                             background: isDone ? 'rgba(16, 185, 129, 0.08)' : 'rgba(0, 0, 0, 0.2)',
@@ -429,7 +433,7 @@ export const AthleteNutritionCard: React.FC<AthleteNutritionCardProps> = ({ clie
                           <span style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(255,255,255,0.8)' }}>
                             {food.cantidad} {food.unidad} • {food.calorias} kcal
                           </span>
-                        </div>
+                        </button>
                       );
                     })}
                   </div>
