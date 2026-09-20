@@ -2,7 +2,7 @@ import React, { useState, useEffect, Suspense, lazy, useRef, useCallback } from 
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useSupabase } from '../../context/SupabaseContext';
 import { supabase } from '../../lib/supabaseClient';
-import { Profile } from '../../types/database.types';
+import { Profile, ValoracionAntropometrica } from '../../types/database.types';
 import Toast from '../common/Toast';
 import TrainerAlertsHub from './TrainerAlertsHub';
 import OnboardingModal from '../common/OnboardingModal';
@@ -23,6 +23,7 @@ const RegisterSessionModal = lazy(() => import('./modals/RegisterSessionModal'))
 const EvolutionModal = lazy(() => import('./modals/EvolutionModal'));
 const RMCalculatorModal = lazy(() => import('./modals/RMCalculatorModal'));
 const AnthropometryModal = lazy(() => import('./modals/AnthropometryModal'));
+const NutritionPlannerModal = lazy(() => import('../nutrition/NutritionPlannerModal'));
 
 export const TrainerDashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -79,6 +80,10 @@ export const TrainerDashboard: React.FC = () => {
   const [isAnthropometryModalOpen, setIsAnthropometryModalOpen] = useState<boolean>(false);
   const [selectedAthleteForAnthropometry, setSelectedAthleteForAnthropometry] = useState<Profile | null>(null);
 
+  const [isNutritionModalOpen, setIsNutritionModalOpen] = useState<boolean>(false);
+  const [selectedAthleteForNutrition, setSelectedAthleteForNutrition] = useState<Profile | null>(null);
+  const [selectedValuationForNutrition, setSelectedValuationForNutrition] = useState<ValoracionAntropometrica | null>(null);
+
   const isPaidTrainer = Boolean(
     (trainerSubscription?.plan && trainerSubscription.plan !== 'free') ||
     (profile?.suscripcion_plan && profile.suscripcion_plan !== 'free')
@@ -91,6 +96,36 @@ export const TrainerDashboard: React.FC = () => {
     }
     setSelectedAthleteForAnthropometry(atleta);
     setIsAnthropometryModalOpen(true);
+  };
+
+  const handleOpenNutritionModal = async (atleta: Profile, valuation?: ValoracionAntropometrica | null) => {
+    if (!isPaidTrainer) {
+      showToast('🔒 La planificación de nutrición y dieta es una funcionalidad exclusiva para entrenadores con membresía de pago. ¡Actualiza tu plan para desbloquearla!', 'info');
+      return;
+    }
+    setSelectedAthleteForNutrition(atleta);
+    if (valuation) {
+      setSelectedValuationForNutrition(valuation);
+    } else {
+      try {
+        const { data, error } = await supabase
+          .from('valoraciones_antropometricas')
+          .select('*')
+          .eq('cliente_id', atleta.id)
+          .order('fecha', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+        if (data && !error) {
+          setSelectedValuationForNutrition(data as ValoracionAntropometrica);
+        } else {
+          setSelectedValuationForNutrition(null);
+        }
+      } catch (e) {
+        console.error('Error al cargar valoración para nutrición:', e);
+        setSelectedValuationForNutrition(null);
+      }
+    }
+    setIsNutritionModalOpen(true);
   };
 
   const [showOnboarding, setShowOnboarding] = useState<boolean>(false);
@@ -902,6 +937,7 @@ export const TrainerDashboard: React.FC = () => {
               handleOpenRegisterSessionModal={handleOpenRegisterSessionModal}
               handleOpenEvolutionModal={handleOpenEvolutionModal}
               handleOpenAnthropometryModal={handleOpenAnthropometryModal}
+              handleOpenNutritionModal={handleOpenNutritionModal}
               trainerSubscription={trainerSubscription}
               trainerProfile={profile}
               showToast={showToast}
@@ -983,6 +1019,25 @@ export const TrainerDashboard: React.FC = () => {
             isOpen={isAnthropometryModalOpen}
             onClose={() => setIsAnthropometryModalOpen(false)}
             atleta={selectedAthleteForAnthropometry}
+            trainerProfile={profile}
+            showToast={showToast}
+            onOpenNutritionPlan={(atleta, valuation) => {
+              setIsAnthropometryModalOpen(false);
+              handleOpenNutritionModal(atleta, valuation);
+            }}
+          />
+        )}
+
+        {isNutritionModalOpen && selectedAthleteForNutrition && (
+          <NutritionPlannerModal
+            isOpen={isNutritionModalOpen}
+            onClose={() => {
+              setIsNutritionModalOpen(false);
+              setSelectedAthleteForNutrition(null);
+              setSelectedValuationForNutrition(null);
+            }}
+            atleta={selectedAthleteForNutrition}
+            initialValuation={selectedValuationForNutrition}
             trainerProfile={profile}
             showToast={showToast}
           />

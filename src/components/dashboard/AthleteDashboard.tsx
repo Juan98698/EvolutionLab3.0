@@ -40,6 +40,7 @@ import { InitialPeriodizationEvaluation } from './InitialPeriodizationEvaluation
 import { subscribirNotificacionesPush, verificarSuscripcionPushActiva } from '../../lib/pushNotifications';
 import { loadBrandFonts } from '../../lib/dynamicFonts';
 import BottomTabBar, { MobileTab } from '../common/BottomTabBar';
+import { AthleteNutritionCard } from './AthleteNutritionCard';
 
 export const AthleteDashboard: React.FC = () => {
   const location = useLocation();
@@ -1823,6 +1824,15 @@ export const AthleteDashboard: React.FC = () => {
             </div>
           )}
         </div>
+
+        {/* TARJETA DE PLAN NUTRICIONAL / DIETA */}
+        {user?.id && (
+          <div style={{ marginTop: '24px', marginBottom: '24px' }}>
+            <ErrorBoundary label="Plan de Nutrición">
+              <AthleteNutritionCard clienteId={user.id} />
+            </ErrorBoundary>
+          </div>
+        )}
 
         </ErrorBoundary>
         </div>{/* /mobile-tab-panel hoy — properly closed before sibling panels */}

@@ -18,6 +18,7 @@ interface TrainerClientsTabProps {
   handleOpenRegisterSessionModal: (atleta: Profile) => void;
   handleOpenEvolutionModal: (atleta: Profile) => void;
   handleOpenAnthropometryModal?: (atleta: Profile) => void;
+  handleOpenNutritionModal?: (atleta: Profile) => void;
   trainerSubscription?: { plan: string; estado: string; expira_at: string | null } | null;
   trainerProfile?: Profile | null;
   showToast?: (msg: string, type: 'success' | 'error' | 'info') => void;
@@ -40,6 +41,7 @@ const TrainerClientsTab: React.FC<TrainerClientsTabProps> = ({
   handleOpenRegisterSessionModal,
   handleOpenEvolutionModal,
   handleOpenAnthropometryModal,
+  handleOpenNutritionModal,
   trainerSubscription,
   trainerProfile,
   showToast
@@ -322,6 +324,44 @@ const TrainerClientsTab: React.FC<TrainerClientsTabProps> = ({
                       }}
                     >
                       {isPaidTrainer ? '📐 Antropometría & Macros' : '🔒 Antropometría & Macros (Solo Plan de Pago)'}
+                    </button>
+                  )}
+                  {handleOpenNutritionModal && (
+                    <button
+                      className="btn"
+                      onClick={() => {
+                        if (!isPaidTrainer) {
+                          showToast?.('🔒 La planificación de nutrición y dieta es una funcionalidad exclusiva para entrenadores con membresía de pago. ¡Actualiza tu plan para desbloquearla!', 'info');
+                        } else {
+                          handleOpenNutritionModal(atleta);
+                        }
+                      }}
+                      title={
+                        isPaidTrainer
+                          ? 'Diseñar o gestionar el plan de alimentación y nutrición'
+                          : 'Funcionalidad exclusiva para entrenadores con membresía de pago (Iniciación, Intermedio, Profesional, Premium)'
+                      }
+                      style={{
+                        width: '100%',
+                        padding: '10px 0',
+                        fontSize: '11px',
+                        display: 'flex',
+                        justifyContent: 'center',
+                        alignItems: 'center',
+                        gap: '6px',
+                        background: isPaidTrainer ? 'rgba(16, 185, 129, 0.12)' : 'rgba(255, 255, 255, 0.03)',
+                        border: isPaidTrainer ? '1px solid rgba(16, 185, 129, 0.35)' : '1px dashed rgba(255, 255, 255, 0.18)',
+                        borderRadius: '8px',
+                        color: isPaidTrainer ? '#34d399' : 'rgba(255, 255, 255, 0.45)',
+                        cursor: isPaidTrainer ? 'pointer' : 'not-allowed',
+                        fontFamily: "'Orbitron', sans-serif",
+                        fontWeight: 800,
+                        boxShadow: isPaidTrainer ? '0 4px 12px rgba(16, 185, 129, 0.15)' : 'none',
+                        opacity: isPaidTrainer ? 1 : 0.65,
+                        transition: 'all 0.2s ease',
+                      }}
+                    >
+                      {isPaidTrainer ? '🥗 Plan de Dieta & Macros' : '🔒 Plan de Dieta (Solo Plan de Pago)'}
                     </button>
                   )}
                 </div>

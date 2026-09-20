@@ -15,6 +15,7 @@ interface AnthropometryModalProps {
   atleta: Profile;
   trainerProfile: Profile | null;
   showToast: (msg: string, type: 'success' | 'error' | 'info') => void;
+  onOpenNutritionPlan?: (atleta: Profile, valuation: ValoracionAntropometrica) => void;
 }
 
 export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
@@ -23,6 +24,7 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
   atleta,
   trainerProfile,
   showToast,
+  onOpenNutritionPlan,
 }) => {
   const [activeTab, setActiveTab] = useState<'medidas' | 'macros' | 'resultados'>('medidas');
   const [metodo, setMetodo] = useState<'Yuhasz' | 'Faulkner' | 'ISAK'>('Yuhasz');
@@ -569,6 +571,34 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
             <div style={{ background: 'rgba(0,212,255,0.08)', border: '1px solid rgba(0,212,255,0.2)', padding: '12px', borderRadius: '8px', textAlign: 'center', fontFamily: 'Orbitron, sans-serif' }}>
               <span style={{ fontSize: '12px', color: '#00d4ff', fontWeight: 800 }}>OBJETIVO DE LA DIETA: {computed.target_calorias} KCAL / DÍA</span>
             </div>
+
+            {onOpenNutritionPlan && (
+              <div style={{ display: 'flex', justifyContent: 'center', marginTop: '6px' }}>
+                <button
+                  type="button"
+                  onClick={() => onOpenNutritionPlan(atleta, computed)}
+                  style={{
+                    width: '100%',
+                    background: 'linear-gradient(135deg, rgba(0, 212, 255, 0.2) 0%, rgba(16, 185, 129, 0.2) 100%)',
+                    border: '1px solid #00d4ff',
+                    borderRadius: '8px',
+                    color: '#00d4ff',
+                    padding: '12px 18px',
+                    fontSize: '12px',
+                    fontWeight: 800,
+                    fontFamily: "'Orbitron', sans-serif",
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 14px rgba(0, 212, 255, 0.25)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                  }}
+                >
+                  🥗 DISEÑAR PLAN DE ALIMENTACIÓN CON ESTOS MACROS ➔
+                </button>
+              </div>
+            )}
           </div>
         )}
 
@@ -660,6 +690,29 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
           {activeTab === 'resultados' && (
             <button onClick={handleDownloadPDF} disabled={downloadingPdf} style={{ padding: '10px 18px', borderRadius: '8px', border: '1px solid rgba(0,212,255,0.4)', background: 'rgba(0,212,255,0.1)', color: '#00d4ff', fontWeight: 800, cursor: 'pointer', fontFamily: 'Orbitron, sans-serif', fontSize: '11px' }}>
               {downloadingPdf ? 'GENERANDO PDF...' : '📄 DESCARGAR PDF MARCA BLANCA'}
+            </button>
+          )}
+
+          {onOpenNutritionPlan && (
+            <button
+              type="button"
+              onClick={() => onOpenNutritionPlan(atleta, computed)}
+              style={{
+                padding: '10px 18px',
+                borderRadius: '8px',
+                border: '1px solid rgba(16, 185, 129, 0.4)',
+                background: 'rgba(16, 185, 129, 0.15)',
+                color: '#34d399',
+                fontWeight: 800,
+                cursor: 'pointer',
+                fontFamily: 'Orbitron, sans-serif',
+                fontSize: '11px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}
+            >
+              🥗 DISEÑAR PLAN CON ESTOS MACROS ➔
             </button>
           )}
 

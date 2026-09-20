@@ -4,10 +4,61 @@ import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import { visualizer } from 'rollup-plugin-visualizer';
 
+// Plugin dev para proxy local de Open Food Facts (/api/food-search)
+function foodSearchDevPlugin() {
+  return {
+    name: 'food-search-dev-plugin',
+    configureServer(server: any) {
+      server.middlewares.use('/api/food-search', async (req: any, res: any) => {
+        try {
+          const url = new URL(req.url, 'http://localhost');
+          const term = (url.searchParams.get('q') || '').trim();
+          if (!term || term.length < 2) {
+            res.statusCode = 400;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ error: 'Término de búsqueda requerido', products: [] }));
+            return;
+          }
+
+          const offUrl = `https://es.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(
+            term
+          )}&search_simple=1&action=process&json=1&page_size=20&fields=code,product_name,product_name_es,brands,nutriments`;
+
+          const upstreamRes = await fetch(offUrl, {
+            headers: {
+              'User-Agent': 'EvolutionLab/3.0 - Web - (soporte@evolutionlab.app)',
+              Accept: 'application/json',
+            },
+          });
+
+          if (!upstreamRes.ok) {
+            res.statusCode = 200;
+            res.setHeader('Content-Type', 'application/json');
+            res.end(JSON.stringify({ products: [] }));
+            return;
+          }
+
+          const data = await upstreamRes.json();
+          res.statusCode = 200;
+          res.setHeader('Content-Type', 'application/json');
+          res.setHeader('Access-Control-Allow-Origin', '*');
+          res.end(JSON.stringify({ products: Array.isArray(data?.products) ? data.products : [] }));
+        } catch (err: any) {
+          console.error('Error en Vite food-search dev middleware:', err?.message || err);
+          res.statusCode = 200;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ products: [], error: err?.message }));
+        }
+      });
+    },
+  };
+}
+
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
     react(),
+    foodSearchDevPlugin(),
     // Solo se activa con `ANALYZE=true npm run build` -- no corre en builds normales
     // ni en CI, y no afecta el bundle final (solo genera un reporte HTML aparte).
     process.env.ANALYZE && visualizer({
