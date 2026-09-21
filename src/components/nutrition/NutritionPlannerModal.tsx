@@ -28,7 +28,7 @@ import { generateNutritionPDF } from '../../lib/nutritionPdf';
 import { SaveNutritionTemplateModal } from './SaveNutritionTemplateModal';
 import { LoadNutritionTemplateModal } from './LoadNutritionTemplateModal';
 import { SaveMealTemplateModal, LoadMealTemplateModal } from './MealTemplateModals';
-import { sharePlanViaWhatsapp } from '../../lib/nutritionWhatsapp';
+import { sharePlanWithPdfViaWhatsapp } from '../../lib/nutritionWhatsapp';
 
 interface NutritionPlannerModalProps {
   isOpen: boolean;
@@ -56,6 +56,7 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
   const [loading, setLoading] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
   const [downloadingPdf, setDownloadingPdf] = useState<boolean>(false);
+  const [sharingWhatsapp, setSharingWhatsapp] = useState<boolean>(false);
   const [syncedValuationDate, setSyncedValuationDate] = useState<string | null>(
     initialValuation?.fecha || null
   );
@@ -612,10 +613,34 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
     showToast?.(`✅ Receta «${mealTemplate.nombre}» agregada a la comida.`, 'success');
   };
 
-  // Compartir día actual vía WhatsApp
-  const handleShareWhatsapp = () => {
-    sharePlanViaWhatsapp(plan, activeDayKey, atleta.nombre, trainerProfile?.nombre);
-    showToast?.('📱 Abriendo WhatsApp con el resumen de la dieta...', 'info');
+  // Compartir día actual con archivo PDF vía WhatsApp (Web Share nativo en móvil / fallback en desktop)
+  const handleShareWhatsapp = async () => {
+    setSharingWhatsapp(true);
+    try {
+      const filename = `Plan_Nutricional_${atleta.nombre.replace(/\s+/g, '_')}.pdf`;
+      const result = await sharePlanWithPdfViaWhatsapp({
+        plan,
+        dayKey: activeDayKey,
+        atletaNombre: atleta.nombre,
+        trainerNombre: trainerProfile?.nombre,
+        pdfElementId: 'nutrition-pdf-content',
+        fileName: filename,
+      });
+
+      if (result.cancelled) {
+        return;
+      }
+
+      if (result.sharedNative) {
+        showToast?.('📲 Menú de compartir abierto con el archivo PDF adjunto.', 'success');
+      } else {
+        showToast?.('📄 PDF descargado y abriendo WhatsApp con el resumen...', 'info');
+      }
+    } catch (err: any) {
+      showToast?.('Error al compartir plan: ' + (err?.message || err), 'error');
+    } finally {
+      setSharingWhatsapp(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -1327,10 +1352,15 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
             <button
               type="button"
               onClick={handleShareWhatsapp}
+              disabled={sharingWhatsapp}
               className="nutrition-footer-btn-whatsapp"
-              title="Compartir día actual con macros detallados por WhatsApp"
+              title="Compartir día actual con el archivo PDF por WhatsApp"
+              style={{
+                cursor: sharingWhatsapp ? 'wait' : 'pointer',
+                opacity: sharingWhatsapp ? 0.7 : 1,
+              }}
             >
-              📲 WhatsApp
+              {sharingWhatsapp ? 'Preparando...' : '📲 WhatsApp'}
             </button>
             <button
               type="button"

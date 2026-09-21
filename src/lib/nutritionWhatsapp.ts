@@ -1,4 +1,5 @@
 import { NutritionPlan, DayOfWeek } from '../types/nutrition.types';
+import { createNutritionPDFFile, generateNutritionPDF } from './nutritionPdf';
 
 const DAY_LABELS: Record<DayOfWeek, string> = {
   lunes: 'Lunes',
@@ -102,4 +103,85 @@ export function sharePlanViaWhatsapp(
   }
 
   return { success: true, text };
+}
+
+export interface ShareNutritionOptions {
+  plan: NutritionPlan;
+  dayKey: DayOfWeek;
+  atletaNombre: string;
+  trainerNombre?: string;
+  pdfElementId?: string;
+  fileName?: string;
+}
+
+export interface ShareNutritionResult {
+  success: boolean;
+  sharedNative: boolean;
+  cancelled?: boolean;
+  text: string;
+}
+
+/**
+ * Comparte el plan nutricional junto con el archivo PDF real.
+ * Si el navegador soporta Web Share API con archivos (celulares Android/iOS),
+ * abre la hoja nativa con el PDF adjunto para enviarlo directamente a WhatsApp.
+ * Si no es compatible (navegadores de escritorio), descarga el PDF automáticamente
+ * y abre WhatsApp Web con el texto preparado para enviar.
+ */
+export async function sharePlanWithPdfViaWhatsapp(
+  options: ShareNutritionOptions
+): Promise<ShareNutritionResult> {
+  const {
+    plan,
+    dayKey,
+    atletaNombre,
+    trainerNombre,
+    pdfElementId = 'nutrition-pdf-content',
+    fileName = `Plan_Nutricional_${atletaNombre.replace(/\s+/g, '_')}.pdf`,
+  } = options;
+
+  const text = formatDayForWhatsapp(plan, dayKey, atletaNombre, trainerNombre);
+
+  // 1. Intentar compartir nativamente con archivo PDF si el dispositivo lo soporta
+  const hasNavigator = typeof navigator !== 'undefined';
+  const canShare = hasNavigator && typeof navigator.share === 'function';
+  const canShareFiles = hasNavigator && typeof navigator.canShare === 'function';
+
+  if (canShare && canShareFiles && pdfElementId) {
+    try {
+      const pdfFile = await createNutritionPDFFile(pdfElementId, fileName);
+      if (navigator.canShare({ files: [pdfFile] })) {
+        await navigator.share({
+          title: `Plan Nutricional — ${atletaNombre}`,
+          text,
+          files: [pdfFile],
+        });
+        return { success: true, sharedNative: true, text };
+      }
+    } catch (err: any) {
+      // Si el usuario canceló la hoja nativa de compartir (AbortError), no hacer fallback ni error
+      if (err?.name === 'AbortError') {
+        return { success: false, sharedNative: true, cancelled: true, text };
+      }
+      console.warn('Fallo en navigator.share con archivos, activando fallback:', err);
+    }
+  }
+
+  // 2. Fallback para computadores de escritorio o navegadores sin soporte de files en Web Share:
+  // Descargar el PDF para que el entrenador lo tenga en su equipo y abrir WhatsApp Web con el texto
+  if (pdfElementId) {
+    try {
+      await generateNutritionPDF(pdfElementId, fileName);
+    } catch (pdfErr) {
+      console.warn('No se pudo autodescargar el PDF en fallback:', pdfErr);
+    }
+  }
+
+  const encoded = encodeURIComponent(text);
+  const url = `https://api.whatsapp.com/send?text=${encoded}`;
+  if (typeof window !== 'undefined') {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  }
+
+  return { success: true, sharedNative: false, text };
 }
