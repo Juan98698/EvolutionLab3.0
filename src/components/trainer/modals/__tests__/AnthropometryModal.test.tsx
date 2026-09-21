@@ -61,7 +61,7 @@ const mockTrainer: Profile = {
   nombre: 'Entrenador Pro',
   rol: 'entrenador',
   marca: {
-    nombre_display: 'NUTRIFIT EVOLUTION',
+    nombre_display: 'EVOLUTION LAB FITNESS',
     eslogan: 'Ciencia del Deporte',
     color_primario: '#00d4ff',
     color_secundario: '#1e293b',

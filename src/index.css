@@ -5084,3 +5084,373 @@ option {
   }
 }
 
+/* ==========================================================================
+   NUTRITION PLANNER & FOOD SELECTOR MOBILE RESPONSIVE SUITE
+   Optimizado para pantallas táctiles (320px - 768px+), safe-areas y ergonomía móvil.
+   ========================================================================== */
+
+.nutrition-modal-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.88);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  padding: 12px;
+}
+
+.nutrition-modal-window {
+  background: #0b0f19;
+  border: 1px solid rgba(0, 212, 255, 0.35);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 1040px;
+  height: 92vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.9);
+  color: #ffffff;
+  font-family: 'Inter', sans-serif;
+  overflow: hidden;
+}
+
+.nutrition-macro-grid {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr 1fr 1fr;
+  gap: 12px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 10px 14px;
+}
+
+.nutrition-meal-header {
+  padding: 12px 16px;
+  background: rgba(255, 255, 255, 0.03);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.nutrition-food-item-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
+  gap: 10px;
+}
+
+.nutrition-food-row-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex: 1;
+}
+
+.nutrition-food-row-bottom {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.nutrition-footer-bar {
+  padding: 14px 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background: #070a12;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+/* FOOD SELECTOR RESPONSIVE CLASSES */
+.food-selector-modal-window {
+  background: #0d1322;
+  border: 1px solid rgba(0, 212, 255, 0.3);
+  border-radius: 14px;
+  width: 100%;
+  max-width: 720px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.8);
+  color: #ffffff;
+  font-family: 'Inter', sans-serif;
+  overflow: hidden;
+}
+
+.food-selector-item-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  gap: 10px;
+}
+
+.food-selector-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex: 1;
+}
+
+.food-selector-card-bottom {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.food-selector-search-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.food-selector-search-select {
+  flex: 0 0 auto;
+  max-width: 100%;
+}
+
+.food-selector-bottom-bar {
+  padding: 14px 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  background: #090d17;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.food-selector-bottom-btn {
+  /* Desktop styles inherited */
+}
+
+/* ═════ MEDIA QUERIES PARA PANTALLAS MÓVILES (< 768px) ═════ */
+@media screen and (max-width: 768px) {
+  .nutrition-modal-backdrop {
+    padding: 0 !important;
+    align-items: stretch !important;
+  }
+
+  .nutrition-modal-window {
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    border-radius: 0 !important;
+    border: none !important;
+  }
+
+  .nutrition-header-top {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+  }
+
+  .nutrition-header-top-row1 {
+    width: 100% !important;
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+  }
+
+  .nutrition-header-actions {
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+  }
+
+  .nutrition-header-action-btn {
+    flex: 1 !important;
+    justify-content: center !important;
+    text-align: center !important;
+    padding: 7px 8px !important;
+    font-size: 11px !important;
+  }
+
+  /* Monitor de macros en móvil: Calorías en fila superior completa, 3 macros en fila inferior */
+  .nutrition-macro-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 8px !important;
+    padding: 10px 12px !important;
+  }
+
+  .nutrition-macro-calorias-col {
+    grid-column: 1 / -1 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+    padding-bottom: 8px !important;
+    margin-bottom: 2px !important;
+  }
+
+  /* Barra de días */
+  .nutrition-days-bar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+    padding: 8px 12px !important;
+  }
+
+  .nutrition-days-scroll {
+    width: 100% !important;
+    display: flex !important;
+    gap: 6px !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    padding-bottom: 4px !important;
+  }
+
+  .nutrition-copy-day-btn {
+    width: 100% !important;
+    justify-content: center !important;
+    padding: 8px !important;
+  }
+
+  /* Cabecera de comida */
+  .nutrition-meal-header {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+    padding: 10px 12px !important;
+  }
+
+  .nutrition-meal-header-row1 {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    width: 100% !important;
+  }
+
+  .nutrition-meal-header-row2 {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+
+  /* Fila de alimento en móvil: 2 niveles para que nombres largos no se aplasten */
+  .nutrition-food-item-row {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 6px !important;
+    padding: 10px 12px !important;
+  }
+
+  .nutrition-food-row-top {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: flex-start !important;
+    width: 100% !important;
+    gap: 8px !important;
+  }
+
+  .nutrition-food-row-bottom {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    width: 100% !important;
+    padding-top: 6px !important;
+    border-top: 1px dashed rgba(255, 255, 255, 0.06) !important;
+  }
+
+  /* Footer en móvil */
+  .nutrition-footer-bar {
+    flex-direction: column-reverse !important;
+    padding: 12px 16px !important;
+    padding-bottom: max(16px, env(safe-area-inset-bottom)) !important;
+    gap: 10px !important;
+  }
+
+  .nutrition-footer-actions {
+    width: 100% !important;
+    display: flex !important;
+    gap: 8px !important;
+  }
+
+  .nutrition-footer-btn-save {
+    flex: 1 !important;
+    padding: 12px !important;
+    font-size: 13px !important;
+    text-align: center !important;
+  }
+
+  .nutrition-footer-btn-pdf {
+    flex: 0 0 auto !important;
+    padding: 10px 14px !important;
+  }
+
+  /* FoodSelectorModal en móvil */
+  .food-selector-modal-window {
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    border-radius: 0 !important;
+    border: none !important;
+  }
+
+  .food-selector-search-row {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+  }
+
+  .food-selector-search-select {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .food-selector-item-card {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 6px !important;
+  }
+
+  .food-selector-card-top {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: flex-start !important;
+    width: 100% !important;
+    gap: 8px !important;
+  }
+
+  .food-selector-card-bottom {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    width: 100% !important;
+    padding-top: 6px !important;
+    border-top: 1px dashed rgba(255, 255, 255, 0.06) !important;
+  }
+
+  .food-selector-bottom-bar {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+    padding-bottom: max(16px, env(safe-area-inset-bottom)) !important;
+  }
+
+  .food-selector-bottom-btn {
+    width: 100% !important;
+    padding: 12px !important;
+    font-size: 13px !important;
+    text-align: center !important;
+  }
+}
+
+

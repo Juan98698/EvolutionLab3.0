@@ -91,12 +91,56 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
     return [...customCatalog, ...baseCatalog];
   }, [customCatalog, baseCatalog]);
 
+  // Categorías y grupos disponibles calculados dinámicamente con sus conteos
+  const availableCategories = useMemo(() => {
+    const counts: Record<string, number> = {};
+    let customCount = 0;
+
+    combinedCatalog.forEach((f) => {
+      if (f.esPersonalizado || f.grupo === 'Mis Alimentos' || f.subgrupo?.startsWith('Personalizados')) {
+        customCount++;
+      } else {
+        const key = f.subgrupo || f.grupo || 'Otros';
+        counts[key] = (counts[key] || 0) + 1;
+      }
+    });
+
+    const list: { id: string; label: string; count: number; isCustom?: boolean }[] = [
+      { id: 'Todos', label: 'Todos', count: combinedCatalog.length },
+      { id: 'Mis Alimentos', label: '⭐ Mis Alimentos', count: customCount, isCustom: true },
+    ];
+
+    const subgrupoKeys = Object.keys(counts).sort((a, b) => {
+      if (a === 'Base ICBF / USDA') return 1;
+      if (b === 'Base ICBF / USDA') return -1;
+      return a.localeCompare(b, 'es', { sensitivity: 'base' });
+    });
+
+    subgrupoKeys.forEach((sg) => {
+      list.push({
+        id: sg,
+        label: sg,
+        count: counts[sg],
+      });
+    });
+
+    return list;
+  }, [combinedCatalog]);
+
   // Filtrado reactivo del catálogo base
   const filteredBaseFoods = useMemo(() => {
     let result = combinedCatalog;
 
     if (selectedGroup !== 'Todos') {
-      result = result.filter((f) => f.grupo === selectedGroup);
+      if (selectedGroup === 'Mis Alimentos' || selectedGroup === 'Personalizados') {
+        result = result.filter(
+          (f) => f.esPersonalizado || f.grupo === 'Mis Alimentos' || f.subgrupo?.startsWith('Personalizados')
+        );
+      } else {
+        result = result.filter(
+          (f) => f.subgrupo === selectedGroup || f.grupo === selectedGroup
+        );
+      }
     }
 
     if (searchQuery.trim()) {
@@ -104,11 +148,13 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
       result = result.filter(
         (f) =>
           f.nombre.toLowerCase().includes(q) ||
-          (f.marca && f.marca.toLowerCase().includes(q))
+          (f.subgrupo && f.subgrupo.toLowerCase().includes(q)) ||
+          (f.marca && f.marca.toLowerCase().includes(q)) ||
+          (f.grupo && f.grupo.toLowerCase().includes(q))
       );
     }
 
-    return result.slice(0, 50); // Límite para scroll super fluido
+    return result.slice(0, 150); // Límite generoso para ver grupos completos
   }, [combinedCatalog, selectedGroup, searchQuery]);
 
   // Búsqueda en Open Food Facts
@@ -205,42 +251,14 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
   return (
     // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- backdrop de modal
     <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.82)',
-        backdropFilter: 'blur(5px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 10001,
-        padding: '16px',
-      }}
+      className="nutrition-modal-backdrop"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div
-        style={{
-          background: '#0d1322',
-          border: '1px solid rgba(0, 212, 255, 0.3)',
-          borderRadius: '14px',
-          width: '100%',
-          maxWidth: '720px',
-          maxHeight: '90vh',
-          display: 'flex',
-          flexDirection: 'column',
-          boxShadow: '0 12px 40px rgba(0, 0, 0, 0.8)',
-          color: '#ffffff',
-          fontFamily: "'Inter', sans-serif",
-          overflow: 'hidden',
-        }}
-      >
+      <div className="food-selector-modal-window">
         {/* CABECERA */}
         <div
           style={{
-            padding: '16px 20px',
+            padding: '14px 16px',
             borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
             display: 'flex',
             justifyContent: 'space-between',
@@ -252,7 +270,7 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
             <span style={{ fontSize: '10px', color: '#00d4ff', letterSpacing: '1px', fontWeight: 700, textTransform: 'uppercase' }}>
               AGREGAR ALIMENTO A:
             </span>
-            <h3 style={{ margin: '2px 0 0', fontSize: '16px', fontFamily: "'Orbitron', sans-serif", color: '#fff' }}>
+            <h3 style={{ margin: '2px 0 0', fontSize: '15px', fontFamily: "'Orbitron', sans-serif", color: '#fff' }}>
               {mealName}
             </h3>
           </div>
@@ -265,13 +283,15 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
               fontSize: '22px',
               cursor: 'pointer',
               lineHeight: 1,
+              padding: '4px',
             }}
+            title="Cerrar buscador"
           >
             ✕
           </button>
         </div>
 
-        {/* SELECTOR DE PESTAÑAS DE FUENTE */}
+        {/* SELECTOR DE PESTAÑAS DE FUENTE RESPONSIVO */}
         <div
           style={{
             display: 'flex',
@@ -284,54 +304,63 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
             onClick={() => setActiveSourceTab('base')}
             style={{
               flex: 1,
-              padding: '12px 16px',
+              padding: '10px 8px',
               background: activeSourceTab === 'base' ? 'rgba(0, 212, 255, 0.1)' : 'transparent',
               border: 'none',
               borderBottom: activeSourceTab === 'base' ? '2px solid #00d4ff' : '2px solid transparent',
               color: activeSourceTab === 'base' ? '#00d4ff' : 'rgba(255, 255, 255, 0.6)',
-              fontSize: '12px',
+              fontSize: '11px',
               fontWeight: 700,
               fontFamily: "'Orbitron', sans-serif",
               cursor: 'pointer',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
             }}
           >
-            🏛️ Catálogo Oficial ({combinedCatalog.length})
+            🏛️ Catálogo ({combinedCatalog.length})
           </button>
           <button
             type="button"
             onClick={() => setActiveSourceTab('openfoodfacts')}
             style={{
               flex: 1,
-              padding: '12px 16px',
+              padding: '10px 8px',
               background: activeSourceTab === 'openfoodfacts' ? 'rgba(0, 212, 255, 0.1)' : 'transparent',
               border: 'none',
               borderBottom: activeSourceTab === 'openfoodfacts' ? '2px solid #00d4ff' : '2px solid transparent',
               color: activeSourceTab === 'openfoodfacts' ? '#00d4ff' : 'rgba(255, 255, 255, 0.6)',
-              fontSize: '12px',
+              fontSize: '11px',
               fontWeight: 700,
               fontFamily: "'Orbitron', sans-serif",
               cursor: 'pointer',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
             }}
           >
-            🌐 Supermercado (Open Food)
+            🌐 Supermercado
           </button>
           <button
             type="button"
             onClick={() => setActiveSourceTab('custom')}
             style={{
               flex: 1,
-              padding: '12px 16px',
+              padding: '10px 8px',
               background: activeSourceTab === 'custom' ? 'rgba(0, 212, 255, 0.1)' : 'transparent',
               border: 'none',
               borderBottom: activeSourceTab === 'custom' ? '2px solid #00d4ff' : '2px solid transparent',
               color: activeSourceTab === 'custom' ? '#00d4ff' : 'rgba(255, 255, 255, 0.6)',
-              fontSize: '12px',
+              fontSize: '11px',
               fontWeight: 700,
               fontFamily: "'Orbitron', sans-serif",
               cursor: 'pointer',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
             }}
           >
-            ✍️ Crear Personalizado
+            ✍️ Crear
           </button>
         </div>
 
@@ -340,27 +369,78 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
           {/* PESTAÑA 1: CATÁLOGO BASE */}
           {activeSourceTab === 'base' && (
             <div>
-              {/* Buscador de texto */}
-              <div style={{ marginBottom: '12px' }}>
-                <input
-                  type="text"
-                  placeholder="🔍 Buscar alimento (ej. pechuga, arroz, huevo, avena...)"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  style={{
-                    width: '100%',
-                    background: 'rgba(0, 0, 0, 0.4)',
-                    border: '1px solid rgba(255, 255, 255, 0.15)',
-                    borderRadius: '8px',
-                    color: '#ffffff',
-                    padding: '10px 14px',
-                    fontSize: '13px',
-                    outline: 'none',
-                  }}
-                />
+              {/* Buscador de texto y selector rápido de grupo */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '12px' }}>
+                <div className="food-selector-search-row" style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <input
+                    type="text"
+                    placeholder="🔍 Buscar alimento (ej. pechuga, cerdo, res, avena...)"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    style={{
+                      flex: '1 1 240px',
+                      background: 'rgba(0, 0, 0, 0.4)',
+                      border: '1px solid rgba(255, 255, 255, 0.15)',
+                      borderRadius: '8px',
+                      color: '#ffffff',
+                      padding: '10px 14px',
+                      fontSize: '13px',
+                      outline: 'none',
+                    }}
+                  />
+                  {/* Selector desplegable directo de grupos */}
+                  <select
+                    value={selectedGroup}
+                    onChange={(e) => setSelectedGroup(e.target.value)}
+                    title="Filtrar por categoría o grupo de alimentos"
+                    className="food-selector-search-select"
+                    style={{
+                      flex: '0 0 auto',
+                      maxWidth: '100%',
+                      background: '#121829',
+                      border: '1px solid rgba(0, 212, 255, 0.35)',
+                      borderRadius: '8px',
+                      color: '#00d4ff',
+                      padding: '10px 12px',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      outline: 'none',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {availableCategories.map((c) => (
+                      <option key={c.id} value={c.id} style={{ background: '#0d1322', color: '#ffffff' }}>
+                        {c.label} ({c.count})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Filtro activo / Limpiar filtro rápido */}
+                {selectedGroup !== 'Todos' && (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 2px' }}>
+                    <span style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.6)' }}>
+                      Grupo activo: <strong style={{ color: '#00d4ff' }}>{selectedGroup}</strong>
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedGroup('Todos')}
+                      style={{
+                        background: 'transparent',
+                        border: 'none',
+                        color: 'rgba(255, 255, 255, 0.5)',
+                        fontSize: '11px',
+                        cursor: 'pointer',
+                        textDecoration: 'underline',
+                      }}
+                    >
+                      Mostrar todos los grupos
+                    </button>
+                  </div>
+                )}
               </div>
 
-              {/* Filtro de grupos en pills scrolleables */}
+              {/* Barra scrolleable con los 46 grupos oficiales + Mis Alimentos + Todos */}
               <div
                 style={{
                   display: 'flex',
@@ -368,28 +448,60 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
                   overflowX: 'auto',
                   paddingBottom: '8px',
                   marginBottom: '14px',
+                  scrollbarWidth: 'thin',
                 }}
               >
-                {['Todos', 'Carnes y Aves', 'Pescados y Mariscos', 'Huevos', 'Lácteos y Quesos', 'Cereales y Tubérculos', 'Legumbres', 'Grasas y Frutos Secos', 'Frutas', 'Verduras', 'Suplementación', 'Bebidas y Varios', 'Mis Alimentos'].map((grp) => (
-                  <button
-                    key={grp}
-                    type="button"
-                    onClick={() => setSelectedGroup(grp)}
-                    style={{
-                      whiteSpace: 'nowrap',
-                      padding: '4px 10px',
-                      borderRadius: '16px',
-                      fontSize: '11px',
-                      border: selectedGroup === grp ? '1px solid #00d4ff' : '1px solid rgba(255, 255, 255, 0.1)',
-                      background: selectedGroup === grp ? 'rgba(0, 212, 255, 0.2)' : 'rgba(255, 255, 255, 0.03)',
-                      color: selectedGroup === grp ? '#00d4ff' : 'rgba(255, 255, 255, 0.7)',
-                      cursor: 'pointer',
-                      fontWeight: selectedGroup === grp ? 700 : 400,
-                    }}
-                  >
-                    {grp}
-                  </button>
-                ))}
+                {availableCategories.map((cat) => {
+                  const isSelected = selectedGroup === cat.id;
+                  const isCustom = cat.id === 'Mis Alimentos';
+                  return (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={() => setSelectedGroup(cat.id)}
+                      style={{
+                        whiteSpace: 'nowrap',
+                        padding: '4px 10px',
+                        borderRadius: '16px',
+                        fontSize: '11px',
+                        border: isSelected
+                          ? '1px solid #00d4ff'
+                          : isCustom
+                          ? '1px solid rgba(0, 212, 255, 0.45)'
+                          : '1px solid rgba(255, 255, 255, 0.1)',
+                        background: isSelected
+                          ? 'rgba(0, 212, 255, 0.25)'
+                          : isCustom
+                          ? 'rgba(0, 212, 255, 0.1)'
+                          : 'rgba(255, 255, 255, 0.03)',
+                        color: isSelected
+                          ? '#00d4ff'
+                          : isCustom
+                          ? '#38bdf8'
+                          : 'rgba(255, 255, 255, 0.7)',
+                        cursor: 'pointer',
+                        fontWeight: isSelected || isCustom ? 700 : 400,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '5px',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      <span>{cat.label}</span>
+                      <span
+                        style={{
+                          fontSize: '9px',
+                          padding: '0 4px',
+                          borderRadius: '8px',
+                          background: isSelected ? 'rgba(0, 212, 255, 0.3)' : 'rgba(255, 255, 255, 0.08)',
+                          color: isSelected ? '#ffffff' : 'rgba(255, 255, 255, 0.55)',
+                        }}
+                      >
+                        {cat.count}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
 
               {/* Lista de alimentos */}
@@ -417,20 +529,14 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
                             handleSelectFood(f);
                           }
                         }}
+                        className="food-selector-item-card"
                         style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          padding: '10px 14px',
-                          borderRadius: '8px',
                           background: isSelected ? 'rgba(0, 212, 255, 0.15)' : 'rgba(255, 255, 255, 0.03)',
                           border: isSelected ? '1px solid #00d4ff' : '1px solid rgba(255, 255, 255, 0.06)',
-                          cursor: 'pointer',
-                          transition: 'all 0.15s ease',
                         }}
                       >
-                        <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <div className="food-selector-card-top">
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                             <span style={{ fontSize: '13px', fontWeight: 600, color: isSelected ? '#00d4ff' : '#ffffff' }}>
                               {f.nombre}
                             </span>
@@ -450,21 +556,20 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
                                 ☁️ Mi Alimento
                               </span>
                             )}
-                          </div>
-                          <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.5)', marginTop: '2px' }}>
-                            Base: {f.cantidadBase} {f.unidad} • {f.grupo}
-                          </div>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <div style={{ textAlign: 'right' }}>
-                            <span style={{ fontSize: '13px', fontWeight: 700, color: '#ffffff' }}>
-                              {f.caloriasBase} kcal
-                            </span>
-                            <div style={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.6)', marginTop: '2px' }}>
-                              <span style={{ color: '#3b82f6' }}>P: {f.proteinaBase}g</span> •{' '}
-                              <span style={{ color: '#10b981' }}>C: {f.carbohidratosBase}g</span> •{' '}
-                              <span style={{ color: '#f59e0b' }}>G: {f.grasaBase}g</span>
-                            </div>
+                            {f.subgrupo && !f.esPersonalizado && (
+                              <span
+                                style={{
+                                  fontSize: '9px',
+                                  padding: '1px 5px',
+                                  borderRadius: '4px',
+                                  background: 'rgba(255, 255, 255, 0.06)',
+                                  color: 'rgba(255, 255, 255, 0.6)',
+                                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                                }}
+                              >
+                                {f.subgrupo}
+                              </span>
+                            )}
                           </div>
                           {f.esPersonalizado && (
                             <button
@@ -489,6 +594,21 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
                               🗑️
                             </button>
                           )}
+                        </div>
+                        <div className="food-selector-card-bottom">
+                          <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.5)' }}>
+                            Base: {f.cantidadBase} {f.unidad} • {f.grupo}
+                          </div>
+                          <div style={{ textAlign: 'right' }}>
+                            <span style={{ fontSize: '13px', fontWeight: 700, color: '#ffffff' }}>
+                              {f.caloriasBase} kcal
+                            </span>
+                            <div style={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.6)', marginTop: '2px' }}>
+                              <span style={{ color: '#3b82f6' }}>P: {f.proteinaBase}g</span> •{' '}
+                              <span style={{ color: '#10b981' }}>C: {f.carbohidratosBase}g</span> •{' '}
+                              <span style={{ color: '#f59e0b' }}>G: {f.grasaBase}g</span>
+                            </div>
+                          </div>
                         </div>
                       </div>
                     );
@@ -614,33 +734,30 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
                             handleSelectFood(f);
                           }
                         }}
+                        className="food-selector-item-card"
                         style={{
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          padding: '10px 14px',
-                          borderRadius: '8px',
                           background: isSelected ? 'rgba(0, 212, 255, 0.15)' : 'rgba(255, 255, 255, 0.03)',
                           border: isSelected ? '1px solid #00d4ff' : '1px solid rgba(255, 255, 255, 0.06)',
-                          cursor: 'pointer',
                         }}
                       >
-                        <div>
+                        <div className="food-selector-card-top">
                           <div style={{ fontSize: '13px', fontWeight: 600, color: isSelected ? '#00d4ff' : '#ffffff' }}>
                             {f.nombre}
                           </div>
-                          <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.5)', marginTop: '2px' }}>
+                        </div>
+                        <div className="food-selector-card-bottom">
+                          <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.5)' }}>
                             Por 100g • {f.marca || 'Comercial'}
                           </div>
-                        </div>
-                        <div style={{ textAlign: 'right' }}>
-                          <span style={{ fontSize: '13px', fontWeight: 700, color: '#ffffff' }}>
-                            {f.caloriasBase} kcal
-                          </span>
-                          <div style={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.6)', marginTop: '2px' }}>
-                            <span style={{ color: '#3b82f6' }}>P: {f.proteinaBase}g</span> •{' '}
-                            <span style={{ color: '#10b981' }}>C: {f.carbohidratosBase}g</span> •{' '}
-                            <span style={{ color: '#f59e0b' }}>G: {f.grasaBase}g</span>
+                          <div style={{ textAlign: 'right' }}>
+                            <span style={{ fontSize: '13px', fontWeight: 700, color: '#ffffff' }}>
+                              {f.caloriasBase} kcal
+                            </span>
+                            <div style={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.6)', marginTop: '2px' }}>
+                              <span style={{ color: '#3b82f6' }}>P: {f.proteinaBase}g</span> •{' '}
+                              <span style={{ color: '#10b981' }}>C: {f.carbohidratosBase}g</span> •{' '}
+                              <span style={{ color: '#f59e0b' }}>G: {f.grasaBase}g</span>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -876,18 +993,7 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
 
         {/* FOOTER: AJUSTE DE PORCIÓN Y BOTÓN AGREGAR */}
         {selectedFood && (
-          <div
-            style={{
-              padding: '14px 20px',
-              borderTop: '1px solid rgba(255, 255, 255, 0.1)',
-              background: '#090d17',
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: '12px',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
+          <div className="food-selector-bottom-bar">
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span style={{ fontSize: '12px', fontWeight: 600, color: 'rgba(255,255,255,0.8)' }}>
                 Porción:
@@ -928,6 +1034,7 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
             <button
               type="button"
               onClick={handleConfirmAdd}
+              className="food-selector-bottom-btn"
               style={{
                 background: 'var(--theme-primary, #00d4ff)',
                 border: 'none',

@@ -528,49 +528,21 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
   return (
     // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- backdrop de modal
     <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.85)',
-        backdropFilter: 'blur(6px)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 9999,
-        padding: '12px',
-      }}
+      className="nutrition-modal-backdrop"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div
-        style={{
-          background: '#0b0f19',
-          border: '1px solid rgba(0, 212, 255, 0.35)',
-          borderRadius: '16px',
-          width: '100%',
-          maxWidth: '1040px',
-          height: '92vh',
-          display: 'flex',
-          flexDirection: 'column',
-          boxShadow: '0 16px 48px rgba(0, 0, 0, 0.9)',
-          color: '#ffffff',
-          fontFamily: "'Inter', sans-serif",
-          overflow: 'hidden',
-        }}
-      >
+      <div className="nutrition-modal-window">
         {/* BARRA SUPERIOR: DATOS Y METAS NUTRICIONALES */}
         <div
           style={{
-            padding: '16px 20px',
+            padding: '14px 16px',
             borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
             background: 'linear-gradient(180deg, rgba(0, 212, 255, 0.08) 0%, rgba(11, 15, 25, 0.6) 100%)',
           }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <div className="nutrition-header-top" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+            <div className="nutrition-header-top-row1">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                 <span
                   style={{
                     fontSize: '11px',
@@ -619,13 +591,29 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
                   </span>
                 )}
               </div>
+              <button
+                onClick={onClose}
+                style={{
+                  background: 'transparent',
+                  border: 'none',
+                  color: 'rgba(255, 255, 255, 0.6)',
+                  fontSize: '22px',
+                  cursor: 'pointer',
+                  lineHeight: 1,
+                  padding: '4px',
+                }}
+                title="Cerrar modal"
+              >
+                ✕
+              </button>
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div className="nutrition-header-actions">
               <button
                 type="button"
                 onClick={handleSyncWithLatestValuation}
                 title="Sincronizar calorías y macros objetivo desde la última valoración antropométrica"
+                className="nutrition-header-action-btn"
                 style={{
                   background: 'rgba(255, 255, 255, 0.05)',
                   border: '1px solid rgba(255, 255, 255, 0.15)',
@@ -645,6 +633,7 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
               <button
                 type="button"
                 onClick={() => setShowPdfView(!showPdfView)}
+                className="nutrition-header-action-btn"
                 style={{
                   background: showPdfView ? 'rgba(0, 212, 255, 0.2)' : 'rgba(255, 255, 255, 0.05)',
                   border: '1px solid rgba(0, 212, 255, 0.3)',
@@ -658,36 +647,13 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
               >
                 {showPdfView ? '✏️ Modo Editor' : '👁️ Vista Previa PDF'}
               </button>
-              <button
-                onClick={onClose}
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  color: 'rgba(255, 255, 255, 0.6)',
-                  fontSize: '22px',
-                  cursor: 'pointer',
-                  lineHeight: 1,
-                }}
-              >
-                ✕
-              </button>
             </div>
           </div>
 
           {/* MONITOR EN TIEMPO REAL: CALORÍAS Y BARRAS DE MACROS */}
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: '1.2fr 1fr 1fr 1fr',
-              gap: '12px',
-              background: 'rgba(0, 0, 0, 0.35)',
-              border: '1px solid rgba(255, 255, 255, 0.06)',
-              borderRadius: '10px',
-              padding: '10px 14px',
-            }}
-          >
+          <div className="nutrition-macro-grid">
             {/* CALORÍAS */}
-            <div>
+            <div className="nutrition-macro-calorias-col">
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}>
                 <span style={{ color: 'rgba(255,255,255,0.7)', fontWeight: 700 }}>🔥 CALORÍAS</span>
                 <span style={{ fontWeight: 800, color: compliance.status === 'optimo' ? '#10b981' : compliance.status === 'deficit' ? '#00d4ff' : '#f59e0b' }}>
@@ -777,16 +743,17 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
 
         {/* PESTAÑAS DE DÍAS Y BOTÓN COPIAR DÍA */}
         <div
+          className="nutrition-days-bar"
           style={{
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            padding: '10px 20px',
+            padding: '10px 16px',
             borderBottom: '1px solid rgba(255, 255, 255, 0.08)',
             background: 'rgba(0, 0, 0, 0.25)',
           }}
         >
-          <div style={{ display: 'flex', gap: '6px', overflowX: 'auto' }}>
+          <div className="nutrition-days-scroll" style={{ display: 'flex', gap: '6px', overflowX: 'auto' }}>
             {DAYS_OF_WEEK.map((d) => {
               const isActive = activeDayKey === d.key;
               const dTotals = calculateDayTotals(plan.datos_plan.days[d.key]);
@@ -796,7 +763,7 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
                   type="button"
                   onClick={() => setActiveDayKey(d.key)}
                   style={{
-                    padding: '8px 14px',
+                    padding: '8px 12px',
                     borderRadius: '8px',
                     border: isActive ? '1px solid #00d4ff' : '1px solid rgba(255, 255, 255, 0.1)',
                     background: isActive ? 'rgba(0, 212, 255, 0.15)' : 'rgba(255, 255, 255, 0.02)',
@@ -809,6 +776,8 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
                     flexDirection: 'column',
                     alignItems: 'center',
                     gap: '2px',
+                    minWidth: '58px',
+                    flexShrink: 0,
                   }}
                 >
                   <span>{d.label}</span>
@@ -823,6 +792,7 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
           <button
             type="button"
             onClick={() => setCopyModalOpen(true)}
+            className="nutrition-copy-day-btn"
             style={{
               display: 'flex',
               alignItems: 'center',
@@ -874,92 +844,61 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
                     }}
                   >
                     {/* CABECERA DE LA COMIDA */}
-                    <div
-                      style={{
-                        padding: '12px 16px',
-                        background: 'rgba(255, 255, 255, 0.03)',
-                        borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                      }}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                        {/* Nombre de comida editable */}
-                        <input
-                          type="text"
-                          value={meal.nombre}
-                          onChange={(e) => handleUpdateMealName(mIdx, e.target.value)}
-                          style={{
-                            background: 'rgba(255, 255, 255, 0.05)',
-                            border: '1px solid rgba(255, 255, 255, 0.12)',
-                            borderRadius: '6px',
-                            color: '#ffffff',
-                            fontSize: '14px',
-                            fontWeight: 800,
-                            padding: '4px 8px',
-                            minWidth: '120px',
-                            maxWidth: '170px',
-                            outline: 'none',
-                          }}
-                          title="Haz clic para cambiar el nombre de la comida"
-                        />
-
-                        {/* Modificador interactivo de horario */}
-                        <div
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            background: 'rgba(255, 255, 255, 0.06)',
-                            border: '1px solid rgba(255, 255, 255, 0.12)',
-                            borderRadius: '6px',
-                            padding: '2px 8px',
-                          }}
-                          title="Modificar horario de la comida"
-                        >
-                          <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)' }}>🕒</span>
+                    <div className="nutrition-meal-header">
+                      <div className="nutrition-meal-header-row1">
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                          {/* Nombre de comida editable */}
                           <input
-                            type="time"
-                            value={meal.horario || '08:00'}
-                            onChange={(e) => handleUpdateMealTime(mIdx, e.target.value)}
+                            type="text"
+                            value={meal.nombre}
+                            onChange={(e) => handleUpdateMealName(mIdx, e.target.value)}
                             style={{
-                              background: 'transparent',
-                              border: 'none',
-                              color: '#00d4ff',
-                              fontSize: '12px',
-                              fontWeight: 700,
+                              background: 'rgba(255, 255, 255, 0.05)',
+                              border: '1px solid rgba(255, 255, 255, 0.12)',
+                              borderRadius: '6px',
+                              color: '#ffffff',
+                              fontSize: '14px',
+                              fontWeight: 800,
+                              padding: '4px 8px',
+                              minWidth: '110px',
+                              maxWidth: '160px',
                               outline: 'none',
-                              cursor: 'pointer',
-                              padding: 0,
                             }}
+                            title="Haz clic para cambiar el nombre de la comida"
                           />
-                        </div>
-                      </div>
 
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                        <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.8)' }}>
-                          <strong>{mealTotals.calorias} kcal</strong> ({mealKcalPct}% del día) •{' '}
-                          <span style={{ color: '#3b82f6' }}>P: {mealTotals.proteina}g</span> |{' '}
-                          <span style={{ color: '#10b981' }}>C: {mealTotals.carbohidratos}g</span> |{' '}
-                          <span style={{ color: '#f59e0b' }}>G: {mealTotals.grasa}g</span>
+                          {/* Modificador interactivo de horario */}
+                          <div
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              background: 'rgba(255, 255, 255, 0.06)',
+                              border: '1px solid rgba(255, 255, 255, 0.12)',
+                              borderRadius: '6px',
+                              padding: '2px 8px',
+                            }}
+                            title="Modificar horario de la comida"
+                          >
+                            <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)' }}>🕒</span>
+                            <input
+                              type="time"
+                              value={meal.horario || '08:00'}
+                              onChange={(e) => handleUpdateMealTime(mIdx, e.target.value)}
+                              style={{
+                                background: 'transparent',
+                                border: 'none',
+                                color: '#00d4ff',
+                                fontSize: '12px',
+                                fontWeight: 700,
+                                outline: 'none',
+                                cursor: 'pointer',
+                                padding: 0,
+                              }}
+                            />
+                          </div>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => handleOpenFoodModal(mIdx)}
-                          style={{
-                            background: 'rgba(0, 212, 255, 0.12)',
-                            border: '1px solid rgba(0, 212, 255, 0.4)',
-                            color: '#00d4ff',
-                            borderRadius: '6px',
-                            padding: '6px 12px',
-                            fontSize: '11px',
-                            fontWeight: 700,
-                            cursor: 'pointer',
-                          }}
-                        >
-                          + Agregar Alimento
-                        </button>
+
                         <button
                           type="button"
                           onClick={() => handleDeleteMeal(mIdx)}
@@ -980,10 +919,35 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
                           🗑️
                         </button>
                       </div>
+
+                      <div className="nutrition-meal-header-row2">
+                        <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.8)' }}>
+                          <strong>{mealTotals.calorias} kcal</strong> ({mealKcalPct}% del día) •{' '}
+                          <span style={{ color: '#3b82f6' }}>P: {mealTotals.proteina}g</span> |{' '}
+                          <span style={{ color: '#10b981' }}>C: {mealTotals.carbohidratos}g</span> |{' '}
+                          <span style={{ color: '#f59e0b' }}>G: {mealTotals.grasa}g</span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => handleOpenFoodModal(mIdx)}
+                          style={{
+                            background: 'rgba(0, 212, 255, 0.12)',
+                            border: '1px solid rgba(0, 212, 255, 0.4)',
+                            color: '#00d4ff',
+                            borderRadius: '6px',
+                            padding: '6px 14px',
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          + Agregar Alimento
+                        </button>
+                      </div>
                     </div>
 
                     {/* LISTADO DE ALIMENTOS EN LA COMIDA */}
-                    <div style={{ padding: '8px 16px' }}>
+                    <div style={{ padding: '8px 12px' }}>
                       {meal.foods.length === 0 ? (
                         <div
                           style={{
@@ -999,28 +963,34 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
                       ) : (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                           {meal.foods.map((food, fIdx) => (
-                            <div
-                              key={food.id || fIdx}
-                              style={{
-                                display: 'flex',
-                                justifyContent: 'space-between',
-                                alignItems: 'center',
-                                padding: '8px 12px',
-                                background: 'rgba(0, 0, 0, 0.25)',
-                                border: '1px solid rgba(255, 255, 255, 0.04)',
-                                borderRadius: '8px',
-                              }}
-                            >
-                              <div style={{ flex: 1 }}>
-                                <div style={{ fontSize: '13px', fontWeight: 600, color: '#ffffff' }}>
-                                  {food.nombre}
+                            <div key={food.id || fIdx} className="nutrition-food-item-row">
+                              <div className="nutrition-food-row-top">
+                                <div style={{ flex: 1 }}>
+                                  <div style={{ fontSize: '13px', fontWeight: 600, color: '#ffffff' }}>
+                                    {food.nombre}
+                                  </div>
+                                  <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.5)', marginTop: '2px' }}>
+                                    {food.grupo}
+                                  </div>
                                 </div>
-                                <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.5)', marginTop: '2px' }}>
-                                  {food.grupo}
-                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRemoveFoodFromMeal(mIdx, fIdx)}
+                                  style={{
+                                    background: 'transparent',
+                                    border: 'none',
+                                    color: 'rgba(239, 68, 68, 0.7)',
+                                    fontSize: '16px',
+                                    cursor: 'pointer',
+                                    padding: '4px',
+                                  }}
+                                  title="Eliminar alimento"
+                                >
+                                  🗑️
+                                </button>
                               </div>
 
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                              <div className="nutrition-food-row-bottom">
                                 {/* Modificador de cantidad inline */}
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                                   <input
@@ -1048,7 +1018,7 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
                                 </div>
 
                                 {/* Macros del alimento */}
-                                <div style={{ fontSize: '11px', textAlign: 'right', minWidth: '160px' }}>
+                                <div style={{ fontSize: '11px', textAlign: 'right' }}>
                                   <strong style={{ color: '#fff' }}>{food.calorias} kcal</strong>
                                   <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>
                                     <span style={{ color: '#3b82f6' }}>P: {food.proteina}g</span> |{' '}
@@ -1056,22 +1026,6 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
                                     <span style={{ color: '#f59e0b' }}>G: {food.grasa}g</span>
                                   </div>
                                 </div>
-
-                                <button
-                                  type="button"
-                                  onClick={() => handleRemoveFoodFromMeal(mIdx, fIdx)}
-                                  style={{
-                                    background: 'transparent',
-                                    border: 'none',
-                                    color: 'rgba(239, 68, 68, 0.7)',
-                                    fontSize: '16px',
-                                    cursor: 'pointer',
-                                    padding: '4px',
-                                  }}
-                                  title="Eliminar alimento"
-                                >
-                                  🗑️
-                                </button>
                               </div>
                             </div>
                           ))}
@@ -1209,25 +1163,17 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
         </div>
 
         {/* FOOTER DE ACCIONES */}
-        <div
-          style={{
-            padding: '14px 20px',
-            borderTop: '1px solid rgba(255, 255, 255, 0.1)',
-            background: '#070a12',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-          }}
-        >
+        <div className="nutrition-footer-bar">
           <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)' }}>
             Estado: {plan.id ? 'Sincronizado con Supabase' : 'Nuevo plan local'}
           </div>
 
-          <div style={{ display: 'flex', gap: '10px' }}>
+          <div className="nutrition-footer-actions">
             <button
               type="button"
               onClick={handleDownloadPDF}
               disabled={downloadingPdf}
+              className="nutrition-footer-btn-pdf"
               style={{
                 background: 'rgba(255, 255, 255, 0.08)',
                 border: '1px solid rgba(255, 255, 255, 0.2)',
@@ -1239,18 +1185,19 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
                 cursor: downloadingPdf ? 'wait' : 'pointer',
               }}
             >
-              {downloadingPdf ? 'Generando PDF...' : '📄 Descargar PDF'}
+              {downloadingPdf ? 'Generando...' : '📄 PDF'}
             </button>
             <button
               type="button"
               onClick={handleSavePlan}
               disabled={saving}
+              className="nutrition-footer-btn-save"
               style={{
                 background: 'var(--theme-primary, #00d4ff)',
                 border: 'none',
                 borderRadius: '8px',
                 color: '#000000',
-                padding: '8px 20px',
+                padding: '10px 20px',
                 fontSize: '12px',
                 fontWeight: 800,
                 fontFamily: "'Orbitron', sans-serif",
