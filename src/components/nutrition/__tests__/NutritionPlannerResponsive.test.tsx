@@ -403,8 +403,9 @@ describe('Nutrition Planner & Food Selector Mobile Responsiveness Test Suite', (
       expect(screen.getByRole('button', { name: /Supermercado/i })).toBeInTheDocument();
       expect(screen.getByRole('button', { name: /Crear/i })).toBeInTheDocument();
 
-      // Responsive search row & category selector
+      // Responsive search row, input & category selector
       expect(container.querySelector('.food-selector-search-row')).toBeInTheDocument();
+      expect(container.querySelector('.food-selector-search-input')).toBeInTheDocument();
       expect(container.querySelector('.food-selector-search-select')).toBeInTheDocument();
     });
 
@@ -583,4 +584,31 @@ describe('Nutrition Planner & Food Selector Mobile Responsiveness Test Suite', (
       expect(onClose).toHaveBeenCalled();
     });
   });
+
+  describe('Master Food Catalog Integrity & Sanitization', () => {
+    it('guarantees clean EvolutionLab ID prefixes and zero third-party residuals', async () => {
+      const rawCatalog = (await import('../../../data/masterFoodCatalog.json')).default;
+      expect(rawCatalog.length).toBe(1740);
+
+      // Zero nfs_ IDs
+      const nfsItems = rawCatalog.filter((f: any) => f.id.startsWith('nfs_'));
+      expect(nfsItems).toHaveLength(0);
+
+      // All IDs start with evo_
+      const nonEvoItems = rawCatalog.filter((f: any) => !f.id.startsWith('evo_'));
+      expect(nonEvoItems).toHaveLength(0);
+
+      // Exactly 39 custom items with esPersonalizado
+      const customItems = rawCatalog.filter((f: any) => f.esPersonalizado === true);
+      expect(customItems).toHaveLength(39);
+      expect(customItems.every((f: any) => f.subgrupo === 'Personalizados EvolutionLab')).toBe(true);
+
+      // Zero strings containing oficialSoft, CHOCHOLATES or NutriFit
+      const serialized = JSON.stringify(rawCatalog);
+      expect(serialized).not.toContain('oficialSoft');
+      expect(serialized).not.toContain('CHOCHOLATES');
+      expect(serialized.toLowerCase()).not.toContain('nutrifit');
+    });
+  });
 });
+

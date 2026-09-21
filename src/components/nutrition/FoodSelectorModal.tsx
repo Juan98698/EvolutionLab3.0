@@ -377,13 +377,17 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
                     placeholder="🔍 Buscar alimento (ej. pechuga, cerdo, res, avena...)"
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
+                    className="food-selector-search-input"
                     style={{
-                      flex: '1 1 240px',
+                      flex: '1 1 auto',
+                      minWidth: '180px',
+                      height: '42px',
+                      boxSizing: 'border-box',
                       background: 'rgba(0, 0, 0, 0.4)',
                       border: '1px solid rgba(255, 255, 255, 0.15)',
                       borderRadius: '8px',
                       color: '#ffffff',
-                      padding: '10px 14px',
+                      padding: '0 14px',
                       fontSize: '13px',
                       outline: 'none',
                     }}
@@ -631,13 +635,16 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
                   value={offQuery}
                   onChange={(e) => setOffQuery(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && handleSearchOff()}
+                  className="food-selector-search-input"
                   style={{
                     flex: 1,
+                    height: '42px',
+                    boxSizing: 'border-box',
                     background: 'rgba(0, 0, 0, 0.4)',
                     border: '1px solid rgba(255, 255, 255, 0.15)',
                     borderRadius: '8px',
                     color: '#ffffff',
-                    padding: '10px 14px',
+                    padding: '0 14px',
                     fontSize: '13px',
                   }}
                 />
