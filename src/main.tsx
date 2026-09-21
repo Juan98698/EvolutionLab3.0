@@ -5,6 +5,7 @@ import { SupabaseProvider } from './context/SupabaseContext.tsx';
 import { ErrorBoundary } from './components/common/ErrorBoundary.tsx';
 import { inject } from '@vercel/analytics';
 import { initErrorTracking } from './lib/errorTracking.ts';
+import { registerPwaServiceWorker } from './lib/pwaRegistration.ts';
 import './index.css';
 
 // Auto-recuperación de "Failed to fetch dynamically imported module": pasa
@@ -16,7 +17,18 @@ import './index.css';
 window.addEventListener('vite:preloadError', (event) => {
   console.warn('⚠️ Chunk desactualizado detectado, recargando automáticamente...', event);
   event.preventDefault();
-  window.location.reload();
+  try {
+    const lastReload = sessionStorage.getItem('evolab_chunk_reload_ts');
+    const now = Date.now();
+    if (!lastReload || now - Number(lastReload) > 10000) {
+      sessionStorage.setItem('evolab_chunk_reload_ts', String(now));
+      window.location.reload();
+    } else {
+      console.warn('⚠️ Recarga por chunk desactualizado ya ejecutada recientemente. Evitando bucle infinito.');
+    }
+  } catch {
+    window.location.reload();
+  }
 });
 
 // Síncronamente inicializar el tema de enfoque para evitar parpadeos visuales (cero-flicker)
@@ -83,31 +95,8 @@ purgeOldServiceWorkersAndCaches().then((wasPurged) => {
   // Inicializar analíticas de Vercel
   inject();
 
-  // Registrar el Service Worker DESPUÉS de verificar que la caché está limpia.
-  // Importar dinámicamente para que no se ejecute en el scope global antes de la purga.
-  import('virtual:pwa-register').then(({ registerSW }) => {
-    const updateSW = registerSW({ immediate: true });
-
-    // El navegador solo revisa automáticamente si hay una versión nueva del
-    // Service Worker al navegar. En una SPA, si alguien deja la pestaña
-    // abierta sin recargar, nunca se entera de un deploy nuevo hasta que
-    // por casualidad falla algo. Revisamos manualmente al volver a la
-    // pestaña y cada 30 minutos mientras sigue abierta.
-    const checkForUpdate = () => {
-      try {
-        const res = updateSW?.(false);
-        if (res && typeof (res as any).catch === 'function') {
-          (res as any).catch(() => {});
-        }
-      } catch (e) {
-        // Ignorar si el Service Worker no soporta verificación manual en este entorno
-      }
-    };
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'visible') checkForUpdate();
-    });
-    setInterval(checkForUpdate, 30 * 60 * 1000);
-  });
+  // Registrar el Service Worker de forma defensiva tras verificar caché limpia.
+  registerPwaServiceWorker();
 
   const GlobalErrorFallback = (error: Error, reset: () => void) => (
     <div style={{

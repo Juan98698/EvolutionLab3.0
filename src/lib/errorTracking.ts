@@ -40,7 +40,9 @@ function _initSentry(dsn: string): void {
       "sendPageHideMessage",
       // Recargas dinámicas de chunks desactualizados de Vite
       "Failed to fetch dynamically imported module",
-      "Importing a module script failed"
+      "Importing a module script failed",
+      "Cannot destructure property 'registerSW'",
+      "registerSW"
     ],
     beforeSend(event, hint) {
       const error = hint?.originalException;
@@ -49,10 +51,11 @@ function _initSentry(dsn: string): void {
         const stack = String((error as any).stack || '');
         if (
           message.includes('webkit.messageHandlers') ||
+          message.includes('registerSW') ||
           stack.includes('sendDataToNative') ||
           stack.includes('sendPageHideMessage')
         ) {
-          return null; // Ignorar en Sentry (ruido de script inyectado de terceros)
+          return null; // Ignorar en Sentry (ruido de script inyectado de terceros o recarga de SW)
         }
       }
       return event;
