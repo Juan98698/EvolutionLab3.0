@@ -159,6 +159,7 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
 
   // Búsqueda en Open Food Facts / Supermercado
   const offDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const activeSearchIdRef = useRef<number>(0);
 
   const handleSearchOff = useCallback(async (queryOverride?: string) => {
     const term = (queryOverride !== undefined ? queryOverride : offQuery).trim();
@@ -169,21 +170,27 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
       offDebounceRef.current = null;
     }
 
+    const currentSearchId = ++activeSearchIdRef.current;
     setSearchingOff(true);
     setHasSearchedOff(true);
     try {
       const items = await searchOpenFoodFacts(term);
-      setOffResults(items);
+      // Evitar condiciones de carrera: si mientras se esperaba respuesta se lanzó otra búsqueda, descartar
+      if (currentSearchId === activeSearchIdRef.current) {
+        setOffResults(items);
+      }
     } finally {
-      setSearchingOff(false);
+      if (currentSearchId === activeSearchIdRef.current) {
+        setSearchingOff(false);
+      }
     }
   }, [offQuery]);
 
-  // Debounce automático al escribir (450ms)
+  // Debounce automático al escribir (requiere mínimo 3 caracteres para no disparar búsquedas de 2 letras como "To")
   useEffect(() => {
     if (activeSourceTab !== 'openfoodfacts') return;
     const term = offQuery.trim();
-    if (term.length < 2) {
+    if (term.length < 3) {
       if (term.length === 0) {
         setOffResults([]);
         setHasSearchedOff(false);
@@ -809,7 +816,7 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
                         </div>
                         <div className="food-selector-card-bottom">
                           <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.5)' }}>
-                            Por 100g • {f.marca || 'Comercial'}
+                            Por 100{f.unidad} • {f.marca || 'Comercial'}
                           </div>
                           <div style={{ textAlign: 'right' }}>
                             {isSinMacros ? (

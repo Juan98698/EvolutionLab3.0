@@ -508,7 +508,7 @@ describe('Nutrition Engine — Cálculos, Integridad y Flujo de Principio a Fin'
       }
     });
 
-    it('debe consultar Search-a-licious con hits y ordenar alimentos con nutrientes al inicio', async () => {
+    it('debe consultar Search-a-licious con hits, asignar ml a líquidos y filtrar productos sin macros cuando existen con macros', async () => {
       const originalFetch = global.fetch;
       global.fetch = vi.fn().mockImplementation((url: string) => {
         // Simular que el proxy /api/food-search falla (red o 500)
@@ -527,7 +527,7 @@ describe('Nutrition Engine — Cálculos, Integridad y Flujo de Principio a Fin'
                   code: '7702001',
                   product_name: 'Salchicha Tradicional',
                   brands: ['Zenú'],
-                  nutriments: {}, // Sin macros
+                  nutriments: {}, // Sin macros (debe ser filtrado)
                 },
                 {
                   code: '7702002',
@@ -540,6 +540,17 @@ describe('Nutrition Engine — Cálculos, Integridad y Flujo de Principio a Fin'
                     fat_100g: 20,
                   },
                 },
+                {
+                  code: '7702003',
+                  product_name: 'Bebida de Avena',
+                  brands: 'Colanta',
+                  nutriments: {
+                    'energy-kcal_100g': 70,
+                    proteins_100g: 2,
+                    carbohydrates_100g: 10.5,
+                    fat_100g: 2,
+                  },
+                },
               ],
             }),
           });
@@ -549,14 +560,16 @@ describe('Nutrition Engine — Cálculos, Integridad y Flujo de Principio a Fin'
 
       try {
         const results = await searchOpenFoodFacts('Zenú');
+        // El producto sin macros se filtra porque hay productos con macros reales
         expect(results.length).toBe(2);
-        // El alimento con macronutrientes completos debe estar de primero
         expect(results[0].nombre).toContain('Salchicha Ranchera');
         expect(results[0].caloriasBase).toBe(240);
         expect(results[0].proteinaBase).toBe(13);
+        expect(results[0].unidad).toBe('gr'); // Sólido -> gr
 
-        // El alimento sin macronutrientes queda después
-        expect(results[1].nombre).toContain('Salchicha Tradicional');
+        // La bebida líquida debe tener unidad 'ml'
+        expect(results[1].nombre).toContain('Bebida de Avena');
+        expect(results[1].unidad).toBe('ml');
       } finally {
         global.fetch = originalFetch;
       }

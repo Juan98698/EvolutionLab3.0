@@ -267,4 +267,84 @@ describe('Supermarket Search (FoodSelectorModal)', () => {
     const nombreInput = screen.getByPlaceholderText(/Tostadas francesas/i);
     expect(nombreInput).toHaveValue('ProductoInexistente99');
   });
+
+  it('debe descartar respuestas desordenadas de búsquedas anteriores (prevención de race conditions)', async () => {
+    let resolveSearch1: (val: any) => void;
+    const promise1 = new Promise((resolve) => {
+      resolveSearch1 = resolve;
+    });
+
+    let resolveSearch2: (val: any) => void;
+    const promise2 = new Promise((resolve) => {
+      resolveSearch2 = resolve;
+    });
+
+    mockSearchOpenFoodFacts.mockImplementation((query: string) => {
+      if (query === 'Antiguo') return promise1;
+      if (query === 'Nuevo') return promise2;
+      return Promise.resolve([]);
+    });
+
+    render(
+      <FoodSelectorModal
+        isOpen={true}
+        onClose={onCloseMock}
+        mealName="Almuerzo"
+        onAddFood={onAddFoodMock}
+      />
+    );
+
+    const supermarketTabBtn = screen.getByRole('button', { name: /Supermercado/i });
+    fireEvent.click(supermarketTabBtn);
+
+    const input = screen.getByPlaceholderText(/Escribe el nombre de la marca o producto/i);
+
+    // 1. Escribir "Antiguo" y avanzar debounce para disparar la primera búsqueda
+    fireEvent.change(input, { target: { value: 'Antiguo' } });
+    await act(async () => {
+      vi.advanceTimersByTime(450);
+    });
+
+    // 2. Escribir "Nuevo" y avanzar debounce para disparar la segunda búsqueda
+    fireEvent.change(input, { target: { value: 'Nuevo' } });
+    await act(async () => {
+      vi.advanceTimersByTime(450);
+    });
+
+    // 3. Responde primero "Nuevo"
+    await act(async () => {
+      resolveSearch2!([
+        {
+          id: 'off_nuevo',
+          nombre: 'Producto Nuevo Esperado',
+          caloriasBase: 100,
+          proteinaBase: 10,
+          carbohidratosBase: 10,
+          grasaBase: 2,
+          fuente: 'Open Food Facts',
+        },
+      ]);
+    });
+
+    expect(screen.getByText('Producto Nuevo Esperado')).toBeInTheDocument();
+
+    // 4. Responde tarde la petición de "Antiguo"
+    await act(async () => {
+      resolveSearch1!([
+        {
+          id: 'off_antiguo',
+          nombre: 'Producto Desactualizado Rezagado',
+          caloriasBase: 50,
+          proteinaBase: 1,
+          carbohidratosBase: 5,
+          grasaBase: 1,
+          fuente: 'Open Food Facts',
+        },
+      ]);
+    });
+
+    // La respuesta rezagada debe haber sido ignorada
+    expect(screen.getByText('Producto Nuevo Esperado')).toBeInTheDocument();
+    expect(screen.queryByText('Producto Desactualizado Rezagado')).toBeNull();
+  });
 });

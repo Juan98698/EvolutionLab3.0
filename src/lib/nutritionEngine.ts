@@ -452,6 +452,14 @@ export async function searchOpenFoodFacts(query: string): Promise<FoodItem[]> {
       const nombre = (p.product_name || p.product_name_es || p.product_name_en || '').trim();
       if (!nombre) continue;
 
+      const lowerName = nombre.toLowerCase();
+
+      // Descartar cosméticos y artículos no comestibles que a veces se cuelan en Open Food Facts
+      const isNonFood = /\b(micellar|shampoo|champú|crema corporal|lotion|jabón|soap|cleanser|serum|mascarilla|conditioner|detergente|cleaner)\b/i.test(
+        lowerName
+      );
+      if (isNonFood) continue;
+
       const nutriments = p.nutriments || {};
       const cal = nutriments['energy-kcal_100g'] ?? nutriments['energy-kcal'] ?? nutriments['energy_100g'];
       const prot = nutriments['proteins_100g'] ?? nutriments['proteins'];
@@ -465,12 +473,21 @@ export async function searchOpenFoodFacts(query: string): Promise<FoodItem[]> {
         ? `${nombre} (${brandStr})`
         : nombre;
 
+      // Detectar si es líquido o bebida para asignar unidad 'ml' en lugar de 'gr'
+      const isLiquid =
+        /\b(leche|yogur|yagur|yogurt|bebida|jugo|néctar|nectar|drink|agua|water|aceite|oil|kumis|soda|gaseosa|refresco|vinagre|té|tea|café|coffee|smoothie|shake|extracto)\b/i.test(
+          lowerName
+        ) ||
+        (typeof p.quantity === 'string' && /\b(ml|cl|l|litro|litros)\b/i.test(p.quantity));
+
+      const unidad = isLiquid ? 'ml' : 'gr';
+
       const { valid, food } = validateAndSanitizeFood({
         id: 'off_' + (p.code || Math.random().toString(36).substring(2, 9)),
         nombre: displayName,
         grupo: 'Mis Alimentos',
         cantidadBase: 100,
-        unidad: 'gr',
+        unidad,
         caloriasBase: Math.round(Number(cal) || 0),
         proteinaBase: Math.round((Number(prot) || 0) * 10) / 10,
         carbohidratosBase: Math.round((Number(carbs) || 0) * 10) / 10,
@@ -487,12 +504,12 @@ export async function searchOpenFoodFacts(query: string): Promise<FoodItem[]> {
       }
     }
 
-    // Ordenar: productos con nutrientes al principio
-    results.sort((a, b) => {
-      const aNut = (a as any)._hasNutrition ? 1 : 0;
-      const bNut = (b as any)._hasNutrition ? 1 : 0;
-      return bNut - aNut;
-    });
+    // Filtrar: Si hay alimentos con información nutricional completa, priorizarlos
+    // para no saturar con tarjetas vacías de productos sin macros
+    const itemsWithMacros = results.filter((f) => (f as any)._hasNutrition);
+    if (itemsWithMacros.length > 0) {
+      return itemsWithMacros;
+    }
 
     return results;
   } catch (err) {
