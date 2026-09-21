@@ -10,6 +10,17 @@ function foodSearchDevPlugin() {
     name: 'food-search-dev-plugin',
     configureServer(server: any) {
       server.middlewares.use('/api/food-search', async (req: any, res: any) => {
+        // Manejo de CORS
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
+        if (req.method === 'OPTIONS') {
+          res.statusCode = 204;
+          res.end();
+          return;
+        }
+
         try {
           const url = new URL(req.url, 'http://localhost');
           const term = (url.searchParams.get('q') || '').trim();
@@ -20,29 +31,102 @@ function foodSearchDevPlugin() {
             return;
           }
 
-          const offUrl = `https://es.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(
-            term
-          )}&search_simple=1&action=process&json=1&page_size=20&fields=code,product_name,product_name_es,brands,nutriments`;
+          const normalizedTerm = term.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+          let products: any[] = [];
 
-          const upstreamRes = await fetch(offUrl, {
-            headers: {
-              'User-Agent': 'EvolutionLab/3.0 - Web - (soporte@evolutionlab.app)',
-              Accept: 'application/json',
-            },
-          });
+          // Consulta al nuevo servicio de búsqueda oficial de Open Food Facts (Search-a-licious)
+          const fetchSearchService = async (q: string): Promise<any[]> => {
+            try {
+              const searchUrl = `https://search.openfoodfacts.org/search?q=${encodeURIComponent(q)}&page_size=25`;
+              const controller = new AbortController();
+              const timeoutId = setTimeout(() => controller.abort(), 6000);
 
-          if (!upstreamRes.ok) {
-            res.statusCode = 200;
-            res.setHeader('Content-Type', 'application/json');
-            res.end(JSON.stringify({ products: [] }));
-            return;
+              const upstreamRes = await fetch(searchUrl, {
+                method: 'GET',
+                headers: {
+                  'User-Agent': 'EvolutionLab/3.0 - Web - (soporte@evolutionlab.app)',
+                  Accept: 'application/json',
+                },
+                signal: controller.signal,
+              });
+
+              clearTimeout(timeoutId);
+
+              if (!upstreamRes.ok) return [];
+              const contentType = upstreamRes.headers.get('content-type') || '';
+              if (!contentType.includes('application/json')) return [];
+
+              const data = await upstreamRes.json();
+              if (Array.isArray(data?.hits)) {
+                return data.hits.map((h: any) => ({
+                  code: h.code || '',
+                  product_name: h.product_name || h.product_name_es || h.product_name_en || '',
+                  product_name_es: h.product_name_es || h.product_name || '',
+                  brands: Array.isArray(h.brands) ? h.brands.join(', ') : (h.brands || ''),
+                  nutriments: h.nutriments || {},
+                  image_front_small_url: h.image_front_small_url || h.image_url || '',
+                }));
+              }
+            } catch (err: any) {
+              console.warn(`Error en dev proxy search.openfoodfacts.org para "${q}":`, err?.message || err);
+            }
+            return [];
+          };
+
+          // 1. Consultar término original
+          const hits1 = await fetchSearchService(term);
+          products.push(...hits1);
+
+          // 2. Si tenía acentos y hay pocos resultados (< 15), complementar con versión sin acentos
+          if (term !== normalizedTerm && products.length < 15) {
+            const hits2 = await fetchSearchService(normalizedTerm);
+            for (const h of hits2) {
+              const exists = products.some(
+                (p) => (p.code && p.code === h.code) || (p.product_name && p.product_name === h.product_name)
+              );
+              if (!exists) {
+                products.push(h);
+              }
+            }
           }
 
-          const data = await upstreamRes.json();
+          // 3. Fallback a world.openfoodfacts.org si Search-a-licious no devolvió productos
+          if (products.length === 0) {
+            try {
+              const offUrl = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(
+                normalizedTerm
+              )}&search_simple=1&action=process&json=1&page_size=25&fields=code,product_name,product_name_es,brands,nutriments,image_front_small_url`;
+              const controller = new AbortController();
+              const timeoutId = setTimeout(() => controller.abort(), 6000);
+
+              const upstreamRes = await fetch(offUrl, {
+                method: 'GET',
+                headers: {
+                  'User-Agent': 'EvolutionLab/3.0 - Web - (soporte@evolutionlab.app)',
+                  Accept: 'application/json',
+                },
+                signal: controller.signal,
+              });
+
+              clearTimeout(timeoutId);
+
+              if (upstreamRes.ok) {
+                const contentType = upstreamRes.headers.get('content-type') || '';
+                if (contentType.includes('application/json')) {
+                  const data = await upstreamRes.json();
+                  if (Array.isArray(data?.products)) {
+                    products = data.products;
+                  }
+                }
+              }
+            } catch (err: any) {
+              console.warn('Fallback cgi/search.pl falló en dev:', err?.message || err);
+            }
+          }
+
           res.statusCode = 200;
           res.setHeader('Content-Type', 'application/json');
-          res.setHeader('Access-Control-Allow-Origin', '*');
-          res.end(JSON.stringify({ products: Array.isArray(data?.products) ? data.products : [] }));
+          res.end(JSON.stringify({ products }));
         } catch (err: any) {
           console.error('Error en Vite food-search dev middleware:', err?.message || err);
           res.statusCode = 200;

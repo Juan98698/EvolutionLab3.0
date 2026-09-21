@@ -349,6 +349,7 @@ export async function searchOpenFoodFacts(query: string): Promise<FoodItem[]> {
   const term = query.trim();
   if (term.length < 2) return [];
 
+  const normalizedTerm = term.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   let rawProducts: any[] = [];
 
   try {
@@ -368,23 +369,75 @@ export async function searchOpenFoodFacts(query: string): Promise<FoodItem[]> {
       // Ignorar error de red del proxy y continuar al fallback directo
     }
 
-    // 2. Si el proxy no devolvió productos (ej. en preview offline o llamadas directas), fallback directo a OFF en español
+    // 2. Si el proxy no devolvió productos (ej. en preview offline o llamadas directas),
+    // consultar directamente el nuevo servicio Search-a-licious de Open Food Facts
     if (rawProducts.length === 0) {
-      const fallbackUrl = `https://es.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(
-        term
-      )}&search_simple=1&action=process&json=1&page_size=20&fields=code,product_name,product_name_es,brands,nutriments`;
-
-      const directRes = await fetch(fallbackUrl, {
-        headers: { Accept: 'application/json' },
-      });
-
-      if (directRes.ok) {
-        const ct = directRes.headers.get('content-type') || '';
-        if (ct.includes('application/json')) {
-          const directData = await directRes.json();
-          if (Array.isArray(directData?.products)) {
-            rawProducts = directData.products;
+      const fetchOffSearch = async (q: string): Promise<any[]> => {
+        try {
+          const searchUrl = `https://search.openfoodfacts.org/search?q=${encodeURIComponent(q)}&page_size=25`;
+          const directRes = await fetch(searchUrl, {
+            headers: {
+              'User-Agent': 'EvolutionLab/3.0 - Web - (soporte@evolutionlab.app)',
+              Accept: 'application/json',
+            },
+          });
+          if (directRes.ok) {
+            const ct = directRes.headers.get('content-type') || '';
+            if (ct.includes('application/json')) {
+              const data = await directRes.json();
+              if (Array.isArray(data?.hits)) {
+                return data.hits.map((h: any) => ({
+                  code: h.code || '',
+                  product_name: h.product_name || h.product_name_es || h.product_name_en || '',
+                  product_name_es: h.product_name_es || h.product_name || '',
+                  brands: Array.isArray(h.brands) ? h.brands.join(', ') : (h.brands || ''),
+                  nutriments: h.nutriments || {},
+                  image_front_small_url: h.image_front_small_url || h.image_url || '',
+                }));
+              }
+            }
           }
+        } catch {
+          // Ignorar y continuar
+        }
+        return [];
+      };
+
+      const hits1 = await fetchOffSearch(term);
+      rawProducts.push(...hits1);
+
+      if (term !== normalizedTerm && rawProducts.length < 15) {
+        const hits2 = await fetchOffSearch(normalizedTerm);
+        for (const h of hits2) {
+          if (!rawProducts.some((p) => (p.code && p.code === h.code) || (p.product_name && p.product_name === h.product_name))) {
+            rawProducts.push(h);
+          }
+        }
+      }
+
+      // 3. Fallback adicional a world.openfoodfacts.org si Search-a-licious no dio resultados
+      if (rawProducts.length === 0) {
+        try {
+          const fallbackUrl = `https://world.openfoodfacts.org/cgi/search.pl?search_terms=${encodeURIComponent(
+            normalizedTerm
+          )}&search_simple=1&action=process&json=1&page_size=25&fields=code,product_name,product_name_es,brands,nutriments,image_front_small_url`;
+          const directRes = await fetch(fallbackUrl, {
+            headers: {
+              'User-Agent': 'EvolutionLab/3.0 - Web - (soporte@evolutionlab.app)',
+              Accept: 'application/json',
+            },
+          });
+          if (directRes.ok) {
+            const ct = directRes.headers.get('content-type') || '';
+            if (ct.includes('application/json')) {
+              const directData = await directRes.json();
+              if (Array.isArray(directData?.products)) {
+                rawProducts = directData.products;
+              }
+            }
+          }
+        } catch {
+          // Continuar
         }
       }
     }
@@ -396,40 +449,50 @@ export async function searchOpenFoodFacts(query: string): Promise<FoodItem[]> {
     const results: FoodItem[] = [];
 
     for (const p of rawProducts) {
-      const nombre = p.product_name || p.product_name_es;
+      const nombre = (p.product_name || p.product_name_es || p.product_name_en || '').trim();
       if (!nombre) continue;
 
       const nutriments = p.nutriments || {};
-      const cal = nutriments['energy-kcal_100g'] ?? nutriments['energy-kcal'];
+      const cal = nutriments['energy-kcal_100g'] ?? nutriments['energy-kcal'] ?? nutriments['energy_100g'];
       const prot = nutriments['proteins_100g'] ?? nutriments['proteins'];
       const carbs = nutriments['carbohydrates_100g'] ?? nutriments['carbohydrates'];
       const fat = nutriments['fat_100g'] ?? nutriments['fat'];
 
-      // Descartar productos sin macronutrientes
-      if (cal === undefined && prot === undefined && carbs === undefined && fat === undefined) {
-        continue;
-      }
+      const hasMacros = cal !== undefined || prot !== undefined || carbs !== undefined || fat !== undefined;
+
+      const brandStr = Array.isArray(p.brands) ? p.brands.join(', ') : (p.brands || '').trim();
+      const displayName = brandStr && !nombre.toLowerCase().includes(brandStr.toLowerCase())
+        ? `${nombre} (${brandStr})`
+        : nombre;
 
       const { valid, food } = validateAndSanitizeFood({
         id: 'off_' + (p.code || Math.random().toString(36).substring(2, 9)),
-        nombre: p.brands ? `${nombre} (${p.brands})` : nombre,
+        nombre: displayName,
         grupo: 'Mis Alimentos',
         cantidadBase: 100,
         unidad: 'gr',
-        caloriasBase: Number(cal) || 0,
-        proteinaBase: Number(prot) || 0,
-        carbohidratosBase: Number(carbs) || 0,
-        grasaBase: Number(fat) || 0,
+        caloriasBase: Math.round(Number(cal) || 0),
+        proteinaBase: Math.round((Number(prot) || 0) * 10) / 10,
+        carbohidratosBase: Math.round((Number(carbs) || 0) * 10) / 10,
+        grasaBase: Math.round((Number(fat) || 0) * 10) / 10,
         esPersonalizado: true,
         fuente: 'Open Food Facts',
-        marca: p.brands,
-        codigoBarras: p.code,
+        marca: brandStr || undefined,
+        codigoBarras: p.code || undefined,
       });
 
       if (valid && food) {
+        (food as any)._hasNutrition = hasMacros;
         results.push(food);
       }
     }
+
+    // Ordenar: productos con nutrientes al principio
+    results.sort((a, b) => {
+      const aNut = (a as any)._hasNutrition ? 1 : 0;
+      const bNut = (b as any)._hasNutrition ? 1 : 0;
+      return bNut - aNut;
+    });
 
     return results;
   } catch (err) {

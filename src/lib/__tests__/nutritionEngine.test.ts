@@ -507,6 +507,60 @@ describe('Nutrition Engine — Cálculos, Integridad y Flujo de Principio a Fin'
         global.fetch = originalFetch;
       }
     });
+
+    it('debe consultar Search-a-licious con hits y ordenar alimentos con nutrientes al inicio', async () => {
+      const originalFetch = global.fetch;
+      global.fetch = vi.fn().mockImplementation((url: string) => {
+        // Simular que el proxy /api/food-search falla (red o 500)
+        if (url.includes('/api/food-search')) {
+          return Promise.reject(new Error('Proxy offline'));
+        }
+
+        // Simular Search-a-licious directo
+        if (url.includes('search.openfoodfacts.org/search')) {
+          return Promise.resolve({
+            ok: true,
+            headers: new Headers({ 'content-type': 'application/json' }),
+            json: async () => ({
+              hits: [
+                {
+                  code: '7702001',
+                  product_name: 'Salchicha Tradicional',
+                  brands: ['Zenú'],
+                  nutriments: {}, // Sin macros
+                },
+                {
+                  code: '7702002',
+                  product_name: 'Salchicha Ranchera',
+                  brands: 'Zenú',
+                  nutriments: {
+                    'energy-kcal_100g': 240,
+                    proteins_100g: 13,
+                    carbohydrates_100g: 2,
+                    fat_100g: 20,
+                  },
+                },
+              ],
+            }),
+          });
+        }
+        return Promise.resolve({ ok: false });
+      });
+
+      try {
+        const results = await searchOpenFoodFacts('Zenú');
+        expect(results.length).toBe(2);
+        // El alimento con macronutrientes completos debe estar de primero
+        expect(results[0].nombre).toContain('Salchicha Ranchera');
+        expect(results[0].caloriasBase).toBe(240);
+        expect(results[0].proteinaBase).toBe(13);
+
+        // El alimento sin macronutrientes queda después
+        expect(results[1].nombre).toContain('Salchicha Tradicional');
+      } finally {
+        global.fetch = originalFetch;
+      }
+    });
   });
 });
 

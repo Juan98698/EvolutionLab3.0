@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { FoodItem, FoodGroup, MealFoodItem } from '../../types/nutrition.types';
 import {
   calculatePortionMacros,
@@ -157,18 +157,50 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
     return result.slice(0, 150); // Límite generoso para ver grupos completos
   }, [combinedCatalog, selectedGroup, searchQuery]);
 
-  // Búsqueda en Open Food Facts
-  const handleSearchOff = useCallback(async () => {
-    if (offQuery.trim().length < 2) return;
+  // Búsqueda en Open Food Facts / Supermercado
+  const offDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const handleSearchOff = useCallback(async (queryOverride?: string) => {
+    const term = (queryOverride !== undefined ? queryOverride : offQuery).trim();
+    if (term.length < 2) return;
+
+    if (offDebounceRef.current) {
+      clearTimeout(offDebounceRef.current);
+      offDebounceRef.current = null;
+    }
+
     setSearchingOff(true);
     setHasSearchedOff(true);
     try {
-      const items = await searchOpenFoodFacts(offQuery);
+      const items = await searchOpenFoodFacts(term);
       setOffResults(items);
     } finally {
       setSearchingOff(false);
     }
   }, [offQuery]);
+
+  // Debounce automático al escribir (450ms)
+  useEffect(() => {
+    if (activeSourceTab !== 'openfoodfacts') return;
+    const term = offQuery.trim();
+    if (term.length < 2) {
+      if (term.length === 0) {
+        setOffResults([]);
+        setHasSearchedOff(false);
+      }
+      return;
+    }
+
+    offDebounceRef.current = setTimeout(() => {
+      handleSearchOff(term);
+    }, 450);
+
+    return () => {
+      if (offDebounceRef.current) {
+        clearTimeout(offDebounceRef.current);
+      }
+    };
+  }, [offQuery, activeSourceTab, handleSearchOff]);
 
   // Guardar alimento personalizado
   const handleSaveCustomFood = async (e: React.FormEvent) => {
@@ -628,40 +660,43 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
               <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)', margin: '0 0 12px' }}>
                 Busca productos de supermercado en vivo de marcas de Colombia y LatAm (Colanta, Bimbo, Alpina, Tosh, Zenú, etc.):
               </p>
-              <div style={{ display: 'flex', gap: '8px', marginBottom: '14px' }}>
-                <input
-                  type="text"
-                  placeholder="Escribe el nombre de la marca o producto..."
-                  value={offQuery}
-                  onChange={(e) => setOffQuery(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSearchOff()}
-                  className="food-selector-search-input"
-                  style={{
-                    flex: 1,
-                    height: '42px',
-                    boxSizing: 'border-box',
-                    background: 'rgba(0, 0, 0, 0.4)',
-                    border: '1px solid rgba(255, 255, 255, 0.15)',
-                    borderRadius: '8px',
-                    color: '#ffffff',
-                    padding: '0 14px',
-                    fontSize: '13px',
-                  }}
-                />
+              <div className="food-selector-supermarket-search-row">
+                <div className="food-selector-supermarket-input-wrapper">
+                  <input
+                    type="text"
+                    placeholder="Escribe el nombre de la marca o producto..."
+                    value={offQuery}
+                    onChange={(e) => setOffQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        handleSearchOff();
+                      }
+                    }}
+                    className="food-selector-supermarket-input"
+                    aria-label="Buscar producto en supermercado"
+                  />
+                  {offQuery.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setOffQuery('');
+                        setOffResults([]);
+                        setHasSearchedOff(false);
+                      }}
+                      className="food-selector-supermarket-clear-btn"
+                      title="Borrar búsqueda"
+                      aria-label="Borrar búsqueda"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
                 <button
                   type="button"
-                  onClick={handleSearchOff}
+                  onClick={() => handleSearchOff()}
                   disabled={searchingOff || offQuery.trim().length < 2}
-                  style={{
-                    background: 'var(--theme-primary, #00d4ff)',
-                    border: 'none',
-                    borderRadius: '8px',
-                    color: '#000',
-                    fontWeight: 700,
-                    padding: '0 16px',
-                    fontSize: '12px',
-                    cursor: searchingOff ? 'wait' : 'pointer',
-                  }}
+                  className="food-selector-supermarket-btn"
                 >
                   {searchingOff ? 'Buscando...' : 'Buscar'}
                 </button>
@@ -729,6 +764,11 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   {offResults.map((f) => {
                     const isSelected = selectedFood?.id === f.id;
+                    const isSinMacros =
+                      (f as any).sinMacros ||
+                      f.fuente?.includes('Sin macros') ||
+                      (f.caloriasBase === 0 && f.proteinaBase === 0 && f.carbohidratosBase === 0 && f.grasaBase === 0);
+
                     return (
                       <div
                         key={f.id}
@@ -751,20 +791,60 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
                           <div style={{ fontSize: '13px', fontWeight: 600, color: isSelected ? '#00d4ff' : '#ffffff' }}>
                             {f.nombre}
                           </div>
+                          {f.marca && (
+                            <span
+                              style={{
+                                fontSize: '10px',
+                                padding: '2px 6px',
+                                borderRadius: '4px',
+                                background: 'rgba(0, 212, 255, 0.15)',
+                                color: '#00d4ff',
+                                fontWeight: 600,
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              {f.marca}
+                            </span>
+                          )}
                         </div>
                         <div className="food-selector-card-bottom">
                           <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.5)' }}>
                             Por 100g • {f.marca || 'Comercial'}
                           </div>
                           <div style={{ textAlign: 'right' }}>
-                            <span style={{ fontSize: '13px', fontWeight: 700, color: '#ffffff' }}>
-                              {f.caloriasBase} kcal
-                            </span>
-                            <div style={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.6)', marginTop: '2px' }}>
-                              <span style={{ color: '#3b82f6' }}>P: {f.proteinaBase}g</span> •{' '}
-                              <span style={{ color: '#10b981' }}>C: {f.carbohidratosBase}g</span> •{' '}
-                              <span style={{ color: '#f59e0b' }}>G: {f.grasaBase}g</span>
-                            </div>
+                            {isSinMacros ? (
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setCustomNombre(f.nombre);
+                                  setActiveSourceTab('custom');
+                                }}
+                                style={{
+                                  background: 'rgba(245, 158, 11, 0.12)',
+                                  border: '1px solid #f59e0b',
+                                  color: '#f59e0b',
+                                  fontSize: '11px',
+                                  fontWeight: 600,
+                                  borderRadius: '4px',
+                                  padding: '2px 8px',
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                Completar macros
+                              </button>
+                            ) : (
+                              <>
+                                <span style={{ fontSize: '13px', fontWeight: 700, color: '#ffffff' }}>
+                                  {f.caloriasBase} kcal
+                                </span>
+                                <div style={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.6)', marginTop: '2px' }}>
+                                  <span style={{ color: '#3b82f6' }}>P: {f.proteinaBase}g</span> •{' '}
+                                  <span style={{ color: '#10b981' }}>C: {f.carbohidratosBase}g</span> •{' '}
+                                  <span style={{ color: '#f59e0b' }}>G: {f.grasaBase}g</span>
+                                </div>
+                              </>
+                            )}
                           </div>
                         </div>
                       </div>
