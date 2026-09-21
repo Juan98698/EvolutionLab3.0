@@ -16,6 +16,7 @@ export interface FoodItem {
   id: string | number;
   nombre: string;
   grupo: FoodGroup;
+  subgrupo?: string;
   cantidadBase: number;
   unidad: string;
   caloriasBase: number;
