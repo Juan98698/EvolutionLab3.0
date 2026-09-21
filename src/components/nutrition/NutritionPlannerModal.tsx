@@ -5,6 +5,8 @@ import {
   MealFoodItem,
   DayOfWeek,
   Meal,
+  NutritionTemplate,
+  MealTemplate,
 } from '../../types/nutrition.types';
 import { Profile, ValoracionAntropometrica } from '../../types/database.types';
 import {
@@ -23,6 +25,10 @@ import FoodSelectorModal from './FoodSelectorModal';
 import CopyDayModal from './CopyDayModal';
 import NutritionReportPDF from './NutritionReportPDF';
 import { generateNutritionPDF } from '../../lib/nutritionPdf';
+import { SaveNutritionTemplateModal } from './SaveNutritionTemplateModal';
+import { LoadNutritionTemplateModal } from './LoadNutritionTemplateModal';
+import { SaveMealTemplateModal, LoadMealTemplateModal } from './MealTemplateModals';
+import { sharePlanViaWhatsapp } from '../../lib/nutritionWhatsapp';
 
 interface NutritionPlannerModalProps {
   isOpen: boolean;
@@ -59,6 +65,10 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
   const [activeMealIndex, setActiveMealIndex] = useState<number>(0);
   const [copyModalOpen, setCopyModalOpen] = useState<boolean>(false);
   const [showPdfView, setShowPdfView] = useState<boolean>(false);
+  const [saveDietModalOpen, setSaveDietModalOpen] = useState<boolean>(false);
+  const [loadDietModalOpen, setLoadDietModalOpen] = useState<boolean>(false);
+  const [mealToSaveAsTemplate, setMealToSaveAsTemplate] = useState<Meal | null>(null);
+  const [mealIdxToLoadRecipe, setMealIdxToLoadRecipe] = useState<number | null>(null);
 
   // Cargar plan existente desde Supabase o IndexedDB al abrir, o resolver última valoración
   useEffect(() => {
@@ -523,6 +533,91 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
     }
   };
 
+  // Cargar una plantilla de dieta completa en el plan activo (100% editable)
+  const handleLoadDietTemplate = (template: NutritionTemplate) => {
+    const clonedDays = JSON.parse(JSON.stringify(template.datos_plan.days));
+
+    // Generar IDs únicos para las comidas y alimentos importados
+    Object.keys(clonedDays).forEach((dayKey) => {
+      const d = clonedDays[dayKey as DayOfWeek];
+      if (d && Array.isArray(d.meals)) {
+        d.meals = d.meals.map((meal: Meal, mIdx: number) => ({
+          ...meal,
+          id: `m_${Date.now()}_${mIdx}_${Math.random().toString(36).substring(2, 6)}`,
+          foods: (meal.foods || []).map((f: MealFoodItem, fIdx: number) => ({
+            ...f,
+            id: `food_${Date.now()}_${mIdx}_${fIdx}_${Math.random().toString(36).substring(2, 6)}`,
+          })),
+        }));
+      }
+    });
+
+    setPlan((prev) => ({
+      ...prev,
+      target_calorias: prev.target_calorias > 0 ? prev.target_calorias : (template.target_calorias ?? 0),
+      target_proteina_g: prev.target_proteina_g > 0 ? prev.target_proteina_g : (template.target_proteina_g ?? 0),
+      target_carbohidratos_g: prev.target_carbohidratos_g > 0 ? prev.target_carbohidratos_g : (template.target_carbohidratos_g ?? 0),
+      target_grasa_g: prev.target_grasa_g > 0 ? prev.target_grasa_g : (template.target_grasa_g ?? 0),
+      objetivo: template.objetivo || prev.objetivo,
+      datos_plan: {
+        ...prev.datos_plan,
+        days: clonedDays,
+      },
+    }));
+
+    setLoadDietModalOpen(false);
+    showToast?.(`✅ Plantilla «${template.nombre}» cargada. Es 100% editable para este atleta.`, 'success');
+  };
+
+  // Insertar receta / comida guardada en la comida activa
+  const handleApplyMealTemplate = (mealTemplate: MealTemplate, mode: 'replace' | 'append') => {
+    if (mealIdxToLoadRecipe === null) return;
+    const targetIdx = mealIdxToLoadRecipe;
+
+    const clonedFoods: MealFoodItem[] = mealTemplate.foods.map((food, fIdx) => ({
+      ...food,
+      id: `food_${Date.now()}_${targetIdx}_${fIdx}_${Math.random().toString(36).substring(2, 6)}`,
+    }));
+
+    setPlan((prev) => {
+      const day = prev.datos_plan.days[activeDayKey];
+      if (!day) return prev;
+      const newMeals = [...day.meals];
+      const targetMeal = newMeals[targetIdx];
+      if (!targetMeal) return prev;
+
+      const updatedFoods = mode === 'replace' ? clonedFoods : [...targetMeal.foods, ...clonedFoods];
+      newMeals[targetIdx] = {
+        ...targetMeal,
+        nombre: mode === 'replace' && mealTemplate.nombre ? mealTemplate.nombre : targetMeal.nombre,
+        foods: updatedFoods,
+      };
+
+      return {
+        ...prev,
+        datos_plan: {
+          ...prev.datos_plan,
+          days: {
+            ...prev.datos_plan.days,
+            [activeDayKey]: {
+              ...day,
+              meals: newMeals,
+            },
+          },
+        },
+      };
+    });
+
+    setMealIdxToLoadRecipe(null);
+    showToast?.(`✅ Receta «${mealTemplate.nombre}» agregada a la comida.`, 'success');
+  };
+
+  // Compartir día actual vía WhatsApp
+  const handleShareWhatsapp = () => {
+    sharePlanViaWhatsapp(plan, activeDayKey, atleta.nombre, trainerProfile?.nombre);
+    showToast?.('📱 Abriendo WhatsApp con el resumen de la dieta...', 'info');
+  };
+
   if (!isOpen) return null;
 
   return (
@@ -629,6 +724,22 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
                 }}
               >
                 🔄 Sincronizar Valoración
+              </button>
+              <button
+                type="button"
+                onClick={() => setSaveDietModalOpen(true)}
+                title="Guardar esta dieta completa como plantilla reusable"
+                className="nutrition-header-action-btn nutrition-header-btn-template"
+              >
+                💾 Guardar Plantilla
+              </button>
+              <button
+                type="button"
+                onClick={() => setLoadDietModalOpen(true)}
+                title="Cargar una plantilla de dieta para este atleta"
+                className="nutrition-header-action-btn nutrition-header-btn-template"
+              >
+                📂 Cargar Plantilla
               </button>
               <button
                 type="button"
@@ -929,22 +1040,41 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
                           <span style={{ color: '#10b981' }}>C: {mealTotals.carbohidratos}g</span> |{' '}
                           <span style={{ color: '#f59e0b' }}>G: {mealTotals.grasa}g</span>
                         </div>
-                        <button
-                          type="button"
-                          onClick={() => handleOpenFoodModal(mIdx)}
-                          style={{
-                            background: 'rgba(0, 212, 255, 0.12)',
-                            border: '1px solid rgba(0, 212, 255, 0.4)',
-                            color: '#00d4ff',
-                            borderRadius: '6px',
-                            padding: '6px 14px',
-                            fontSize: '11px',
-                            fontWeight: 700,
-                            cursor: 'pointer',
-                          }}
-                        >
-                          + Agregar Alimento
-                        </button>
+                        <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
+                          <button
+                            type="button"
+                            onClick={() => setMealToSaveAsTemplate(meal)}
+                            className="nutrition-meal-btn-recipe"
+                            title="Guardar esta comida como receta reutilizable (ej: Desayuno Anabólico)"
+                            disabled={meal.foods.length === 0}
+                          >
+                            💾 Guardar Receta
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setMealIdxToLoadRecipe(mIdx)}
+                            className="nutrition-meal-btn-recipe"
+                            title="Insertar una receta guardada en esta comida"
+                          >
+                            📖 Recetas
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenFoodModal(mIdx)}
+                            style={{
+                              background: 'rgba(0, 212, 255, 0.12)',
+                              border: '1px solid rgba(0, 212, 255, 0.4)',
+                              color: '#00d4ff',
+                              borderRadius: '6px',
+                              padding: '6px 14px',
+                              fontSize: '11px',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                            }}
+                          >
+                            + Agregar Alimento
+                          </button>
+                        </div>
                       </div>
                     </div>
 
@@ -1196,6 +1326,14 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
           <div className="nutrition-footer-actions">
             <button
               type="button"
+              onClick={handleShareWhatsapp}
+              className="nutrition-footer-btn-whatsapp"
+              title="Compartir día actual con macros detallados por WhatsApp"
+            >
+              📲 WhatsApp
+            </button>
+            <button
+              type="button"
               onClick={handleDownloadPDF}
               disabled={downloadingPdf}
               className="nutrition-footer-btn-pdf"
@@ -1251,6 +1389,53 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
         sourceDayLabel={currentDay?.nombre || activeDayKey}
         onConfirmCopy={handleConfirmCopyDays}
       />
+
+      {/* MODAL GUARDAR PLANTILLA DE DIETA COMPLETA */}
+      <SaveNutritionTemplateModal
+        isOpen={saveDietModalOpen}
+        onClose={() => setSaveDietModalOpen(false)}
+        trainerId={trainerProfile?.id || 'default'}
+        currentPlan={plan}
+        onSaveSuccess={(tmpl) => {
+          setSaveDietModalOpen(false);
+          showToast?.(`Plantilla «${tmpl.nombre}» guardada exitosamente.`, 'success');
+        }}
+        showToast={showToast}
+      />
+
+      {/* MODAL CARGAR PLANTILLA DE DIETA COMPLETA */}
+      <LoadNutritionTemplateModal
+        isOpen={loadDietModalOpen}
+        onClose={() => setLoadDietModalOpen(false)}
+        trainerId={trainerProfile?.id || 'default'}
+        onSelectTemplate={handleLoadDietTemplate}
+        showToast={showToast}
+      />
+
+      {/* MODAL GUARDAR RECETA / COMIDA */}
+      {mealToSaveAsTemplate && (
+        <SaveMealTemplateModal
+          isOpen={!!mealToSaveAsTemplate}
+          onClose={() => setMealToSaveAsTemplate(null)}
+          trainerId={trainerProfile?.id || 'default'}
+          meal={mealToSaveAsTemplate}
+          onSaveSuccess={() => {
+            setMealToSaveAsTemplate(null);
+          }}
+          showToast={showToast}
+        />
+      )}
+
+      {/* MODAL CARGAR RECETA / COMIDA */}
+      {mealIdxToLoadRecipe !== null && (
+        <LoadMealTemplateModal
+          isOpen={mealIdxToLoadRecipe !== null}
+          onClose={() => setMealIdxToLoadRecipe(null)}
+          trainerId={trainerProfile?.id || 'default'}
+          onSelectTemplate={handleApplyMealTemplate}
+          showToast={showToast}
+        />
+      )}
     </div>
   );
 };

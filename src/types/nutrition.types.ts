@@ -34,6 +34,7 @@ export interface MealFoodItem {
   foodId: string | number;
   nombre: string;
   grupo: FoodGroup;
+  subgrupo?: string;
   cantidad: number;
   cantidadBase: number;
   unidad: string;
@@ -60,6 +61,7 @@ export interface NutritionDay {
   id: string;
   diaSemana: DayOfWeek | 'todos';
   nombre: string;
+  comidas_count?: number;
   meals: Meal[];
 }
 
@@ -120,12 +122,30 @@ export interface NutritionPlan {
 }
 
 export interface NutritionTemplate {
-  id?: string;
+  id: string;
   entrenador_id: string;
   nombre: string;
   descripcion?: string | null;
   objetivo?: string | null;
   target_calorias?: number | null;
+  target_proteina_g?: number | null;
+  target_carbohidratos_g?: number | null;
+  target_grasa_g?: number | null;
+  dias_count?: number;
+  comidas_count?: number;
   datos_plan: NutritionPlanData;
   created_at?: string;
+  updated_at?: string;
 }
+
+export interface MealTemplate {
+  id: string;
+  entrenador_id: string;
+  nombre: string;
+  categoria?: string;
+  horario_sugerido?: string;
+  foods: MealFoodItem[];
+  created_at?: string;
+  updated_at?: string;
+}
+

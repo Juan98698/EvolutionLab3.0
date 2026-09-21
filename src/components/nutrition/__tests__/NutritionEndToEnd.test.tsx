@@ -265,7 +265,7 @@ describe('Nutrition & Diet Planning End-to-End Suite', () => {
       />
     );
 
-    const saveButton = screen.getByText(/GUARDAR PLAN/i);
+    const saveButton = screen.getByText(/GUARDAR PLAN\b/i);
     fireEvent.click(saveButton);
 
     await waitFor(() => {
