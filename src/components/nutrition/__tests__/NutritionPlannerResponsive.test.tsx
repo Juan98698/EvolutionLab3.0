@@ -175,13 +175,17 @@ vi.mock('html2canvas', () => ({
   }),
 }));
 
-vi.mock('jspdf', () => ({
-  jsPDF: vi.fn().mockImplementation(() => ({
-    internal: { pageSize: { getWidth: () => 210 } },
+vi.mock('jspdf', () => {
+  const MockJsPDF = vi.fn().mockImplementation(() => ({
+    internal: { pageSize: { getWidth: () => 210, getHeight: () => 297 } },
     addImage: vi.fn(),
     save: vi.fn(),
-  })),
-}));
+  }));
+  return {
+    default: MockJsPDF,
+    jsPDF: MockJsPDF,
+  };
+});
 
 const mockAthlete: Profile = {
   id: 'athlete-123',
@@ -343,6 +347,36 @@ describe('Nutrition Planner & Food Selector Mobile Responsiveness Test Suite', (
       expect(rowBottom).toBeInTheDocument();
       expect(rowBottom).toHaveTextContent('450 kcal');
       expect(rowBottom).toHaveTextContent('P: 32g');
+    });
+
+    it('allows generating PDF directly from editor view without missing element error', async () => {
+      const showToast = vi.fn();
+      const { container } = render(
+        <NutritionPlannerModal
+          isOpen={true}
+          onClose={vi.fn()}
+          atleta={mockAthlete}
+          initialValuation={mockValuation}
+          trainerProfile={mockTrainer}
+          showToast={showToast}
+        />
+      );
+
+      // Verify off-screen nutrition-pdf-content is present in DOM even in editor mode
+      const pdfElement = document.getElementById('nutrition-pdf-content');
+      expect(pdfElement).toBeInTheDocument();
+
+      // Click "📄 PDF" button in footer
+      const pdfBtn = container.querySelector('.nutrition-footer-btn-pdf') as HTMLButtonElement;
+      expect(pdfBtn).toBeInTheDocument();
+      fireEvent.click(pdfBtn);
+
+      await waitFor(() => {
+        expect(showToast).toHaveBeenCalledWith(
+          expect.stringContaining('PDF descargado correctamente'),
+          'success'
+        );
+      });
     });
   });
 

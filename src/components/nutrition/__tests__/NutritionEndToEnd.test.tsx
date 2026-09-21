@@ -71,13 +71,17 @@ vi.mock('html2canvas', () => ({
   }),
 }));
 
-vi.mock('jspdf', () => ({
-  jsPDF: vi.fn().mockImplementation(() => ({
-    internal: { pageSize: { getWidth: () => 210 } },
+vi.mock('jspdf', () => {
+  const MockJsPDF = vi.fn().mockImplementation(() => ({
+    internal: { pageSize: { getWidth: () => 210, getHeight: () => 297 } },
     addImage: vi.fn(),
     save: vi.fn(),
-  })),
-}));
+  }));
+  return {
+    default: MockJsPDF,
+    jsPDF: MockJsPDF,
+  };
+});
 
 // Mock IndexedDbStore
 const mockIdb: Record<string, any> = {};
@@ -237,11 +241,12 @@ describe('Nutrition & Diet Planning End-to-End Suite', () => {
       />
     );
 
-    expect(screen.getByText(/LUNES/i)).toBeInTheDocument();
-    expect(screen.getByText(/MARTES/i)).toBeInTheDocument();
+    const lunesBtns = screen.getAllByText(/LUNES/i);
+    expect(lunesBtns.length).toBeGreaterThan(0);
+    const martesBtns = screen.getAllByText(/MARTES/i);
+    expect(martesBtns.length).toBeGreaterThan(0);
 
-    const martesBtn = screen.getByText(/MARTES/i);
-    fireEvent.click(martesBtn);
+    fireEvent.click(martesBtns[0]);
 
     // Default meals (Desayuno, Almuerzo, etc.) each have an add food button
     expect(screen.getAllByText(/Agregar Alimento/i).length).toBeGreaterThan(0);

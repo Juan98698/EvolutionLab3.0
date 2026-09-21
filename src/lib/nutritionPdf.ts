@@ -13,6 +13,7 @@ export const generateNutritionPDF = async (
     useCORS: true,
     logging: false,
     backgroundColor: '#ffffff',
+    windowWidth: 1200,
   });
 
   const imgData = canvas.toDataURL('image/jpeg', 0.95);

@@ -816,13 +816,15 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
         {/* CONTENIDO SCROLLEABLE: LISTADO DE COMIDAS O VISTA PREVIA PDF */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '20px' }}>
           {showPdfView ? (
-            <div style={{ display: 'flex', justifyContent: 'center' }}>
-              <NutritionReportPDF
-                plan={plan}
-                atletaNombre={atleta.nombre}
-                trainerProfile={trainerProfile}
-                activeDayKey={activeDayKey}
-              />
+            <div style={{ display: 'flex', justifyContent: 'center', width: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch', paddingBottom: '16px' }}>
+              <div style={{ minWidth: '794px' }}>
+                <NutritionReportPDF
+                  plan={plan}
+                  atletaNombre={atleta.nombre}
+                  trainerProfile={trainerProfile}
+                  activeDayKey={activeDayKey}
+                />
+              </div>
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -1161,6 +1163,29 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
             </div>
           )}
         </div>
+
+        {/* Plantilla PDF montada en segundo plano cuando no está en vista previa para garantizar que la descarga de PDF funcione en cualquier momento */}
+        {!showPdfView && (
+          <div
+            style={{
+              position: 'fixed',
+              left: '-9999px',
+              top: 0,
+              width: '794px',
+              opacity: 0,
+              pointerEvents: 'none',
+              zIndex: -1,
+            }}
+            aria-hidden="true"
+          >
+            <NutritionReportPDF
+              plan={plan}
+              atletaNombre={atleta.nombre}
+              trainerProfile={trainerProfile}
+              activeDayKey={activeDayKey}
+            />
+          </div>
+        )}
 
         {/* FOOTER DE ACCIONES */}
         <div className="nutrition-footer-bar">
