@@ -33,6 +33,62 @@ export const DEFAULT_MEALS: { nombre: string; horario: string }[] = [
 ];
 
 /**
+ * Normaliza una cadena para búsquedas insensibles a mayúsculas, minúsculas, espacios y acentos/diacríticos.
+ * Por ejemplo: "Plátano" -> "platano", "Atún" -> "atun", "Café" -> "cafe", "Mañana" -> "manana".
+ */
+export function normalizeFoodSearchText(str: string): string {
+  if (!str) return '';
+  return str
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim();
+}
+
+/**
+ * Ordena las comidas de un día en riguroso orden cronológico según su horario (HH:MM).
+ * En caso de ausencia de horario o empate, recurre al orden canónico nutricional.
+ * Reasigna orden correlativo (1, 2, 3...) tras la ordenación.
+ */
+export function sortMealsChronologically(meals: Meal[]): Meal[] {
+  if (!Array.isArray(meals) || meals.length <= 1) {
+    return Array.isArray(meals)
+      ? meals.map((m, idx) => ({ ...m, orden: idx + 1 }))
+      : [];
+  }
+
+  const getMealMinutes = (meal: Meal): number => {
+    if (meal.horario && /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/.test(meal.horario.trim())) {
+      const [h, m] = meal.horario.trim().split(':').map(Number);
+      return h * 60 + m;
+    }
+
+    const norm = normalizeFoodSearchText(meal.nombre);
+    if (norm.includes('desayuno')) return 8 * 60; // 08:00
+    if (norm.includes('media manana') || norm.includes('almuerzo 1') || norm.includes('snack matutino')) return 10 * 60 + 30; // 10:30
+    if (norm.includes('almuerzo') || norm.includes('comida')) return 13 * 60 + 30; // 13:30
+    if (norm.includes('merienda') || norm.includes('media tarde')) return 16 * 60 + 30; // 16:30
+    if (norm.includes('pre-entreno') || norm.includes('pre entreno') || norm.includes('preentreno')) return 17 * 60; // 17:00
+    if (norm.includes('post-entreno') || norm.includes('post entreno') || norm.includes('postentreno')) return 18 * 60 + 30; // 18:30
+    if (norm.includes('cena')) return 20 * 60 + 30; // 20:30
+    if (norm.includes('nocturno') || norm.includes('recena') || norm.includes('dormir')) return 22 * 60 + 30; // 22:30
+    if (norm.includes('colacion') || norm.includes('snack')) return 11 * 60; // 11:00
+
+    return (meal.orden ?? 99) * 100;
+  };
+
+  return [...meals]
+    .sort((a, b) => {
+      const minA = getMealMinutes(a);
+      const minB = getMealMinutes(b);
+      if (minA !== minB) return minA - minB;
+      return (a.orden ?? 0) - (b.orden ?? 0);
+    })
+    .map((m, idx) => ({ ...m, orden: idx + 1 }));
+}
+
+
+/**
  * Redondeo a 1 decimal para macronutrientes
  */
 export function round1(num: number): number {

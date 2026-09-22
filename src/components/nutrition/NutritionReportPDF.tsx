@@ -1,6 +1,11 @@
 import React from 'react';
 import { NutritionPlan, NutritionDay, DayOfWeek } from '../../types/nutrition.types';
-import { calculateMealTotals, calculateDayTotals, DAYS_OF_WEEK } from '../../lib/nutritionEngine';
+import {
+  calculateMealTotals,
+  calculateDayTotals,
+  DAYS_OF_WEEK,
+  sortMealsChronologically,
+} from '../../lib/nutritionEngine';
 import { Profile } from '../../types/database.types';
 
 interface NutritionReportPDFProps {
@@ -66,6 +71,7 @@ export const NutritionReportPDF: React.FC<NutritionReportPDFProps> = ({
     >
       {/* ENCABEZADO Y BRANDING */}
       <div
+        data-pdf-block="header-branding"
         style={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -126,6 +132,7 @@ export const NutritionReportPDF: React.FC<NutritionReportPDFProps> = ({
 
       {/* FICHA DEL ATLETA Y OBJETIVO */}
       <div
+        data-pdf-block="athlete-info"
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(4, 1fr)',
@@ -165,6 +172,7 @@ export const NutritionReportPDF: React.FC<NutritionReportPDFProps> = ({
 
       {/* METAS DIARIAS (TARGETS) */}
       <div
+        data-pdf-block="daily-targets"
         style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(4, 1fr)',
@@ -252,16 +260,20 @@ export const NutritionReportPDF: React.FC<NutritionReportPDFProps> = ({
         {daysToRender.map(({ key: dayKey, label: dayLabel, day: renderedDay }, dIdx) => {
           if (!renderedDay) return null;
           const dayCalculatedTotals = calculateDayTotals(renderedDay);
+          // Ordenar comidas siempre en orden cronológico en el reporte PDF
+          const mealsToRender = sortMealsChronologically(renderedDay.meals);
 
           return (
             <div
               key={dayKey}
+              data-pdf-block="day-card"
               style={{
                 marginBottom: dIdx === daysToRender.length - 1 ? '16px' : '28px',
               }}
             >
               {/* ENCABEZADO DISTINTIVO DEL DÍA */}
               <div
+                data-pdf-block="day-header"
                 style={{
                   display: 'flex',
                   justifyContent: 'space-between',
@@ -308,7 +320,7 @@ export const NutritionReportPDF: React.FC<NutritionReportPDFProps> = ({
               </div>
 
               {/* LISTA DE COMIDAS DEL DÍA */}
-              {renderedDay.meals.map((meal) => {
+              {mealsToRender.map((meal) => {
                 const mTotals = calculateMealTotals(meal.foods);
                 const mealKcalPct =
                   dayCalculatedTotals.calorias > 0
@@ -318,6 +330,7 @@ export const NutritionReportPDF: React.FC<NutritionReportPDFProps> = ({
                 return (
                   <div
                     key={meal.id}
+                    data-pdf-block="meal-card"
                     style={{
                       marginBottom: '12px',
                       border: '1px solid #e2e8f0',
@@ -384,6 +397,7 @@ export const NutritionReportPDF: React.FC<NutritionReportPDFProps> = ({
                           {meal.foods.map((food, fIdx) => (
                             <tr
                               key={food.id || fIdx}
+                              data-pdf-block="meal-row"
                               style={{
                                 borderTop: '1px solid #f1f5f9',
                                 backgroundColor: fIdx % 2 === 0 ? '#ffffff' : '#fafafa',
@@ -428,6 +442,7 @@ export const NutritionReportPDF: React.FC<NutritionReportPDFProps> = ({
       {/* PAUTAS Y RECOMENDACIONES GENERALES */}
       {plan.recomendaciones && (
         <div
+          data-pdf-block="recommendations-card"
           style={{
             border: '1px solid #cbd5e1',
             borderRadius: '8px',
@@ -437,8 +452,9 @@ export const NutritionReportPDF: React.FC<NutritionReportPDFProps> = ({
           }}
         >
           <h3
+            data-pdf-block="rec-header"
             style={{
-              margin: '0 0 6px',
+              margin: '0 0 8px',
               fontSize: '12px',
               fontWeight: 800,
               fontFamily: "'Orbitron', sans-serif",
@@ -447,22 +463,31 @@ export const NutritionReportPDF: React.FC<NutritionReportPDFProps> = ({
           >
             📋 RECOMENDACIONES DEL ENTRENADOR
           </h3>
-          <p
-            style={{
-              margin: 0,
-              fontSize: '11px',
-              lineHeight: 1.6,
-              color: '#334155',
-              whiteSpace: 'pre-line',
-            }}
-          >
-            {plan.recomendaciones}
-          </p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            {plan.recomendaciones
+              .split('\n')
+              .filter((line) => line.trim().length > 0)
+              .map((line, lIdx) => (
+                <p
+                  key={lIdx}
+                  data-pdf-block="rec-para"
+                  style={{
+                    margin: 0,
+                    fontSize: '11px',
+                    lineHeight: 1.6,
+                    color: '#334155',
+                  }}
+                >
+                  {line}
+                </p>
+              ))}
+          </div>
         </div>
       )}
 
       {/* PIE DE PÁGINA */}
       <div
+        data-pdf-block="footer"
         style={{
           borderTop: '1px solid #e2e8f0',
           paddingTop: '10px',

@@ -19,6 +19,8 @@ import {
   getPlanOffline,
   DAYS_OF_WEEK,
   round1,
+  sortMealsChronologically,
+  normalizeFoodSearchText,
 } from '../../lib/nutritionEngine';
 import { supabase } from '../../lib/supabaseClient';
 import FoodSelectorModal from './FoodSelectorModal';
@@ -277,7 +279,7 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
     showToast?.(`Comida «${mealToDelete.nombre}» eliminada`, 'info');
   };
 
-  // Añadir nueva comida al día activo
+  // Añadir nueva comida al día activo con ordenación cronológica automática
   const handleAddMeal = (presetName: string = 'Merienda', defaultTime?: string) => {
     setPlan((prev) => {
       const day = prev.datos_plan.days[activeDayKey];
@@ -285,14 +287,16 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
 
       let suggestedTime = defaultTime;
       if (!suggestedTime) {
-        const lower = presetName.toLowerCase();
-        if (lower.includes('pre')) suggestedTime = '16:00';
-        else if (lower.includes('post')) suggestedTime = '18:00';
-        else if (lower.includes('merienda')) suggestedTime = '17:00';
-        else if (lower.includes('desayuno')) suggestedTime = '08:00';
-        else if (lower.includes('almuerzo')) suggestedTime = '13:30';
+        const lower = normalizeFoodSearchText(presetName);
+        if (lower.includes('desayuno')) suggestedTime = '08:00';
+        else if (lower.includes('media manana') || lower.includes('almuerzo 1') || lower.includes('snack matutino')) suggestedTime = '10:30';
+        else if (lower.includes('almuerzo') || lower.includes('comida')) suggestedTime = '13:30';
+        else if (lower.includes('pre')) suggestedTime = '16:00';
+        else if (lower.includes('merienda') || lower.includes('media tarde')) suggestedTime = '17:00';
+        else if (lower.includes('post')) suggestedTime = '18:30';
         else if (lower.includes('cena')) suggestedTime = '20:30';
-        else if (lower.includes('colación') || lower.includes('snack')) suggestedTime = '11:00';
+        else if (lower.includes('nocturno') || lower.includes('recena')) suggestedTime = '22:30';
+        else if (lower.includes('colacion') || lower.includes('snack')) suggestedTime = '11:00';
         else suggestedTime = '12:00';
       }
 
@@ -304,6 +308,8 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
         foods: [],
       };
 
+      const sortedMeals = sortMealsChronologically([...day.meals, newMeal]);
+
       return {
         ...prev,
         datos_plan: {
@@ -312,7 +318,7 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
             ...prev.datos_plan.days,
             [activeDayKey]: {
               ...day,
-              meals: [...day.meals, newMeal],
+              meals: sortedMeals,
             },
           },
         },
@@ -326,11 +332,7 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
     setPlan((prev) => {
       const day = prev.datos_plan.days[activeDayKey];
       if (!day || day.meals.length < 2) return prev;
-      const sorted = [...day.meals].sort((a, b) => {
-        const timeA = a.horario || '99:99';
-        const timeB = b.horario || '99:99';
-        return timeA.localeCompare(timeB);
-      });
+      const sorted = sortMealsChronologically(day.meals);
       return {
         ...prev,
         datos_plan: {
@@ -479,25 +481,43 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
   const handleSavePlan = async () => {
     setSaving(true);
     try {
+      // Normalizar orden cronológico en cada día antes de persistir
+      const normalizedDays = { ...plan.datos_plan.days };
+      for (const k of Object.keys(normalizedDays) as DayOfWeek[]) {
+        if (normalizedDays[k]?.meals) {
+          normalizedDays[k] = {
+            ...normalizedDays[k],
+            meals: sortMealsChronologically(normalizedDays[k].meals),
+          };
+        }
+      }
+      const planToPersist: NutritionPlan = {
+        ...plan,
+        datos_plan: {
+          ...plan.datos_plan,
+          days: normalizedDays,
+        },
+      };
+
       // 1. Guardar primero en IndexedDB (offline-first garantizado)
-      await savePlanOffline(plan);
+      await savePlanOffline(planToPersist);
 
       // 2. Persistir en Supabase
       const payload = {
-        cliente_id: plan.cliente_id,
-        entrenador_id: plan.entrenador_id,
-        valoracion_id: plan.valoracion_id,
-        nombre: plan.nombre,
+        cliente_id: planToPersist.cliente_id,
+        entrenador_id: planToPersist.entrenador_id,
+        valoracion_id: planToPersist.valoracion_id,
+        nombre: planToPersist.nombre,
         activo: true,
-        modo: plan.modo,
-        objetivo: plan.objetivo,
-        target_calorias: plan.target_calorias,
-        target_proteina_g: plan.target_proteina_g,
-        target_carbohidratos_g: plan.target_carbohidratos_g,
-        target_grasa_g: plan.target_grasa_g,
-        ajuste_calorico_pct: plan.ajuste_calorico_pct,
-        datos_plan: plan.datos_plan,
-        recomendaciones: plan.recomendaciones,
+        modo: planToPersist.modo,
+        objetivo: planToPersist.objetivo,
+        target_calorias: planToPersist.target_calorias,
+        target_proteina_g: planToPersist.target_proteina_g,
+        target_carbohidratos_g: planToPersist.target_carbohidratos_g,
+        target_grasa_g: planToPersist.target_grasa_g,
+        ajuste_calorico_pct: planToPersist.ajuste_calorico_pct,
+        datos_plan: planToPersist.datos_plan,
+        recomendaciones: planToPersist.recomendaciones,
         updated_at: new Date().toISOString(),
       };
 
@@ -1089,6 +1109,7 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
                               type="time"
                               value={meal.horario || '08:00'}
                               onChange={(e) => handleUpdateMealTime(mIdx, e.target.value)}
+                              onBlur={handleSortMealsByTime}
                               style={{
                                 background: 'transparent',
                                 border: 'none',
@@ -1285,7 +1306,7 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
                   >
                     + Añadir Comida rápida:
                   </span>
-                  {['Pre-Entreno', 'Post-Entreno', 'Merienda', 'Colación', 'Snack Nocturno'].map((preset) => (
+                  {['Media Mañana', 'Pre-Entreno', 'Post-Entreno', 'Merienda', 'Colación', 'Snack Nocturno'].map((preset) => (
                     <button
                       key={preset}
                       type="button"

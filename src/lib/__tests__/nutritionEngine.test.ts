@@ -72,6 +72,8 @@ import {
   getCustomFoods,
   deleteCustomFood,
   searchOpenFoodFacts,
+  normalizeFoodSearchText,
+  sortMealsChronologically,
   DAYS_OF_WEEK,
 } from '../nutritionEngine';
 import { BASE_FOOD_CATALOG } from '../../data/foodCatalog';
@@ -573,6 +575,100 @@ describe('Nutrition Engine — Cálculos, Integridad y Flujo de Principio a Fin'
       } finally {
         global.fetch = originalFetch;
       }
+    });
+  });
+
+  describe('11. Normalización de Búsqueda Insensible a Acentos (normalizeFoodSearchText)', () => {
+    it('remueve tildes y diacríticos preservando los caracteres base en minúsculas', () => {
+      expect(normalizeFoodSearchText('Plátano')).toBe('platano');
+      expect(normalizeFoodSearchText('ATÚN')).toBe('atun');
+      expect(normalizeFoodSearchText('Café con Leche')).toBe('cafe con leche');
+      expect(normalizeFoodSearchText('Jamón Serrano')).toBe('jamon serrano');
+      expect(normalizeFoodSearchText('Orégano')).toBe('oregano');
+      expect(normalizeFoodSearchText('Güisqui')).toBe('guisqui');
+      expect(normalizeFoodSearchText('Mañana')).toBe('manana');
+    });
+
+    it('maneja espacios redundantes, strings vacíos y valores nulos/indefinidos', () => {
+      expect(normalizeFoodSearchText('   Plátano   maduro   ')).toBe('platano   maduro');
+      expect(normalizeFoodSearchText('')).toBe('');
+      expect(normalizeFoodSearchText(null as any)).toBe('');
+      expect(normalizeFoodSearchText(undefined as any)).toBe('');
+    });
+
+    it('permite comparar términos con y sin acento de forma bidireccional', () => {
+      const foodName = 'Plátano hartón verde';
+      const searchNoAccent = 'platano';
+      const searchWithAccent = 'plátano';
+      const searchUpper = 'PLÁTANO';
+
+      const normFood = normalizeFoodSearchText(foodName);
+      expect(normFood.includes(normalizeFoodSearchText(searchNoAccent))).toBe(true);
+      expect(normFood.includes(normalizeFoodSearchText(searchWithAccent))).toBe(true);
+      expect(normFood.includes(normalizeFoodSearchText(searchUpper))).toBe(true);
+    });
+  });
+
+  describe('12. Ordenación Cronológica de Comidas (sortMealsChronologically)', () => {
+    it('ordena comidas por su horario HH:MM de menor a mayor y actualiza orden correlativo', () => {
+      const unorderedMeals: any[] = [
+        { id: 'm3', nombre: 'Cena', horario: '20:30', orden: 1, foods: [] },
+        { id: 'm1', nombre: 'Desayuno', horario: '08:00', orden: 2, foods: [] },
+        { id: 'm2', nombre: 'Almuerzo', horario: '13:30', orden: 3, foods: [] },
+      ];
+
+      const sorted = sortMealsChronologically(unorderedMeals);
+      expect(sorted.map((m) => m.nombre)).toEqual(['Desayuno', 'Almuerzo', 'Cena']);
+      expect(sorted.map((m) => m.orden)).toEqual([1, 2, 3]);
+    });
+
+    it('resuelve el caso donde Media Mañana se reinserta al final tras haber sido eliminada', () => {
+      // Simula el caso exacto reportado por el usuario:
+      // El día tenía Desayuno, Almuerzo, Merienda, Cena, y el usuario añade Media Mañana que quedó al final
+      const mealsWithAppendedMidMorning: any[] = [
+        { id: 'm1', nombre: 'Desayuno', horario: '08:00', orden: 1, foods: [] },
+        { id: 'm2', nombre: 'Almuerzo', horario: '13:30', orden: 2, foods: [] },
+        { id: 'm3', nombre: 'Merienda', horario: '17:00', orden: 3, foods: [] },
+        { id: 'm4', nombre: 'Cena', horario: '20:30', orden: 4, foods: [] },
+        { id: 'm5', nombre: 'Media Mañana', horario: '10:00', orden: 5, foods: [] },
+      ];
+
+      const sorted = sortMealsChronologically(mealsWithAppendedMidMorning);
+      expect(sorted.map((m) => m.nombre)).toEqual([
+        'Desayuno',
+        'Media Mañana',
+        'Almuerzo',
+        'Merienda',
+        'Cena',
+      ]);
+      expect(sorted.map((m) => m.orden)).toEqual([1, 2, 3, 4, 5]);
+      expect(sorted[1].horario).toBe('10:00');
+    });
+
+    it('utiliza fallback canónico nutricional cuando no hay horario definido', () => {
+      const mealsWithoutTimes: any[] = [
+        { id: 'm3', nombre: 'Cena', horario: '', orden: 1, foods: [] },
+        { id: 'm2', nombre: 'Almuerzo', horario: '', orden: 2, foods: [] },
+        { id: 'm1', nombre: 'Desayuno', horario: '', orden: 3, foods: [] },
+        { id: 'm4', nombre: 'Media Mañana', horario: '', orden: 4, foods: [] },
+      ];
+
+      const sorted = sortMealsChronologically(mealsWithoutTimes);
+      expect(sorted.map((m) => m.nombre)).toEqual([
+        'Desayuno',
+        'Media Mañana',
+        'Almuerzo',
+        'Cena',
+      ]);
+      expect(sorted.map((m) => m.orden)).toEqual([1, 2, 3, 4]);
+    });
+
+    it('maneja arreglos vacíos o de un solo elemento sin alterarlos', () => {
+      expect(sortMealsChronologically([])).toEqual([]);
+      const singleMeal: any = [{ id: 'm1', nombre: 'Desayuno', horario: '08:00', orden: 9, foods: [] }];
+      const sortedSingle = sortMealsChronologically(singleMeal);
+      expect(sortedSingle.length).toBe(1);
+      expect(sortedSingle[0].orden).toBe(1);
     });
   });
 });

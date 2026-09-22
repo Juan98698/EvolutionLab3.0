@@ -7,6 +7,7 @@ import {
   saveCustomFood,
   getCustomFoods,
   deleteCustomFood,
+  normalizeFoodSearchText,
 } from '../../lib/nutritionEngine';
 
 interface FoodSelectorModalProps {
@@ -144,14 +145,21 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
     }
 
     if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim();
-      result = result.filter(
-        (f) =>
-          f.nombre.toLowerCase().includes(q) ||
-          (f.subgrupo && f.subgrupo.toLowerCase().includes(q)) ||
-          (f.marca && f.marca.toLowerCase().includes(q)) ||
-          (f.grupo && f.grupo.toLowerCase().includes(q))
-      );
+      const tokens = normalizeFoodSearchText(searchQuery).split(/\s+/).filter(Boolean);
+      result = result.filter((f) => {
+        const normNombre = normalizeFoodSearchText(f.nombre);
+        const normSubgrupo = normalizeFoodSearchText(f.subgrupo || '');
+        const normMarca = normalizeFoodSearchText(f.marca || '');
+        const normGrupo = normalizeFoodSearchText(f.grupo || '');
+
+        return tokens.every(
+          (token) =>
+            normNombre.includes(token) ||
+            normSubgrupo.includes(token) ||
+            normMarca.includes(token) ||
+            normGrupo.includes(token)
+        );
+      });
     }
 
     return result.slice(0, 150); // Límite generoso para ver grupos completos

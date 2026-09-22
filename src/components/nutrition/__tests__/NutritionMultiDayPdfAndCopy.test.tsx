@@ -317,4 +317,98 @@ describe('NutritionPlannerModal — Copy Day Navigation & PDF Scope Toggle', () 
     fireEvent.click(weekScopeBtn);
     expect(screen.getByRole('button', { name: /📄 PDF \(Semana\)/i })).toBeInTheDocument();
   });
+
+  it('renders meals in strict chronological order in NutritionReportPDF even if the input plan had Media Mañana appended at the end', () => {
+    // Caso exacto del usuario: Miércoles tenía Desayuno, Almuerzo, Cena, y Media Mañana se agregó después quedando al final en el array
+    const planWithUnsortedMeals: NutritionPlan = {
+      id: 'plan-chronological-test',
+      cliente_id: 'ath-1',
+      entrenador_id: 'trainer-123',
+      nombre: 'Plan Cronológico',
+      activo: true,
+      modo: 'semanal',
+      target_calorias: 2000,
+      target_proteina_g: 150,
+      target_carbohidratos_g: 200,
+      target_grasa_g: 65,
+      recomendaciones: 'Hidratarse bien\nConsumir 3L de agua al día\nPriorizar descanso',
+      datos_plan: {
+        modo: 'semanal',
+        days: {
+          miercoles: {
+            id: 'day_miercoles',
+            diaSemana: 'miercoles',
+            nombre: 'Miércoles',
+            meals: [
+              {
+                id: 'm_desayuno',
+                nombre: 'Desayuno',
+                horario: '08:00',
+                orden: 1,
+                foods: [{ id: 'f1', foodId: 'f1', grupo: 'Huevos', cantidadBase: 100, nombre: 'Huevos', cantidad: 3, unidad: 'u', calorias: 210, proteina: 18, carbohidratos: 1, grasa: 15 }],
+              },
+              {
+                id: 'm_almuerzo',
+                nombre: 'Almuerzo',
+                horario: '13:30',
+                orden: 2,
+                foods: [{ id: 'f2', foodId: 'f2', grupo: 'Carnes y Aves', cantidadBase: 100, nombre: 'Pechuga', cantidad: 150, unidad: 'gr', calorias: 247, proteina: 46, carbohidratos: 0, grasa: 5 }],
+              },
+              {
+                id: 'm_cena',
+                nombre: 'Cena',
+                horario: '20:30',
+                orden: 3,
+                foods: [{ id: 'f3', foodId: 'f3', grupo: 'Pescados y Mariscos', cantidadBase: 100, nombre: 'Salmón', cantidad: 150, unidad: 'gr', calorias: 300, proteina: 30, carbohidratos: 0, grasa: 20 }],
+              },
+              {
+                id: 'm_media_manana',
+                nombre: 'Media Mañana',
+                horario: '10:00',
+                orden: 4, // Al final del arreglo
+                foods: [{ id: 'f4', foodId: 'f4', grupo: 'Frutas', cantidadBase: 100, nombre: 'Manzana', cantidad: 1, unidad: 'u', calorias: 80, proteina: 0.5, carbohidratos: 20, grasa: 0.2 }],
+              },
+            ],
+          },
+        },
+      },
+    };
+
+    render(
+      <NutritionReportPDF
+        plan={planWithUnsortedMeals}
+        atletaNombre="Lorena Gamboa"
+        trainerProfile={null}
+        activeDayKey="miercoles"
+      />
+    );
+
+    // Obtener todas las cabeceras de comidas renderizadas en el DOM
+    const mealCards = document.querySelectorAll('[data-pdf-block="meal-card"]');
+    expect(mealCards.length).toBe(4);
+
+    // Extraer los nombres de las comidas en el orden visual del DOM
+    const mealNames = Array.from(mealCards).map((card) => {
+      const titleSpan = card.querySelector('span');
+      return titleSpan?.textContent?.trim();
+    });
+
+    // En el PDF, Media Mañana (10:00) DEBE aparecer en segundo lugar, ANTES del Almuerzo (13:30) y Cena (20:30)
+    expect(mealNames).toEqual(['Desayuno', 'Media Mañana', 'Almuerzo', 'Cena']);
+
+    // Verificar presencia de bloques semánticos para el algoritmo de paginación
+    expect(document.querySelector('[data-pdf-block="header-branding"]')).not.toBeNull();
+    expect(document.querySelector('[data-pdf-block="athlete-info"]')).not.toBeNull();
+    expect(document.querySelector('[data-pdf-block="daily-targets"]')).not.toBeNull();
+    expect(document.querySelector('[data-pdf-block="day-card"]')).not.toBeNull();
+    expect(document.querySelector('[data-pdf-block="day-header"]')).not.toBeNull();
+    expect(document.querySelectorAll('[data-pdf-block="meal-row"]').length).toBe(4);
+
+    // Verificar recomendaciones estructuradas en párrafos rec-para
+    const recParas = document.querySelectorAll('[data-pdf-block="rec-para"]');
+    expect(recParas.length).toBe(3);
+    expect(recParas[0].textContent).toBe('Hidratarse bien');
+    expect(recParas[1].textContent).toBe('Consumir 3L de agua al día');
+    expect(recParas[2].textContent).toBe('Priorizar descanso');
+  });
 });
