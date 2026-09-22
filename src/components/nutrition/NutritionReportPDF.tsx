@@ -397,7 +397,7 @@ export const NutritionReportPDF: React.FC<NutritionReportPDFProps> = ({
         }}
       >
         <span>Generado por Evolution Lab 3.0 • Alta Precisión en Entrenamiento y Nutrición</span>
-        <span>Página 1 / 1</span>
+        <span>Plan Nutricional Personalizado</span>
       </div>
     </div>
   );
