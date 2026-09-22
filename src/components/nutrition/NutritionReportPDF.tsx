@@ -1,6 +1,6 @@
 import React from 'react';
-import { NutritionPlan, NutritionDay } from '../../types/nutrition.types';
-import { calculateMealTotals, calculateDayTotals } from '../../lib/nutritionEngine';
+import { NutritionPlan, NutritionDay, DayOfWeek } from '../../types/nutrition.types';
+import { calculateMealTotals, calculateDayTotals, DAYS_OF_WEEK } from '../../lib/nutritionEngine';
 import { Profile } from '../../types/database.types';
 
 interface NutritionReportPDFProps {
@@ -21,9 +21,29 @@ export const NutritionReportPDF: React.FC<NutritionReportPDFProps> = ({
   const brandEslogan = trainerProfile?.marca?.eslogan || 'Sistemas de Entrenamiento & Nutrición de Alta Precisión';
   const brandLogo = (trainerProfile?.marca as any)?.logo_url;
 
-  const currentDay: NutritionDay | undefined =
-    plan.datos_plan.days[activeDayKey] || Object.values(plan.datos_plan.days)[0];
-  const dayTotals = calculateDayTotals(currentDay);
+  const isMultiDay = activeDayKey === 'todos' || activeDayKey === 'all' || !activeDayKey;
+
+  // Días que realmente contienen comidas con alimentos asignados
+  const configuredDays = DAYS_OF_WEEK
+    .map((d) => ({
+      key: d.key,
+      label: d.label,
+      day: plan.datos_plan.days[d.key],
+    }))
+    .filter(({ day }) => day && Array.isArray(day.meals) && day.meals.some((m) => m.foods && m.foods.length > 0));
+
+  // Si es multi-día y hay días poblados, renderizamos todos; si no, fallback al día activo o al primer día existente
+  const fallbackSingleDayKey = (activeDayKey && activeDayKey !== 'todos' && activeDayKey !== 'all') ? activeDayKey : 'lunes';
+  const singleDay: NutritionDay | undefined =
+    plan.datos_plan.days[fallbackSingleDayKey as DayOfWeek] || Object.values(plan.datos_plan.days)[0];
+
+  const daysToRender: Array<{ key: string; label: string; day?: NutritionDay }> = isMultiDay
+    ? (configuredDays.length > 0
+        ? configuredDays
+        : [{ key: fallbackSingleDayKey, label: singleDay?.nombre || 'Lunes', day: singleDay }])
+    : [{ key: fallbackSingleDayKey, label: singleDay?.nombre || 'Lunes', day: singleDay }];
+
+  const currentDayTotals = calculateDayTotals(singleDay);
 
   const tCal = plan.target_calorias || 2000;
   const tProt = plan.target_proteina_g || 150;
@@ -134,7 +154,11 @@ export const NutritionReportPDF: React.FC<NutritionReportPDFProps> = ({
         <div>
           <span style={{ fontSize: '10px', color: '#64748b', fontWeight: 600 }}>DÍA DEL PLAN</span>
           <div style={{ fontSize: '13px', fontWeight: 700, color: '#0f172a' }}>
-            {currentDay?.nombre || 'General'}
+            {isMultiDay
+              ? (daysToRender.length > 1
+                  ? `Semana Completa (${daysToRender.map((d) => d.label).join(', ')})`
+                  : (daysToRender[0]?.label || singleDay?.nombre || 'General'))
+              : (singleDay?.nombre || 'General')}
           </div>
         </div>
       </div>
@@ -162,7 +186,9 @@ export const NutritionReportPDF: React.FC<NutritionReportPDFProps> = ({
             {tCal} <span style={{ fontSize: '11px', fontWeight: 500 }}>kcal</span>
           </div>
           <span style={{ fontSize: '9px', color: '#16a34a' }}>
-            Prescritas: {dayTotals.calorias} kcal
+            {isMultiDay
+              ? `${daysToRender.length} día(s) con menú activo`
+              : `Prescritas: ${currentDayTotals.calorias} kcal`}
           </span>
         </div>
 
@@ -180,7 +206,7 @@ export const NutritionReportPDF: React.FC<NutritionReportPDFProps> = ({
             {tProt} <span style={{ fontSize: '11px', fontWeight: 500 }}>g</span>
           </div>
           <span style={{ fontSize: '9px', color: '#2563eb' }}>
-            Prescritas: {dayTotals.proteina}g
+            {isMultiDay ? 'Meta por jornada activa' : `Prescritas: ${currentDayTotals.proteina}g`}
           </span>
         </div>
 
@@ -198,7 +224,7 @@ export const NutritionReportPDF: React.FC<NutritionReportPDFProps> = ({
             {tCarb} <span style={{ fontSize: '11px', fontWeight: 500 }}>g</span>
           </div>
           <span style={{ fontSize: '9px', color: '#ca8a04' }}>
-            Prescritos: {dayTotals.carbohidratos}g
+            {isMultiDay ? 'Aporte glucídico equilibrado' : `Prescritos: ${currentDayTotals.carbohidratos}g`}
           </span>
         </div>
 
@@ -216,133 +242,184 @@ export const NutritionReportPDF: React.FC<NutritionReportPDFProps> = ({
             {tFat} <span style={{ fontSize: '11px', fontWeight: 500 }}>g</span>
           </div>
           <span style={{ fontSize: '9px', color: '#ea580c' }}>
-            Prescritas: {dayTotals.grasa}g
+            {isMultiDay ? 'Perfil lipídico esencial' : `Prescritas: ${currentDayTotals.grasa}g`}
           </span>
         </div>
       </div>
 
       {/* DETALLE DE COMIDAS E INGESTAS */}
       <div style={{ marginBottom: '24px' }}>
-        <h2
-          style={{
-            margin: '0 0 12px',
-            fontSize: '14px',
-            fontFamily: "'Orbitron', sans-serif",
-            color: '#0f172a',
-            letterSpacing: '1px',
-            borderBottom: '1px solid #cbd5e1',
-            paddingBottom: '4px',
-          }}
-        >
-          DISTRIBUCIÓN DE COMIDAS ({currentDay?.nombre ? currentDay.nombre.toUpperCase() : 'PLAN'})
-        </h2>
-
-        {currentDay?.meals.map((meal) => {
-          const mTotals = calculateMealTotals(meal.foods);
-          const mealKcalPct = dayTotals.calorias > 0 ? Math.round((mTotals.calorias / dayTotals.calorias) * 100) : 0;
+        {daysToRender.map(({ key: dayKey, label: dayLabel, day: renderedDay }, dIdx) => {
+          if (!renderedDay) return null;
+          const dayCalculatedTotals = calculateDayTotals(renderedDay);
 
           return (
             <div
-              key={meal.id}
+              key={dayKey}
               style={{
-                marginBottom: '16px',
-                border: '1px solid #e2e8f0',
-                borderRadius: '8px',
-                overflow: 'hidden',
+                marginBottom: dIdx === daysToRender.length - 1 ? '16px' : '28px',
               }}
             >
-              {/* CABECERA DE LA COMIDA */}
+              {/* ENCABEZADO DISTINTIVO DEL DÍA */}
               <div
                 style={{
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
-                  backgroundColor: '#f1f5f9',
-                  padding: '8px 14px',
-                  borderBottom: '1px solid #e2e8f0',
+                  backgroundColor: '#0f172a',
+                  color: '#ffffff',
+                  borderRadius: '8px',
+                  padding: '9px 14px',
+                  marginBottom: '12px',
+                  borderLeft: '4px solid #00d4ff',
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '13px', fontWeight: 800, color: '#0f172a' }}>
-                    {meal.nombre}
+                  <span
+                    style={{
+                      fontSize: '13px',
+                      fontWeight: 900,
+                      fontFamily: "'Orbitron', sans-serif",
+                      letterSpacing: '1px',
+                      color: '#ffffff',
+                    }}
+                  >
+                    📅 {renderedDay.nombre ? renderedDay.nombre.toUpperCase() : dayLabel.toUpperCase()}
                   </span>
-                  {meal.horario && (
-                    <span
-                      style={{
-                        fontSize: '10px',
-                        background: '#e2e8f0',
-                        color: '#475569',
-                        padding: '2px 6px',
-                        borderRadius: '4px',
-                        fontWeight: 600,
-                      }}
-                    >
-                      🕒 {meal.horario}
-                    </span>
-                  )}
+                  <span
+                    style={{
+                      fontSize: '11px',
+                      background: 'rgba(0, 212, 255, 0.2)',
+                      color: '#00d4ff',
+                      padding: '2px 8px',
+                      borderRadius: '4px',
+                      fontWeight: 700,
+                    }}
+                  >
+                    {dayCalculatedTotals.calorias} kcal
+                  </span>
                 </div>
-                <div style={{ fontSize: '11px', color: '#334155' }}>
-                  <strong>{mTotals.calorias} kcal</strong> ({mealKcalPct}% del día) •{' '}
-                  <span style={{ color: '#1d4ed8' }}>P: {mTotals.proteina}g</span> |{' '}
-                  <span style={{ color: '#a16207' }}>C: {mTotals.carbohidratos}g</span> |{' '}
-                  <span style={{ color: '#c2410c' }}>G: {mTotals.grasa}g</span>
+
+                <div style={{ fontSize: '11px', color: '#cbd5e1' }}>
+                  <span style={{ color: '#93c5fd', fontWeight: 600 }}>P: {dayCalculatedTotals.proteina}g</span> |{' '}
+                  <span style={{ color: '#fde047', fontWeight: 600 }}>C: {dayCalculatedTotals.carbohidratos}g</span> |{' '}
+                  <span style={{ color: '#fdba74', fontWeight: 600 }}>G: {dayCalculatedTotals.grasa}g</span>
                 </div>
               </div>
 
-              {/* TABLA DE ALIMENTOS */}
-              {meal.foods.length === 0 ? (
-                <div style={{ padding: '10px 14px', fontSize: '11px', color: '#94a3b8', fontStyle: 'italic' }}>
-                  No hay alimentos registrados en esta comida.
-                </div>
-              ) : (
-                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
-                  <thead>
-                    <tr style={{ backgroundColor: '#f8fafc', color: '#64748b', textAlign: 'left' }}>
-                      <th style={{ padding: '6px 12px', width: '50%' }}>Alimento</th>
-                      <th style={{ padding: '6px 8px', textAlign: 'center', width: '15%' }}>Porción</th>
-                      <th style={{ padding: '6px 8px', textAlign: 'right', width: '9%' }}>Prot</th>
-                      <th style={{ padding: '6px 8px', textAlign: 'right', width: '9%' }}>Carbs</th>
-                      <th style={{ padding: '6px 8px', textAlign: 'right', width: '9%' }}>Grasa</th>
-                      <th style={{ padding: '6px 12px', textAlign: 'right', width: '11%' }}>Kcal</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {meal.foods.map((food, fIdx) => (
-                      <tr
-                        key={food.id || fIdx}
-                        style={{
-                          borderTop: '1px solid #f1f5f9',
-                          backgroundColor: fIdx % 2 === 0 ? '#ffffff' : '#fafafa',
-                        }}
-                      >
-                        <td style={{ padding: '6px 12px', color: '#1e293b', fontWeight: 600 }}>
-                          {food.nombre}
-                          {food.notas && (
-                            <div style={{ fontSize: '9px', color: '#64748b', fontWeight: 400 }}>
-                              {food.notas}
-                            </div>
-                          )}
-                        </td>
-                        <td style={{ padding: '6px 8px', textAlign: 'center', color: '#475569' }}>
-                          {food.cantidad} {food.unidad}
-                        </td>
-                        <td style={{ padding: '6px 8px', textAlign: 'right', color: '#1d4ed8' }}>
-                          {food.proteina}g
-                        </td>
-                        <td style={{ padding: '6px 8px', textAlign: 'right', color: '#a16207' }}>
-                          {food.carbohidratos}g
-                        </td>
-                        <td style={{ padding: '6px 8px', textAlign: 'right', color: '#c2410c' }}>
-                          {food.grasa}g
-                        </td>
-                        <td style={{ padding: '6px 12px', textAlign: 'right', fontWeight: 700, color: '#0f172a' }}>
-                          {food.calorias}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
+              {/* LISTA DE COMIDAS DEL DÍA */}
+              {renderedDay.meals.map((meal) => {
+                const mTotals = calculateMealTotals(meal.foods);
+                const mealKcalPct =
+                  dayCalculatedTotals.calorias > 0
+                    ? Math.round((mTotals.calorias / dayCalculatedTotals.calorias) * 100)
+                    : 0;
+
+                return (
+                  <div
+                    key={meal.id}
+                    style={{
+                      marginBottom: '12px',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '8px',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    {/* CABECERA DE LA COMIDA */}
+                    <div
+                      style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        backgroundColor: '#f8fafc',
+                        padding: '7px 12px',
+                        borderBottom: '1px solid #e2e8f0',
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '12px', fontWeight: 800, color: '#0f172a' }}>
+                          {meal.nombre}
+                        </span>
+                        {meal.horario && (
+                          <span
+                            style={{
+                              fontSize: '10px',
+                              background: '#e2e8f0',
+                              color: '#475569',
+                              padding: '2px 6px',
+                              borderRadius: '4px',
+                              fontWeight: 600,
+                            }}
+                          >
+                            🕒 {meal.horario}
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ fontSize: '11px', color: '#334155' }}>
+                        <strong>{mTotals.calorias} kcal</strong> ({mealKcalPct}% del día) •{' '}
+                        <span style={{ color: '#1d4ed8' }}>P: {mTotals.proteina}g</span> |{' '}
+                        <span style={{ color: '#a16207' }}>C: {mTotals.carbohidratos}g</span> |{' '}
+                        <span style={{ color: '#c2410c' }}>G: {mTotals.grasa}g</span>
+                      </div>
+                    </div>
+
+                    {/* TABLA DE ALIMENTOS */}
+                    {meal.foods.length === 0 ? (
+                      <div style={{ padding: '8px 12px', fontSize: '11px', color: '#94a3b8', fontStyle: 'italic' }}>
+                        No hay alimentos registrados en esta comida.
+                      </div>
+                    ) : (
+                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px' }}>
+                        <thead>
+                          <tr style={{ backgroundColor: '#f1f5f9', color: '#64748b', textAlign: 'left' }}>
+                            <th style={{ padding: '5px 12px', width: '50%' }}>Alimento</th>
+                            <th style={{ padding: '5px 8px', textAlign: 'center', width: '15%' }}>Porción</th>
+                            <th style={{ padding: '5px 8px', textAlign: 'right', width: '9%' }}>Prot</th>
+                            <th style={{ padding: '5px 8px', textAlign: 'right', width: '9%' }}>Carbs</th>
+                            <th style={{ padding: '5px 8px', textAlign: 'right', width: '9%' }}>Grasa</th>
+                            <th style={{ padding: '5px 12px', textAlign: 'right', width: '11%' }}>Kcal</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {meal.foods.map((food, fIdx) => (
+                            <tr
+                              key={food.id || fIdx}
+                              style={{
+                                borderTop: '1px solid #f1f5f9',
+                                backgroundColor: fIdx % 2 === 0 ? '#ffffff' : '#fafafa',
+                              }}
+                            >
+                              <td style={{ padding: '5px 12px', color: '#1e293b', fontWeight: 600 }}>
+                                {food.nombre}
+                                {food.notas && (
+                                  <div style={{ fontSize: '9px', color: '#64748b', fontWeight: 400 }}>
+                                    {food.notas}
+                                  </div>
+                                )}
+                              </td>
+                              <td style={{ padding: '5px 8px', textAlign: 'center', color: '#475569' }}>
+                                {food.cantidad} {food.unidad}
+                              </td>
+                              <td style={{ padding: '5px 8px', textAlign: 'right', color: '#1d4ed8' }}>
+                                {food.proteina}g
+                              </td>
+                              <td style={{ padding: '5px 8px', textAlign: 'right', color: '#a16207' }}>
+                                {food.carbohidratos}g
+                              </td>
+                              <td style={{ padding: '5px 8px', textAlign: 'right', color: '#c2410c' }}>
+                                {food.grasa}g
+                              </td>
+                              <td style={{ padding: '5px 12px', textAlign: 'right', fontWeight: 700, color: '#0f172a' }}>
+                                {food.calorias}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
+                  </div>
+                );
+              })}
             </div>
           );
         })}

@@ -66,6 +66,7 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
   const [activeMealIndex, setActiveMealIndex] = useState<number>(0);
   const [copyModalOpen, setCopyModalOpen] = useState<boolean>(false);
   const [showPdfView, setShowPdfView] = useState<boolean>(false);
+  const [pdfScope, setPdfScope] = useState<'all' | 'current'>('all');
   const [saveDietModalOpen, setSaveDietModalOpen] = useState<boolean>(false);
   const [loadDietModalOpen, setLoadDietModalOpen] = useState<boolean>(false);
   const [mealToSaveAsTemplate, setMealToSaveAsTemplate] = useState<Meal | null>(null);
@@ -464,7 +465,14 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
   // Copiar comidas de un día a otros días
   const handleConfirmCopyDays = (targetDays: DayOfWeek[]) => {
     setPlan((prev) => copyNutritionDay(prev, activeDayKey, targetDays));
-    showToast?.(`✅ Menú de ${activeDayKey} copiado a ${targetDays.join(', ')}`, 'success');
+    if (targetDays.length > 0) {
+      setActiveDayKey(targetDays[0]);
+    }
+    const formattedTargets = targetDays
+      .map((d) => DAYS_OF_WEEK.find((x) => x.key === d)?.label || d)
+      .join(', ');
+    const sourceLabel = DAYS_OF_WEEK.find((x) => x.key === activeDayKey)?.label || activeDayKey;
+    showToast?.(`✅ Menú de ${sourceLabel} copiado a ${formattedTargets}`, 'success');
   };
 
   // Guardar en Supabase e IndexedDB
@@ -524,7 +532,8 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
   const handleDownloadPDF = async () => {
     setDownloadingPdf(true);
     try {
-      const filename = `Plan_Nutricional_${atleta.nombre.replace(/\s+/g, '_')}.pdf`;
+      const scopeSuffix = pdfScope === 'all' ? 'Semana_Completa' : (currentDay?.nombre || activeDayKey);
+      const filename = `Plan_Nutricional_${atleta.nombre.replace(/\s+/g, '_')}_${scopeSuffix}.pdf`;
       await generateNutritionPDF('nutrition-pdf-content', filename);
       showToast?.('📄 PDF descargado correctamente.', 'success');
     } catch (err: any) {
@@ -617,7 +626,8 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
   const handleShareWhatsapp = async () => {
     setSharingWhatsapp(true);
     try {
-      const filename = `Plan_Nutricional_${atleta.nombre.replace(/\s+/g, '_')}.pdf`;
+      const scopeSuffix = pdfScope === 'all' ? 'Semanal' : (currentDay?.nombre || activeDayKey);
+      const filename = `Plan_Nutricional_${atleta.nombre.replace(/\s+/g, '_')}_${scopeSuffix}.pdf`;
       const result = await sharePlanWithPdfViaWhatsapp({
         plan,
         dayKey: activeDayKey,
@@ -952,14 +962,70 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
         {/* CONTENIDO SCROLLEABLE: LISTADO DE COMIDAS O VISTA PREVIA PDF */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '20px' }}>
           {showPdfView ? (
-            <div style={{ display: 'flex', justifyContent: 'center', width: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch', paddingBottom: '16px' }}>
-              <div style={{ minWidth: '794px' }}>
-                <NutritionReportPDF
-                  plan={plan}
-                  atletaNombre={atleta.nombre}
-                  trainerProfile={trainerProfile}
-                  activeDayKey={activeDayKey}
-                />
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+              {/* SELECTOR DE ALCANCE DEL PDF: SEMANA COMPLETA VS DÍA ACTUAL */}
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  marginBottom: '16px',
+                  background: 'rgba(255, 255, 255, 0.04)',
+                  padding: '6px 14px',
+                  borderRadius: '10px',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                }}
+              >
+                <span style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.7)', fontWeight: 600 }}>
+                  Alcance del PDF:
+                </span>
+                <div style={{ display: 'inline-flex', gap: '4px' }}>
+                  <button
+                    type="button"
+                    onClick={() => setPdfScope('all')}
+                    style={{
+                      padding: '5px 12px',
+                      borderRadius: '6px',
+                      border: 'none',
+                      background: pdfScope === 'all' ? 'var(--theme-primary, #00d4ff)' : 'rgba(255, 255, 255, 0.05)',
+                      color: pdfScope === 'all' ? '#000000' : 'rgba(255, 255, 255, 0.8)',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      fontFamily: "'Orbitron', sans-serif",
+                    }}
+                  >
+                    📅 Plan Completo (Semana)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPdfScope('current')}
+                    style={{
+                      padding: '5px 12px',
+                      borderRadius: '6px',
+                      border: 'none',
+                      background: pdfScope === 'current' ? 'var(--theme-primary, #00d4ff)' : 'rgba(255, 255, 255, 0.05)',
+                      color: pdfScope === 'current' ? '#000000' : 'rgba(255, 255, 255, 0.8)',
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      fontFamily: "'Orbitron', sans-serif",
+                    }}
+                  >
+                    🔍 Solo {currentDay?.nombre || activeDayKey}
+                  </button>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'center', width: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch', paddingBottom: '16px' }}>
+                <div style={{ minWidth: '794px' }}>
+                  <NutritionReportPDF
+                    plan={plan}
+                    atletaNombre={atleta.nombre}
+                    trainerProfile={trainerProfile}
+                    activeDayKey={pdfScope === 'all' ? 'todos' : activeDayKey}
+                  />
+                </div>
               </div>
             </div>
           ) : (
@@ -1337,7 +1403,7 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
               plan={plan}
               atletaNombre={atleta.nombre}
               trainerProfile={trainerProfile}
-              activeDayKey={activeDayKey}
+              activeDayKey={pdfScope === 'all' ? 'todos' : activeDayKey}
             />
           </div>
         )}
@@ -1367,6 +1433,7 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
               onClick={handleDownloadPDF}
               disabled={downloadingPdf}
               className="nutrition-footer-btn-pdf"
+              title={pdfScope === 'all' ? 'Descargar PDF de la semana completa' : `Descargar PDF de ${currentDay?.nombre || activeDayKey}`}
               style={{
                 background: 'rgba(255, 255, 255, 0.08)',
                 border: '1px solid rgba(255, 255, 255, 0.2)',
@@ -1378,7 +1445,7 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
                 cursor: downloadingPdf ? 'wait' : 'pointer',
               }}
             >
-              {downloadingPdf ? 'Generando...' : '📄 PDF'}
+              {downloadingPdf ? 'Generando...' : (pdfScope === 'all' ? '📄 PDF (Semana)' : '📄 PDF')}
             </button>
             <button
               type="button"
