@@ -12,13 +12,28 @@ export type FoodGroup =
   | 'Bebidas y Varios'
   | 'Mis Alimentos';
 
+export type FoodPortionUnit =
+  | 'gr'
+  | 'ml'
+  | 'u'
+  | 'Tajada'
+  | 'scoop'
+  | 'cucharada'
+  | 'cucharadita'
+  | 'Taza'
+  | 'vaso'
+  | 'tableta'
+  | 'sobre'
+  | 'capsula'
+  | 'cápsula';
+
 export interface FoodItem {
   id: string | number;
   nombre: string;
   grupo: FoodGroup;
   subgrupo?: string;
   cantidadBase: number;
-  unidad: string;
+  unidad: FoodPortionUnit | string;
   caloriasBase: number;
   proteinaBase: number;
   carbohidratosBase: number;
@@ -37,7 +52,7 @@ export interface MealFoodItem {
   subgrupo?: string;
   cantidad: number;
   cantidadBase: number;
-  unidad: string;
+  unidad: FoodPortionUnit | string;
   calorias: number;
   proteina: number;
   carbohidratos: number;

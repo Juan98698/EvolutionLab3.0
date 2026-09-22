@@ -115,6 +115,68 @@ describe('Nutrition Engine — Cálculos, Integridad y Flujo de Principio a Fin'
       expect(res.grasa).toBe(3.6);
     });
 
+    it('debe calcular macros para nuevas unidades discretas (cucharadita, tableta, vaso, sobre, capsula)', () => {
+      // 1. Tableta (ej. multivitamínico base 1 tableta)
+      const tabletaItem = {
+        cantidadBase: 1,
+        caloriasBase: 5,
+        proteinaBase: 0.2,
+        carbohidratosBase: 0.8,
+        grasaBase: 0.1,
+      };
+      const resTableta = calculatePortionMacros(tabletaItem, 2); // 2 tabletas
+      expect(resTableta.calorias).toBe(10);
+      expect(resTableta.proteina).toBe(0.4);
+
+      // 2. Cápsula (ej. omega 3 base 1 capsula)
+      const capsulaItem = {
+        cantidadBase: 1,
+        caloriasBase: 10,
+        proteinaBase: 0,
+        carbohidratosBase: 0,
+        grasaBase: 1.0,
+      };
+      const resCapsula = calculatePortionMacros(capsulaItem, 3); // 3 capsulas
+      expect(resCapsula.calorias).toBe(30);
+      expect(resCapsula.grasa).toBe(3.0);
+
+      // 3. Sobre (ej. electrolitos base 1 sobre)
+      const sobreItem = {
+        cantidadBase: 1,
+        caloriasBase: 15,
+        proteinaBase: 0,
+        carbohidratosBase: 3.5,
+        grasaBase: 0,
+      };
+      const resSobre = calculatePortionMacros(sobreItem, 2);
+      expect(resSobre.calorias).toBe(30);
+      expect(resSobre.carbohidratos).toBe(7.0);
+
+      // 4. Cucharadita (ej. creatina o miel base 1 cucharadita)
+      const cditaItem = {
+        cantidadBase: 1,
+        caloriasBase: 20,
+        proteinaBase: 0,
+        carbohidratosBase: 5.0,
+        grasaBase: 0,
+      };
+      const resCdita = calculatePortionMacros(cditaItem, 2.5);
+      expect(resCdita.calorias).toBe(50);
+      expect(resCdita.carbohidratos).toBe(12.5);
+
+      // 5. Vaso (ej. jugo o bebida hidratante base 1 vaso)
+      const vasoItem = {
+        cantidadBase: 1,
+        caloriasBase: 110,
+        proteinaBase: 1.0,
+        carbohidratosBase: 26.0,
+        grasaBase: 0.2,
+      };
+      const resVaso = calculatePortionMacros(vasoItem, 1.5);
+      expect(resVaso.calorias).toBe(165);
+      expect(resVaso.carbohidratos).toBe(39.0);
+    });
+
     it('debe devolver 0 si la cantidad ingresada es 0', () => {
       const food = {
         cantidadBase: 100,
@@ -349,6 +411,25 @@ describe('Nutrition Engine — Cálculos, Integridad y Flujo de Principio a Fin'
 
       expect(res.valid).toBe(true);
       expect(res.warning).toContain('Calorías atípicas');
+    });
+
+    it('debe validar y preservar correctamente las unidades cucharadita, tableta, vaso, sobre, capsula', () => {
+      const units = ['cucharadita', 'tableta', 'vaso', 'sobre', 'capsula', 'cápsula'] as const;
+      for (const unit of units) {
+        const res = validateAndSanitizeFood({
+          nombre: `Suplemento ${unit}`,
+          cantidadBase: 1,
+          unidad: unit,
+          caloriasBase: 25,
+          proteinaBase: 2,
+          carbohidratosBase: 3,
+          grasaBase: 0.5,
+        });
+
+        expect(res.valid).toBe(true);
+        expect(res.food?.unidad).toBe(unit);
+        expect(res.food?.cantidadBase).toBe(1);
+      }
     });
   });
 

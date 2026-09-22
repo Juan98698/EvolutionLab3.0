@@ -256,6 +256,8 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
     setCustomProteina('');
     setCustomCarbos('');
     setCustomGrasa('');
+    setCustomCantidadBase(100);
+    setCustomUnidad('gr');
   };
 
   // Eliminar alimento personalizado
@@ -943,8 +945,16 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
                     UNIDAD DE MEDIDA *
                   </label>
                   <select
-                    value={customUnidad}
-                    onChange={(e) => setCustomUnidad(e.target.value)}
+                    value={customUnidad === 'cápsula' ? 'capsula' : customUnidad}
+                    onChange={(e) => {
+                      const newUnidad = e.target.value;
+                      setCustomUnidad(newUnidad);
+                      if (newUnidad !== 'gr' && newUnidad !== 'ml' && customCantidadBase === 100) {
+                        setCustomCantidadBase(1);
+                      } else if ((newUnidad === 'gr' || newUnidad === 'ml') && customCantidadBase === 1) {
+                        setCustomCantidadBase(100);
+                      }
+                    }}
                     style={{
                       width: '100%',
                       background: '#121829',
@@ -962,7 +972,13 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
                     <option value="Tajada">Tajada</option>
                     <option value="scoop">Scoop</option>
                     <option value="cucharada">Cucharada</option>
+                    <option value="cucharadita">Cucharadita</option>
                     <option value="Taza">Taza</option>
+                    <option value="vaso">Vaso</option>
+                    <option value="tableta">Tableta</option>
+                    <option value="sobre">Sobre</option>
+                    <option value="capsula">Cápsula</option>
+                    <option value="cápsula" style={{ display: 'none' }}>Cápsula</option>
                   </select>
                 </div>
               </div>
