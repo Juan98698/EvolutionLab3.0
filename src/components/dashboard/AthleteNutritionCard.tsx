@@ -6,6 +6,7 @@ import {
   calculateCompliance,
   getPlanOffline,
   savePlanOffline,
+  sortMealsChronologically,
   DAYS_OF_WEEK,
 } from '../../lib/nutritionEngine';
 import { supabase } from '../../lib/supabaseClient';
@@ -15,13 +16,40 @@ import { useSupabase } from '../../context/SupabaseContext';
 
 interface AthleteNutritionCardProps {
   clienteId: string;
+  trainerProfile?: any;
+  defaultExpanded?: boolean;
 }
 
-export const AthleteNutritionCard: React.FC<AthleteNutritionCardProps> = ({ clienteId }) => {
+export const AthleteNutritionCard: React.FC<AthleteNutritionCardProps> = ({
+  clienteId,
+  trainerProfile,
+  defaultExpanded = true,
+}) => {
   const { profile } = useSupabase();
   const [plan, setPlan] = useState<NutritionPlan | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [downloadingPdf, setDownloadingPdf] = useState<boolean>(false);
+  const [pdfScope, setPdfScope] = useState<'all' | 'current'>('all');
+  const [resolvedTrainer, setResolvedTrainer] = useState<any>(trainerProfile || null);
+
+  // Estado colapsado / desplegable para evitar scrolls excesivos
+  const [isExpanded, setIsExpanded] = useState<boolean>(() => {
+    const saved = typeof window !== 'undefined' ? localStorage.getItem('athlete_nutrition_card_expanded') : null;
+    if (saved !== null) return saved === 'true';
+    return defaultExpanded ?? true;
+  });
+
+  const toggleExpanded = () => {
+    setIsExpanded((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem('athlete_nutrition_card_expanded', String(next));
+      } catch {
+        // Ignorar excepciones de almacenamiento
+      }
+      return next;
+    });
+  };
 
   // Obtener el día actual de la semana en español
   const todayKey = useMemo<DayOfWeek>(() => {
@@ -39,6 +67,29 @@ export const AthleteNutritionCard: React.FC<AthleteNutritionCardProps> = ({ clie
   }, []);
 
   const [selectedDayKey, setSelectedDayKey] = useState<DayOfWeek>(todayKey);
+
+  // Resolver el perfil del entrenador si no vino directamente por props
+  useEffect(() => {
+    if (trainerProfile) {
+      setResolvedTrainer(trainerProfile);
+      return;
+    }
+
+    if (plan?.entrenador_id) {
+      void (async () => {
+        try {
+          const { data } = await supabase
+            .from('perfiles')
+            .select('*')
+            .eq('id', plan.entrenador_id)
+            .maybeSingle();
+          if (data) setResolvedTrainer(data);
+        } catch (err: unknown) {
+          console.warn('No se pudo cargar perfil del entrenador para branding de dieta:', err);
+        }
+      })();
+    }
+  }, [trainerProfile, plan?.entrenador_id]);
 
   // Cargar plan activo
   useEffect(() => {
@@ -86,6 +137,11 @@ export const AthleteNutritionCard: React.FC<AthleteNutritionCardProps> = ({ clie
     return plan.datos_plan.days[selectedDayKey] || Object.values(plan.datos_plan.days)[0];
   }, [plan, selectedDayKey]);
 
+  // Comidas ordenadas en riguroso orden cronológico por hora
+  const sortedMeals = useMemo(() => {
+    return sortMealsChronologically(currentDay?.meals || []);
+  }, [currentDay?.meals]);
+
   const dayTotals = useMemo(() => {
     return calculateDayTotals(currentDay);
   }, [currentDay]);
@@ -101,20 +157,20 @@ export const AthleteNutritionCard: React.FC<AthleteNutritionCardProps> = ({ clie
   }, [plan, dayTotals]);
 
   // Alternar checkmark de alimento consumido
-  const handleToggleFoodComplete = async (mealIndex: number, foodIndex: number) => {
+  const handleToggleFoodComplete = async (mealId: string, foodIndex: number) => {
     if (!plan || !currentDay) return;
 
+    const originalMealIdx = currentDay.meals.findIndex((m) => m.id === mealId);
+    if (originalMealIdx === -1) return;
+
     const newMeals = [...currentDay.meals];
-    const targetMeal = newMeals[mealIndex];
+    const targetMeal = { ...newMeals[originalMealIdx] };
     if (!targetMeal) return;
 
-    const targetFood = targetMeal.foods[foodIndex];
-    if (!targetFood) return;
-
-    targetMeal.foods[foodIndex] = {
-      ...targetFood,
-      completado: !targetFood.completado,
-    };
+    targetMeal.foods = targetMeal.foods.map((f, idx) =>
+      idx === foodIndex ? { ...f, completado: !f.completado } : f
+    );
+    newMeals[originalMealIdx] = targetMeal;
 
     const updatedPlan: NutritionPlan = {
       ...plan,
@@ -150,7 +206,8 @@ export const AthleteNutritionCard: React.FC<AthleteNutritionCardProps> = ({ clie
   const handleDownloadPDF = async () => {
     setDownloadingPdf(true);
     try {
-      const filename = `Mi_Plan_Nutricional_${selectedDayKey}.pdf`;
+      const scopeSuffix = pdfScope === 'all' ? 'Semana_Completa' : (currentDay?.nombre || selectedDayKey);
+      const filename = `Plan_Nutricional_${(profile?.nombre || 'Atleta').replace(/\s+/g, '_')}_${scopeSuffix}.pdf`;
       await generateNutritionPDF('athlete-pdf-render', filename);
     } catch (err) {
       console.error('Error al generar PDF:', err);
@@ -207,16 +264,37 @@ export const AthleteNutritionCard: React.FC<AthleteNutritionCardProps> = ({ clie
         background: 'linear-gradient(180deg, rgba(0, 212, 255, 0.06) 0%, rgba(13, 19, 34, 0.8) 100%)',
         border: '1px solid rgba(0, 212, 255, 0.3)',
         borderRadius: '16px',
-        padding: '20px',
+        padding: '16px 20px',
         boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
         color: '#ffffff',
         fontFamily: "'Inter', sans-serif",
       }}
     >
-      {/* CABECERA */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      {/* CABECERA PRINCIPAL / ACORDEÓN DESPLEGABLE */}
+      <div
+        style={{
+          display: 'flex',
+          flexWrap: 'wrap',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          gap: '12px',
+        }}
+      >
+        <button
+          type="button"
+          onClick={toggleExpanded}
+          style={{
+            background: 'none',
+            border: 'none',
+            padding: 0,
+            textAlign: 'left',
+            cursor: 'pointer',
+            flex: '1 1 240px',
+            color: 'inherit',
+            font: 'inherit',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
             <span
               style={{
                 fontSize: '10px',
@@ -230,248 +308,473 @@ export const AthleteNutritionCard: React.FC<AthleteNutritionCardProps> = ({ clie
             >
               🥗 MI DIETA
             </span>
-            <h3 style={{ margin: 0, fontSize: '16px', fontFamily: "'Orbitron', sans-serif", color: '#fff' }}>
+            <h3 style={{ margin: 0, fontSize: '15px', fontFamily: "'Orbitron', sans-serif", color: '#fff' }}>
               {plan.nombre}
             </h3>
+            {plan.objetivo && (
+              <span
+                style={{
+                  fontSize: '10px',
+                  color: '#00d4ff',
+                  border: '1px solid rgba(0, 212, 255, 0.3)',
+                  background: 'rgba(0, 212, 255, 0.1)',
+                  padding: '1px 6px',
+                  borderRadius: '4px',
+                  fontWeight: 600,
+                }}
+              >
+                {plan.objetivo}
+              </span>
+            )}
           </div>
-          <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)', marginTop: '2px', display: 'block' }}>
-            Objetivo: <strong style={{ color: '#00d4ff' }}>{plan.objetivo || 'Recomposición'}</strong>
+          <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', marginTop: '4px', display: 'block' }}>
+            {isExpanded
+              ? 'Toca para contraer y reducir el scroll de la pantalla'
+              : 'Toca para desplegar las comidas del día y registrar alimentos consumidos'}
           </span>
-        </div>
-
-        <button
-          type="button"
-          onClick={handleDownloadPDF}
-          disabled={downloadingPdf}
-          style={{
-            background: 'rgba(0, 212, 255, 0.1)',
-            border: '1px solid rgba(0, 212, 255, 0.35)',
-            color: '#00d4ff',
-            borderRadius: '8px',
-            padding: '6px 12px',
-            fontSize: '11px',
-            fontWeight: 700,
-            cursor: downloadingPdf ? 'wait' : 'pointer',
-          }}
-        >
-          {downloadingPdf ? 'Generando...' : '📄 Descargar PDF'}
         </button>
+
+        {/* ACCIONES RÁPIDAS EN CABECERA */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            onClick={handleDownloadPDF}
+            disabled={downloadingPdf}
+            title={pdfScope === 'all' ? 'Descargar plan de la semana completa en PDF' : `Descargar día ${selectedDayKey} en PDF`}
+            style={{
+              background: 'rgba(0, 212, 255, 0.12)',
+              border: '1px solid rgba(0, 212, 255, 0.4)',
+              color: '#00d4ff',
+              borderRadius: '8px',
+              padding: '6px 12px',
+              fontSize: '11px',
+              fontWeight: 700,
+              fontFamily: "'Orbitron', sans-serif",
+              cursor: downloadingPdf ? 'wait' : 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.2s ease',
+            }}
+          >
+            {downloadingPdf ? '⏳ Generando...' : '📄 Descargar PDF'}
+          </button>
+
+          <button
+            type="button"
+            onClick={toggleExpanded}
+            aria-expanded={isExpanded}
+            style={{
+              background: isExpanded ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 212, 255, 0.18)',
+              border: isExpanded ? '1px solid rgba(255, 255, 255, 0.2)' : '1px solid #00d4ff',
+              color: isExpanded ? 'rgba(255, 255, 255, 0.85)' : '#ffffff',
+              borderRadius: '8px',
+              padding: '6px 12px',
+              fontSize: '11px',
+              fontWeight: 700,
+              fontFamily: "'Orbitron', sans-serif",
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px',
+              transition: 'all 0.2s ease',
+            }}
+          >
+            <span>{isExpanded ? 'Ocultar' : 'Ver Comidas'}</span>
+            <span style={{ fontSize: '10px' }}>{isExpanded ? '▲' : '▼'}</span>
+          </button>
+        </div>
       </div>
 
-      {/* MONITOR DE MACROS */}
+      {/* PÍLDORAS RESUMEN DE MACROS DE HOY (Siempre visibles en cabecera) */}
       {compliance && (
         <div
           style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
-            gap: '10px',
-            background: 'rgba(0, 0, 0, 0.35)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            borderRadius: '12px',
-            padding: '12px 14px',
-            marginBottom: '16px',
+            display: 'flex',
+            flexWrap: 'wrap',
+            gap: '8px',
+            alignItems: 'center',
+            marginTop: '12px',
+            paddingTop: '12px',
+            borderTop: '1px solid rgba(255, 255, 255, 0.08)',
           }}
         >
-          <div>
-            <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)', fontWeight: 700 }}>
-              🔥 CALORÍAS HOY
-            </span>
-            <div style={{ fontSize: '16px', fontWeight: 900, color: '#fff' }}>
-              {dayTotals.calorias} <span style={{ fontSize: '11px', fontWeight: 500 }}>/ {plan.target_calorias} kcal</span>
-            </div>
-            <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', marginTop: '4px', overflow: 'hidden' }}>
-              <div style={{ width: `${Math.min(100, compliance.caloriasPct)}%`, height: '100%', background: '#00d4ff', borderRadius: '2px' }} />
-            </div>
+          <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)', fontWeight: 600 }}>
+            Meta Hoy ({DAYS_OF_WEEK.find((d) => d.key === selectedDayKey)?.label || selectedDayKey}):
           </div>
-
-          <div>
-            <span style={{ fontSize: '10px', color: '#3b82f6', fontWeight: 700 }}>
-              🥩 PROTEÍNA
-            </span>
-            <div style={{ fontSize: '16px', fontWeight: 900, color: '#3b82f6' }}>
-              {dayTotals.proteina}g <span style={{ fontSize: '11px', fontWeight: 500 }}>/ {plan.target_proteina_g}g</span>
-            </div>
-            <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', marginTop: '4px', overflow: 'hidden' }}>
-              <div style={{ width: `${Math.min(100, compliance.proteinaPct)}%`, height: '100%', background: '#3b82f6', borderRadius: '2px' }} />
-            </div>
+          <div
+            style={{
+              fontSize: '11px',
+              fontWeight: 700,
+              color: '#ffffff',
+              background: 'rgba(0, 212, 255, 0.1)',
+              border: '1px solid rgba(0, 212, 255, 0.25)',
+              borderRadius: '6px',
+              padding: '3px 8px',
+            }}
+          >
+            🔥 {dayTotals.calorias} / {plan.target_calorias} kcal
           </div>
-
-          <div>
-            <span style={{ fontSize: '10px', color: '#10b981', fontWeight: 700 }}>
-              🍚 CARBOS
-            </span>
-            <div style={{ fontSize: '16px', fontWeight: 900, color: '#10b981' }}>
-              {dayTotals.carbohidratos}g <span style={{ fontSize: '11px', fontWeight: 500 }}>/ {plan.target_carbohidratos_g}g</span>
-            </div>
-            <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', marginTop: '4px', overflow: 'hidden' }}>
-              <div style={{ width: `${Math.min(100, compliance.carbohidratosPct)}%`, height: '100%', background: '#10b981', borderRadius: '2px' }} />
-            </div>
+          <div
+            style={{
+              fontSize: '11px',
+              fontWeight: 700,
+              color: '#3b82f6',
+              background: 'rgba(59, 130, 246, 0.1)',
+              border: '1px solid rgba(59, 130, 246, 0.25)',
+              borderRadius: '6px',
+              padding: '3px 8px',
+            }}
+          >
+            🥩 {dayTotals.proteina}g / {plan.target_proteina_g}g
           </div>
-
-          <div>
-            <span style={{ fontSize: '10px', color: '#f59e0b', fontWeight: 700 }}>
-              🥑 GRASAS
-            </span>
-            <div style={{ fontSize: '16px', fontWeight: 900, color: '#f59e0b' }}>
-              {dayTotals.grasa}g <span style={{ fontSize: '11px', fontWeight: 500 }}>/ {plan.target_grasa_g}g</span>
-            </div>
-            <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', marginTop: '4px', overflow: 'hidden' }}>
-              <div style={{ width: `${Math.min(100, compliance.grasaPct)}%`, height: '100%', background: '#f59e0b', borderRadius: '2px' }} />
-            </div>
+          <div
+            style={{
+              fontSize: '11px',
+              fontWeight: 700,
+              color: '#10b981',
+              background: 'rgba(16, 185, 129, 0.1)',
+              border: '1px solid rgba(16, 185, 129, 0.25)',
+              borderRadius: '6px',
+              padding: '3px 8px',
+            }}
+          >
+            🍚 {dayTotals.carbohidratos}g / {plan.target_carbohidratos_g}g
+          </div>
+          <div
+            style={{
+              fontSize: '11px',
+              fontWeight: 700,
+              color: '#f59e0b',
+              background: 'rgba(245, 158, 11, 0.1)',
+              border: '1px solid rgba(245, 158, 11, 0.25)',
+              borderRadius: '6px',
+              padding: '3px 8px',
+            }}
+          >
+            🥑 {dayTotals.grasa}g / {plan.target_grasa_g}g
           </div>
         </div>
       )}
 
-      {/* SELECTOR DE DÍAS */}
-      <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '8px', marginBottom: '14px' }}>
-        {DAYS_OF_WEEK.map((d) => {
-          const isSelected = selectedDayKey === d.key;
-          const isToday = todayKey === d.key;
-          return (
-            <button
-              key={d.key}
-              type="button"
-              onClick={() => setSelectedDayKey(d.key)}
+      {/* CONTENIDO DESPLEGABLE COMPLETO (Solo visible cuando isExpanded === true) */}
+      {isExpanded && (
+        <div style={{ marginTop: '16px' }}>
+          {/* BARRA DE ALCANCE DEL PDF */}
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              flexWrap: 'wrap',
+              gap: '10px',
+              background: 'rgba(0, 0, 0, 0.3)',
+              border: '1px solid rgba(255, 255, 255, 0.08)',
+              borderRadius: '10px',
+              padding: '8px 12px',
+              marginBottom: '14px',
+            }}
+          >
+            <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>
+              Formato de descarga PDF:
+            </div>
+            <div
               style={{
-                padding: '6px 12px',
+                display: 'inline-flex',
+                background: 'rgba(0, 0, 0, 0.4)',
                 borderRadius: '8px',
-                border: isSelected ? '1px solid #00d4ff' : '1px solid rgba(255, 255, 255, 0.1)',
-                background: isSelected ? 'rgba(0, 212, 255, 0.2)' : 'rgba(255, 255, 255, 0.03)',
-                color: isSelected ? '#00d4ff' : 'rgba(255, 255, 255, 0.7)',
+                padding: '2px',
+                border: '1px solid rgba(255, 255, 255, 0.1)',
+              }}
+            >
+              <button
+                type="button"
+                onClick={() => setPdfScope('all')}
+                style={{
+                  padding: '4px 10px',
+                  fontSize: '11px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  background: pdfScope === 'all' ? 'var(--theme-primary, #00d4ff)' : 'transparent',
+                  color: pdfScope === 'all' ? '#000000' : 'rgba(255, 255, 255, 0.7)',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  fontFamily: "'Orbitron', sans-serif",
+                }}
+              >
+                📅 Semana Completa
+              </button>
+              <button
+                type="button"
+                onClick={() => setPdfScope('current')}
+                style={{
+                  padding: '4px 10px',
+                  fontSize: '11px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  background: pdfScope === 'current' ? 'var(--theme-primary, #00d4ff)' : 'transparent',
+                  color: pdfScope === 'current' ? '#000000' : 'rgba(255, 255, 255, 0.7)',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  fontFamily: "'Orbitron', sans-serif",
+                }}
+              >
+                🔍 Solo {currentDay?.nombre || selectedDayKey}
+              </button>
+            </div>
+          </div>
+
+          {/* MONITOR DETALLADO DE MACROS CON BARRAS */}
+          {compliance && (
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))',
+                gap: '10px',
+                background: 'rgba(0, 0, 0, 0.35)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+                borderRadius: '12px',
+                padding: '12px 14px',
+                marginBottom: '16px',
+              }}
+            >
+              <div>
+                <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)', fontWeight: 700 }}>
+                  🔥 CALORÍAS HOY
+                </span>
+                <div style={{ fontSize: '16px', fontWeight: 900, color: '#fff' }}>
+                  {dayTotals.calorias} <span style={{ fontSize: '11px', fontWeight: 500 }}>/ {plan.target_calorias} kcal</span>
+                </div>
+                <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', marginTop: '4px', overflow: 'hidden' }}>
+                  <div style={{ width: `${Math.min(100, compliance.caloriasPct)}%`, height: '100%', background: '#00d4ff', borderRadius: '2px' }} />
+                </div>
+              </div>
+
+              <div>
+                <span style={{ fontSize: '10px', color: '#3b82f6', fontWeight: 700 }}>
+                  🥩 PROTEÍNA
+                </span>
+                <div style={{ fontSize: '16px', fontWeight: 900, color: '#3b82f6' }}>
+                  {dayTotals.proteina}g <span style={{ fontSize: '11px', fontWeight: 500 }}>/ {plan.target_proteina_g}g</span>
+                </div>
+                <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', marginTop: '4px', overflow: 'hidden' }}>
+                  <div style={{ width: `${Math.min(100, compliance.proteinaPct)}%`, height: '100%', background: '#3b82f6', borderRadius: '2px' }} />
+                </div>
+              </div>
+
+              <div>
+                <span style={{ fontSize: '10px', color: '#10b981', fontWeight: 700 }}>
+                  🍚 CARBOS
+                </span>
+                <div style={{ fontSize: '16px', fontWeight: 900, color: '#10b981' }}>
+                  {dayTotals.carbohidratos}g <span style={{ fontSize: '11px', fontWeight: 500 }}>/ {plan.target_carbohidratos_g}g</span>
+                </div>
+                <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', marginTop: '4px', overflow: 'hidden' }}>
+                  <div style={{ width: `${Math.min(100, compliance.carbohidratosPct)}%`, height: '100%', background: '#10b981', borderRadius: '2px' }} />
+                </div>
+              </div>
+
+              <div>
+                <span style={{ fontSize: '10px', color: '#f59e0b', fontWeight: 700 }}>
+                  🥑 GRASAS
+                </span>
+                <div style={{ fontSize: '16px', fontWeight: 900, color: '#f59e0b' }}>
+                  {dayTotals.grasa}g <span style={{ fontSize: '11px', fontWeight: 500 }}>/ {plan.target_grasa_g}g</span>
+                </div>
+                <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', marginTop: '4px', overflow: 'hidden' }}>
+                  <div style={{ width: `${Math.min(100, compliance.grasaPct)}%`, height: '100%', background: '#f59e0b', borderRadius: '2px' }} />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* SELECTOR DE DÍAS */}
+          <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '8px', marginBottom: '14px' }}>
+            {DAYS_OF_WEEK.map((d) => {
+              const isSelected = selectedDayKey === d.key;
+              const isToday = todayKey === d.key;
+              return (
+                <button
+                  key={d.key}
+                  type="button"
+                  onClick={() => setSelectedDayKey(d.key)}
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: '8px',
+                    border: isSelected ? '1px solid #00d4ff' : '1px solid rgba(255, 255, 255, 0.1)',
+                    background: isSelected ? 'rgba(0, 212, 255, 0.2)' : 'rgba(255, 255, 255, 0.03)',
+                    color: isSelected ? '#00d4ff' : 'rgba(255, 255, 255, 0.7)',
+                    fontSize: '11px',
+                    fontWeight: 700,
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {d.label} {isToday && '⭐'}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* COMIDAS DEL DÍA EN ORDEN CRONOLÓGICO */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {sortedMeals.map((meal) => {
+              const mTotals = calculateMealTotals(meal.foods);
+              return (
+                <div
+                  key={meal.id}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.02)',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                    borderRadius: '10px',
+                    overflow: 'hidden',
+                  }}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '10px 14px',
+                      background: 'rgba(255, 255, 255, 0.04)',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '13px', fontWeight: 800 }}>{meal.nombre}</span>
+                      {meal.horario && (
+                        <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>
+                          🕒 {meal.horario}
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)' }}>
+                      <strong>{mTotals.calorias} kcal</strong>
+                    </div>
+                  </div>
+
+                  <div style={{ padding: '8px 12px' }}>
+                    {meal.foods.length === 0 ? (
+                      <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', fontStyle: 'italic' }}>
+                        Sin alimentos asignados para esta comida.
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        {meal.foods.map((food, fIdx) => {
+                          const isDone = Boolean(food.completado);
+                          return (
+                            <button
+                              type="button"
+                              key={food.id || fIdx}
+                              onClick={() => handleToggleFoodComplete(meal.id, fIdx)}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                width: '100%',
+                                textAlign: 'left',
+                                padding: '6px 10px',
+                                borderRadius: '6px',
+                                background: isDone ? 'rgba(16, 185, 129, 0.08)' : 'rgba(0, 0, 0, 0.2)',
+                                border: isDone ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(255, 255, 255, 0.04)',
+                                cursor: 'pointer',
+                              }}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <input
+                                  type="checkbox"
+                                  checked={isDone}
+                                  onChange={() => {}}
+                                  style={{ accentColor: '#10b981', cursor: 'pointer' }}
+                                />
+                                <span
+                                  style={{
+                                    fontSize: '12px',
+                                    textDecoration: isDone ? 'line-through' : 'none',
+                                    color: isDone ? 'rgba(255,255,255,0.5)' : '#ffffff',
+                                  }}
+                                >
+                                  {food.nombre}
+                                </span>
+                              </div>
+                              <span style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(255,255,255,0.8)' }}>
+                                {food.cantidad} {food.unidad} • {food.calorias} kcal
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* RECOMENDACIONES DEL ENTRENADOR */}
+          {plan.recomendaciones && (
+            <div
+              style={{
+                marginTop: '16px',
+                background: 'rgba(0, 212, 255, 0.05)',
+                border: '1px solid rgba(0, 212, 255, 0.2)',
+                borderRadius: '10px',
+                padding: '12px 14px',
+              }}
+            >
+              <span style={{ fontSize: '11px', color: '#00d4ff', fontWeight: 800 }}>
+                📋 PAUTAS DE TU ENTRENADOR:
+              </span>
+              <p style={{ margin: '4px 0 0', fontSize: '11px', color: 'rgba(255,255,255,0.8)', lineHeight: 1.5, whiteSpace: 'pre-line' }}>
+                {plan.recomendaciones}
+              </p>
+            </div>
+          )}
+
+          {/* BOTÓN INFERIOR PARA COLAPSAR Y REDUCIR EL SCROLL */}
+          <div style={{ textAlign: 'center', marginTop: '16px' }}>
+            <button
+              type="button"
+              onClick={toggleExpanded}
+              style={{
+                background: 'rgba(255, 255, 255, 0.04)',
+                border: '1px solid rgba(255, 255, 255, 0.15)',
+                borderRadius: '8px',
+                color: 'rgba(255, 255, 255, 0.7)',
+                padding: '8px 18px',
                 fontSize: '11px',
                 fontWeight: 700,
                 cursor: 'pointer',
-                whiteSpace: 'nowrap',
+                fontFamily: "'Orbitron', sans-serif",
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
               }}
             >
-              {d.label} {isToday && '⭐'}
+              <span>▲ Ocultar detalle de comidas</span>
             </button>
-          );
-        })}
-      </div>
-
-      {/* COMIDAS DEL DÍA */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-        {currentDay?.meals.map((meal, mIdx) => {
-          const mTotals = calculateMealTotals(meal.foods);
-          return (
-            <div
-              key={meal.id}
-              style={{
-                background: 'rgba(255, 255, 255, 0.02)',
-                border: '1px solid rgba(255, 255, 255, 0.08)',
-                borderRadius: '10px',
-                overflow: 'hidden',
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  padding: '10px 14px',
-                  background: 'rgba(255, 255, 255, 0.04)',
-                }}
-              >
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '13px', fontWeight: 800 }}>{meal.nombre}</span>
-                  {meal.horario && (
-                    <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>
-                      🕒 {meal.horario}
-                    </span>
-                  )}
-                </div>
-                <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)' }}>
-                  <strong>{mTotals.calorias} kcal</strong>
-                </div>
-              </div>
-
-              <div style={{ padding: '8px 12px' }}>
-                {meal.foods.length === 0 ? (
-                  <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', fontStyle: 'italic' }}>
-                    Sin alimentos asignados para esta comida.
-                  </div>
-                ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    {meal.foods.map((food, fIdx) => {
-                      const isDone = Boolean(food.completado);
-                      return (
-                        <button
-                          type="button"
-                          key={food.id || fIdx}
-                          onClick={() => handleToggleFoodComplete(mIdx, fIdx)}
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            width: '100%',
-                            textAlign: 'left',
-                            padding: '6px 10px',
-                            borderRadius: '6px',
-                            background: isDone ? 'rgba(16, 185, 129, 0.08)' : 'rgba(0, 0, 0, 0.2)',
-                            border: isDone ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(255, 255, 255, 0.04)',
-                            cursor: 'pointer',
-                          }}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                            <input
-                              type="checkbox"
-                              checked={isDone}
-                              onChange={() => {}}
-                              style={{ accentColor: '#10b981', cursor: 'pointer' }}
-                            />
-                            <span
-                              style={{
-                                fontSize: '12px',
-                                textDecoration: isDone ? 'line-through' : 'none',
-                                color: isDone ? 'rgba(255,255,255,0.5)' : '#ffffff',
-                              }}
-                            >
-                              {food.nombre}
-                            </span>
-                          </div>
-                          <span style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(255,255,255,0.8)' }}>
-                            {food.cantidad} {food.unidad} • {food.calorias} kcal
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* RECOMENDACIONES DEL ENTRENADOR */}
-      {plan.recomendaciones && (
-        <div
-          style={{
-            marginTop: '16px',
-            background: 'rgba(0, 212, 255, 0.05)',
-            border: '1px solid rgba(0, 212, 255, 0.2)',
-            borderRadius: '10px',
-            padding: '12px 14px',
-          }}
-        >
-          <span style={{ fontSize: '11px', color: '#00d4ff', fontWeight: 800 }}>
-            📋 PAUTAS DE TU ENTRENADOR:
-          </span>
-          <p style={{ margin: '4px 0 0', fontSize: '11px', color: 'rgba(255,255,255,0.8)', lineHeight: 1.5, whiteSpace: 'pre-line' }}>
-            {plan.recomendaciones}
-          </p>
+          </div>
         </div>
       )}
 
-      {/* RENDER OCULTO PARA EL GENERADOR DE PDF */}
-      <div style={{ position: 'absolute', left: '-9999px', top: '-9999px' }}>
-        <div id="athlete-pdf-render">
+      {/* RENDER OCULTO PARA EL GENERADOR DE PDF (Estructura y Branding idénticos al Entrenador) */}
+      <div
+        style={{
+          position: 'fixed',
+          left: '-9999px',
+          top: 0,
+          width: '794px',
+          opacity: 0,
+          pointerEvents: 'none',
+          zIndex: -1,
+        }}
+        aria-hidden="true"
+      >
+        <div id="athlete-pdf-render" style={{ width: '794px', backgroundColor: '#ffffff' }}>
           <NutritionReportPDF
             plan={plan}
             atletaNombre={profile?.nombre || 'Atleta'}
-            trainerProfile={null}
-            activeDayKey={selectedDayKey}
+            trainerProfile={resolvedTrainer}
+            activeDayKey={pdfScope === 'all' ? 'todos' : selectedDayKey}
           />
         </div>
       </div>

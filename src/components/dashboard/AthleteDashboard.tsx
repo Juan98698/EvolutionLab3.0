@@ -1829,7 +1829,11 @@ export const AthleteDashboard: React.FC = () => {
         {user?.id && (
           <div style={{ marginTop: '24px', marginBottom: '24px' }}>
             <ErrorBoundary label="Plan de Nutrición">
-              <AthleteNutritionCard clienteId={user.id} />
+              <AthleteNutritionCard
+                clienteId={user.id}
+                trainerProfile={trainerProfile}
+                defaultExpanded={false}
+              />
             </ErrorBoundary>
           </div>
         )}
