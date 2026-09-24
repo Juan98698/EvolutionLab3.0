@@ -11,6 +11,7 @@ import {
   DayOfWeek,
   DominantMacro,
   FoodEquivalentOption,
+  FoodEquivalentsGroupedSuggestions,
 } from '../types/nutrition.types';
 import { ValoracionAntropometrica } from '../types/database.types';
 import { idbGet, idbSet } from './indexedDbStore';
@@ -227,6 +228,12 @@ export function calculateEquivalentPortion(
 
   if (qty <= 0) return null;
 
+  // Límite ergonómico culinario: evitar multiplicaciones desproporcionadas (ej. más de 3.5x del peso prescrito o más de 450g)
+  const maxReasonableQty = Math.max((Number(targetFood.cantidad) || 100) * 3.5, 420);
+  if (!isDiscreteUnit && qty > maxReasonableQty) {
+    return null;
+  }
+
   // Reusar calculatePortionMacros para calcular los valores proporcionales
   const macros = calculatePortionMacros(candidate, qty);
 
@@ -264,6 +271,142 @@ export function calculateEquivalentPortion(
 }
 
 /**
+ * Evalúa si un alimento candidato del catálogo es una fuente culinaria sensata y coherente
+ * para actuar como reemplazo del macronutriente prescrito.
+ * Evita disparates como sugerir 1.4kg de ensalada de canónigos o 1.1kg de alcaparras como fuente proteica,
+ * o vísceras/menudencias grasosas (chunchullo, ubre) como fuentes de grasa saludable.
+ */
+export function isEligibleMacroCandidate(
+  targetMacro: DominantMacro,
+  candidate: FoodItem
+): boolean {
+  if (!candidate || !candidate.nombre) return false;
+  const cGrupo = candidate.grupo || '';
+  const cSubgrupo = candidate.subgrupo || '';
+  const cNorm = normalizeFoodSearchText(candidate.nombre);
+  const pBase = candidate.proteinaBase || 0;
+  const cBase = candidate.carbohidratosBase || 0;
+  const gBase = candidate.grasaBase || 0;
+
+  // Filtros de sentido común general
+  if (
+    cGrupo === 'Bebidas y Varios' ||
+    cSubgrupo.includes('Bebida') ||
+    cSubgrupo.includes('Alcohólica') ||
+    cSubgrupo.includes('Infusiones')
+  ) {
+    return false;
+  }
+  if (
+    cSubgrupo.includes('Vísceras') ||
+    cSubgrupo.includes('Menudencias') ||
+    cNorm.includes('chunchullo') ||
+    cNorm.includes('ubre') ||
+    cNorm.includes('rinon')
+  ) {
+    return false;
+  }
+  if (
+    cNorm.includes('levadura') ||
+    cNorm.includes('gelatina') ||
+    cNorm.includes('curry') ||
+    cNorm.includes('pimienta') ||
+    cNorm.includes('alcaparras')
+  ) {
+    return false;
+  }
+
+  if (targetMacro === 'proteina') {
+    // Verduras, frutas o semillas no deben sustituir fuentes magras de proteína
+    if (cGrupo === 'Verduras' || cGrupo === 'Frutas' || cGrupo === 'Grasas y Frutos Secos') {
+      return false;
+    }
+    const isProteinGroup = [
+      'Carnes y Aves',
+      'Pescados y Mariscos',
+      'Huevos',
+      'Lácteos y Quesos',
+      'Suplementación',
+    ].includes(cGrupo);
+    return isProteinGroup || pBase >= 12;
+  }
+
+  if (targetMacro === 'carbohidratos') {
+    // Carnes o verduras muy bajas en hidratos no son fuentes primarias de carbohidratos
+    if (cGrupo === 'Verduras' || cGrupo === 'Carnes y Aves' || cGrupo === 'Pescados y Mariscos') {
+      return false;
+    }
+    const isCarbGroup = ['Cereales y Tubérculos', 'Frutas', 'Legumbres'].includes(cGrupo);
+    return isCarbGroup || cBase >= 14;
+  }
+
+  if (targetMacro === 'grasa') {
+    // Grasas saludables: frutos secos, aceites, semillas, aguacates
+    if (cGrupo === 'Carnes y Aves' || cGrupo === 'Pescados y Mariscos' || cGrupo === 'Verduras') {
+      return false;
+    }
+    return ['Grasas y Frutos Secos', 'Lácteos y Quesos'].includes(cGrupo) || gBase >= 14;
+  }
+
+  return true;
+}
+
+/**
+ * Obtiene las sugerencias organizadas en dos niveles para el entrenador:
+ * 1. strictMatches: Alimentos con estricta tolerancia calórica (<= ±10%).
+ * 2. macroMatches: Otras fuentes culinarias válidas del macro (proteína/carbos/grasa)
+ *    cuyas calorías difieren (> 10%), permitiendo al entrenador ampliar la variedad
+ *    con alimentos como salmón, huevo entero, legumbres o batata según su criterio.
+ */
+export function getGroupedEquivalentsSuggestions(
+  targetFood: MealFoodItem,
+  catalog: FoodItem[] = BASE_FOOD_CATALOG
+): FoodEquivalentsGroupedSuggestions {
+  if (!targetFood || !Array.isArray(catalog) || catalog.length === 0) {
+    return { strictMatches: [], macroMatches: [] };
+  }
+
+  const targetMacro = getDominantMacro(targetFood);
+  const targetNorm = normalizeFoodSearchText(targetFood.nombre);
+
+  const strictMatches: FoodEquivalentOption[] = [];
+  const macroMatches: FoodEquivalentOption[] = [];
+  const seenKeys = new Set<string>();
+  seenKeys.add(targetNorm);
+
+  for (const item of catalog) {
+    const itemNorm = normalizeFoodSearchText(item.nombre);
+    if (seenKeys.has(itemNorm) || itemNorm === targetNorm) continue;
+    if (!isEligibleMacroCandidate(targetMacro, item)) continue;
+
+    // Permitimos calcular hasta ±70% para clasificar en los dos niveles
+    const equiv = calculateEquivalentPortion(targetFood, item, 70);
+    if (!equiv) continue;
+
+    const firstWord = itemNorm.split(' ')[0];
+    const key = `${equiv.grupo}_${firstWord}`;
+    if (seenKeys.has(key)) continue;
+    seenKeys.add(key);
+    seenKeys.add(itemNorm);
+
+    if (Math.abs(equiv.deltaCaloriasPct) <= 10) {
+      strictMatches.push(equiv);
+    } else {
+      macroMatches.push(equiv);
+    }
+  }
+
+  // Ordenar ambos niveles por cercanía calórica al prescrito
+  strictMatches.sort((a, b) => Math.abs(a.deltaCaloriasPct) - Math.abs(b.deltaCaloriasPct));
+  macroMatches.sort((a, b) => Math.abs(a.deltaCaloriasPct) - Math.abs(b.deltaCaloriasPct));
+
+  return {
+    strictMatches: strictMatches.slice(0, 6),
+    macroMatches: macroMatches.slice(0, 8),
+  };
+}
+
+/**
  * Obtiene las mejores opciones automáticas equivalentes desde el catálogo para un alimento prescrito.
  * Aplica el filtro duro calórico (±10%), excluye el mismo alimento y deduplica para ofrecer variedad culinaria.
  */
@@ -272,37 +415,8 @@ export function getAutomaticEquivalents(
   catalog: FoodItem[] = BASE_FOOD_CATALOG,
   maxOptions: number = 6
 ): FoodEquivalentOption[] {
-  if (!targetFood || !Array.isArray(catalog) || catalog.length === 0) return [];
-
-  const targetNorm = normalizeFoodSearchText(targetFood.nombre);
-
-  const candidates: FoodEquivalentOption[] = [];
-  const seenNames = new Set<string>();
-  seenNames.add(targetNorm);
-
-  for (const item of catalog) {
-    const itemNorm = normalizeFoodSearchText(item.nombre);
-
-    // Evitar el mismo alimento o variantes duplicadas directas
-    if (seenNames.has(itemNorm) || itemNorm === targetNorm) continue;
-
-    const equiv = calculateEquivalentPortion(targetFood, item, 10);
-    if (!equiv) continue;
-
-    // Deduplicar palabras clave para evitar 5 tipos de pechuga de pollo repetidos
-    const firstWord = itemNorm.split(' ')[0];
-    const key = `${equiv.grupo}_${firstWord}`;
-    if (seenNames.has(key)) continue;
-    seenNames.add(key);
-    seenNames.add(itemNorm);
-
-    candidates.push(equiv);
-  }
-
-  // Ordenar por menor desviación calórica (más cercano a 0%)
-  candidates.sort((a, b) => Math.abs(a.deltaCaloriasPct) - Math.abs(b.deltaCaloriasPct));
-
-  return candidates.slice(0, maxOptions);
+  const { strictMatches } = getGroupedEquivalentsSuggestions(targetFood, catalog);
+  return strictMatches.slice(0, maxOptions);
 }
 
 /**

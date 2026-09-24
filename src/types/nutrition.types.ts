@@ -130,6 +130,11 @@ export interface FoodEquivalentOption {
   nota?: string;
 }
 
+export interface FoodEquivalentsGroupedSuggestions {
+  strictMatches: FoodEquivalentOption[]; // Tolerancia estricta (delta <= 10%)
+  macroMatches: FoodEquivalentOption[];  // Otras fuentes del macro (delta > 10%)
+}
+
 export interface NutritionPlanData {
   days: Record<string, NutritionDay>;
   modo: 'diario_unico' | 'semanal';

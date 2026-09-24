@@ -24,6 +24,8 @@ export interface UseFoodEquivalentsReturn {
   addCustomOption: (candidate: FoodItem) => void;
   removeOption: (index: number) => void;
   resetToAutomatic: () => void;
+  addOptionDirect: (option: FoodEquivalentOption) => void;
+  clearOptions: () => void;
   getActiveOptionsForFood: (
     food: MealFoodItem,
     savedEquivalentsMap?: Record<string, FoodEquivalentOption[]>
@@ -140,6 +142,30 @@ export function useFoodEquivalents(): UseFoodEquivalentsReturn {
     setCurrentEquivalents(autos);
   }, [targetFood]);
 
+  const addOptionDirect = useCallback((option: FoodEquivalentOption) => {
+    setCurrentEquivalents((prev) => {
+      const optNorm = normalizeFoodSearchText(option.nombre);
+      const exists = prev.some(
+        (p) =>
+          String(p.foodId) === String(option.foodId) ||
+          normalizeFoodSearchText(p.nombre) === optNorm
+      );
+      if (exists) {
+        return prev.map((p) =>
+          String(p.foodId) === String(option.foodId) ||
+          normalizeFoodSearchText(p.nombre) === optNorm
+            ? { ...p, activo: true }
+            : p
+        );
+      }
+      return [...prev, { ...option, activo: true }];
+    });
+  }, []);
+
+  const clearOptions = useCallback(() => {
+    setCurrentEquivalents([]);
+  }, []);
+
   return {
     isModalOpen,
     targetFood,
@@ -151,6 +177,8 @@ export function useFoodEquivalents(): UseFoodEquivalentsReturn {
     addCustomOption,
     removeOption,
     resetToAutomatic,
+    addOptionDirect,
+    clearOptions,
     getActiveOptionsForFood,
   };
 }

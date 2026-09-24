@@ -6,7 +6,6 @@ import {
   DAYS_OF_WEEK,
   sortMealsChronologically,
   getUniquePrescribedFoods,
-  getAutomaticEquivalents,
   getDominantMacro,
   normalizeFoodSearchText,
 } from '../../lib/nutritionEngine';
@@ -68,10 +67,14 @@ export const NutritionReportPDF: React.FC<NutritionReportPDFProps> = ({
     .map((food) => {
       const key = normalizeFoodSearchText(food.nombre);
       const configured = plan.datos_plan?.equivalencias?.[key];
-      const allOptions = Array.isArray(configured)
-        ? configured
-        : getAutomaticEquivalents(food);
-      const approvedOptions = allOptions.filter((opt) => opt.activo !== false);
+      // Solo incluimos en el PDF los alimentos para los cuales el entrenador haya configurado
+      // y aprobado explícitamente opciones de reemplazo (evita ruido no deseado en el documento)
+      if (!Array.isArray(configured) || configured.length === 0) {
+        return null;
+      }
+      const approvedOptions = configured.filter((opt) => opt.activo !== false);
+      if (approvedOptions.length === 0) return null;
+
       const macro = getDominantMacro(food);
       return {
         food,
@@ -79,7 +82,7 @@ export const NutritionReportPDF: React.FC<NutritionReportPDFProps> = ({
         approvedOptions,
       };
     })
-    .filter(({ approvedOptions }) => approvedOptions.length > 0);
+    .filter((item): item is NonNullable<typeof item> => item !== null);
 
   const proteinEquivalents = foodsWithEquivalents.filter((f) => f.macro === 'proteina');
   const carbEquivalents = foodsWithEquivalents.filter((f) => f.macro === 'carbohidratos');
@@ -469,52 +472,6 @@ export const NutritionReportPDF: React.FC<NutritionReportPDFProps> = ({
         })}
       </div>
 
-      {/* PAUTAS Y RECOMENDACIONES GENERALES */}
-      {plan.recomendaciones && (
-        <div
-          data-pdf-block="recommendations-card"
-          style={{
-            border: '1px solid #cbd5e1',
-            borderRadius: '8px',
-            backgroundColor: '#f8fafc',
-            padding: '14px 16px',
-            marginBottom: '20px',
-          }}
-        >
-          <h3
-            data-pdf-block="rec-header"
-            style={{
-              margin: '0 0 8px',
-              fontSize: '12px',
-              fontWeight: 800,
-              fontFamily: "'Orbitron', sans-serif",
-              color: '#0284c7',
-            }}
-          >
-            📋 RECOMENDACIONES DEL ENTRENADOR
-          </h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-            {plan.recomendaciones
-              .split('\n')
-              .filter((line) => line.trim().length > 0)
-              .map((line, lIdx) => (
-                <p
-                  key={lIdx}
-                  data-pdf-block="rec-para"
-                  style={{
-                    margin: 0,
-                    fontSize: '11px',
-                    lineHeight: 1.6,
-                    color: '#334155',
-                  }}
-                >
-                  {line}
-                </p>
-              ))}
-          </div>
-        </div>
-      )}
-
       {/* GUÍA DE INTERCAMBIOS Y ALIMENTOS EQUIVALENTES */}
       {includeEquivalents && foodsWithEquivalents.length > 0 && (
         <div
@@ -782,6 +739,52 @@ export const NutritionReportPDF: React.FC<NutritionReportPDFProps> = ({
               </table>
             </div>
           )}
+        </div>
+      )}
+
+      {/* PAUTAS Y RECOMENDACIONES GENERALES */}
+      {plan.recomendaciones && (
+        <div
+          data-pdf-block="recommendations-card"
+          style={{
+            border: '1px solid #cbd5e1',
+            borderRadius: '8px',
+            backgroundColor: '#f8fafc',
+            padding: '14px 16px',
+            marginBottom: '20px',
+          }}
+        >
+          <h3
+            data-pdf-block="rec-header"
+            style={{
+              margin: '0 0 8px',
+              fontSize: '12px',
+              fontWeight: 800,
+              fontFamily: "'Orbitron', sans-serif",
+              color: '#0284c7',
+            }}
+          >
+            📋 RECOMENDACIONES DEL ENTRENADOR
+          </h3>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            {plan.recomendaciones
+              .split('\n')
+              .filter((line) => line.trim().length > 0)
+              .map((line, lIdx) => (
+                <p
+                  key={lIdx}
+                  data-pdf-block="rec-para"
+                  style={{
+                    margin: 0,
+                    fontSize: '11px',
+                    lineHeight: 1.6,
+                    color: '#334155',
+                  }}
+                >
+                  {line}
+                </p>
+              ))}
+          </div>
         </div>
       )}
 

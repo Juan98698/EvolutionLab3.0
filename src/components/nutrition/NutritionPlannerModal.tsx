@@ -21,6 +21,7 @@ import {
   round1,
   sortMealsChronologically,
   normalizeFoodSearchText,
+  getUniquePrescribedFoods,
 } from '../../lib/nutritionEngine';
 import { supabase } from '../../lib/supabaseClient';
 import FoodSelectorModal from './FoodSelectorModal';
@@ -93,6 +94,18 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
     }));
     if (showToast) showToast('Equivalencias guardadas para este alimento', 'success');
   };
+
+  // Alimentos únicos prescritos en el plan para la gestión de equivalentes
+  const uniquePlanFoods = useMemo(() => {
+    return getUniquePrescribedFoods(plan);
+  }, [plan]);
+
+  const configuredEquivalentsCount = useMemo(() => {
+    const equivs = plan.datos_plan?.equivalencias || {};
+    return Object.values(equivs).filter(
+      (opts) => Array.isArray(opts) && opts.some((o) => o.activo !== false)
+    ).length;
+  }, [plan.datos_plan?.equivalencias]);
 
   // Cargar plan existente desde Supabase o IndexedDB al abrir, o resolver última valoración
   useEffect(() => {
@@ -818,6 +831,50 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
               </button>
               <button
                 type="button"
+                onClick={() => {
+                  const initialFood = uniquePlanFoods[0] || null;
+                  if (initialFood) {
+                    equivalentsHook.openEquivalentsModal(initialFood, plan.datos_plan?.equivalencias);
+                  } else {
+                    showToast?.('Agrega alimentos al plan primero para configurar sus equivalentes.', 'info');
+                  }
+                }}
+                title="Configurar opciones de intercambio y equivalentes de alimentos para el PDF"
+                className="nutrition-header-action-btn"
+                style={{
+                  background: configuredEquivalentsCount > 0 ? 'rgba(0, 212, 255, 0.18)' : 'rgba(255, 255, 255, 0.05)',
+                  border: configuredEquivalentsCount > 0 ? '1px solid #00d4ff' : '1px solid rgba(255, 255, 255, 0.15)',
+                  color: configuredEquivalentsCount > 0 ? '#00d4ff' : 'rgba(255, 255, 255, 0.85)',
+                  borderRadius: '8px',
+                  padding: '6px 12px',
+                  fontSize: '11px',
+                  cursor: 'pointer',
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                <span>🔄 Alimentos Equivalentes</span>
+                {configuredEquivalentsCount > 0 ? (
+                  <span
+                    style={{
+                      background: '#00d4ff',
+                      color: '#000',
+                      borderRadius: '10px',
+                      padding: '1px 6px',
+                      fontSize: '10px',
+                      fontWeight: 800,
+                    }}
+                  >
+                    {configuredEquivalentsCount}
+                  </span>
+                ) : (
+                  <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)' }}>(0)</span>
+                )}
+              </button>
+              <button
+                type="button"
                 onClick={() => setShowPdfView(!showPdfView)}
                 className="nutrition-header-action-btn"
                 style={{
@@ -1272,32 +1329,52 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
                                   </div>
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                  <button
-                                    type="button"
-                                    onClick={() =>
-                                      equivalentsHook.openEquivalentsModal(
-                                        food,
-                                        plan.datos_plan.equivalencias
-                                      )
-                                    }
-                                    style={{
-                                      background: 'rgba(0, 212, 255, 0.1)',
-                                      border: '1px solid rgba(0, 212, 255, 0.3)',
-                                      color: '#00d4ff',
-                                      borderRadius: '6px',
-                                      padding: '3px 8px',
-                                      fontSize: '11px',
-                                      fontWeight: 600,
-                                      cursor: 'pointer',
-                                      display: 'inline-flex',
-                                      alignItems: 'center',
-                                      gap: '4px',
-                                    }}
-                                    title="Configurar y revisar sustituciones equivalentes"
-                                  >
-                                    <span>🔄</span>
-                                    <span>Equivalentes</span>
-                                  </button>
+                                  {(() => {
+                                    const fKey = normalizeFoodSearchText(food.nombre);
+                                    const configured = plan.datos_plan?.equivalencias?.[fKey];
+                                    const activeCount = Array.isArray(configured)
+                                      ? configured.filter((c) => c.activo !== false).length
+                                      : 0;
+                                    const isConfigured = activeCount > 0;
+                                    return (
+                                      <button
+                                        type="button"
+                                        onClick={() =>
+                                          equivalentsHook.openEquivalentsModal(
+                                            food,
+                                            plan.datos_plan.equivalencias
+                                          )
+                                        }
+                                        style={{
+                                          background: isConfigured
+                                            ? 'rgba(16, 185, 129, 0.15)'
+                                            : 'rgba(0, 212, 255, 0.1)',
+                                          border: isConfigured
+                                            ? '1px solid rgba(16, 185, 129, 0.4)'
+                                            : '1px solid rgba(0, 212, 255, 0.3)',
+                                          color: isConfigured ? '#34d399' : '#00d4ff',
+                                          borderRadius: '6px',
+                                          padding: '3px 8px',
+                                          fontSize: '11px',
+                                          fontWeight: 600,
+                                          cursor: 'pointer',
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          gap: '4px',
+                                        }}
+                                        title={
+                                          isConfigured
+                                            ? `Tiene ${activeCount} opciones de reemplazo activas en el PDF`
+                                            : 'Configurar y revisar sustituciones equivalentes'
+                                        }
+                                      >
+                                        <span>{isConfigured ? '✓' : '🔄'}</span>
+                                        <span>
+                                          {isConfigured ? `Reemplazos (${activeCount})` : 'Equivalentes'}
+                                        </span>
+                                      </button>
+                                    );
+                                  })()}
                                   <button
                                     type="button"
                                     onClick={() => handleRemoveFoodFromMeal(mIdx, fIdx)}
@@ -1533,6 +1610,34 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
             </button>
             <button
               type="button"
+              onClick={() => {
+                const initialFood = uniquePlanFoods[0] || null;
+                if (initialFood) {
+                  equivalentsHook.openEquivalentsModal(initialFood, plan.datos_plan?.equivalencias);
+                } else {
+                  showToast?.('Agrega alimentos al plan primero para configurar sus equivalentes.', 'info');
+                }
+              }}
+              className="nutrition-footer-btn-equiv"
+              title="Configurar qué alimentos tendrán opciones de reemplazo en el PDF"
+              style={{
+                background: configuredEquivalentsCount > 0 ? 'rgba(0, 212, 255, 0.12)' : 'rgba(255, 255, 255, 0.06)',
+                border: configuredEquivalentsCount > 0 ? '1px solid rgba(0, 212, 255, 0.4)' : '1px solid rgba(255, 255, 255, 0.18)',
+                color: configuredEquivalentsCount > 0 ? '#00d4ff' : 'rgba(255, 255, 255, 0.85)',
+                borderRadius: '8px',
+                padding: '8px 14px',
+                fontSize: '12px',
+                fontWeight: 600,
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+              }}
+            >
+              🔄 Reemplazos PDF ({configuredEquivalentsCount})
+            </button>
+            <button
+              type="button"
               onClick={handleDownloadPDF}
               disabled={downloadingPdf}
               className="nutrition-footer-btn-pdf"
@@ -1647,8 +1752,20 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
         onUpdateQuantity={equivalentsHook.updateOptionQuantity}
         onRemoveOption={equivalentsHook.removeOption}
         onAddCustomOption={equivalentsHook.addCustomOption}
+        onAddOption={equivalentsHook.addOptionDirect}
         onResetToAutomatic={equivalentsHook.resetToAutomatic}
         onSave={handleSaveEquivalentsForFood}
+        planFoods={uniquePlanFoods}
+        savedEquivalencias={plan.datos_plan?.equivalencias}
+        onSelectFood={(food) => {
+          if (equivalentsHook.targetFood) {
+            handleSaveEquivalentsForFood(
+              normalizeFoodSearchText(equivalentsHook.targetFood.nombre),
+              equivalentsHook.currentEquivalents
+            );
+          }
+          equivalentsHook.openEquivalentsModal(food, plan.datos_plan?.equivalencias);
+        }}
       />
     </div>
   );
