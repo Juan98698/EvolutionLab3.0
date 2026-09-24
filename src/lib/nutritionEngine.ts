@@ -9,10 +9,13 @@ import {
   NutritionTotals,
   NutritionCompliance,
   DayOfWeek,
+  DominantMacro,
+  FoodEquivalentOption,
 } from '../types/nutrition.types';
 import { ValoracionAntropometrica } from '../types/database.types';
 import { idbGet, idbSet } from './indexedDbStore';
 import { supabase } from './supabaseClient';
+import { BASE_FOOD_CATALOG } from '../data/foodCatalog';
 
 export const DAYS_OF_WEEK: { key: DayOfWeek; label: string }[] = [
   { key: 'lunes', label: 'Lunes' },
@@ -117,6 +120,241 @@ export function calculatePortionMacros(
     carbohidratos: round1(food.carbohidratosBase * ratio),
     grasa: round1(food.grasaBase * ratio),
   };
+}
+
+/**
+ * Detecta el macronutriente dominante de un alimento con rigor clínico y fallback determinista.
+ * Funciona tanto con MealFoodItem ({ proteina, carbohidratos, grasa }) como con FoodItem ({ proteinaBase, carbohidratosBase, grasaBase }).
+ */
+export function getDominantMacro(
+  food:
+    | { proteina: number; carbohidratos: number; grasa: number; calorias?: number }
+    | { proteinaBase: number; carbohidratosBase: number; grasaBase: number; caloriasBase?: number }
+): DominantMacro {
+  const p = 'proteina' in food ? Number(food.proteina) || 0 : Number(food.proteinaBase) || 0;
+  const c = 'carbohidratos' in food ? Number(food.carbohidratos) || 0 : Number(food.carbohidratosBase) || 0;
+  const g = 'grasa' in food ? Number(food.grasa) || 0 : Number(food.grasaBase) || 0;
+
+  const calP = p * 4;
+  const calC = c * 4;
+  const calG = g * 9;
+  const totalCal = calP + calC + calG;
+
+  if (totalCal <= 0) return 'proteina';
+
+  const ratioP = calP / totalCal;
+  const ratioC = calC / totalCal;
+  const ratioG = calG / totalCal;
+
+  // Umbrales clínicos prioritarios
+  if (ratioP >= 0.35 || (p >= 15 && p > c && p > g)) return 'proteina';
+  if (ratioC >= 0.45) return 'carbohidratos';
+  if (ratioG >= 0.50) return 'grasa';
+
+  // Fallback determinista para alimentos mixtos (frutos secos, legumbres, etc.)
+  if (calP >= calC && calP >= calG) return 'proteina';
+  if (calC >= calP && calC >= calG) return 'carbohidratos';
+  return 'grasa';
+}
+
+/**
+ * Calcula la porción matemáticamente equivalente de un alimento candidato para igualar
+ * el macronutriente dominante del alimento prescrito, usando calculatePortionMacros y aplicando
+ * un filtro duro de tolerancia calórica (por defecto ±10%).
+ */
+export function calculateEquivalentPortion(
+  targetFood: MealFoodItem,
+  candidate: FoodItem,
+  maxCalorieDiffPct: number = 10
+): FoodEquivalentOption | null {
+  const targetMacro = getDominantMacro(targetFood);
+  const candidateMacro = getDominantMacro(candidate);
+
+  // Ambos alimentos deben compartir el mismo macronutriente dominante
+  if (targetMacro !== candidateMacro) return null;
+
+  let targetVal = 0;
+  let candidateBaseVal = 0;
+
+  if (targetMacro === 'proteina') {
+    targetVal = Number(targetFood.proteina) || 0;
+    candidateBaseVal = Number(candidate.proteinaBase) || 0;
+  } else if (targetMacro === 'carbohidratos') {
+    targetVal = Number(targetFood.carbohidratos) || 0;
+    candidateBaseVal = Number(candidate.carbohidratosBase) || 0;
+  } else {
+    targetVal = Number(targetFood.grasa) || 0;
+    candidateBaseVal = Number(candidate.grasaBase) || 0;
+  }
+
+  // Si el candidato no tiene cantidad significativa del macro o el prescrito no tiene nada
+  if (candidateBaseVal <= 0.5 || targetVal <= 0) return null;
+
+  const basePortion = candidate.cantidadBase > 0 ? candidate.cantidadBase : 100;
+  const rawQty = (targetVal / candidateBaseVal) * basePortion;
+
+  if (rawQty <= 0 || !isFinite(rawQty)) return null;
+
+  // Redondeo ergonómico para cocina y nutrición
+  let qty: number;
+  const unit = (candidate.unidad || 'gr').toLowerCase();
+  const isDiscreteUnit = [
+    'u',
+    'unidad',
+    'scoop',
+    'tableta',
+    'capsula',
+    'cápsula',
+    'sobre',
+    'tajada',
+    'taza',
+    'vaso',
+    'cucharada',
+    'cucharadita',
+  ].includes(unit);
+
+  if (isDiscreteUnit) {
+    qty = rawQty >= 2 ? Math.round(rawQty * 2) / 2 : round1(rawQty);
+  } else {
+    if (rawQty >= 50) {
+      qty = Math.round(rawQty / 5) * 5;
+    } else if (rawQty >= 10) {
+      qty = Math.round(rawQty);
+    } else {
+      qty = round1(rawQty);
+    }
+  }
+
+  if (qty <= 0) return null;
+
+  // Reusar calculatePortionMacros para calcular los valores proporcionales
+  const macros = calculatePortionMacros(candidate, qty);
+
+  const targetCal =
+    targetFood.calorias > 0
+      ? targetFood.calorias
+      : Math.round(
+          (Number(targetFood.proteina) || 0) * 4 +
+            (Number(targetFood.carbohidratos) || 0) * 4 +
+            (Number(targetFood.grasa) || 0) * 9
+        );
+
+  const safeTargetCal = targetCal > 0 ? targetCal : 1;
+  const deltaCaloriasPct = Math.round(((macros.calorias - safeTargetCal) / safeTargetCal) * 100);
+
+  // Filtro duro: no superar la tolerancia calórica estricta (por defecto ±10%)
+  if (Math.abs(deltaCaloriasPct) > maxCalorieDiffPct) {
+    return null;
+  }
+
+  return {
+    foodId: candidate.id,
+    nombre: candidate.nombre,
+    grupo: candidate.grupo,
+    cantidad: qty,
+    unidad: candidate.unidad,
+    calorias: macros.calorias,
+    proteina: macros.proteina,
+    carbohidratos: macros.carbohidratos,
+    grasa: macros.grasa,
+    deltaCaloriasPct,
+    activo: true,
+    esPersonalizado: candidate.esPersonalizado || false,
+  };
+}
+
+/**
+ * Obtiene las mejores opciones automáticas equivalentes desde el catálogo para un alimento prescrito.
+ * Aplica el filtro duro calórico (±10%), excluye el mismo alimento y deduplica para ofrecer variedad culinaria.
+ */
+export function getAutomaticEquivalents(
+  targetFood: MealFoodItem,
+  catalog: FoodItem[] = BASE_FOOD_CATALOG,
+  maxOptions: number = 6
+): FoodEquivalentOption[] {
+  if (!targetFood || !Array.isArray(catalog) || catalog.length === 0) return [];
+
+  const targetNorm = normalizeFoodSearchText(targetFood.nombre);
+
+  const candidates: FoodEquivalentOption[] = [];
+  const seenNames = new Set<string>();
+  seenNames.add(targetNorm);
+
+  for (const item of catalog) {
+    const itemNorm = normalizeFoodSearchText(item.nombre);
+
+    // Evitar el mismo alimento o variantes duplicadas directas
+    if (seenNames.has(itemNorm) || itemNorm === targetNorm) continue;
+
+    const equiv = calculateEquivalentPortion(targetFood, item, 10);
+    if (!equiv) continue;
+
+    // Deduplicar palabras clave para evitar 5 tipos de pechuga de pollo repetidos
+    const firstWord = itemNorm.split(' ')[0];
+    const key = `${equiv.grupo}_${firstWord}`;
+    if (seenNames.has(key)) continue;
+    seenNames.add(key);
+    seenNames.add(itemNorm);
+
+    candidates.push(equiv);
+  }
+
+  // Ordenar por menor desviación calórica (más cercano a 0%)
+  candidates.sort((a, b) => Math.abs(a.deltaCaloriasPct) - Math.abs(b.deltaCaloriasPct));
+
+  return candidates.slice(0, maxOptions);
+}
+
+/**
+ * Consolida los alimentos prescritos en el plan semanal para la guía de equivalencias,
+ * agrupando repeticiones del mismo alimento y filtrando alimentos irrelevantes o aderezos mínimos.
+ */
+export function getUniquePrescribedFoods(plan: NutritionPlan): MealFoodItem[] {
+  if (!plan || !plan.datos_plan || !plan.datos_plan.days) return [];
+
+  const map = new Map<string, MealFoodItem>();
+
+  for (const day of Object.values(plan.datos_plan.days)) {
+    if (!day || !Array.isArray(day.meals)) continue;
+    for (const meal of day.meals) {
+      if (!Array.isArray(meal.foods)) continue;
+      for (const food of meal.foods) {
+        if (!food || !food.nombre) continue;
+
+        // Filtrar alimentos muy pequeños o aderezos sin significancia macro
+        const p = Number(food.proteina) || 0;
+        const c = Number(food.carbohidratos) || 0;
+        const g = Number(food.grasa) || 0;
+        const cal = Number(food.calorias) || 0;
+
+        if (p < 10 && c < 12 && g < 8 && cal < 80) continue;
+
+        const norm = normalizeFoodSearchText(food.nombre);
+        if (!map.has(norm)) {
+          map.set(norm, food);
+        } else {
+          // Si ya existe, conservar el de mayor porción para que la guía cubra la ración completa
+          const existing = map.get(norm)!;
+          if (food.cantidad > existing.cantidad) {
+            map.set(norm, food);
+          }
+        }
+      }
+    }
+  }
+
+  // Ordenar: primero fuentes de proteína, luego carbohidratos, luego grasas
+  return Array.from(map.values()).sort((a, b) => {
+    const macroOrder: Record<DominantMacro, number> = {
+      proteina: 1,
+      carbohidratos: 2,
+      grasa: 3,
+    };
+    const orderA = macroOrder[getDominantMacro(a)];
+    const orderB = macroOrder[getDominantMacro(b)];
+    if (orderA !== orderB) return orderA - orderB;
+    return a.nombre.localeCompare(b.nombre);
+  });
 }
 
 /**

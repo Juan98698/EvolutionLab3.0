@@ -13,6 +13,9 @@ import { supabase } from '../../lib/supabaseClient';
 import { NutritionReportPDF } from '../nutrition/NutritionReportPDF';
 import { generateNutritionPDF } from '../../lib/nutritionPdf';
 import { useSupabase } from '../../context/SupabaseContext';
+import { AthleteFoodSubstitutionModal } from '../nutrition/AthleteFoodSubstitutionModal';
+import { FoodEquivalentOption, MealFoodItem } from '../../types/nutrition.types';
+import { getAutomaticEquivalents, normalizeFoodSearchText } from '../../lib/nutritionEngine';
 
 interface AthleteNutritionCardProps {
   clienteId: string;
@@ -49,6 +52,83 @@ export const AthleteNutritionCard: React.FC<AthleteNutritionCardProps> = ({
       }
       return next;
     });
+  };
+
+  // Clave de almacenamiento aislada por cliente y fecha para sustituciones no destructivas
+  const todayDateStr = useMemo(() => new Date().toISOString().slice(0, 10), []);
+  const subsStorageKey = useMemo(
+    () => `athlete_nutrition_subs_${clienteId}_${todayDateStr}`,
+    [clienteId, todayDateStr]
+  );
+
+  const [activeSubstitutions, setActiveSubstitutions] = useState<Record<string, FoodEquivalentOption>>(
+    () => {
+      if (typeof window === 'undefined') return {};
+      try {
+        const saved = localStorage.getItem(`athlete_nutrition_subs_${clienteId}_${new Date().toISOString().slice(0, 10)}`);
+        return saved ? JSON.parse(saved) : {};
+      } catch {
+        return {};
+      }
+    }
+  );
+
+  const [substitutionModalOpen, setSubstitutionModalOpen] = useState(false);
+  const [substitutionTarget, setSubstitutionTarget] = useState<{
+    food: MealFoodItem;
+    mealId: string;
+    foodKey: string;
+    approvedOptions: FoodEquivalentOption[];
+  } | null>(null);
+
+  const handleOpenSubstitution = (mealId: string, food: MealFoodItem) => {
+    let targetPrescribedFood = food;
+    if (food.nombreOriginal && currentDay) {
+      const origMeal = currentDay.meals.find((m) => m.id === mealId);
+      const origFood = origMeal?.foods.find((f) => f.id === food.id);
+      if (origFood) {
+        targetPrescribedFood = origFood;
+      }
+    }
+
+    const key = normalizeFoodSearchText(targetPrescribedFood.nombre);
+    const subKey = `${mealId}_${key}`;
+    const configured = plan?.datos_plan?.equivalencias?.[key];
+    const allOptions = Array.isArray(configured) ? configured : getAutomaticEquivalents(targetPrescribedFood);
+    const approved = allOptions.filter((opt) => opt.activo !== false);
+
+    setSubstitutionTarget({
+      food: targetPrescribedFood,
+      mealId,
+      foodKey: subKey,
+      approvedOptions: approved,
+    });
+    setSubstitutionModalOpen(true);
+  };
+
+  const handleApplySubstitution = (selectedOption: FoodEquivalentOption) => {
+    if (!substitutionTarget) return;
+    const subKey = substitutionTarget.foodKey;
+    const nextSubs = { ...activeSubstitutions, [subKey]: selectedOption };
+    setActiveSubstitutions(nextSubs);
+    try {
+      localStorage.setItem(subsStorageKey, JSON.stringify(nextSubs));
+    } catch {
+      // Ignorar excepciones de localStorage
+    }
+  };
+
+  const handleRevertSubstitution = () => {
+    if (!substitutionTarget) return;
+    const subKey = substitutionTarget.foodKey;
+    const nextSubs = { ...activeSubstitutions };
+    delete nextSubs[subKey];
+    setActiveSubstitutions(nextSubs);
+    try {
+      localStorage.setItem(subsStorageKey, JSON.stringify(nextSubs));
+    } catch {
+      // Ignorar excepciones de localStorage
+    }
   };
 
   // Obtener el día actual de la semana en español
@@ -137,14 +217,51 @@ export const AthleteNutritionCard: React.FC<AthleteNutritionCardProps> = ({
     return plan.datos_plan.days[selectedDayKey] || Object.values(plan.datos_plan.days)[0];
   }, [plan, selectedDayKey]);
 
+  // Comidas con sustituciones de hoy aplicadas en memoria (no destructivas)
+  const effectiveMeals = useMemo(() => {
+    if (!currentDay || !currentDay.meals) return [];
+    const hasSubs = Object.keys(activeSubstitutions).length > 0;
+    if (selectedDayKey !== todayKey || !hasSubs) {
+      return currentDay.meals;
+    }
+
+    return currentDay.meals.map((meal) => {
+      const updatedFoods = meal.foods.map((food) => {
+        const originalName = food.nombreOriginal || food.nombre;
+        const subKey = `${meal.id}_${normalizeFoodSearchText(originalName)}`;
+        const sub = activeSubstitutions[subKey];
+        if (!sub) return food;
+        return {
+          ...food,
+          nombreOriginal: originalName,
+          nombre: sub.nombre,
+          grupo: sub.grupo,
+          cantidad: sub.cantidad,
+          unidad: sub.unidad,
+          calorias: sub.calorias,
+          proteina: sub.proteina,
+          carbohidratos: sub.carbohidratos,
+          grasa: sub.grasa,
+          esSustituido: true,
+        };
+      });
+      return { ...meal, foods: updatedFoods };
+    });
+  }, [currentDay, selectedDayKey, todayKey, activeSubstitutions]);
+
   // Comidas ordenadas en riguroso orden cronológico por hora
   const sortedMeals = useMemo(() => {
-    return sortMealsChronologically(currentDay?.meals || []);
-  }, [currentDay?.meals]);
+    return sortMealsChronologically(effectiveMeals);
+  }, [effectiveMeals]);
 
   const dayTotals = useMemo(() => {
-    return calculateDayTotals(currentDay);
-  }, [currentDay]);
+    return calculateDayTotals({
+      id: currentDay?.id || 'day-effective',
+      diaSemana: selectedDayKey,
+      nombre: currentDay?.nombre || 'Día',
+      meals: effectiveMeals,
+    });
+  }, [currentDay, selectedDayKey, effectiveMeals]);
 
   const compliance = useMemo(() => {
     if (!plan) return null;
@@ -661,45 +778,88 @@ export const AthleteNutritionCard: React.FC<AthleteNutritionCardProps> = ({
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                         {meal.foods.map((food, fIdx) => {
                           const isDone = Boolean(food.completado);
+                          const originalName = food.nombreOriginal || food.nombre;
+                          const subKey = `${meal.id}_${normalizeFoodSearchText(originalName)}`;
+                          const substitution = activeSubstitutions[subKey];
                           return (
-                            <button
-                              type="button"
+                            <div
                               key={food.id || fIdx}
-                              onClick={() => handleToggleFoodComplete(meal.id, fIdx)}
                               style={{
                                 display: 'flex',
                                 alignItems: 'center',
-                                justifyContent: 'space-between',
+                                gap: '8px',
                                 width: '100%',
-                                textAlign: 'left',
-                                padding: '6px 10px',
-                                borderRadius: '6px',
-                                background: isDone ? 'rgba(16, 185, 129, 0.08)' : 'rgba(0, 0, 0, 0.2)',
-                                border: isDone ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(255, 255, 255, 0.04)',
-                                cursor: 'pointer',
                               }}
                             >
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                <input
-                                  type="checkbox"
-                                  checked={isDone}
-                                  onChange={() => {}}
-                                  style={{ accentColor: '#10b981', cursor: 'pointer' }}
-                                />
-                                <span
-                                  style={{
-                                    fontSize: '12px',
-                                    textDecoration: isDone ? 'line-through' : 'none',
-                                    color: isDone ? 'rgba(255,255,255,0.5)' : '#ffffff',
-                                  }}
-                                >
-                                  {food.nombre}
+                              <button
+                                type="button"
+                                onClick={() => handleToggleFoodComplete(meal.id, fIdx)}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'space-between',
+                                  flex: 1,
+                                  textAlign: 'left',
+                                  padding: '6px 10px',
+                                  borderRadius: '6px',
+                                  background: isDone ? 'rgba(16, 185, 129, 0.08)' : 'rgba(0, 0, 0, 0.2)',
+                                  border: isDone ? '1px solid rgba(16, 185, 129, 0.3)' : '1px solid rgba(255, 255, 255, 0.04)',
+                                  cursor: 'pointer',
+                                }}
+                              >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                  <input
+                                    type="checkbox"
+                                    checked={isDone}
+                                    onChange={() => {}}
+                                    style={{ accentColor: '#10b981', cursor: 'pointer' }}
+                                  />
+                                  <div>
+                                    <span
+                                      style={{
+                                        fontSize: '12px',
+                                        textDecoration: isDone ? 'line-through' : 'none',
+                                        color: isDone ? 'rgba(255,255,255,0.5)' : '#ffffff',
+                                      }}
+                                    >
+                                      {food.nombre}
+                                    </span>
+                                    {substitution && (
+                                      <span style={{ display: 'block', fontSize: '10px', color: '#00d4ff' }}>
+                                        🔄 Sustituido hoy
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                                <span style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(255,255,255,0.8)' }}>
+                                  {food.cantidad} {food.unidad} • {food.calorias} kcal
                                 </span>
-                              </div>
-                              <span style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(255,255,255,0.8)' }}>
-                                {food.cantidad} {food.unidad} • {food.calorias} kcal
-                              </span>
-                            </button>
+                              </button>
+
+                              {/* BOTÓN SUSTITUIR ALIMENTO */}
+                              <button
+                                type="button"
+                                onClick={() => handleOpenSubstitution(meal.id, food)}
+                                style={{
+                                  background: substitution ? 'rgba(0, 212, 255, 0.15)' : 'rgba(255, 255, 255, 0.05)',
+                                  border: substitution ? '1px solid #00d4ff' : '1px solid rgba(255, 255, 255, 0.12)',
+                                  borderRadius: '6px',
+                                  color: substitution ? '#00d4ff' : 'rgba(255, 255, 255, 0.75)',
+                                  padding: '6px 9px',
+                                  fontSize: '11px',
+                                  fontWeight: 600,
+                                  cursor: 'pointer',
+                                  whiteSpace: 'nowrap',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                }}
+                                title={substitution ? 'Cambiar o revertir sustitución' : 'Sustituir por alimento equivalente'}
+                              >
+                                <span>🔄</span>
+                                <span>{substitution ? 'Cambiar' : 'Sustituir'}</span>
+                              </button>
+                            </div>
                           );
                         })}
                       </div>
@@ -778,6 +938,22 @@ export const AthleteNutritionCard: React.FC<AthleteNutritionCardProps> = ({
           />
         </div>
       </div>
+
+      {/* MODAL DE SUSTITUCIÓN DE ALIMENTO DEL ATLETA */}
+      {substitutionTarget && (
+        <AthleteFoodSubstitutionModal
+          isOpen={substitutionModalOpen}
+          onClose={() => {
+            setSubstitutionModalOpen(false);
+            setSubstitutionTarget(null);
+          }}
+          originalFood={substitutionTarget.food}
+          approvedOptions={substitutionTarget.approvedOptions}
+          currentSubstitution={activeSubstitutions[substitutionTarget.foodKey] || null}
+          onApplySubstitution={handleApplySubstitution}
+          onRevertToOriginal={handleRevertSubstitution}
+        />
+      )}
     </div>
   );
 };

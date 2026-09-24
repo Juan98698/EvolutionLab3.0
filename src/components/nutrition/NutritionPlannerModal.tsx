@@ -31,6 +31,9 @@ import { SaveNutritionTemplateModal } from './SaveNutritionTemplateModal';
 import { LoadNutritionTemplateModal } from './LoadNutritionTemplateModal';
 import { SaveMealTemplateModal, LoadMealTemplateModal } from './MealTemplateModals';
 import { sharePlanWithPdfViaWhatsapp } from '../../lib/nutritionWhatsapp';
+import { useFoodEquivalents } from './useFoodEquivalents';
+import { FoodEquivalentsConfigModal } from './FoodEquivalentsConfigModal';
+import { FoodEquivalentOption } from '../../types/nutrition.types';
 
 interface NutritionPlannerModalProps {
   isOpen: boolean;
@@ -73,6 +76,23 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
   const [loadDietModalOpen, setLoadDietModalOpen] = useState<boolean>(false);
   const [mealToSaveAsTemplate, setMealToSaveAsTemplate] = useState<Meal | null>(null);
   const [mealIdxToLoadRecipe, setMealIdxToLoadRecipe] = useState<number | null>(null);
+
+  // Hook desacoplado de alimentos equivalentes
+  const equivalentsHook = useFoodEquivalents();
+
+  const handleSaveEquivalentsForFood = (foodKey: string, options: FoodEquivalentOption[]) => {
+    setPlan((prev) => ({
+      ...prev,
+      datos_plan: {
+        ...prev.datos_plan,
+        equivalencias: {
+          ...(prev.datos_plan.equivalencias || {}),
+          [foodKey]: options,
+        },
+      },
+    }));
+    if (showToast) showToast('Equivalencias guardadas para este alimento', 'success');
+  };
 
   // Cargar plan existente desde Supabase o IndexedDB al abrir, o resolver última valoración
   useEffect(() => {
@@ -1035,6 +1055,40 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
                     🔍 Solo {currentDay?.nombre || activeDayKey}
                   </button>
                 </div>
+
+                {/* TOGGLE TABLA DE EQUIVALENCIAS EN PDF */}
+                <label
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    fontSize: '11px',
+                    color: 'rgba(255, 255, 255, 0.85)',
+                    cursor: 'pointer',
+                    userSelect: 'none',
+                    marginLeft: 'auto',
+                    background: 'rgba(0, 212, 255, 0.08)',
+                    padding: '4px 10px',
+                    borderRadius: '6px',
+                    border: '1px solid rgba(0, 212, 255, 0.2)',
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={plan.datos_plan.incluirEquivalenciasPdf !== false}
+                    onChange={(e) =>
+                      setPlan((prev) => ({
+                        ...prev,
+                        datos_plan: {
+                          ...prev.datos_plan,
+                          incluirEquivalenciasPdf: e.target.checked,
+                        },
+                      }))
+                    }
+                    style={{ cursor: 'pointer' }}
+                  />
+                  <span>🔄 Incluir Guía de Equivalencias en PDF</span>
+                </label>
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'center', width: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch', paddingBottom: '16px' }}>
@@ -1217,21 +1271,49 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
                                     {food.grupo}
                                   </div>
                                 </div>
-                                <button
-                                  type="button"
-                                  onClick={() => handleRemoveFoodFromMeal(mIdx, fIdx)}
-                                  style={{
-                                    background: 'transparent',
-                                    border: 'none',
-                                    color: 'rgba(239, 68, 68, 0.7)',
-                                    fontSize: '16px',
-                                    cursor: 'pointer',
-                                    padding: '4px',
-                                  }}
-                                  title="Eliminar alimento"
-                                >
-                                  🗑️
-                                </button>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      equivalentsHook.openEquivalentsModal(
+                                        food,
+                                        plan.datos_plan.equivalencias
+                                      )
+                                    }
+                                    style={{
+                                      background: 'rgba(0, 212, 255, 0.1)',
+                                      border: '1px solid rgba(0, 212, 255, 0.3)',
+                                      color: '#00d4ff',
+                                      borderRadius: '6px',
+                                      padding: '3px 8px',
+                                      fontSize: '11px',
+                                      fontWeight: 600,
+                                      cursor: 'pointer',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '4px',
+                                    }}
+                                    title="Configurar y revisar sustituciones equivalentes"
+                                  >
+                                    <span>🔄</span>
+                                    <span>Equivalentes</span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleRemoveFoodFromMeal(mIdx, fIdx)}
+                                    style={{
+                                      background: 'transparent',
+                                      border: 'none',
+                                      color: 'rgba(239, 68, 68, 0.7)',
+                                      fontSize: '16px',
+                                      cursor: 'pointer',
+                                      padding: '4px',
+                                    }}
+                                    title="Eliminar alimento"
+                                  >
+                                    🗑️
+                                  </button>
+                                </div>
                               </div>
 
                               <div className="nutrition-food-row-bottom">
@@ -1554,6 +1636,20 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
           showToast={showToast}
         />
       )}
+
+      {/* MODAL CONFIGURACIÓN DE ALIMENTOS EQUIVALENTES */}
+      <FoodEquivalentsConfigModal
+        isOpen={equivalentsHook.isModalOpen}
+        onClose={equivalentsHook.closeEquivalentsModal}
+        targetFood={equivalentsHook.targetFood}
+        equivalents={equivalentsHook.currentEquivalents}
+        onToggleActive={equivalentsHook.toggleOptionActive}
+        onUpdateQuantity={equivalentsHook.updateOptionQuantity}
+        onRemoveOption={equivalentsHook.removeOption}
+        onAddCustomOption={equivalentsHook.addCustomOption}
+        onResetToAutomatic={equivalentsHook.resetToAutomatic}
+        onSave={handleSaveEquivalentsForFood}
+      />
     </div>
   );
 };

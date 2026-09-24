@@ -59,6 +59,8 @@ export interface MealFoodItem {
   grasa: number;
   completado?: boolean;
   notas?: string;
+  nombreOriginal?: string;
+  esSustituido?: boolean;
 }
 
 export interface Meal {
@@ -110,10 +112,30 @@ export interface NutritionCompliance {
   status: 'optimo' | 'deficit' | 'superavit';
 }
 
+export type DominantMacro = 'proteina' | 'carbohidratos' | 'grasa';
+
+export interface FoodEquivalentOption {
+  foodId: string | number;
+  nombre: string;
+  grupo: FoodGroup;
+  cantidad: number;
+  unidad: string;
+  calorias: number;
+  proteina: number;
+  carbohidratos: number;
+  grasa: number;
+  deltaCaloriasPct: number; // Porcentaje de desviación calórica respecto al original
+  activo: boolean; // Si el entrenador lo aprueba o desmarca
+  esPersonalizado?: boolean;
+  nota?: string;
+}
+
 export interface NutritionPlanData {
   days: Record<string, NutritionDay>;
   modo: 'diario_unico' | 'semanal';
   vigenciaDias?: number;
+  equivalencias?: Record<string, FoodEquivalentOption[]>;
+  incluirEquivalenciasPdf?: boolean;
 }
 
 export interface NutritionPlan {

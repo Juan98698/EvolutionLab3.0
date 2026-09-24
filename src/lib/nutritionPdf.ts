@@ -140,6 +140,8 @@ export function calculatePdfSlices(options: {
           b.bottom > naiveCutY &&
           (b.type === 'meal-card' ||
             b.type === 'recommendations-card' ||
+            b.type === 'equivalents-section' ||
+            b.type === 'equiv-card' ||
             b.type === 'day-header' ||
             b.type === 'athlete-info' ||
             b.type === 'daily-targets' ||
@@ -171,12 +173,12 @@ export function calculatePdfSlices(options: {
           }
         } else {
           // El bloque es muy largo o comenzó casi al inicio de la página:
-          // Intentar cortar entre sub-bloques internos ('meal-row' o 'rec-para')
+          // Intentar cortar entre sub-bloques internos ('meal-row', 'rec-para' o 'equiv-row')
           const subBlocks = blocks.filter(
             (b) =>
               b.top >= slicedBlock.top &&
               b.bottom <= slicedBlock.bottom &&
-              (b.type === 'meal-row' || b.type === 'rec-para')
+              (b.type === 'meal-row' || b.type === 'rec-para' || b.type === 'equiv-row')
           );
 
           const candidateSub = [...subBlocks].reverse().find((sb) => sb.bottom <= naiveCutY);

@@ -5,6 +5,10 @@ import {
   calculateDayTotals,
   DAYS_OF_WEEK,
   sortMealsChronologically,
+  getUniquePrescribedFoods,
+  getAutomaticEquivalents,
+  getDominantMacro,
+  normalizeFoodSearchText,
 } from '../../lib/nutritionEngine';
 import { Profile } from '../../types/database.types';
 
@@ -54,6 +58,31 @@ export const NutritionReportPDF: React.FC<NutritionReportPDFProps> = ({
   const tProt = plan.target_proteina_g || 150;
   const tCarb = plan.target_carbohidratos_g || 200;
   const tFat = plan.target_grasa_g || 60;
+
+  // Cálculo de Guía de Alimentos Equivalentes
+  const includeEquivalents = plan.datos_plan?.incluirEquivalenciasPdf !== false;
+  const uniqueFoods = includeEquivalents ? getUniquePrescribedFoods(plan) : [];
+
+  const foodsWithEquivalents = uniqueFoods
+    .map((food) => {
+      const key = normalizeFoodSearchText(food.nombre);
+      const configured = plan.datos_plan?.equivalencias?.[key];
+      const allOptions = Array.isArray(configured)
+        ? configured
+        : getAutomaticEquivalents(food);
+      const approvedOptions = allOptions.filter((opt) => opt.activo !== false);
+      const macro = getDominantMacro(food);
+      return {
+        food,
+        macro,
+        approvedOptions,
+      };
+    })
+    .filter(({ approvedOptions }) => approvedOptions.length > 0);
+
+  const proteinEquivalents = foodsWithEquivalents.filter((f) => f.macro === 'proteina');
+  const carbEquivalents = foodsWithEquivalents.filter((f) => f.macro === 'carbohidratos');
+  const fatEquivalents = foodsWithEquivalents.filter((f) => f.macro === 'grasa');
 
   return (
     <div
@@ -482,6 +511,276 @@ export const NutritionReportPDF: React.FC<NutritionReportPDFProps> = ({
                 </p>
               ))}
           </div>
+        </div>
+      )}
+
+      {/* GUÍA DE INTERCAMBIOS Y ALIMENTOS EQUIVALENTES */}
+      {includeEquivalents && foodsWithEquivalents.length > 0 && (
+        <div
+          data-pdf-block="equivalents-section"
+          style={{
+            border: '1px solid #cbd5e1',
+            borderRadius: '8px',
+            backgroundColor: '#ffffff',
+            padding: '16px 20px',
+            marginBottom: '20px',
+          }}
+        >
+          <div style={{ borderBottom: '2px solid #00d4ff', paddingBottom: '8px', marginBottom: '14px' }}>
+            <h3
+              style={{
+                margin: 0,
+                fontSize: '13px',
+                fontWeight: 800,
+                fontFamily: "'Orbitron', sans-serif",
+                color: '#0f172a',
+                letterSpacing: '0.5px',
+              }}
+            >
+              🔄 GUÍA DE INTERCAMBIOS Y ALIMENTOS EQUIVALENTES
+            </h3>
+            <p style={{ margin: '4px 0 0', fontSize: '10px', color: '#64748b', lineHeight: 1.4 }}>
+              Puedes sustituir cualquier alimento prescrito en tu plan por cualquiera de las opciones listadas a continuación.
+              Las cantidades han sido calculadas con estricta equivalencia calórica (±10%) para mantener intactos tus objetivos diarios.
+            </p>
+          </div>
+
+          {/* TABLA DE PROTEÍNAS */}
+          {proteinEquivalents.length > 0 && (
+            <div data-pdf-block="equiv-card" style={{ marginBottom: '16px' }}>
+              <div
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 800,
+                  fontFamily: "'Orbitron', sans-serif",
+                  color: '#0284c7',
+                  marginBottom: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                <span>🥩</span>
+                <span>FUENTES DE PROTEÍNA</span>
+              </div>
+              <table
+                style={{
+                  width: '100%',
+                  borderCollapse: 'collapse',
+                  fontSize: '10px',
+                }}
+              >
+                <thead>
+                  <tr style={{ background: '#f1f5f9', borderBottom: '1px solid #cbd5e1' }}>
+                    <th style={{ textAlign: 'left', padding: '6px 8px', fontWeight: 700, color: '#334155', width: '32%' }}>
+                      Alimento en tu Plan
+                    </th>
+                    <th style={{ textAlign: 'center', padding: '6px 8px', fontWeight: 700, color: '#334155', width: '22%' }}>
+                      Aporte Nutricional
+                    </th>
+                    <th style={{ textAlign: 'left', padding: '6px 8px', fontWeight: 700, color: '#334155', width: '46%' }}>
+                      Opciones de Reemplazo Aprobadas (Elige 1)
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {proteinEquivalents.map(({ food, approvedOptions }, idx) => (
+                    <tr
+                      key={idx}
+                      data-pdf-block="equiv-row"
+                      style={{
+                        borderBottom: '1px solid #e2e8f0',
+                        background: idx % 2 === 0 ? '#ffffff' : '#f8fafc',
+                      }}
+                    >
+                      <td style={{ padding: '8px', verticalAlign: 'top' }}>
+                        <div style={{ fontWeight: 700, color: '#0f172a' }}>{food.nombre}</div>
+                        <div style={{ color: '#0284c7', fontWeight: 600, fontSize: '10px', marginTop: '2px' }}>
+                          {food.cantidad} {food.unidad}
+                        </div>
+                      </td>
+                      <td style={{ padding: '8px', textAlign: 'center', verticalAlign: 'top' }}>
+                        <div style={{ fontWeight: 700, color: '#3b82f6' }}>{food.proteina}g Proteína</div>
+                        <div style={{ color: '#64748b', fontSize: '9px', marginTop: '2px' }}>
+                          {food.calorias} kcal • {food.grasa}g G
+                        </div>
+                      </td>
+                      <td style={{ padding: '8px', verticalAlign: 'top' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          {approvedOptions.map((opt, optIdx) => (
+                            <div key={optIdx} style={{ lineHeight: 1.3, color: '#1e293b' }}>
+                              • <strong style={{ color: '#0f172a' }}>{opt.cantidad} {opt.unidad}</strong> {opt.nombre}{' '}
+                              <span style={{ color: '#64748b', fontSize: '9px' }}>
+                                ({opt.calorias} kcal)
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* TABLA DE CARBOHIDRATOS */}
+          {carbEquivalents.length > 0 && (
+            <div data-pdf-block="equiv-card" style={{ marginBottom: '16px' }}>
+              <div
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 800,
+                  fontFamily: "'Orbitron', sans-serif",
+                  color: '#059669',
+                  marginBottom: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                <span>🍚</span>
+                <span>FUENTES DE CARBOHIDRATOS</span>
+              </div>
+              <table
+                style={{
+                  width: '100%',
+                  borderCollapse: 'collapse',
+                  fontSize: '10px',
+                }}
+              >
+                <thead>
+                  <tr style={{ background: '#f1f5f9', borderBottom: '1px solid #cbd5e1' }}>
+                    <th style={{ textAlign: 'left', padding: '6px 8px', fontWeight: 700, color: '#334155', width: '32%' }}>
+                      Alimento en tu Plan
+                    </th>
+                    <th style={{ textAlign: 'center', padding: '6px 8px', fontWeight: 700, color: '#334155', width: '22%' }}>
+                      Aporte Nutricional
+                    </th>
+                    <th style={{ textAlign: 'left', padding: '6px 8px', fontWeight: 700, color: '#334155', width: '46%' }}>
+                      Opciones de Reemplazo Aprobadas (Elige 1)
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {carbEquivalents.map(({ food, approvedOptions }, idx) => (
+                    <tr
+                      key={idx}
+                      data-pdf-block="equiv-row"
+                      style={{
+                        borderBottom: '1px solid #e2e8f0',
+                        background: idx % 2 === 0 ? '#ffffff' : '#f8fafc',
+                      }}
+                    >
+                      <td style={{ padding: '8px', verticalAlign: 'top' }}>
+                        <div style={{ fontWeight: 700, color: '#0f172a' }}>{food.nombre}</div>
+                        <div style={{ color: '#059669', fontWeight: 600, fontSize: '10px', marginTop: '2px' }}>
+                          {food.cantidad} {food.unidad}
+                        </div>
+                      </td>
+                      <td style={{ padding: '8px', textAlign: 'center', verticalAlign: 'top' }}>
+                        <div style={{ fontWeight: 700, color: '#10b981' }}>{food.carbohidratos}g Carbohidratos</div>
+                        <div style={{ color: '#64748b', fontSize: '9px', marginTop: '2px' }}>
+                          {food.calorias} kcal • {food.proteina}g P
+                        </div>
+                      </td>
+                      <td style={{ padding: '8px', verticalAlign: 'top' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          {approvedOptions.map((opt, optIdx) => (
+                            <div key={optIdx} style={{ lineHeight: 1.3, color: '#1e293b' }}>
+                              • <strong style={{ color: '#0f172a' }}>{opt.cantidad} {opt.unidad}</strong> {opt.nombre}{' '}
+                              <span style={{ color: '#64748b', fontSize: '9px' }}>
+                                ({opt.calorias} kcal)
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {/* TABLA DE GRASAS */}
+          {fatEquivalents.length > 0 && (
+            <div data-pdf-block="equiv-card" style={{ marginBottom: '8px' }}>
+              <div
+                style={{
+                  fontSize: '11px',
+                  fontWeight: 800,
+                  fontFamily: "'Orbitron', sans-serif",
+                  color: '#d97706',
+                  marginBottom: '8px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                <span>🥑</span>
+                <span>FUENTES DE GRASAS SALUDABLES</span>
+              </div>
+              <table
+                style={{
+                  width: '100%',
+                  borderCollapse: 'collapse',
+                  fontSize: '10px',
+                }}
+              >
+                <thead>
+                  <tr style={{ background: '#f1f5f9', borderBottom: '1px solid #cbd5e1' }}>
+                    <th style={{ textAlign: 'left', padding: '6px 8px', fontWeight: 700, color: '#334155', width: '32%' }}>
+                      Alimento en tu Plan
+                    </th>
+                    <th style={{ textAlign: 'center', padding: '6px 8px', fontWeight: 700, color: '#334155', width: '22%' }}>
+                      Aporte Nutricional
+                    </th>
+                    <th style={{ textAlign: 'left', padding: '6px 8px', fontWeight: 700, color: '#334155', width: '46%' }}>
+                      Opciones de Reemplazo Aprobadas (Elige 1)
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {fatEquivalents.map(({ food, approvedOptions }, idx) => (
+                    <tr
+                      key={idx}
+                      data-pdf-block="equiv-row"
+                      style={{
+                        borderBottom: '1px solid #e2e8f0',
+                        background: idx % 2 === 0 ? '#ffffff' : '#f8fafc',
+                      }}
+                    >
+                      <td style={{ padding: '8px', verticalAlign: 'top' }}>
+                        <div style={{ fontWeight: 700, color: '#0f172a' }}>{food.nombre}</div>
+                        <div style={{ color: '#d97706', fontWeight: 600, fontSize: '10px', marginTop: '2px' }}>
+                          {food.cantidad} {food.unidad}
+                        </div>
+                      </td>
+                      <td style={{ padding: '8px', textAlign: 'center', verticalAlign: 'top' }}>
+                        <div style={{ fontWeight: 700, color: '#f59e0b' }}>{food.grasa}g Grasas</div>
+                        <div style={{ color: '#64748b', fontSize: '9px', marginTop: '2px' }}>
+                          {food.calorias} kcal
+                        </div>
+                      </td>
+                      <td style={{ padding: '8px', verticalAlign: 'top' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          {approvedOptions.map((opt, optIdx) => (
+                            <div key={optIdx} style={{ lineHeight: 1.3, color: '#1e293b' }}>
+                              • <strong style={{ color: '#0f172a' }}>{opt.cantidad} {opt.unidad}</strong> {opt.nombre}{' '}
+                              <span style={{ color: '#64748b', fontSize: '9px' }}>
+                                ({opt.calorias} kcal)
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       )}
 
