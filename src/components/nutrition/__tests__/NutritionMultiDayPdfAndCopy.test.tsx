@@ -200,10 +200,10 @@ describe('NutritionReportPDF — Multi-day vs Single-day rendering', () => {
     expect(screen.getByText(/📅 VIERNES/i)).toBeInTheDocument();
 
     // Food items from both Lunes and Viernes should be present
-    expect(screen.getByText(/Avena con Frutos \(Lunes\)/i)).toBeInTheDocument();
-    expect(screen.getByText(/Pechuga de Pollo \(Lunes\)/i)).toBeInTheDocument();
-    expect(screen.getByText(/Avena con Frutos \(Viernes\)/i)).toBeInTheDocument();
-    expect(screen.getByText(/Pechuga de Pollo \(Viernes\)/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Avena con Frutos \(Lunes\)/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Pechuga de Pollo \(Lunes\)/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Avena con Frutos \(Viernes\)/i).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/Pechuga de Pollo \(Viernes\)/i).length).toBeGreaterThan(0);
 
     // Empty days (Martes, Miércoles, etc.) should not be rendered
     expect(screen.queryByText(/📅 MARTES/i)).not.toBeInTheDocument();
@@ -230,7 +230,7 @@ describe('NutritionReportPDF — Multi-day vs Single-day rendering', () => {
     expect(screen.queryByText(/📅 VIERNES/i)).not.toBeInTheDocument();
 
     // Food items from Lunes only
-    expect(screen.getByText(/Avena con Frutos \(Lunes\)/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/Avena con Frutos \(Lunes\)/i).length).toBeGreaterThan(0);
     expect(screen.queryByText(/Avena con Frutos \(Viernes\)/i)).not.toBeInTheDocument();
   });
 });

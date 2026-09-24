@@ -309,12 +309,20 @@ export function getAutomaticEquivalents(
  * Consolida los alimentos prescritos en el plan semanal para la guía de equivalencias,
  * agrupando repeticiones del mismo alimento y filtrando alimentos irrelevantes o aderezos mínimos.
  */
-export function getUniquePrescribedFoods(plan: NutritionPlan): MealFoodItem[] {
+export function getUniquePrescribedFoods(
+  plan: NutritionPlan,
+  filterDayKeys?: string[]
+): MealFoodItem[] {
   if (!plan || !plan.datos_plan || !plan.datos_plan.days) return [];
 
   const map = new Map<string, MealFoodItem>();
+  const allowedKeys =
+    Array.isArray(filterDayKeys) && filterDayKeys.length > 0
+      ? new Set(filterDayKeys.map((k) => k.toLowerCase()))
+      : null;
 
-  for (const day of Object.values(plan.datos_plan.days)) {
+  for (const [dayKey, day] of Object.entries(plan.datos_plan.days)) {
+    if (allowedKeys && !allowedKeys.has(dayKey.toLowerCase())) continue;
     if (!day || !Array.isArray(day.meals)) continue;
     for (const meal of day.meals) {
       if (!Array.isArray(meal.foods)) continue;

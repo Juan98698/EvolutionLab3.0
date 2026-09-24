@@ -61,7 +61,8 @@ export const NutritionReportPDF: React.FC<NutritionReportPDFProps> = ({
 
   // Cálculo de Guía de Alimentos Equivalentes
   const includeEquivalents = plan.datos_plan?.incluirEquivalenciasPdf !== false;
-  const uniqueFoods = includeEquivalents ? getUniquePrescribedFoods(plan) : [];
+  const activeDayKeys = isMultiDay ? undefined : [activeDayKey];
+  const uniqueFoods = includeEquivalents ? getUniquePrescribedFoods(plan, activeDayKeys) : [];
 
   const foodsWithEquivalents = uniqueFoods
     .map((food) => {
