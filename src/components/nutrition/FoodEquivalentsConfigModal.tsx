@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   MealFoodItem,
   FoodItem,
@@ -47,6 +47,9 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
   onSelectFood,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>('all');
+  const [categorySearchQuery, setCategorySearchQuery] = useState<string>('');
+  const [visibleMacroLimit, setVisibleMacroLimit] = useState<number>(12);
 
   const dominantMacro = useMemo(() => {
     return targetFood ? getDominantMacro(targetFood) : 'proteina';
@@ -56,6 +59,39 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
     if (!targetFood) return { strictMatches: [], macroMatches: [] };
     return getGroupedEquivalentsSuggestions(targetFood, BASE_FOOD_CATALOG);
   }, [targetFood]);
+
+  // Lista de categorías taxonómicas únicas disponibles en el Nivel 2 con su conteo
+  const availableCategories = useMemo(() => {
+    const counts: Record<string, number> = {};
+    for (const opt of suggestions.macroMatches) {
+      const groupName = opt.subgrupo || opt.grupo || 'Otros';
+      counts[groupName] = (counts[groupName] || 0) + 1;
+    }
+    return Object.entries(counts).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+  }, [suggestions.macroMatches]);
+
+  // Sugerencias de Nivel 2 filtradas por categoría y buscador interno
+  const filteredMacroMatches = useMemo(() => {
+    let list = suggestions.macroMatches;
+    if (selectedCategory !== 'all') {
+      list = list.filter((opt) => (opt.subgrupo || opt.grupo) === selectedCategory);
+    }
+    if (categorySearchQuery.trim()) {
+      const q = normalizeFoodSearchText(categorySearchQuery);
+      list = list.filter((opt) => {
+        const nameNorm = normalizeFoodSearchText(opt.nombre);
+        const subNorm = normalizeFoodSearchText(opt.subgrupo || '');
+        return nameNorm.includes(q) || subNorm.includes(q);
+      });
+    }
+    return list;
+  }, [suggestions.macroMatches, selectedCategory, categorySearchQuery]);
+
+  useEffect(() => {
+    setSelectedCategory('all');
+    setCategorySearchQuery('');
+    setVisibleMacroLimit(12);
+  }, [targetFood?.id, targetFood?.nombre]);
 
   const searchResults = useMemo(() => {
     if (!searchQuery.trim() || !targetFood) return [];
@@ -161,6 +197,29 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
     if (macro === 'proteina') return '🥩';
     if (macro === 'carbohidratos') return '🍚';
     return '🥑';
+  };
+
+  const getSubgrupoIcon = (subgrupo: string) => {
+    const s = (subgrupo || '').toLowerCase();
+    if (s.includes('res') || s.includes('vacuno')) return '🥩';
+    if (s.includes('cerdo')) return '🥓';
+    if (s.includes('cordero') || s.includes('ovino')) return '🍖';
+    if (s.includes('ave') || s.includes('pollo') || s.includes('pavo')) return '🍗';
+    if (s.includes('azul') || s.includes('graso') || s.includes('salm') || s.includes('atun')) return '🍣';
+    if (s.includes('blanco') || s.includes('magro') || s.includes('pescado')) return '🐟';
+    if (s.includes('marisco') || s.includes('crust') || s.includes('molusco') || s.includes('camar')) return '🦐';
+    if (s.includes('huevo')) return '🥚';
+    if (s.includes('queso')) return '🧀';
+    if (s.includes('leche') || s.includes('lacte')) return '🥛';
+    if (s.includes('yogur')) return '🥣';
+    if (s.includes('cereal') || s.includes('arroz') || s.includes('avena') || s.includes('pasta')) return '🌾';
+    if (s.includes('legumb') || s.includes('grano') || s.includes('lenteja') || s.includes('frijol')) return '🫘';
+    if (s.includes('tuberc') || s.includes('papa') || s.includes('raiz') || s.includes('batata') || s.includes('yuca')) return '🥔';
+    if (s.includes('fruta')) return '🍎';
+    if (s.includes('fruto seco') || s.includes('semilla') || s.includes('almendra') || s.includes('nuez')) return '🥜';
+    if (s.includes('aceite') || s.includes('grasa') || s.includes('mantequilla')) return '🫒';
+    if (s.includes('suplement') || s.includes('proteina en polvo')) return '⚡';
+    return '🍽️';
   };
 
   return (
@@ -720,108 +779,303 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
               )}
             </div>
 
-            {/* NIVEL 2: OTRAS FUENTES DEL MACRO (CALORÍAS VARIABLES) */}
+            {/* NIVEL 2: OTRAS FUENTES DEL MACRO (CALORÍAS VARIABLES, CLASIFICADAS POR CATEGORÍA) */}
             {suggestions.macroMatches.length > 0 && (
               <div
                 style={{
                   background: 'rgba(245, 158, 11, 0.04)',
-                  border: '1px solid rgba(245, 158, 11, 0.2)',
+                  border: '1px solid rgba(245, 158, 11, 0.25)',
                   borderRadius: '10px',
                   padding: '14px',
                 }}
               >
-                <div style={{ marginBottom: '8px' }}>
-                  <div style={{ fontSize: '12px', fontWeight: 800, color: '#fbbf24', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span>⚡</span>
-                    <span>NIVEL 2: OTRAS FUENTES DE {dominantMacro.toUpperCase()} (Criterio del Entrenador)</span>
+                <div style={{ marginBottom: '10px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                    <div style={{ fontSize: '12px', fontWeight: 800, color: '#fbbf24', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span>⚡</span>
+                      <span>NIVEL 2: OTRAS FUENTES DE {dominantMacro.toUpperCase()} ({suggestions.macroMatches.length} opciones en {availableCategories.length} categorías)</span>
+                    </div>
                   </div>
                   <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.5)', marginTop: '2px' }}>
-                    Alimentos que igualan la porción de {dominantMacro} pero cuyas calorías varían (&gt;10%). Útiles para dar variedad cuando el balance calórico global lo permita.
+                    Alimentos que igualan la porción de {dominantMacro} pero cuyas calorías varían (&gt;10%). Clasificados por categorías para dar variedad según tu criterio profesional.
                   </div>
                 </div>
 
-                <div className="food-equiv-grid-suggestions" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '8px', marginTop: '6px' }}>
-                  {suggestions.macroMatches.map((cand, cIdx) => {
-                    const existing = getExistingOption(cand.nombre, cand.foodId);
-                    const isInList = !!existing;
-                    const isActive = existing ? existing.activo !== false : false;
-                    const delta = cand.deltaCaloriasPct || 0;
-                    return (
-                      <div
-                        key={`macro-${cand.foodId}-${cIdx}`}
+                {/* FILTROS POR CATEGORÍA Y BUSCADOR RÁPIDO */}
+                <div
+                  style={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px',
+                    marginBottom: '12px',
+                    background: 'rgba(0, 0, 0, 0.25)',
+                    padding: '10px',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(255, 255, 255, 0.08)',
+                  }}
+                >
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                    <div style={{ position: 'relative', flex: 1, minWidth: '180px' }}>
+                      <input
+                        type="text"
+                        value={categorySearchQuery}
+                        onChange={(e) => setCategorySearchQuery(e.target.value)}
+                        placeholder="🔍 Filtrar cortes o grupos (ej: lomo, salmón, vacuno, cerdo)..."
                         style={{
-                          background: 'rgba(255, 255, 255, 0.03)',
-                          border: isInList
-                            ? isActive
-                              ? '1px solid rgba(245, 158, 11, 0.4)'
-                              : '1px dashed rgba(255, 255, 255, 0.2)'
-                            : '1px solid rgba(255, 255, 255, 0.08)',
-                          borderRadius: '8px',
-                          padding: '8px 12px',
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          gap: '8px',
+                          width: '100%',
+                          background: 'rgba(255, 255, 255, 0.06)',
+                          border: '1px solid rgba(255, 255, 255, 0.15)',
+                          borderRadius: '6px',
+                          color: '#fff',
+                          padding: '6px 10px',
+                          fontSize: '11px',
+                          boxSizing: 'border-box',
                         }}
-                      >
-                        <div style={{ minWidth: 0, flex: 1 }}>
-                          <div style={{ fontSize: '12px', fontWeight: 600, color: '#ffffff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                            {cand.nombre}
-                          </div>
-                          <div style={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.6)', marginTop: '2px' }}>
-                            <strong>{cand.cantidad} {cand.unidad}</strong> • {cand.calorias} kcal{' '}
-                            <span style={{ color: '#fbbf24', fontWeight: 700 }}>
-                              ({delta > 0 ? `+${delta}%` : `${delta}%`} kcal)
-                            </span>
-                          </div>
-                        </div>
+                      />
+                      {categorySearchQuery && (
+                        <button
+                          type="button"
+                          onClick={() => setCategorySearchQuery('')}
+                          style={{
+                            position: 'absolute',
+                            right: '8px',
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            background: 'none',
+                            border: 'none',
+                            color: 'rgba(255, 255, 255, 0.5)',
+                            fontSize: '11px',
+                            cursor: 'pointer',
+                          }}
+                        >
+                          ✕
+                        </button>
+                      )}
+                    </div>
 
-                        {isInList && isActive ? (
-                          <span style={{ fontSize: '10px', color: '#fbbf24', fontWeight: 700, padding: '3px 8px', background: 'rgba(245, 158, 11, 0.15)', borderRadius: '4px' }}>
-                            ✓ En lista
-                          </span>
-                        ) : isInList && !isActive ? (
-                          <button
-                            type="button"
-                            onClick={() => handleAddSuggestedOption(cand)}
-                            style={{
-                              background: 'rgba(245, 158, 11, 0.2)',
-                              border: '1px solid rgba(245, 158, 11, 0.5)',
-                              color: '#fbbf24',
-                              borderRadius: '5px',
-                              padding: '4px 10px',
-                              fontSize: '11px',
-                              fontWeight: 700,
-                              cursor: 'pointer',
-                              whiteSpace: 'nowrap',
-                            }}
-                            title="Volver a activar para el PDF"
-                          >
-                            + Habilitar
-                          </button>
-                        ) : (
-                          <button
-                            type="button"
-                            onClick={() => handleAddSuggestedOption(cand)}
-                            style={{
-                              background: 'rgba(245, 158, 11, 0.2)',
-                              border: '1px solid rgba(245, 158, 11, 0.5)',
-                              color: '#fbbf24',
-                              borderRadius: '5px',
-                              padding: '4px 10px',
-                              fontSize: '11px',
-                              fontWeight: 700,
-                              cursor: 'pointer',
-                              whiteSpace: 'nowrap',
-                            }}
-                          >
-                            + Añadir
-                          </button>
-                        )}
-                      </div>
-                    );
-                  })}
+                    <select
+                      value={selectedCategory}
+                      aria-label="Filtrar sugerencias por categoría"
+                      onChange={(e) => {
+                        setSelectedCategory(e.target.value);
+                        setVisibleMacroLimit(12);
+                      }}
+                      style={{
+                        background: 'rgba(255, 255, 255, 0.08)',
+                        border: '1px solid rgba(255, 255, 255, 0.2)',
+                        borderRadius: '6px',
+                        color: '#fff',
+                        padding: '6px 10px',
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      <option value="all" style={{ background: '#111827', color: '#fff' }}>
+                        🌐 Todas las categorías ({suggestions.macroMatches.length})
+                      </option>
+                      {availableCategories.map(([cat, count]) => (
+                        <option key={cat} value={cat} style={{ background: '#111827', color: '#fff' }}>
+                          {getSubgrupoIcon(cat)} {cat} ({count})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* PILLS DESPLAZABLES DE CATEGORÍAS */}
+                  <div
+                    style={{
+                      display: 'flex',
+                      gap: '6px',
+                      overflowX: 'auto',
+                      paddingBottom: '4px',
+                      WebkitOverflowScrolling: 'touch',
+                    }}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setSelectedCategory('all');
+                        setVisibleMacroLimit(12);
+                      }}
+                      style={{
+                        padding: '4px 10px',
+                        borderRadius: '6px',
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap',
+                        border: selectedCategory === 'all' ? '1px solid #fbbf24' : '1px solid rgba(255, 255, 255, 0.1)',
+                        background: selectedCategory === 'all' ? 'rgba(245, 158, 11, 0.2)' : 'rgba(255, 255, 255, 0.04)',
+                        color: selectedCategory === 'all' ? '#fbbf24' : 'rgba(255, 255, 255, 0.75)',
+                      }}
+                    >
+                      🌐 Todas ({suggestions.macroMatches.length})
+                    </button>
+                    {availableCategories.map(([cat, count]) => {
+                      const isSel = selectedCategory === cat;
+                      return (
+                        <button
+                          key={`pill-${cat}`}
+                          type="button"
+                          onClick={() => {
+                            setSelectedCategory(cat);
+                            setVisibleMacroLimit(12);
+                          }}
+                          style={{
+                            padding: '4px 10px',
+                            borderRadius: '6px',
+                            fontSize: '11px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            whiteSpace: 'nowrap',
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '4px',
+                            border: isSel ? '1px solid #fbbf24' : '1px solid rgba(255, 255, 255, 0.1)',
+                            background: isSel ? 'rgba(245, 158, 11, 0.2)' : 'rgba(255, 255, 255, 0.04)',
+                            color: isSel ? '#fbbf24' : 'rgba(255, 255, 255, 0.75)',
+                          }}
+                        >
+                          <span>{getSubgrupoIcon(cat)}</span>
+                          <span>{cat}</span>
+                          <span style={{ opacity: 0.6, fontSize: '10px' }}>({count})</span>
+                        </button>
+                      );
+                    })}
+                  </div>
                 </div>
+
+                {filteredMacroMatches.length === 0 ? (
+                  <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.4)', fontStyle: 'italic', padding: '10px 0', textAlign: 'center' }}>
+                    No se encontraron alimentos en esta categoría con el filtro actual.
+                  </div>
+                ) : (
+                  <>
+                    <div className="food-equiv-grid-suggestions" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '8px', marginTop: '6px' }}>
+                      {filteredMacroMatches.slice(0, visibleMacroLimit).map((cand, cIdx) => {
+                        const existing = getExistingOption(cand.nombre, cand.foodId);
+                        const isInList = !!existing;
+                        const isActive = existing ? existing.activo !== false : false;
+                        const delta = cand.deltaCaloriasPct || 0;
+                        const subName = cand.subgrupo || cand.grupo;
+                        return (
+                          <div
+                            key={`macro-${cand.foodId}-${cIdx}`}
+                            style={{
+                              background: 'rgba(255, 255, 255, 0.03)',
+                              border: isInList
+                                ? isActive
+                                  ? '1px solid rgba(245, 158, 11, 0.4)'
+                                  : '1px dashed rgba(255, 255, 255, 0.2)'
+                                : '1px solid rgba(255, 255, 255, 0.08)',
+                              borderRadius: '8px',
+                              padding: '8px 12px',
+                              display: 'flex',
+                              justifyContent: 'space-between',
+                              alignItems: 'center',
+                              gap: '8px',
+                            }}
+                          >
+                            <div style={{ minWidth: 0, flex: 1 }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px' }}>
+                                <span
+                                  style={{
+                                    fontSize: '9px',
+                                    fontWeight: 700,
+                                    background: 'rgba(255, 255, 255, 0.08)',
+                                    color: 'rgba(255, 255, 255, 0.75)',
+                                    padding: '1px 6px',
+                                    borderRadius: '4px',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '3px',
+                                  }}
+                                >
+                                  <span>{getSubgrupoIcon(subName)}</span>
+                                  <span>{subName}</span>
+                                </span>
+                              </div>
+                              <div style={{ fontSize: '12px', fontWeight: 600, color: '#ffffff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={cand.nombre}>
+                                {cand.nombre}
+                              </div>
+                              <div style={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.6)', marginTop: '2px' }}>
+                                <strong>{cand.cantidad} {cand.unidad}</strong> • {cand.calorias} kcal{' '}
+                                <span style={{ color: '#fbbf24', fontWeight: 700 }}>
+                                  ({delta > 0 ? `+${delta}%` : `${delta}%`} kcal)
+                                </span>
+                              </div>
+                            </div>
+
+                            {isInList && isActive ? (
+                              <span style={{ fontSize: '10px', color: '#fbbf24', fontWeight: 700, padding: '3px 8px', background: 'rgba(245, 158, 11, 0.15)', borderRadius: '4px' }}>
+                                ✓ En lista
+                              </span>
+                            ) : isInList && !isActive ? (
+                              <button
+                                type="button"
+                                onClick={() => handleAddSuggestedOption(cand)}
+                                style={{
+                                  background: 'rgba(245, 158, 11, 0.2)',
+                                  border: '1px solid rgba(245, 158, 11, 0.5)',
+                                  color: '#fbbf24',
+                                  borderRadius: '5px',
+                                  padding: '4px 10px',
+                                  fontSize: '11px',
+                                  fontWeight: 700,
+                                  cursor: 'pointer',
+                                  whiteSpace: 'nowrap',
+                                }}
+                                title="Volver a activar para el PDF"
+                              >
+                                + Habilitar
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                onClick={() => handleAddSuggestedOption(cand)}
+                                style={{
+                                  background: 'rgba(245, 158, 11, 0.2)',
+                                  border: '1px solid rgba(245, 158, 11, 0.5)',
+                                  color: '#fbbf24',
+                                  borderRadius: '5px',
+                                  padding: '4px 10px',
+                                  fontSize: '11px',
+                                  fontWeight: 700,
+                                  cursor: 'pointer',
+                                  whiteSpace: 'nowrap',
+                                }}
+                              >
+                                + Añadir
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {filteredMacroMatches.length > visibleMacroLimit && (
+                      <div style={{ textAlign: 'center', marginTop: '10px' }}>
+                        <button
+                          type="button"
+                          onClick={() => setVisibleMacroLimit((prev) => prev + 12)}
+                          style={{
+                            background: 'rgba(255, 255, 255, 0.06)',
+                            border: '1px solid rgba(255, 255, 255, 0.15)',
+                            color: '#fbbf24',
+                            borderRadius: '6px',
+                            padding: '6px 16px',
+                            fontSize: '11px',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                          }}
+                        >
+                          👁️ Mostrar más opciones (+{filteredMacroMatches.length - visibleMacroLimit})
+                        </button>
+                      </div>
+                    )}
+                  </>
+                )}
               </div>
             )}
           </div>

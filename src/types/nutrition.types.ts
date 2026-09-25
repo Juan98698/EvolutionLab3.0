@@ -118,6 +118,7 @@ export interface FoodEquivalentOption {
   foodId: string | number;
   nombre: string;
   grupo: FoodGroup;
+  subgrupo?: string;
   cantidad: number;
   unidad: string;
   calorias: number;

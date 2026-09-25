@@ -277,5 +277,51 @@ describe('Sistema de Alimentos Equivalentes para el Entrenador', () => {
       fireEvent.click(activateAllBtn);
       expect(handleToggleAll).toHaveBeenCalledWith(true);
     });
+
+    it('clasifica y filtra las sugerencias de Nivel 2 por categoría/grupo y permite añadir', () => {
+      const handleAddCustomOption = vi.fn();
+
+      render(
+        <FoodEquivalentsConfigModal
+          isOpen={true}
+          onClose={vi.fn()}
+          targetFood={sampleTargetChicken}
+          equivalents={sampleInitialEquivalents}
+          onToggleActive={vi.fn()}
+          onToggleAllActive={vi.fn()}
+          onUpdateQuantity={vi.fn()}
+          onRemoveOption={vi.fn()}
+          onAddCustomOption={handleAddCustomOption}
+          onResetToAutomatic={vi.fn()}
+          onSave={vi.fn()}
+        />
+      );
+
+      // Debe mostrar la cabecera de Nivel 2 con conteo de opciones y categorías
+      expect(screen.getByText(/NIVEL 2: OTRAS FUENTES DE PROTEINA/i)).toBeInTheDocument();
+
+      // Debe renderizar la píldora de "Todas"
+      const allPill = screen.getByRole('button', { name: /🌐 Todas/i });
+      expect(allPill).toBeInTheDocument();
+
+      // Debe existir el selector dropdown de categorías
+      const categorySelect = screen.getByLabelText(/Filtrar sugerencias por categoría/i);
+      expect(categorySelect).toBeInTheDocument();
+
+      // Debe existir el input para filtrar por corte o grupo
+      const searchInput = screen.getByPlaceholderText(/Filtrar cortes o grupos/i);
+      expect(searchInput).toBeInTheDocument();
+
+      // Filtrar escribiendo "res" o "lomo"
+      fireEvent.change(searchInput, { target: { value: 'res' } });
+
+      // Debe mostrar sugerencias filtradas con badge de categoría y botón + Añadir
+      const addBtns = screen.getAllByRole('button', { name: /\+ Añadir/i });
+      expect(addBtns.length).toBeGreaterThan(0);
+
+      // Oprimir + Añadir en una opción filtrada
+      fireEvent.click(addBtns[0]);
+      expect(handleAddCustomOption).toHaveBeenCalled();
+    });
   });
 });

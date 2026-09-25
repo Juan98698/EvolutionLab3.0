@@ -258,6 +258,7 @@ export function calculateEquivalentPortion(
     foodId: candidate.id,
     nombre: candidate.nombre,
     grupo: candidate.grupo,
+    subgrupo: candidate.subgrupo || candidate.grupo,
     cantidad: qty,
     unidad: candidate.unidad,
     calorias: macros.calorias,
@@ -374,6 +375,8 @@ export function getGroupedEquivalentsSuggestions(
   const seenKeys = new Set<string>();
   seenKeys.add(targetNorm);
 
+  const subgrupoCounts: Record<string, number> = {};
+
   for (const item of catalog) {
     const itemNorm = normalizeFoodSearchText(item.nombre);
     if (seenKeys.has(itemNorm) || itemNorm === targetNorm) continue;
@@ -383,11 +386,19 @@ export function getGroupedEquivalentsSuggestions(
     const equiv = calculateEquivalentPortion(targetFood, item, 70);
     if (!equiv) continue;
 
-    const firstWord = itemNorm.split(' ')[0];
-    const key = `${equiv.grupo}_${firstWord}`;
-    if (seenKeys.has(key)) continue;
-    seenKeys.add(key);
+    const sub = equiv.subgrupo || equiv.grupo;
+    // Evitar duplicados casi idénticos del mismo corte dentro del mismo subgrupo
+    const firstTwoWords = itemNorm.split(' ').slice(0, 2).join(' ');
+    const dedupKey = `${sub}_${firstTwoWords}`;
+    if (seenKeys.has(dedupKey)) continue;
+
+    const countInSub = subgrupoCounts[sub] || 0;
+    // Permitir hasta 12 opciones ricas por cada subgrupo taxonómico
+    if (countInSub >= 12) continue;
+
+    seenKeys.add(dedupKey);
     seenKeys.add(itemNorm);
+    subgrupoCounts[sub] = countInSub + 1;
 
     if (Math.abs(equiv.deltaCaloriasPct) <= 10) {
       strictMatches.push(equiv);
@@ -401,8 +412,8 @@ export function getGroupedEquivalentsSuggestions(
   macroMatches.sort((a, b) => Math.abs(a.deltaCaloriasPct) - Math.abs(b.deltaCaloriasPct));
 
   return {
-    strictMatches: strictMatches.slice(0, 6),
-    macroMatches: macroMatches.slice(0, 8),
+    strictMatches: strictMatches.slice(0, 8),
+    macroMatches,
   };
 }
 

@@ -4,6 +4,7 @@ import {
   calculateEquivalentPortion,
   getAutomaticEquivalents,
   getUniquePrescribedFoods,
+  getGroupedEquivalentsSuggestions,
 } from '../nutritionEngine';
 import { MealFoodItem, FoodItem, NutritionPlan } from '../../types/nutrition.types';
 
@@ -243,6 +244,22 @@ describe('Motor de Alimentos Equivalentes y Sustituciones Nutricionales', () => 
       expect(chickens[0].cantidad).toBe(150);
       // Arroz blanco debe aparecer
       expect(unique.some((f) => f.nombre.includes('Arroz'))).toBe(true);
+    });
+
+    it('asigna subgrupo taxonómico y genera opciones categorizadas en Nivel 2 para el catálogo', () => {
+      const { strictMatches, macroMatches } = getGroupedEquivalentsSuggestions(sampleChicken);
+      expect(strictMatches.length).toBeGreaterThan(0);
+      expect(macroMatches.length).toBeGreaterThan(0);
+
+      // Cada opción debe incluir subgrupo
+      for (const item of macroMatches) {
+        expect(item.subgrupo).toBeDefined();
+        expect(typeof item.subgrupo).toBe('string');
+      }
+
+      // Debe incluir múltiples categorías taxonómicas distintas (ej. Res, Cerdo, Pescados)
+      const subgrupos = new Set(macroMatches.map((m) => m.subgrupo));
+      expect(subgrupos.size).toBeGreaterThanOrEqual(2);
     });
   });
 });
