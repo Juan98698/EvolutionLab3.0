@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   NutritionPlan,
   NutritionDay,
@@ -77,6 +77,54 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
   const [loadDietModalOpen, setLoadDietModalOpen] = useState<boolean>(false);
   const [mealToSaveAsTemplate, setMealToSaveAsTemplate] = useState<Meal | null>(null);
   const [mealIdxToLoadRecipe, setMealIdxToLoadRecipe] = useState<number | null>(null);
+
+  // Zoom y gestos táctiles para la vista previa de PDF en móvil y escritorio
+  const [pdfZoom, setPdfZoom] = useState<number>(() => {
+    if (typeof window !== 'undefined' && window.innerWidth <= 768) {
+      return Math.min(1, Math.max(0.4, (window.innerWidth - 32) / 794));
+    }
+    return 1;
+  });
+  const touchStartDistRef = useRef<number | null>(null);
+  const touchStartZoomRef = useRef<number>(1);
+
+  const handleZoomIn = () => setPdfZoom((prev) => Math.min(1.6, Math.round((prev + 0.1) * 10) / 10));
+  const handleZoomOut = () => setPdfZoom((prev) => Math.max(0.35, Math.round((prev - 0.1) * 10) / 10));
+  const handleZoomReset = () => setPdfZoom(1);
+  const handleZoomFit = () => {
+    if (typeof window !== 'undefined') {
+      const containerWidth = window.innerWidth <= 768 ? window.innerWidth - 32 : 794;
+      const fitZoom = Math.min(1.2, Math.max(0.35, containerWidth / 794));
+      setPdfZoom(Math.round(fitZoom * 100) / 100);
+    }
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      touchStartDistRef.current = dist;
+      touchStartZoomRef.current = pdfZoom;
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (e.touches.length === 2 && touchStartDistRef.current !== null) {
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      const factor = dist / touchStartDistRef.current;
+      const newZoom = Math.min(1.6, Math.max(0.35, touchStartZoomRef.current * factor));
+      setPdfZoom(Math.round(newZoom * 100) / 100);
+    }
+  };
+
+  const handleTouchEnd = () => {
+    touchStartDistRef.current = null;
+  };
 
   // Hook desacoplado de alimentos equivalentes
   const equivalentsHook = useFoodEquivalents();
@@ -1061,101 +1109,177 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
           {showPdfView ? (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
               {/* SELECTOR DE ALCANCE DEL PDF: SEMANA COMPLETA VS DÍA ACTUAL */}
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  marginBottom: '16px',
-                  background: 'rgba(255, 255, 255, 0.04)',
-                  padding: '6px 14px',
-                  borderRadius: '10px',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                }}
-              >
-                <span style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.7)', fontWeight: 600 }}>
-                  Alcance del PDF:
-                </span>
-                <div style={{ display: 'inline-flex', gap: '4px' }}>
-                  <button
-                    type="button"
-                    onClick={() => setPdfScope('all')}
+              <div className="nutrition-pdf-toolbar">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.7)', fontWeight: 600 }}>
+                    Alcance:
+                  </span>
+                  <div style={{ display: 'inline-flex', gap: '4px' }}>
+                    <button
+                      type="button"
+                      onClick={() => setPdfScope('all')}
+                      style={{
+                        padding: '5px 12px',
+                        borderRadius: '6px',
+                        border: 'none',
+                        background: pdfScope === 'all' ? 'var(--theme-primary, #00d4ff)' : 'rgba(255, 255, 255, 0.05)',
+                        color: pdfScope === 'all' ? '#000000' : 'rgba(255, 255, 255, 0.8)',
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        fontFamily: "'Orbitron', sans-serif",
+                      }}
+                    >
+                      📅 Plan Completo (Semana)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPdfScope('current')}
+                      style={{
+                        padding: '5px 12px',
+                        borderRadius: '6px',
+                        border: 'none',
+                        background: pdfScope === 'current' ? 'var(--theme-primary, #00d4ff)' : 'rgba(255, 255, 255, 0.05)',
+                        color: pdfScope === 'current' ? '#000000' : 'rgba(255, 255, 255, 0.8)',
+                        fontSize: '11px',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        fontFamily: "'Orbitron', sans-serif",
+                      }}
+                    >
+                      🔍 Solo {currentDay?.nombre || activeDayKey}
+                    </button>
+                  </div>
+
+                  {/* TOGGLE TABLA DE EQUIVALENCIAS EN PDF */}
+                  <label
                     style={{
-                      padding: '5px 12px',
-                      borderRadius: '6px',
-                      border: 'none',
-                      background: pdfScope === 'all' ? 'var(--theme-primary, #00d4ff)' : 'rgba(255, 255, 255, 0.05)',
-                      color: pdfScope === 'all' ? '#000000' : 'rgba(255, 255, 255, 0.8)',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
                       fontSize: '11px',
-                      fontWeight: 700,
+                      color: 'rgba(255, 255, 255, 0.85)',
                       cursor: 'pointer',
-                      fontFamily: "'Orbitron', sans-serif",
+                      userSelect: 'none',
+                      background: 'rgba(0, 212, 255, 0.08)',
+                      padding: '4px 10px',
+                      borderRadius: '6px',
+                      border: '1px solid rgba(0, 212, 255, 0.2)',
                     }}
                   >
-                    📅 Plan Completo (Semana)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPdfScope('current')}
-                    style={{
-                      padding: '5px 12px',
-                      borderRadius: '6px',
-                      border: 'none',
-                      background: pdfScope === 'current' ? 'var(--theme-primary, #00d4ff)' : 'rgba(255, 255, 255, 0.05)',
-                      color: pdfScope === 'current' ? '#000000' : 'rgba(255, 255, 255, 0.8)',
-                      fontSize: '11px',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      fontFamily: "'Orbitron', sans-serif",
-                    }}
-                  >
-                    🔍 Solo {currentDay?.nombre || activeDayKey}
-                  </button>
+                    <input
+                      type="checkbox"
+                      checked={plan.datos_plan.incluirEquivalenciasPdf !== false}
+                      onChange={(e) =>
+                        setPlan((prev) => ({
+                          ...prev,
+                          datos_plan: {
+                            ...prev.datos_plan,
+                            incluirEquivalenciasPdf: e.target.checked,
+                          },
+                        }))
+                      }
+                      style={{ cursor: 'pointer' }}
+                    />
+                    <span>🔄 Guía de Equivalencias</span>
+                  </label>
                 </div>
 
-                {/* TOGGLE TABLA DE EQUIVALENCIAS EN PDF */}
-                <label
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    fontSize: '11px',
-                    color: 'rgba(255, 255, 255, 0.85)',
-                    cursor: 'pointer',
-                    userSelect: 'none',
-                    marginLeft: 'auto',
-                    background: 'rgba(0, 212, 255, 0.08)',
-                    padding: '4px 10px',
-                    borderRadius: '6px',
-                    border: '1px solid rgba(0, 212, 255, 0.2)',
-                  }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={plan.datos_plan.incluirEquivalenciasPdf !== false}
-                    onChange={(e) =>
-                      setPlan((prev) => ({
-                        ...prev,
-                        datos_plan: {
-                          ...prev.datos_plan,
-                          incluirEquivalenciasPdf: e.target.checked,
-                        },
-                      }))
-                    }
-                    style={{ cursor: 'pointer' }}
-                  />
-                  <span>🔄 Incluir Guía de Equivalencias en PDF</span>
-                </label>
+                {/* CONTROLES DE ZOOM PARA MÓVIL Y ESCRITORIO */}
+                <div className="nutrition-pdf-zoom-group">
+                  <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)', marginRight: '2px' }}>
+                    Zoom:
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleZoomOut}
+                    className="nutrition-pdf-zoom-btn"
+                    title="Alejar vista previa"
+                    aria-label="Alejar vista previa"
+                  >
+                    🔍➖
+                  </button>
+                  <span
+                    style={{
+                      fontSize: '11px',
+                      fontWeight: 700,
+                      color: '#00d4ff',
+                      minWidth: '38px',
+                      textAlign: 'center',
+                      fontFamily: "'Orbitron', monospace",
+                    }}
+                  >
+                    {Math.round(pdfZoom * 100)}%
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleZoomIn}
+                    className="nutrition-pdf-zoom-btn"
+                    title="Acercar vista previa"
+                    aria-label="Acercar vista previa"
+                  >
+                    🔍➕
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleZoomFit}
+                    className="nutrition-pdf-zoom-btn"
+                    title="Ajustar al ancho disponible"
+                  >
+                    📐 Ajustar
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleZoomReset}
+                    className="nutrition-pdf-zoom-btn"
+                    title="Restablecer tamaño original (100%)"
+                  >
+                    100%
+                  </button>
+                </div>
               </div>
 
-              <div style={{ display: 'flex', justifyContent: 'center', width: '100%', overflowX: 'auto', WebkitOverflowScrolling: 'touch', paddingBottom: '16px' }}>
-                <div style={{ minWidth: '794px' }}>
-                  <NutritionReportPDF
-                    plan={plan}
-                    atletaNombre={atleta.nombre}
-                    trainerProfile={trainerProfile}
-                    activeDayKey={pdfScope === 'all' ? 'todos' : activeDayKey}
-                  />
+              <div
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+                style={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  width: '100%',
+                  overflowX: 'auto',
+                  overflowY: 'hidden',
+                  WebkitOverflowScrolling: 'touch',
+                  paddingBottom: '24px',
+                  touchAction: 'pan-x pan-y pinch-zoom',
+                }}
+              >
+                <div
+                  style={{
+                    width: `${794 * pdfZoom}px`,
+                    display: 'flex',
+                    justifyContent: 'center',
+                    transformOrigin: 'top center',
+                    transition: 'width 0.15s ease-out',
+                  }}
+                >
+                  <div
+                    style={{
+                      transform: `scale(${pdfZoom})`,
+                      transformOrigin: 'top center',
+                      width: '794px',
+                      boxShadow: '0 8px 30px rgba(0,0,0,0.6)',
+                      borderRadius: '4px',
+                    }}
+                  >
+                    <NutritionReportPDF
+                      id="nutrition-pdf-preview"
+                      plan={plan}
+                      atletaNombre={atleta.nombre}
+                      trainerProfile={trainerProfile}
+                      activeDayKey={pdfScope === 'all' ? 'todos' : activeDayKey}
+                    />
+                  </div>
                 </div>
               </div>
             </div>
@@ -1565,28 +1689,27 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
           )}
         </div>
 
-        {/* Plantilla PDF montada en segundo plano cuando no está en vista previa para garantizar que la descarga de PDF funcione en cualquier momento */}
-        {!showPdfView && (
-          <div
-            style={{
-              position: 'fixed',
-              left: '-9999px',
-              top: 0,
-              width: '794px',
-              opacity: 0,
-              pointerEvents: 'none',
-              zIndex: -1,
-            }}
-            aria-hidden="true"
-          >
-            <NutritionReportPDF
-              plan={plan}
-              atletaNombre={atleta.nombre}
-              trainerProfile={trainerProfile}
-              activeDayKey={pdfScope === 'all' ? 'todos' : activeDayKey}
-            />
-          </div>
-        )}
+        {/* Plantilla PDF montada en segundo plano para garantizar que la descarga de PDF funcione siempre con id="nutrition-pdf-content" */}
+        <div
+          style={{
+            position: 'fixed',
+            left: '-9999px',
+            top: 0,
+            width: '794px',
+            opacity: 0,
+            pointerEvents: 'none',
+            zIndex: -1,
+          }}
+          aria-hidden="true"
+        >
+          <NutritionReportPDF
+            id="nutrition-pdf-content"
+            plan={plan}
+            atletaNombre={atleta.nombre}
+            trainerProfile={trainerProfile}
+            activeDayKey={pdfScope === 'all' ? 'todos' : activeDayKey}
+          />
+        </div>
 
         {/* FOOTER DE ACCIONES */}
         <div className="nutrition-footer-bar">
@@ -1749,6 +1872,7 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
         targetFood={equivalentsHook.targetFood}
         equivalents={equivalentsHook.currentEquivalents}
         onToggleActive={equivalentsHook.toggleOptionActive}
+        onToggleAllActive={equivalentsHook.toggleAllActive}
         onUpdateQuantity={equivalentsHook.updateOptionQuantity}
         onRemoveOption={equivalentsHook.removeOption}
         onAddCustomOption={equivalentsHook.addCustomOption}
@@ -1757,14 +1881,23 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
         onSave={handleSaveEquivalentsForFood}
         planFoods={uniquePlanFoods}
         savedEquivalencias={plan.datos_plan?.equivalencias}
-        onSelectFood={(food) => {
-          if (equivalentsHook.targetFood) {
-            handleSaveEquivalentsForFood(
-              normalizeFoodSearchText(equivalentsHook.targetFood.nombre),
-              equivalentsHook.currentEquivalents
-            );
+        onSelectFood={(food, prevKey, prevOptions) => {
+          let updatedEquivalencias = plan.datos_plan?.equivalencias || {};
+          if (prevKey && prevOptions) {
+            updatedEquivalencias = {
+              ...updatedEquivalencias,
+              [prevKey]: prevOptions,
+            };
+            handleSaveEquivalentsForFood(prevKey, prevOptions);
+          } else if (equivalentsHook.targetFood) {
+            const currentKey = normalizeFoodSearchText(equivalentsHook.targetFood.nombre);
+            updatedEquivalencias = {
+              ...updatedEquivalencias,
+              [currentKey]: equivalentsHook.currentEquivalents,
+            };
+            handleSaveEquivalentsForFood(currentKey, equivalentsHook.currentEquivalents);
           }
-          equivalentsHook.openEquivalentsModal(food, plan.datos_plan?.equivalencias);
+          equivalentsHook.openEquivalentsModal(food, updatedEquivalencias);
         }}
       />
     </div>

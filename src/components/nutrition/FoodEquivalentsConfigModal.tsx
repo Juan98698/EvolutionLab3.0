@@ -17,6 +17,7 @@ interface FoodEquivalentsConfigModalProps {
   targetFood: MealFoodItem | null;
   equivalents: FoodEquivalentOption[];
   onToggleActive: (index: number) => void;
+  onToggleAllActive?: (active: boolean) => void;
   onUpdateQuantity: (index: number, newQty: number) => void;
   onRemoveOption: (index: number) => void;
   onAddCustomOption: (candidate: FoodItem) => void;
@@ -25,7 +26,7 @@ interface FoodEquivalentsConfigModalProps {
   onSave: (foodKey: string, updatedOptions: FoodEquivalentOption[]) => void;
   planFoods?: MealFoodItem[];
   savedEquivalencias?: Record<string, FoodEquivalentOption[]>;
-  onSelectFood?: (food: MealFoodItem) => void;
+  onSelectFood?: (food: MealFoodItem, prevFoodKey?: string, prevOptions?: FoodEquivalentOption[]) => void;
 }
 
 export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProps> = ({
@@ -34,6 +35,7 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
   targetFood,
   equivalents,
   onToggleActive,
+  onToggleAllActive,
   onUpdateQuantity,
   onRemoveOption,
   onAddCustomOption,
@@ -69,21 +71,33 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
 
   if (!isOpen || !targetFood) return null;
 
-  const isAlreadyInList = (optName: string, optId: string | number) => {
+  const getExistingOption = (optName: string, optId: string | number) => {
     const norm = normalizeFoodSearchText(optName);
-    return equivalents.some(
+    return equivalents.find(
       (e) => String(e.foodId) === String(optId) || normalizeFoodSearchText(e.nombre) === norm
     );
   };
 
   const handleAddSuggestedOption = (opt: FoodEquivalentOption) => {
+    const norm = normalizeFoodSearchText(opt.nombre);
+    const existingIndex = equivalents.findIndex(
+      (e) => String(e.foodId) === String(opt.foodId) || normalizeFoodSearchText(e.nombre) === norm
+    );
+    // Si ya existe en la lista, asegurar que quede activado
+    if (existingIndex >= 0) {
+      if (equivalents[existingIndex].activo === false) {
+        onToggleActive(existingIndex);
+      }
+      return;
+    }
+
     if (onAddOption) {
       onAddOption(opt);
     } else {
       const candidateItem = BASE_FOOD_CATALOG.find(
         (f) =>
           String(f.id) === String(opt.foodId) ||
-          normalizeFoodSearchText(f.nombre) === normalizeFoodSearchText(opt.nombre)
+          normalizeFoodSearchText(f.nombre) === norm
       );
       if (candidateItem) {
         onAddCustomOption(candidateItem);
@@ -93,10 +107,32 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
 
   const handleAddAllStrictSuggestions = () => {
     suggestions.strictMatches.forEach((s) => {
-      if (!isAlreadyInList(s.nombre, s.foodId)) {
-        handleAddSuggestedOption(s);
-      }
+      handleAddSuggestedOption(s);
     });
+  };
+
+  const handleActivateAll = () => {
+    if (equivalents.length > 0) {
+      if (onToggleAllActive) {
+        onToggleAllActive(true);
+      } else {
+        equivalents.forEach((opt, idx) => {
+          if (opt.activo === false) onToggleActive(idx);
+        });
+      }
+    } else {
+      handleAddAllStrictSuggestions();
+    }
+  };
+
+  const handleDeactivateAll = () => {
+    if (onToggleAllActive) {
+      onToggleAllActive(false);
+    } else {
+      equivalents.forEach((opt, idx) => {
+        if (opt.activo !== false) onToggleActive(idx);
+      });
+    }
   };
 
   const handleSelectCandidate = (candidate: FoodItem) => {
@@ -111,9 +147,10 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
 
   const handleFoodChipClick = (food: MealFoodItem) => {
     if (!targetFood || food.nombre === targetFood.nombre) return;
-    onSave(normalizeFoodSearchText(targetFood.nombre), equivalents);
+    const currentKey = normalizeFoodSearchText(targetFood.nombre);
+    onSave(currentKey, equivalents);
     if (onSelectFood) {
-      onSelectFood(food);
+      onSelectFood(food, currentKey, equivalents);
     }
   };
 
@@ -128,6 +165,7 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
 
   return (
     <div
+      className="food-equiv-modal-backdrop"
       style={{
         position: 'fixed',
         top: 0,
@@ -144,6 +182,7 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
       }}
     >
       <div
+        className="food-equiv-modal-window"
         style={{
           backgroundColor: '#0d1322',
           border: '1px solid rgba(0, 212, 255, 0.35)',
@@ -259,9 +298,11 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
                 const isSelected = targetFood && normalizeFoodSearchText(targetFood.nombre) === fKey;
                 const foodMacro = getDominantMacro(food);
                 const configured = savedEquivalencias?.[fKey];
-                const activeCount = Array.isArray(configured)
-                  ? configured.filter((c) => c.activo !== false).length
-                  : 0;
+                const activeCount = isSelected
+                  ? activeOptionsCount
+                  : Array.isArray(configured)
+                    ? configured.filter((c) => c.activo !== false).length
+                    : 0;
 
                 return (
                   <button
@@ -346,56 +387,60 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
               {hasActiveOptions ? (
                 <button
                   type="button"
-                  onClick={() => {
-                    equivalents.forEach((opt, idx) => {
-                      if (opt.activo) onToggleActive(idx);
-                    });
-                  }}
+                  onClick={handleDeactivateAll}
                   style={{
                     background: 'rgba(239, 68, 68, 0.15)',
                     border: '1px solid rgba(239, 68, 68, 0.35)',
                     color: '#f87171',
                     borderRadius: '6px',
-                    padding: '5px 12px',
+                    padding: '6px 12px',
                     fontSize: '11px',
                     fontWeight: 600,
                     cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
                   }}
+                  title="Desmarcar todas las opciones para este alimento"
                 >
                   🚫 Desactivar todos en PDF
                 </button>
               ) : (
-                suggestions.strictMatches.length > 0 && (
-                  <button
-                    type="button"
-                    onClick={handleAddAllStrictSuggestions}
-                    style={{
-                      background: 'rgba(0, 212, 255, 0.15)',
-                      border: '1px solid rgba(0, 212, 255, 0.4)',
-                      color: '#00d4ff',
-                      borderRadius: '6px',
-                      padding: '5px 12px',
-                      fontSize: '11px',
-                      fontWeight: 600,
-                      cursor: 'pointer',
-                    }}
-                  >
-                    ⚡ Añadir sugerencias recomendadas
-                  </button>
-                )
+                <button
+                  type="button"
+                  onClick={handleActivateAll}
+                  style={{
+                    background: 'rgba(0, 212, 255, 0.15)',
+                    border: '1px solid rgba(0, 212, 255, 0.4)',
+                    color: '#00d4ff',
+                    borderRadius: '6px',
+                    padding: '6px 12px',
+                    fontSize: '11px',
+                    fontWeight: 600,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                  }}
+                  title="Activar todas las opciones para este alimento en el PDF"
+                >
+                  ⚡ {equivalents.length > 0 ? 'Activar todos en PDF' : 'Añadir sugerencias recomendadas'}
+                </button>
               )}
             </div>
           </div>
 
           {/* SECCIÓN 1: OPCIONES CONFIGURADAS PARA EL PDF */}
           <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '4px' }}>
               <div style={{ fontSize: '12px', fontWeight: 700, color: 'rgba(255, 255, 255, 0.9)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                📋 Opciones Aprobadas para el PDF ({equivalents.length})
+                📋 Opciones Aprobadas para el PDF ({activeOptionsCount})
               </div>
               {equivalents.length > 0 && (
                 <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.5)' }}>
-                  Ajusta la cantidad en gramos o desmarca con el checkbox
+                  {activeOptionsCount === equivalents.length
+                    ? `${activeOptionsCount} de ${equivalents.length} activas`
+                    : `${activeOptionsCount} de ${equivalents.length} activas (${equivalents.length - activeOptionsCount} deshabilitadas)`}
                 </div>
               )}
             </div>
@@ -421,11 +466,8 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
                   return (
                     <div
                       key={`${opt.foodId}-${idx}`}
+                      className="food-equiv-card"
                       style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '12px',
-                        padding: '10px 14px',
                         borderRadius: '8px',
                         background: opt.activo
                           ? 'rgba(255, 255, 255, 0.04)'
@@ -437,103 +479,130 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
                         transition: 'all 0.2s ease',
                       }}
                     >
-                      {/* CHECKBOX */}
-                      <input
-                        type="checkbox"
-                        checked={opt.activo}
-                        onChange={() => onToggleActive(idx)}
-                        style={{ cursor: 'pointer', width: '16px', height: '16px' }}
-                        title="Activar / Desactivar en el PDF"
-                      />
-
-                      {/* NOMBRE Y GRUPO */}
-                      <div style={{ flex: 1, minWidth: '130px' }}>
-                        <div style={{ fontSize: '13px', fontWeight: 600, color: '#ffffff' }}>
-                          {opt.nombre}
-                        </div>
-                        <div
-                          style={{
-                            fontSize: '10px',
-                            color: 'rgba(255, 255, 255, 0.4)',
-                            marginTop: '2px',
-                          }}
-                        >
-                          {opt.grupo}
-                        </div>
-                      </div>
-
-                      {/* CANTIDAD EDITABLE */}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                      {/* EN MÓVIL: FILA 1 CON CHECKBOX, NOMBRE Y BASURA */}
+                      <div className="food-equiv-card-row1">
+                        {/* CHECKBOX */}
                         <input
-                          type="number"
-                          min="1"
-                          value={opt.cantidad}
-                          onChange={(e) => onUpdateQuantity(idx, Number(e.target.value) || 0)}
-                          style={{
-                            width: '58px',
-                            background: 'rgba(0, 0, 0, 0.4)',
-                            border: '1px solid rgba(255, 255, 255, 0.2)',
-                            borderRadius: '6px',
-                            color: '#00d4ff',
-                            padding: '4px 6px',
-                            fontSize: '12px',
-                            textAlign: 'center',
-                            fontWeight: 700,
-                          }}
+                          type="checkbox"
+                          checked={opt.activo}
+                          onChange={() => onToggleActive(idx)}
+                          style={{ cursor: 'pointer', width: '18px', height: '18px', accentColor: '#00d4ff', flexShrink: 0 }}
+                          title="Activar / Desactivar en el PDF"
                         />
-                        <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)' }}>
-                          {opt.unidad}
-                        </span>
-                      </div>
 
-                      {/* MACROS & DELTA */}
-                      <div style={{ textAlign: 'right', minWidth: '115px' }}>
-                        <div style={{ fontSize: '12px', fontWeight: 700, color: '#fff' }}>
-                          {opt.calorias} kcal
-                        </div>
-                        <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>
-                          P: {opt.proteina}g • C: {opt.carbohidratos}g • G: {opt.grasa}g
-                        </div>
-                        <div style={{ marginTop: '2px' }}>
-                          <span
+                        {/* NOMBRE Y GRUPO */}
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: '13px', fontWeight: 600, color: '#ffffff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            {opt.nombre}
+                          </div>
+                          <div
                             style={{
-                              fontSize: '9px',
-                              fontWeight: 700,
-                              padding: '1px 5px',
-                              borderRadius: '4px',
-                              background:
-                                Math.abs(delta) <= 10
-                                  ? 'rgba(16, 185, 129, 0.2)'
-                                  : 'rgba(245, 158, 11, 0.2)',
-                              color: Math.abs(delta) <= 10 ? '#10b981' : '#f59e0b',
-                              border: `1px solid ${
-                                Math.abs(delta) <= 10
-                                  ? 'rgba(16, 185, 129, 0.4)'
-                                  : 'rgba(245, 158, 11, 0.4)'
-                              }`,
+                              fontSize: '10px',
+                              color: 'rgba(255, 255, 255, 0.4)',
+                              marginTop: '2px',
                             }}
                           >
-                            {delta > 0 ? `+${delta}% kcal` : `${delta}% kcal`}
-                          </span>
+                            {opt.grupo}
+                          </div>
                         </div>
+
+                        {/* BOTÓN ELIMINAR EN MÓVIL */}
+                        <button
+                          type="button"
+                          className="food-equiv-delete-mobile"
+                          onClick={() => onRemoveOption(idx)}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            color: 'rgba(239, 68, 68, 0.7)',
+                            fontSize: '14px',
+                            cursor: 'pointer',
+                            padding: '4px',
+                            flexShrink: 0,
+                          }}
+                          title="Quitar opción"
+                        >
+                          🗑️
+                        </button>
                       </div>
 
-                      {/* BOTÓN ELIMINAR */}
-                      <button
-                        type="button"
-                        onClick={() => onRemoveOption(idx)}
-                        style={{
-                          background: 'none',
-                          border: 'none',
-                          color: 'rgba(239, 68, 68, 0.7)',
-                          fontSize: '14px',
-                          cursor: 'pointer',
-                          padding: '4px',
-                        }}
-                        title="Quitar opción"
-                      >
-                        🗑️
-                      </button>
+                      {/* EN MÓVIL: FILA 2 CON CANTIDAD EDITABLE, MACROS Y BASURA DESKTOP */}
+                      <div className="food-equiv-card-row2">
+                        {/* CANTIDAD EDITABLE */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexShrink: 0 }}>
+                          <input
+                            type="number"
+                            min="1"
+                            value={opt.cantidad}
+                            onChange={(e) => onUpdateQuantity(idx, Number(e.target.value) || 0)}
+                            style={{
+                              width: '58px',
+                              background: 'rgba(0, 0, 0, 0.4)',
+                              border: '1px solid rgba(255, 255, 255, 0.2)',
+                              borderRadius: '6px',
+                              color: '#00d4ff',
+                              padding: '4px 6px',
+                              fontSize: '12px',
+                              textAlign: 'center',
+                              fontWeight: 700,
+                            }}
+                          />
+                          <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)' }}>
+                            {opt.unidad}
+                          </span>
+                        </div>
+
+                        {/* MACROS & DELTA */}
+                        <div style={{ textAlign: 'right', minWidth: '115px', flex: 1 }}>
+                          <div style={{ fontSize: '12px', fontWeight: 700, color: '#fff' }}>
+                            {opt.calorias} kcal
+                          </div>
+                          <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>
+                            P: {opt.proteina}g • C: {opt.carbohidratos}g • G: {opt.grasa}g
+                          </div>
+                          <div style={{ marginTop: '2px' }}>
+                            <span
+                              style={{
+                                fontSize: '9px',
+                                fontWeight: 700,
+                                padding: '1px 5px',
+                                borderRadius: '4px',
+                                background:
+                                  Math.abs(delta) <= 10
+                                    ? 'rgba(16, 185, 129, 0.2)'
+                                    : 'rgba(245, 158, 11, 0.2)',
+                                color: Math.abs(delta) <= 10 ? '#10b981' : '#f59e0b',
+                                border: `1px solid ${
+                                  Math.abs(delta) <= 10
+                                    ? 'rgba(16, 185, 129, 0.4)'
+                                    : 'rgba(245, 158, 11, 0.4)'
+                                }`,
+                              }}
+                            >
+                              {delta > 0 ? `+${delta}% kcal` : `${delta}% kcal`}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* BOTÓN ELIMINAR EN DESKTOP */}
+                        <button
+                          type="button"
+                          className="food-equiv-delete-desktop"
+                          onClick={() => onRemoveOption(idx)}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            color: 'rgba(239, 68, 68, 0.7)',
+                            fontSize: '14px',
+                            cursor: 'pointer',
+                            padding: '4px',
+                            flexShrink: 0,
+                          }}
+                          title="Quitar opción"
+                        >
+                          🗑️
+                        </button>
+                      </div>
                     </div>
                   );
                 })}
@@ -570,15 +639,21 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
                   No se encontraron alimentos en el catálogo con diferencia menor al ±10%.
                 </div>
               ) : (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '8px', marginTop: '6px' }}>
+                <div className="food-equiv-grid-suggestions" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '8px', marginTop: '6px' }}>
                   {suggestions.strictMatches.map((cand, cIdx) => {
-                    const added = isAlreadyInList(cand.nombre, cand.foodId);
+                    const existing = getExistingOption(cand.nombre, cand.foodId);
+                    const isInList = !!existing;
+                    const isActive = existing ? existing.activo !== false : false;
                     return (
                       <div
                         key={`strict-${cand.foodId}-${cIdx}`}
                         style={{
                           background: 'rgba(255, 255, 255, 0.03)',
-                          border: added ? '1px solid rgba(16, 185, 129, 0.4)' : '1px solid rgba(255, 255, 255, 0.08)',
+                          border: isInList
+                            ? isActive
+                              ? '1px solid rgba(16, 185, 129, 0.4)'
+                              : '1px dashed rgba(255, 255, 255, 0.2)'
+                            : '1px solid rgba(255, 255, 255, 0.08)',
                           borderRadius: '8px',
                           padding: '8px 12px',
                           display: 'flex',
@@ -596,10 +671,29 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
                           </div>
                         </div>
 
-                        {added ? (
+                        {isInList && isActive ? (
                           <span style={{ fontSize: '10px', color: '#10b981', fontWeight: 700, padding: '3px 8px', background: 'rgba(16, 185, 129, 0.15)', borderRadius: '4px' }}>
                             ✓ En lista
                           </span>
+                        ) : isInList && !isActive ? (
+                          <button
+                            type="button"
+                            onClick={() => handleAddSuggestedOption(cand)}
+                            style={{
+                              background: 'rgba(0, 212, 255, 0.15)',
+                              border: '1px solid rgba(0, 212, 255, 0.5)',
+                              color: '#00d4ff',
+                              borderRadius: '5px',
+                              padding: '4px 10px',
+                              fontSize: '11px',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              whiteSpace: 'nowrap',
+                            }}
+                            title="Volver a activar para el PDF"
+                          >
+                            + Habilitar
+                          </button>
                         ) : (
                           <button
                             type="button"
@@ -646,16 +740,22 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '8px', marginTop: '6px' }}>
+                <div className="food-equiv-grid-suggestions" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '8px', marginTop: '6px' }}>
                   {suggestions.macroMatches.map((cand, cIdx) => {
-                    const added = isAlreadyInList(cand.nombre, cand.foodId);
+                    const existing = getExistingOption(cand.nombre, cand.foodId);
+                    const isInList = !!existing;
+                    const isActive = existing ? existing.activo !== false : false;
                     const delta = cand.deltaCaloriasPct || 0;
                     return (
                       <div
                         key={`macro-${cand.foodId}-${cIdx}`}
                         style={{
                           background: 'rgba(255, 255, 255, 0.03)',
-                          border: added ? '1px solid rgba(245, 158, 11, 0.4)' : '1px solid rgba(255, 255, 255, 0.08)',
+                          border: isInList
+                            ? isActive
+                              ? '1px solid rgba(245, 158, 11, 0.4)'
+                              : '1px dashed rgba(255, 255, 255, 0.2)'
+                            : '1px solid rgba(255, 255, 255, 0.08)',
                           borderRadius: '8px',
                           padding: '8px 12px',
                           display: 'flex',
@@ -676,10 +776,29 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
                           </div>
                         </div>
 
-                        {added ? (
+                        {isInList && isActive ? (
                           <span style={{ fontSize: '10px', color: '#fbbf24', fontWeight: 700, padding: '3px 8px', background: 'rgba(245, 158, 11, 0.15)', borderRadius: '4px' }}>
                             ✓ En lista
                           </span>
+                        ) : isInList && !isActive ? (
+                          <button
+                            type="button"
+                            onClick={() => handleAddSuggestedOption(cand)}
+                            style={{
+                              background: 'rgba(245, 158, 11, 0.2)',
+                              border: '1px solid rgba(245, 158, 11, 0.5)',
+                              color: '#fbbf24',
+                              borderRadius: '5px',
+                              padding: '4px 10px',
+                              fontSize: '11px',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              whiteSpace: 'nowrap',
+                            }}
+                            title="Volver a activar para el PDF"
+                          >
+                            + Habilitar
+                          </button>
                         ) : (
                           <button
                             type="button"
@@ -793,6 +912,7 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
 
         {/* PIE DE ACCIONES */}
         <div
+          className="food-equiv-modal-footer"
           style={{
             padding: '14px 24px',
             borderTop: '1px solid rgba(255, 255, 255, 0.1)',

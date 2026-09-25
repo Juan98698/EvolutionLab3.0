@@ -10,6 +10,8 @@ import {
   calculateEquivalentPortion,
 } from '../../lib/nutritionEngine';
 
+import { BASE_FOOD_CATALOG } from '../../data/foodCatalog';
+
 export interface UseFoodEquivalentsReturn {
   isModalOpen: boolean;
   targetFood: MealFoodItem | null;
@@ -20,6 +22,7 @@ export interface UseFoodEquivalentsReturn {
   ) => void;
   closeEquivalentsModal: () => void;
   toggleOptionActive: (index: number) => void;
+  toggleAllActive: (active: boolean) => void;
   updateOptionQuantity: (index: number, newQty: number, candidateFood?: FoodItem) => void;
   addCustomOption: (candidate: FoodItem) => void;
   removeOption: (index: number) => void;
@@ -77,13 +80,26 @@ export function useFoodEquivalents(): UseFoodEquivalentsReturn {
     );
   }, []);
 
+  const toggleAllActive = useCallback((active: boolean) => {
+    setCurrentEquivalents((prev) =>
+      prev.map((opt) => ({ ...opt, activo: active }))
+    );
+  }, []);
+
   const updateOptionQuantity = useCallback(
     (index: number, newQty: number, candidateFood?: FoodItem) => {
       if (newQty <= 0) return;
       setCurrentEquivalents((prev) =>
         prev.map((opt, i) => {
           if (i !== index) return opt;
-          const foodBase = candidateFood || {
+          const catalogItem =
+            candidateFood ||
+            BASE_FOOD_CATALOG.find(
+              (f) =>
+                String(f.id) === String(opt.foodId) ||
+                normalizeFoodSearchText(f.nombre) === normalizeFoodSearchText(opt.nombre)
+            );
+          const foodBase = catalogItem || {
             cantidadBase: 100,
             caloriasBase: Math.round((opt.calorias / (opt.cantidad || 1)) * 100),
             proteinaBase: (opt.proteina / (opt.cantidad || 1)) * 100,
@@ -173,6 +189,7 @@ export function useFoodEquivalents(): UseFoodEquivalentsReturn {
     openEquivalentsModal,
     closeEquivalentsModal,
     toggleOptionActive,
+    toggleAllActive,
     updateOptionQuantity,
     addCustomOption,
     removeOption,

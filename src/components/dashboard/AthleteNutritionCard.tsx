@@ -263,6 +263,28 @@ export const AthleteNutritionCard: React.FC<AthleteNutritionCardProps> = ({
     });
   }, [currentDay, selectedDayKey, effectiveMeals]);
 
+  // Plan con las sustituciones del atleta reflejadas en memoria para la exportación del PDF
+  const planForPdf = useMemo(() => {
+    if (!plan) return plan;
+    const hasSubs = Object.keys(activeSubstitutions).length > 0;
+    if (!hasSubs) return plan;
+
+    const updatedDays = { ...plan.datos_plan.days };
+    if (updatedDays[selectedDayKey]) {
+      updatedDays[selectedDayKey] = {
+        ...updatedDays[selectedDayKey],
+        meals: effectiveMeals,
+      };
+    }
+    return {
+      ...plan,
+      datos_plan: {
+        ...plan.datos_plan,
+        days: updatedDays,
+      },
+    };
+  }, [plan, activeSubstitutions, selectedDayKey, effectiveMeals]);
+
   const compliance = useMemo(() => {
     if (!plan) return null;
     return calculateCompliance(dayTotals, {
@@ -931,7 +953,7 @@ export const AthleteNutritionCard: React.FC<AthleteNutritionCardProps> = ({
       >
         <div id="athlete-pdf-render" style={{ width: '794px', backgroundColor: '#ffffff' }}>
           <NutritionReportPDF
-            plan={plan}
+            plan={planForPdf || plan}
             atletaNombre={profile?.nombre || 'Atleta'}
             trainerProfile={resolvedTrainer}
             activeDayKey={pdfScope === 'all' ? 'todos' : selectedDayKey}

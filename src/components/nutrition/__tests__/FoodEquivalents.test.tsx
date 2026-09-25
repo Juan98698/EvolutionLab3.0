@@ -219,5 +219,63 @@ describe('Sistema de Alimentos Equivalentes para el Entrenador', () => {
 
       expect(handleSave).toHaveBeenCalledWith('pechuga de pollo', sampleInitialEquivalents);
     });
+
+    it('muestra el contador exacto de opciones activas y el botón alternar todas', () => {
+      const handleToggleAll = vi.fn();
+
+      const { rerender } = render(
+        <FoodEquivalentsConfigModal
+          isOpen={true}
+          onClose={vi.fn()}
+          targetFood={sampleTargetChicken}
+          equivalents={sampleInitialEquivalents} // 2 activos, 1 inactivo
+          onToggleActive={vi.fn()}
+          onToggleAllActive={handleToggleAll}
+          onUpdateQuantity={vi.fn()}
+          onRemoveOption={vi.fn()}
+          onAddCustomOption={vi.fn()}
+          onResetToAutomatic={vi.fn()}
+          onSave={vi.fn()}
+        />
+      );
+
+      // Debe mostrar 2 activas de 3 totales en el título y subtítulo
+      expect(screen.getByText(/Opciones Aprobadas para el PDF \(2\)/i)).toBeInTheDocument();
+      expect(screen.getByText(/2 de 3 activas/i)).toBeInTheDocument();
+
+      // Al haber activas, el botón debe ser "Desactivar todos en PDF"
+      const toggleAllBtn = screen.getByRole('button', { name: /Desactivar todos en PDF/i });
+      expect(toggleAllBtn).toBeInTheDocument();
+      fireEvent.click(toggleAllBtn);
+      expect(handleToggleAll).toHaveBeenCalledWith(false);
+
+      // Ahora simular que todas están inactivas
+      const allInactiveEquivalents = sampleInitialEquivalents.map((e) => ({ ...e, activo: false }));
+      rerender(
+        <FoodEquivalentsConfigModal
+          isOpen={true}
+          onClose={vi.fn()}
+          targetFood={sampleTargetChicken}
+          equivalents={allInactiveEquivalents}
+          onToggleActive={vi.fn()}
+          onToggleAllActive={handleToggleAll}
+          onUpdateQuantity={vi.fn()}
+          onRemoveOption={vi.fn()}
+          onAddCustomOption={vi.fn()}
+          onResetToAutomatic={vi.fn()}
+          onSave={vi.fn()}
+        />
+      );
+
+      // El contador debe mostrar (0) y "0 de 3 activas"
+      expect(screen.getByText(/Opciones Aprobadas para el PDF \(0\)/i)).toBeInTheDocument();
+      expect(screen.getByText(/0 de 3 activas/i)).toBeInTheDocument();
+
+      // Debe mostrar el botón para reactivar todos
+      const activateAllBtn = screen.getByRole('button', { name: /Activar todos en PDF/i });
+      expect(activateAllBtn).toBeInTheDocument();
+      fireEvent.click(activateAllBtn);
+      expect(handleToggleAll).toHaveBeenCalledWith(true);
+    });
   });
 });

@@ -442,16 +442,24 @@ export function getUniquePrescribedFoods(
       if (!Array.isArray(meal.foods)) continue;
       for (const food of meal.foods) {
         if (!food || !food.nombre) continue;
+        const norm = normalizeFoodSearchText(food.nombre);
+        const cleanNorm = norm.replace(/[^a-z0-9]/g, '');
 
-        // Filtrar alimentos muy pequeños o aderezos sin significancia macro
+        // Si el entrenador configuró equivalencias para este alimento, conservarlo siempre en la guía
+        const hasConfiguredEquivs = Object.entries(plan.datos_plan?.equivalencias || {}).some(
+          ([k, opts]) =>
+            (k === norm || k.replace(/[^a-z0-9]/g, '') === cleanNorm) &&
+            Array.isArray(opts) &&
+            opts.some((o) => o.activo !== false)
+        );
+
+        // Filtrar alimentos muy pequeños o aderezos sin significancia macro, a menos que tengan equivalencias
         const p = Number(food.proteina) || 0;
         const c = Number(food.carbohidratos) || 0;
         const g = Number(food.grasa) || 0;
         const cal = Number(food.calorias) || 0;
 
-        if (p < 10 && c < 12 && g < 8 && cal < 80) continue;
-
-        const norm = normalizeFoodSearchText(food.nombre);
+        if (!hasConfiguredEquivs && p < 10 && c < 12 && g < 8 && cal < 80) continue;
         if (!map.has(norm)) {
           map.set(norm, food);
         } else {

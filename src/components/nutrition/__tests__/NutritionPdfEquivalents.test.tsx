@@ -141,4 +141,61 @@ describe('NutritionReportPDF — Guía de Intercambios y Alimentos Equivalentes'
     expect(equivSection).toBeNull();
     expect(screen.queryByText(/GUÍA DE INTERCAMBIOS Y ALIMENTOS EQUIVALENTES/i)).toBeNull();
   });
+
+  it('acepta un id personalizado para separar la vista previa del elemento de descarga', () => {
+    const plan = createPlanWithEquivalents(true);
+
+    const { container } = render(
+      <NutritionReportPDF
+        id="nutrition-pdf-preview"
+        plan={plan}
+        atletaNombre="Camila Rodriguez"
+        trainerProfile={null}
+        activeDayKey="todos"
+      />
+    );
+
+    const previewElement = container.querySelector('#nutrition-pdf-preview');
+    expect(previewElement).not.toBeNull();
+  });
+
+  it('encuentra equivalencias configuradas incluso con diferencias de puntuación o paréntesis', () => {
+    const basePlan = createPlanWithEquivalents(true);
+    // Configurar clave con puntuación y alimento en comida sin puntuación
+    const punctuationPlan: NutritionPlan = {
+      ...basePlan,
+      datos_plan: {
+        ...basePlan.datos_plan,
+        equivalencias: {
+          'pechuga de pollo (cocida)': [
+            {
+              foodId: 'tilapia-opt',
+              nombre: 'Filete de Tilapia Puntuada',
+              grupo: 'Pescados y Mariscos',
+              cantidad: 150,
+              unidad: 'gr',
+              calorias: 150,
+              proteina: 30,
+              carbohidratos: 0,
+              grasa: 2,
+              deltaCaloriasPct: 0,
+              activo: true,
+            },
+          ],
+        },
+      },
+    };
+
+    render(
+      <NutritionReportPDF
+        plan={punctuationPlan}
+        atletaNombre="Camila Rodriguez"
+        trainerProfile={null}
+        activeDayKey="todos"
+      />
+    );
+
+    // Debe resolver 'pechuga de pollo' y mostrar la tilapia
+    expect(screen.getByText(/Filete de Tilapia Puntuada/i)).toBeInTheDocument();
+  });
 });

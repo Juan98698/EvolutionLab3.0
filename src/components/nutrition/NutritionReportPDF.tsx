@@ -1,5 +1,5 @@
 import React from 'react';
-import { NutritionPlan, NutritionDay, DayOfWeek } from '../../types/nutrition.types';
+import { NutritionPlan, NutritionDay, DayOfWeek, FoodEquivalentOption } from '../../types/nutrition.types';
 import {
   calculateMealTotals,
   calculateDayTotals,
@@ -16,14 +16,50 @@ interface NutritionReportPDFProps {
   atletaNombre: string;
   trainerProfile: Profile | null;
   activeDayKey?: string;
+  id?: string;
 }
 
+/**
+ * Busca de forma tolerante a signos de puntuación, mayúsculas y acentos las equivalencias
+ * configuradas en plan.datos_plan.equivalencias
+ */
+const findConfiguredEquivalents = (
+  equivalencias: Record<string, FoodEquivalentOption[]> | undefined,
+  foodNombre: string
+): FoodEquivalentOption[] | undefined => {
+  if (!equivalencias) return undefined;
+  const key = normalizeFoodSearchText(foodNombre);
+  if (equivalencias[key] && Array.isArray(equivalencias[key])) {
+    return equivalencias[key];
+  }
+
+  // Fallback 1: Comparar caracteres alfanuméricos limpios (elimina comas, paréntesis, etc.)
+  const cleanKey = key.replace(/[^a-z0-9]/g, '');
+  if (!cleanKey) return undefined;
+
+  for (const [savedKey, options] of Object.entries(equivalencias)) {
+    if (savedKey.replace(/[^a-z0-9]/g, '') === cleanKey && Array.isArray(options)) {
+      return options;
+    }
+  }
+
+  // Fallback 2: Subcadena si uno incluye al otro (ej. "arroz blanco" y "arroz blanco cocido")
+  for (const [savedKey, options] of Object.entries(equivalencias)) {
+    const cleanSaved = savedKey.replace(/[^a-z0-9]/g, '');
+    if (cleanSaved.length >= 4 && (cleanKey.includes(cleanSaved) || cleanSaved.includes(cleanKey)) && Array.isArray(options)) {
+      return options;
+    }
+  }
+
+  return undefined;
+};
 
 export const NutritionReportPDF: React.FC<NutritionReportPDFProps> = ({
   plan,
   atletaNombre,
   trainerProfile,
   activeDayKey = 'lunes',
+  id = 'nutrition-pdf-content',
 }) => {
   const brandName = trainerProfile?.marca?.nombre_display || trainerProfile?.nombre || 'EVOLUTION LAB';
   const brandEslogan = trainerProfile?.marca?.eslogan || 'Sistemas de Entrenamiento & Nutrición de Alta Precisión';
@@ -65,8 +101,7 @@ export const NutritionReportPDF: React.FC<NutritionReportPDFProps> = ({
 
   const foodsWithEquivalents = uniqueFoods
     .map((food) => {
-      const key = normalizeFoodSearchText(food.nombre);
-      const configured = plan.datos_plan?.equivalencias?.[key];
+      const configured = findConfiguredEquivalents(plan.datos_plan?.equivalencias, food.nombre);
       // Solo incluimos en el PDF los alimentos para los cuales el entrenador haya configurado
       // y aprobado explícitamente opciones de reemplazo (evita ruido no deseado en el documento)
       if (!Array.isArray(configured) || configured.length === 0) {
@@ -90,7 +125,7 @@ export const NutritionReportPDF: React.FC<NutritionReportPDFProps> = ({
 
   return (
     <div
-      id="nutrition-pdf-content"
+      id={id}
       style={{
         width: '794px', // Tamaño A4 estándar a 96 DPI
         minHeight: '1123px',
