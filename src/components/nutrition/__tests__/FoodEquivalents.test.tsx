@@ -323,5 +323,30 @@ describe('Sistema de Alimentos Equivalentes para el Entrenador', () => {
       fireEvent.click(addBtns[0]);
       expect(handleAddCustomOption).toHaveBeenCalled();
     });
+
+    it('integra el catálogo completo para buscar y añadir cualquier alimento en el modal', () => {
+      render(
+        <FoodEquivalentsConfigModal
+          isOpen={true}
+          onClose={vi.fn()}
+          targetFood={sampleTargetChicken}
+          equivalents={sampleInitialEquivalents}
+          onToggleActive={vi.fn()}
+          onToggleAllActive={vi.fn()}
+          onUpdateQuantity={vi.fn()}
+          onRemoveOption={vi.fn()}
+          onAddCustomOption={vi.fn()}
+          onResetToAutomatic={vi.fn()}
+          onSave={vi.fn()}
+        />
+      );
+
+      // Verificar que el buscador general de alimentos permite buscar en el catálogo
+      const generalSearch = screen.getByPlaceholderText(/Buscar por nombre \(ej: Tilapia, Avena/i);
+      expect(generalSearch).toBeInTheDocument();
+      fireEvent.change(generalSearch, { target: { value: 'Tilapia' } });
+      const addBtns = screen.getAllByText(/\+ Calcular & Añadir/i);
+      expect(addBtns.length).toBeGreaterThan(0);
+    });
   });
 });

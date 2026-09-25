@@ -8,6 +8,7 @@ import {
   getDominantMacro,
   normalizeFoodSearchText,
   getGroupedEquivalentsSuggestions,
+  getCustomFoods,
 } from '../../lib/nutritionEngine';
 import { BASE_FOOD_CATALOG } from '../../data/foodCatalog';
 
@@ -50,6 +51,21 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [categorySearchQuery, setCategorySearchQuery] = useState<string>('');
   const [visibleMacroLimit, setVisibleMacroLimit] = useState<number>(12);
+  const [customCatalog, setCustomCatalog] = useState<FoodItem[]>([]);
+
+  useEffect(() => {
+    if (isOpen) {
+      getCustomFoods().then((customs) => {
+        if (Array.isArray(customs)) {
+          setCustomCatalog(customs);
+        }
+      });
+    }
+  }, [isOpen]);
+
+  const fullCatalog = useMemo(() => {
+    return [...customCatalog, ...BASE_FOOD_CATALOG];
+  }, [customCatalog]);
 
   const dominantMacro = useMemo(() => {
     return targetFood ? getDominantMacro(targetFood) : 'proteina';
@@ -57,24 +73,33 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
 
   const suggestions = useMemo(() => {
     if (!targetFood) return { strictMatches: [], macroMatches: [] };
-    return getGroupedEquivalentsSuggestions(targetFood, BASE_FOOD_CATALOG);
-  }, [targetFood]);
+    return getGroupedEquivalentsSuggestions(targetFood, fullCatalog);
+  }, [targetFood, fullCatalog]);
 
   // Lista de categorías taxonómicas únicas disponibles en el Nivel 2 con su conteo
   const availableCategories = useMemo(() => {
     const counts: Record<string, number> = {};
     for (const opt of suggestions.macroMatches) {
-      const groupName = opt.subgrupo || opt.grupo || 'Otros';
+      const isCustom = opt.esPersonalizado || opt.grupo === 'Mis Alimentos' || (opt.subgrupo && opt.subgrupo.includes('Personalizado'));
+      const groupName = isCustom ? 'Mis Alimentos' : (opt.subgrupo || opt.grupo || 'Otros');
       counts[groupName] = (counts[groupName] || 0) + 1;
     }
-    return Object.entries(counts).sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]));
+    return Object.entries(counts).sort((a, b) => {
+      if (a[0] === 'Mis Alimentos') return -1;
+      if (b[0] === 'Mis Alimentos') return 1;
+      return b[1] - a[1] || a[0].localeCompare(b[0]);
+    });
   }, [suggestions.macroMatches]);
 
   // Sugerencias de Nivel 2 filtradas por categoría y buscador interno
   const filteredMacroMatches = useMemo(() => {
     let list = suggestions.macroMatches;
     if (selectedCategory !== 'all') {
-      list = list.filter((opt) => (opt.subgrupo || opt.grupo) === selectedCategory);
+      list = list.filter((opt) => {
+        const isCustom = opt.esPersonalizado || opt.grupo === 'Mis Alimentos' || (opt.subgrupo && opt.subgrupo.includes('Personalizado'));
+        const grp = isCustom ? 'Mis Alimentos' : (opt.subgrupo || opt.grupo);
+        return grp === selectedCategory;
+      });
     }
     if (categorySearchQuery.trim()) {
       const q = normalizeFoodSearchText(categorySearchQuery);
@@ -98,12 +123,12 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
     const queryNorm = normalizeFoodSearchText(searchQuery);
     const targetNorm = normalizeFoodSearchText(targetFood.nombre);
 
-    return BASE_FOOD_CATALOG.filter((item) => {
+    return fullCatalog.filter((item) => {
       const itemNorm = normalizeFoodSearchText(item.nombre);
       if (itemNorm === targetNorm) return false;
       return itemNorm.includes(queryNorm);
-    }).slice(0, 8);
-  }, [searchQuery, targetFood]);
+    }).slice(0, 10);
+  }, [searchQuery, targetFood, fullCatalog]);
 
   if (!isOpen || !targetFood) return null;
 
@@ -958,7 +983,8 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
                         const isInList = !!existing;
                         const isActive = existing ? existing.activo !== false : false;
                         const delta = cand.deltaCaloriasPct || 0;
-                        const subName = cand.subgrupo || cand.grupo;
+                        const isCustom = cand.esPersonalizado || cand.grupo === 'Mis Alimentos' || (cand.subgrupo && cand.subgrupo.includes('Personalizado'));
+                        const subName = isCustom ? 'Mis Alimentos' : (cand.subgrupo || cand.grupo);
                         return (
                           <div
                             key={`macro-${cand.foodId}-${cIdx}`}
@@ -1149,9 +1175,25 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
                     }}
                   >
                     <span>
+                      {item.esPersonalizado || item.grupo === 'Mis Alimentos' ? (
+                        <span
+                          style={{
+                            fontSize: '10px',
+                            background: 'rgba(245, 158, 11, 0.2)',
+                            color: '#fbbf24',
+                            border: '1px solid rgba(245, 158, 11, 0.4)',
+                            padding: '1px 6px',
+                            borderRadius: '4px',
+                            marginRight: '6px',
+                            fontWeight: 700,
+                          }}
+                        >
+                          ⭐ Mis Alimentos
+                        </span>
+                      ) : null}
                       <strong>{item.nombre}</strong>{' '}
                       <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '11px' }}>
-                        ({item.grupo})
+                        ({item.subgrupo || item.grupo})
                       </span>
                     </span>
                     <span style={{ color: '#00d4ff', fontWeight: 600, fontSize: '11px' }}>

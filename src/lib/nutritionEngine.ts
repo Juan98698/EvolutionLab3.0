@@ -317,6 +317,14 @@ export function isEligibleMacroCandidate(
     return false;
   }
 
+  // Alimentos creados por el entrenador en "Mis Alimentos"
+  if (candidate.esPersonalizado || cGrupo === 'Mis Alimentos' || cSubgrupo.includes('Personalizado')) {
+    if (targetMacro === 'proteina') return pBase >= 10;
+    if (targetMacro === 'carbohidratos') return cBase >= 10;
+    if (targetMacro === 'grasa') return gBase >= 10;
+    return true;
+  }
+
   if (targetMacro === 'proteina') {
     // Verduras, frutas o semillas no deben sustituir fuentes magras de proteína
     if (cGrupo === 'Verduras' || cGrupo === 'Frutas' || cGrupo === 'Grasas y Frutos Secos') {
