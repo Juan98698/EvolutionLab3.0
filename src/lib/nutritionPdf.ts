@@ -149,10 +149,28 @@ export function calculatePdfSlices(options: {
       );
 
       if (slicedBlock) {
-        const minContentOnPage = maxSliceH * 0.25;
-        // Si cortar antes de este bloque deja al menos el 25% de la página ocupada,
-        // movemos el bloque completo a la siguiente página.
-        if (slicedBlock.top - currentY >= minContentOnPage) {
+        const blockHeight = slicedBlock.bottom - slicedBlock.top;
+        const fitsOnSinglePage = blockHeight <= maxSliceH;
+        const hasContentAbove = slicedBlock.top - currentY > 50;
+
+        // Sub-bloques internos del bloque cortado (rec-para, meal-row, equiv-row)
+        const subBlocks = blocks.filter(
+          (b) =>
+            b.top >= slicedBlock.top &&
+            b.bottom <= slicedBlock.bottom &&
+            (b.type === 'meal-row' || b.type === 'rec-para' || b.type === 'equiv-row')
+        );
+
+        // Sub-bloques que alcanzan a caber completamente antes de naiveCutY
+        const fittingSubBlocks = subBlocks.filter((sb) => sb.bottom <= naiveCutY);
+
+        // Si el bloque cabe entero en una página nueva y hay contenido previo en la página actual,
+        // o si es un bloque con sub-bloques pero ningún sub-bloque alcanza a caber (solo cabría el título):
+        // Movemos el bloque completo a la página siguiente para no dejar el título huérfano.
+        const shouldMoveEntireBlock =
+          hasContentAbove && (fitsOnSinglePage || fittingSubBlocks.length === 0);
+
+        if (shouldMoveEntireBlock) {
           // Si el bloque es una comida, verificar si tiene un encabezado de día inmediatamente previo
           // para no dejar el encabezado del día huérfano y aislado al fondo de la página
           const precedingDayHeader =
@@ -162,7 +180,7 @@ export function calculatePdfSlices(options: {
                     b.type === 'day-header' &&
                     b.bottom <= slicedBlock.top &&
                     slicedBlock.top - b.bottom < 80 &&
-                    b.top - currentY >= minContentOnPage
+                    b.top - currentY > 50
                 )
               : null;
 
@@ -171,33 +189,60 @@ export function calculatePdfSlices(options: {
           } else {
             cutY = Math.max(currentY + 50, slicedBlock.top - 12);
           }
-        } else {
-          // El bloque es muy largo o comenzó casi al inicio de la página:
-          // Intentar cortar entre sub-bloques internos ('meal-row', 'rec-para' o 'equiv-row')
-          const subBlocks = blocks.filter(
-            (b) =>
-              b.top >= slicedBlock.top &&
-              b.bottom <= slicedBlock.bottom &&
-              (b.type === 'meal-row' || b.type === 'rec-para' || b.type === 'equiv-row')
-          );
-
-          const candidateSub = [...subBlocks].reverse().find((sb) => sb.bottom <= naiveCutY);
-          if (candidateSub && candidateSub.bottom - currentY >= minContentOnPage) {
+        } else if (subBlocks.length > 0) {
+          // El bloque es más alto que una página y ya está al inicio, o ya contiene múltiples sub-bloques:
+          // Cortar después del último sub-bloque que quepa limpiamente
+          const candidateSub = fittingSubBlocks[fittingSubBlocks.length - 1];
+          if (candidateSub && candidateSub.bottom > currentY + 50) {
             cutY = candidateSub.bottom + 4;
+          } else if (hasContentAbove) {
+            cutY = Math.max(currentY + 50, slicedBlock.top - 12);
           }
+        } else if (hasContentAbove) {
+          cutY = Math.max(currentY + 50, slicedBlock.top - 12);
         }
-      } else {
-        // 2. Comprobar si hay un encabezado de día (day-header) que quedaría huérfano cerca del fondo
-        const orphanHeader = blocks.find(
-          (b) =>
-            b.type === 'day-header' &&
-            b.top < naiveCutY &&
-            b.bottom <= naiveCutY &&
-            naiveCutY - b.bottom < 120
-        );
+      }
 
-        if (orphanHeader && orphanHeader.top - currentY >= maxSliceH * 0.25) {
-          cutY = Math.max(currentY + 50, orphanHeader.top - 12);
+      // 2. Anti-Orphan Header Guard:
+      // Asegurar que ningún encabezado (rec-header, day-header) quede desprendido al fondo de una página
+      // sin su contenido subsiguiente.
+      const orphanHeader = blocks.find((b) => {
+        if (b.type !== 'rec-header' && b.type !== 'day-header') return false;
+        // El encabezado está en la página actual antes del corte
+        if (b.top < currentY || b.top >= cutY) return false;
+
+        // Si el corte quedó demasiado pegado al encabezado
+        if (cutY - b.bottom < 40) return true;
+
+        // Si es rec-header, verificar que haya al menos 1 párrafo rec-para en esta página
+        if (b.type === 'rec-header') {
+          const parasOnThisPage = blocks.filter(
+            (p) => p.type === 'rec-para' && p.top >= b.bottom && p.bottom <= cutY
+          );
+          return parasOnThisPage.length === 0;
+        }
+
+        // Si es day-header, verificar que haya al menos 1 comida meal-card en esta página
+        if (b.type === 'day-header') {
+          const mealsOnThisPage = blocks.filter(
+            (m) => m.type === 'meal-card' && m.top >= b.bottom && m.bottom <= cutY
+          );
+          return mealsOnThisPage.length === 0;
+        }
+
+        return false;
+      });
+
+      if (orphanHeader) {
+        const parentContainer = blocks.find(
+          (cb) =>
+            cb.top <= orphanHeader.top &&
+            cb.bottom >= orphanHeader.bottom &&
+            (cb.type === 'recommendations-card' || cb.type === 'day-card')
+        );
+        const targetTop = parentContainer ? parentContainer.top : orphanHeader.top;
+        if (targetTop - currentY > 50) {
+          cutY = Math.max(currentY + 50, targetTop - 12);
         }
       }
     }

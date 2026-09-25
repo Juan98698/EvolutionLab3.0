@@ -787,6 +787,8 @@ export const NutritionReportPDF: React.FC<NutritionReportPDFProps> = ({
             backgroundColor: '#f8fafc',
             padding: '14px 16px',
             marginBottom: '20px',
+            pageBreakInside: 'avoid',
+            breakInside: 'avoid',
           }}
         >
           <h3
@@ -797,6 +799,8 @@ export const NutritionReportPDF: React.FC<NutritionReportPDFProps> = ({
               fontWeight: 800,
               fontFamily: "'Orbitron', sans-serif",
               color: '#0284c7',
+              pageBreakAfter: 'avoid',
+              breakAfter: 'avoid',
             }}
           >
             📋 RECOMENDACIONES DEL ENTRENADOR

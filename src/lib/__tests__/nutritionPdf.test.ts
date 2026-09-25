@@ -274,6 +274,60 @@ describe('nutritionPdf — Multi-page rendering and export', () => {
       expect(slices[0].sourceH).toBeGreaterThanOrEqual(950);
       expect(slices[0].sourceH).toBeLessThan(970);
     });
+
+    it('nunca deja el título de recomendaciones huérfano al final de la página si los párrafos no caben', () => {
+      // Caso idéntico a la captura: al final de la página 4 hay una fila de alimentos (Y=50 a Y=880).
+      // La tarjeta de recomendaciones empieza en Y=910, su título termina en Y=945, pero el primer
+      // párrafo no cabe antes de Y=1000 (de Y=955 a Y=1080).
+      // El algoritmo DEBE cortar antes de Y=910 para mover la tarjeta y su título íntegros a la siguiente página.
+      const blocks = [
+        { top: 50, bottom: 880, type: 'equiv-card' },
+        { top: 910, bottom: 1600, type: 'recommendations-card' },
+        { top: 920, bottom: 945, type: 'rec-header' },
+        { top: 955, bottom: 1080, type: 'rec-para' },
+        { top: 1090, bottom: 1200, type: 'rec-para' },
+        { top: 1210, bottom: 1350, type: 'rec-para' },
+      ];
+
+      const slices = calculatePdfSlices({
+        canvasHeight: 1600,
+        canvasWidth: 800,
+        pageCanvasHeight: 1000,
+        blocks,
+        topPaddingPx: 30,
+      });
+
+      expect(slices.length).toBe(2);
+      // La página 1 debe terminar antes de 910 (antes de recommendations-card y su título)
+      expect(slices[0].sourceH).toBeLessThan(910);
+      expect(slices[0].sourceH).toBeGreaterThanOrEqual(880);
+
+      // La página 2 comienza donde terminó la página 1, llevando el título y todos sus párrafos juntos
+      expect(slices[1].sourceY).toBe(slices[0].sourceH);
+    });
+
+    it('anti-orphan guard previene que un corte ingenuo corte justo después de rec-header', () => {
+      // Supongamos que naiveCutY cae exactamente a 950 (justo después del título rec-header en 920-945)
+      // y no hay ningún párrafo que quepa en la página actual.
+      const blocks = [
+        { top: 100, bottom: 800, type: 'meal-card' },
+        { top: 890, bottom: 1500, type: 'recommendations-card' },
+        { top: 900, bottom: 940, type: 'rec-header' },
+        { top: 960, bottom: 1100, type: 'rec-para' },
+      ];
+
+      const slices = calculatePdfSlices({
+        canvasHeight: 1500,
+        canvasWidth: 800,
+        pageCanvasHeight: 950, // naiveCutY = 950, corta justo después de rec-header
+        blocks,
+        topPaddingPx: 30,
+      });
+
+      // El guardián anti-huérfano debe forzar el corte antes de recommendations-card (890)
+      expect(slices[0].sourceH).toBeLessThan(890);
+      expect(slices[0].sourceH).toBeGreaterThanOrEqual(800);
+    });
   });
 
   describe('extractPdfBlockBoundaries — Detección de elementos DOM', () => {
