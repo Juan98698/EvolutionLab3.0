@@ -18,7 +18,7 @@ export interface PdfSlice {
  */
 export function extractPdfBlockBoundaries(
   element: HTMLElement,
-  canvasHeight: number
+  canvasHeight: number = 0
 ): PdfBlockBoundary[] {
   try {
     let parentHeight = element.offsetHeight || element.scrollHeight;
@@ -36,7 +36,7 @@ export function extractPdfBlockBoundaries(
 
     if (parentHeight <= 0) return [];
 
-    const scale = canvasHeight / parentHeight;
+    const scale = canvasHeight > 0 ? canvasHeight / parentHeight : 1;
     const blockElements = element.querySelectorAll<HTMLElement>('[data-pdf-block]');
     const boundaries: PdfBlockBoundary[] = [];
 
@@ -289,11 +289,14 @@ export function calculatePdfSlices(options: {
           (cb) =>
             cb.top <= orphanHeader.top &&
             cb.bottom >= orphanHeader.bottom &&
-            (cb.type === 'recommendations-card' || cb.type === 'meal-card')
+            (cb.type === 'recommendations-card' || cb.type === 'meal-card' || cb.type === 'equiv-card')
         );
         const targetTop = parentContainer ? parentContainer.top : orphanHeader.top;
         if (targetTop - currentY > 50) {
           cutY = Math.max(currentY + 50, targetTop - 12);
+          if (canvasCtx && typeof canvasCtx.getImageData === 'function') {
+            cutY = findWhiteRowNear(canvasCtx, canvasWidth, cutY, 20);
+          }
         }
       }
     }
@@ -324,12 +327,54 @@ export const renderNutritionPDFDoc = async (elementId: string): Promise<jsPDF> =
   const element = document.getElementById(elementId);
   if (!element) throw new Error(`Elemento con ID ${elementId} no encontrado para generar PDF.`);
 
+  let rawBlocksFromClone: PdfBlockBoundary[] = [];
+  let clonedParentHeight = 0;
+
   const canvas = await html2canvas(element, {
     scale: 2,
     useCORS: true,
     logging: false,
     backgroundColor: '#ffffff',
     windowWidth: 1200,
+    scrollX: 0,
+    scrollY: 0,
+    onclone: (clonedDoc: Document) => {
+      const clonedElement =
+        clonedDoc.getElementById(elementId) ||
+        clonedDoc.querySelector<HTMLElement>(`[id="${elementId}"]`);
+
+      if (clonedElement) {
+        // Garantizar aislamiento estricto de 794px en el iframe virtual de 1200px
+        clonedElement.style.width = '794px';
+        clonedElement.style.minWidth = '794px';
+        clonedElement.style.maxWidth = '794px';
+        clonedElement.style.boxSizing = 'border-box';
+        clonedElement.style.overflow = 'visible';
+        clonedElement.style.position = 'relative';
+        clonedElement.style.opacity = '1';
+        clonedElement.style.transform = 'none';
+
+        if (clonedElement.parentElement) {
+          clonedElement.parentElement.style.width = '794px';
+          clonedElement.parentElement.style.minWidth = '794px';
+          clonedElement.parentElement.style.maxWidth = '794px';
+          clonedElement.parentElement.style.overflow = 'visible';
+          clonedElement.parentElement.style.position = 'relative';
+          clonedElement.parentElement.style.opacity = '1';
+          clonedElement.parentElement.style.transform = 'none';
+        }
+
+        clonedParentHeight =
+          clonedElement.offsetHeight ||
+          clonedElement.scrollHeight ||
+          (typeof clonedElement.getBoundingClientRect === 'function'
+            ? clonedElement.getBoundingClientRect().height
+            : 0);
+
+        // Medir límites en coordenadas CSS relativas (canvasHeight = 0 -> scale = 1)
+        rawBlocksFromClone = extractPdfBlockBoundaries(clonedElement, 0);
+      }
+    },
   });
 
   const pdf = new jsPDF('p', 'mm', 'a4');
@@ -345,7 +390,24 @@ export const renderNutritionPDFDoc = async (elementId: string): Promise<jsPDF> =
     // Multipágina inteligente: cortar respetando límites de elementos y agregando márgenes superiores
     const scaleFactor = canvas.width / pdfWidth;
     const pageCanvasHeight = pdfPageHeight * scaleFactor;
-    const blocks = extractPdfBlockBoundaries(element, canvas.height);
+
+    // Si onclone capturó los bloques del clonedDoc (renderizado idéntico en móvil y PC),
+    // escalamos sus límites con la relación exacta canvas.height / clonedParentHeight.
+    // De lo contrario (ej. mocks unitarios simples de html2canvas), usamos fallback en element.
+    let blocks: PdfBlockBoundary[] = [];
+    if (rawBlocksFromClone.length > 0 && clonedParentHeight > 0) {
+      const cloneScale = canvas.height / clonedParentHeight;
+      blocks = rawBlocksFromClone
+        .map((b) => ({
+          top: Math.round(b.top * cloneScale),
+          bottom: Math.round(b.bottom * cloneScale),
+          type: b.type,
+        }))
+        .sort((a, b) => a.top - b.top);
+    } else {
+      blocks = extractPdfBlockBoundaries(element, canvas.height);
+    }
+
     const canvasCtx = canvas.getContext ? canvas.getContext('2d') : null;
 
     const slices = calculatePdfSlices({

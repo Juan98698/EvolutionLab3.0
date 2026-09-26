@@ -1696,6 +1696,8 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
             left: 0,
             top: 0,
             width: '794px',
+            minWidth: '794px',
+            maxWidth: '794px',
             opacity: 0,
             pointerEvents: 'none',
             zIndex: -9999,

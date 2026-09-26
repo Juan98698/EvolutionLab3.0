@@ -128,6 +128,8 @@ export const NutritionReportPDF: React.FC<NutritionReportPDFProps> = ({
       id={id}
       style={{
         width: '794px', // Tamaño A4 estándar a 96 DPI
+        minWidth: '794px',
+        maxWidth: '794px',
         minHeight: '1123px',
         backgroundColor: '#ffffff',
         color: '#1a202c',

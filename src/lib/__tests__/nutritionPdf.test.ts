@@ -423,5 +423,68 @@ describe('nutritionPdf — Multi-page rendering and export', () => {
         type: 'meal-card',
       });
     });
+
+    it('retorna coordenadas 1:1 en píxeles CSS sin escalar si canvasHeight es 0 (para uso en onclone)', () => {
+      const container = document.createElement('div');
+      container.getBoundingClientRect = vi.fn().mockReturnValue({ top: 50, height: 400 });
+
+      const card = document.createElement('div');
+      card.setAttribute('data-pdf-block', 'meal-card');
+      card.getBoundingClientRect = vi.fn().mockReturnValue({ top: 80, bottom: 220, height: 140 });
+      container.appendChild(card);
+
+      // canvasHeight = 0 -> scale = 1
+      const boundaries = extractPdfBlockBoundaries(container, 0);
+
+      expect(boundaries).toHaveLength(1);
+      expect(boundaries[0]).toEqual({
+        top: 30, // 80 - 50
+        bottom: 170, // 220 - 50
+        type: 'meal-card',
+      });
+    });
+
+    it('renderNutritionPDFDoc invoca onclone, configura el ancho en 794px y extrae límites del clonedDoc', async () => {
+      const div = document.createElement('div');
+      div.id = 'nutrition-pdf-content';
+      document.body.appendChild(div);
+
+      let capturedOnclone: ((clonedDoc: any) => void) | undefined;
+      vi.mocked(html2canvas).mockImplementation(async (_el: any, options: any) => {
+        capturedOnclone = options?.onclone;
+        if (capturedOnclone) {
+          const fakeClonedElement = document.createElement('div');
+          fakeClonedElement.id = 'nutrition-pdf-content';
+          Object.defineProperty(fakeClonedElement, 'offsetHeight', { value: 1000, configurable: true });
+
+          const fakeMeal = document.createElement('div');
+          fakeMeal.setAttribute('data-pdf-block', 'meal-card');
+          Object.defineProperty(fakeMeal, 'offsetTop', { value: 100, configurable: true });
+          Object.defineProperty(fakeMeal, 'offsetHeight', { value: 200, configurable: true });
+          fakeClonedElement.appendChild(fakeMeal);
+
+          const fakeClonedDoc = {
+            getElementById: vi.fn().mockReturnValue(fakeClonedElement),
+            querySelector: vi.fn().mockReturnValue(fakeClonedElement),
+          };
+          capturedOnclone(fakeClonedDoc);
+
+          // Verificar que onclone forzó el ancho a 794px
+          expect(fakeClonedElement.style.width).toBe('794px');
+          expect(fakeClonedElement.style.minWidth).toBe('794px');
+        }
+
+        return {
+          width: 800,
+          height: 2000,
+          getContext: vi.fn().mockReturnValue(null),
+          toDataURL: vi.fn().mockReturnValue('data:image/jpeg;base64,data'),
+        } as any;
+      });
+
+      const pdf = await renderNutritionPDFDoc('nutrition-pdf-content');
+      expect(pdf).toBeDefined();
+      expect(capturedOnclone).toBeDefined();
+    });
   });
 });

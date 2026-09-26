@@ -945,13 +945,15 @@ export const AthleteNutritionCard: React.FC<AthleteNutritionCardProps> = ({
           left: 0,
           top: 0,
           width: '794px',
+          minWidth: '794px',
+          maxWidth: '794px',
           opacity: 0,
           pointerEvents: 'none',
           zIndex: -9999,
         }}
         aria-hidden="true"
       >
-        <div id="athlete-pdf-render" style={{ width: '794px', backgroundColor: '#ffffff' }}>
+        <div id="athlete-pdf-render" style={{ width: '794px', minWidth: '794px', maxWidth: '794px', backgroundColor: '#ffffff' }}>
           <NutritionReportPDF
             plan={planForPdf || plan}
             atletaNombre={profile?.nombre || 'Atleta'}
