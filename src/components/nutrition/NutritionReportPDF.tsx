@@ -404,10 +404,13 @@ export const NutritionReportPDF: React.FC<NutritionReportPDFProps> = ({
                       border: '1px solid #e2e8f0',
                       borderRadius: '8px',
                       overflow: 'hidden',
+                      pageBreakInside: 'avoid',
+                      breakInside: 'avoid',
                     }}
                   >
                     {/* CABECERA DE LA COMIDA */}
                     <div
+                      data-pdf-block="meal-header"
                       style={{
                         display: 'flex',
                         justifyContent: 'space-between',
@@ -415,6 +418,8 @@ export const NutritionReportPDF: React.FC<NutritionReportPDFProps> = ({
                         backgroundColor: '#f8fafc',
                         padding: '7px 12px',
                         borderBottom: '1px solid #e2e8f0',
+                        pageBreakAfter: 'avoid',
+                        breakAfter: 'avoid',
                       }}
                     >
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -540,7 +545,14 @@ export const NutritionReportPDF: React.FC<NutritionReportPDFProps> = ({
 
           {/* TABLA DE PROTEÍNAS */}
           {proteinEquivalents.length > 0 && (
-            <div data-pdf-block="equiv-card" style={{ marginBottom: '16px' }}>
+            <div
+              data-pdf-block="equiv-card"
+              style={{
+                marginBottom: '16px',
+                pageBreakInside: 'avoid',
+                breakInside: 'avoid',
+              }}
+            >
               <div
                 style={{
                   fontSize: '11px',
@@ -619,7 +631,14 @@ export const NutritionReportPDF: React.FC<NutritionReportPDFProps> = ({
 
           {/* TABLA DE CARBOHIDRATOS */}
           {carbEquivalents.length > 0 && (
-            <div data-pdf-block="equiv-card" style={{ marginBottom: '16px' }}>
+            <div
+              data-pdf-block="equiv-card"
+              style={{
+                marginBottom: '16px',
+                pageBreakInside: 'avoid',
+                breakInside: 'avoid',
+              }}
+            >
               <div
                 style={{
                   fontSize: '11px',
@@ -698,7 +717,14 @@ export const NutritionReportPDF: React.FC<NutritionReportPDFProps> = ({
 
           {/* TABLA DE GRASAS */}
           {fatEquivalents.length > 0 && (
-            <div data-pdf-block="equiv-card" style={{ marginBottom: '8px' }}>
+            <div
+              data-pdf-block="equiv-card"
+              style={{
+                marginBottom: '8px',
+                pageBreakInside: 'avoid',
+                breakInside: 'avoid',
+              }}
+            >
               <div
                 style={{
                   fontSize: '11px',

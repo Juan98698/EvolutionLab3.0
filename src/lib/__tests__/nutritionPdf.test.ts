@@ -328,6 +328,53 @@ describe('nutritionPdf — Multi-page rendering and export', () => {
       expect(slices[0].sourceH).toBeLessThan(890);
       expect(slices[0].sourceH).toBeGreaterThanOrEqual(800);
     });
+
+    it('mueve una meal-card (Cena) completa a la siguiente página sin fragmentar su cabecera ni filas', () => {
+      // Caso idéntico a la captura 1: al final de la página 3 está Almuerzo/Merienda (Y=100 a Y=870).
+      // Cena empieza en Y=890 y termina en Y=1150 (cruza naiveCutY = 1000).
+      // Debe cortar antes de Y=890 para que la Cena entera empiece en la página 4.
+      const blocks = [
+        { top: 100, bottom: 870, type: 'meal-card' },
+        { top: 890, bottom: 1150, type: 'meal-card' },
+        { top: 890, bottom: 930, type: 'meal-header' },
+        { top: 935, bottom: 980, type: 'meal-row' },
+        { top: 985, bottom: 1040, type: 'meal-row' },
+        { top: 1045, bottom: 1100, type: 'meal-row' },
+      ];
+
+      const slices = calculatePdfSlices({
+        canvasHeight: 1400,
+        canvasWidth: 800,
+        pageCanvasHeight: 1000,
+        blocks,
+        topPaddingPx: 30,
+      });
+
+      expect(slices.length).toBe(2);
+      expect(slices[0].sourceH).toBeLessThan(890);
+      expect(slices[0].sourceH).toBeGreaterThanOrEqual(870);
+      expect(slices[1].sourceY).toBe(slices[0].sourceH);
+    });
+
+    it('anti-orphan guard previene que un corte ingenuo corte justo después de meal-header', () => {
+      const blocks = [
+        { top: 100, bottom: 850, type: 'meal-card' },
+        { top: 890, bottom: 1200, type: 'meal-card' },
+        { top: 890, bottom: 940, type: 'meal-header' },
+        { top: 960, bottom: 1050, type: 'meal-row' },
+      ];
+
+      const slices = calculatePdfSlices({
+        canvasHeight: 1400,
+        canvasWidth: 800,
+        pageCanvasHeight: 950, // naiveCutY corta después de meal-header
+        blocks,
+        topPaddingPx: 30,
+      });
+
+      expect(slices[0].sourceH).toBeLessThan(890);
+      expect(slices[0].sourceH).toBeGreaterThanOrEqual(850);
+    });
   });
 
   describe('extractPdfBlockBoundaries — Detección de elementos DOM', () => {
@@ -352,6 +399,29 @@ describe('nutritionPdf — Multi-page rendering and export', () => {
         { top: (150 - 100) * 2, bottom: (250 - 100) * 2, type: 'meal-card' },
         { top: (300 - 100) * 2, bottom: (450 - 100) * 2, type: 'recommendations-card' },
       ]);
+    });
+
+    it('utiliza fallback con offsetTop y offsetHeight si getBoundingClientRect retorna altura 0 (entornos móviles / offscreen)', () => {
+      const container = document.createElement('div');
+      container.getBoundingClientRect = vi.fn().mockReturnValue({ top: 0, height: 0 }); // Simula culling de Chromium móvil
+      Object.defineProperty(container, 'offsetHeight', { value: 600, configurable: true });
+
+      const mealCard = document.createElement('div');
+      mealCard.setAttribute('data-pdf-block', 'meal-card');
+      mealCard.getBoundingClientRect = vi.fn().mockReturnValue({ top: 0, bottom: 0, height: 0 });
+      Object.defineProperty(mealCard, 'offsetTop', { value: 120, configurable: true });
+      Object.defineProperty(mealCard, 'offsetHeight', { value: 200, configurable: true });
+      container.appendChild(mealCard);
+
+      // canvasHeight = 1200, scale = 1200 / 600 = 2
+      const boundaries = extractPdfBlockBoundaries(container, 1200);
+
+      expect(boundaries).toHaveLength(1);
+      expect(boundaries[0]).toEqual({
+        top: 120 * 2,
+        bottom: (120 + 200) * 2,
+        type: 'meal-card',
+      });
     });
   });
 });

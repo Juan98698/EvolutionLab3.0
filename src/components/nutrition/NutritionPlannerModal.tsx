@@ -1693,12 +1693,12 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
         <div
           style={{
             position: 'fixed',
-            left: '-9999px',
+            left: 0,
             top: 0,
             width: '794px',
             opacity: 0,
             pointerEvents: 'none',
-            zIndex: -1,
+            zIndex: -9999,
           }}
           aria-hidden="true"
         >

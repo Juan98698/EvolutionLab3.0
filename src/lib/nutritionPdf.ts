@@ -21,19 +21,56 @@ export function extractPdfBlockBoundaries(
   canvasHeight: number
 ): PdfBlockBoundary[] {
   try {
-    const parentRect = element.getBoundingClientRect();
-    if (!parentRect || parentRect.height <= 0) return [];
+    let parentHeight = element.offsetHeight || element.scrollHeight;
+    let parentTop = 0;
+    let useRect = false;
 
-    const scale = canvasHeight / parentRect.height;
+    if (typeof element.getBoundingClientRect === 'function') {
+      const parentRect = element.getBoundingClientRect();
+      if (parentRect && parentRect.height > 10) {
+        parentHeight = parentRect.height;
+        parentTop = parentRect.top;
+        useRect = true;
+      }
+    }
+
+    if (parentHeight <= 0) return [];
+
+    const scale = canvasHeight / parentHeight;
     const blockElements = element.querySelectorAll<HTMLElement>('[data-pdf-block]');
     const boundaries: PdfBlockBoundary[] = [];
 
     blockElements.forEach((el) => {
-      const rect = el.getBoundingClientRect();
-      if (rect.height > 0) {
+      let top = 0;
+      let bottom = 0;
+
+      if (useRect && typeof el.getBoundingClientRect === 'function') {
+        const rect = el.getBoundingClientRect();
+        if (rect.height > 0) {
+          top = Math.round((rect.top - parentTop) * scale);
+          bottom = Math.round((rect.bottom - parentTop) * scale);
+        }
+      }
+
+      // Fallback a offsetTop acumulativo si getBoundingClientRect no produjo altura
+      if (bottom <= top) {
+        let curr: HTMLElement | null = el;
+        let accumTop = 0;
+        while (curr && curr !== element && element.contains(curr)) {
+          accumTop += curr.offsetTop || 0;
+          curr = curr.offsetParent as HTMLElement | null;
+        }
+        const h = el.offsetHeight || el.scrollHeight || 0;
+        if (h > 0) {
+          top = Math.round(accumTop * scale);
+          bottom = Math.round((accumTop + h) * scale);
+        }
+      }
+
+      if (bottom > top) {
         boundaries.push({
-          top: Math.round((rect.top - parentRect.top) * scale),
-          bottom: Math.round((rect.bottom - parentRect.top) * scale),
+          top,
+          bottom,
           type: el.getAttribute('data-pdf-block') || 'block',
         });
       }
@@ -133,14 +170,13 @@ export function calculatePdfSlices(options: {
     let cutY = naiveCutY;
 
     if (blocks.length > 0) {
-      // 1. Verificar si naiveCutY atraviesa un bloque atómico principal
+      // 1. Verificar si naiveCutY atraviesa un bloque atómico principal (excluyendo wrappers gigantes)
       const slicedBlock = blocks.find(
         (b) =>
           b.top < naiveCutY &&
           b.bottom > naiveCutY &&
           (b.type === 'meal-card' ||
             b.type === 'recommendations-card' ||
-            b.type === 'equivalents-section' ||
             b.type === 'equiv-card' ||
             b.type === 'day-header' ||
             b.type === 'athlete-info' ||
@@ -190,7 +226,7 @@ export function calculatePdfSlices(options: {
             cutY = Math.max(currentY + 50, slicedBlock.top - 12);
           }
         } else if (subBlocks.length > 0) {
-          // El bloque es más alto que una página y ya está al inicio, o ya contiene múltiples sub-bloques:
+          // El bloque es más alto que una página y ya contiene múltiples sub-bloques:
           // Cortar después del último sub-bloque que quepa limpiamente
           const candidateSub = fittingSubBlocks[fittingSubBlocks.length - 1];
           if (candidateSub && candidateSub.bottom > currentY + 50) {
@@ -202,12 +238,19 @@ export function calculatePdfSlices(options: {
           cutY = Math.max(currentY + 50, slicedBlock.top - 12);
         }
       }
+    }
 
-      // 2. Anti-Orphan Header Guard:
-      // Asegurar que ningún encabezado (rec-header, day-header) quede desprendido al fondo de una página
-      // sin su contenido subsiguiente.
+    // 2. Si disponemos de contexto de canvas, buscar una franja blanca exacta (#ffffff)
+    if (canvasCtx && typeof canvasCtx.getImageData === 'function') {
+      cutY = findWhiteRowNear(canvasCtx, canvasWidth, cutY, 30);
+    }
+
+    // 3. Anti-Orphan Header Guard Estricto (Filtro final e inmutable):
+    // Asegurar que ningún encabezado (rec-header, meal-header, day-header) quede desprendido al fondo de una página
+    // sin su contenido subsiguiente.
+    if (blocks.length > 0) {
       const orphanHeader = blocks.find((b) => {
-        if (b.type !== 'rec-header' && b.type !== 'day-header') return false;
+        if (b.type !== 'rec-header' && b.type !== 'day-header' && b.type !== 'meal-header') return false;
         // El encabezado está en la página actual antes del corte
         if (b.top < currentY || b.top >= cutY) return false;
 
@@ -220,6 +263,14 @@ export function calculatePdfSlices(options: {
             (p) => p.type === 'rec-para' && p.top >= b.bottom && p.bottom <= cutY
           );
           return parasOnThisPage.length === 0;
+        }
+
+        // Si es meal-header, verificar que haya al menos 1 alimento meal-row en esta página
+        if (b.type === 'meal-header') {
+          const rowsOnThisPage = blocks.filter(
+            (m) => m.type === 'meal-row' && m.top >= b.bottom && m.bottom <= cutY
+          );
+          return rowsOnThisPage.length === 0;
         }
 
         // Si es day-header, verificar que haya al menos 1 comida meal-card en esta página
@@ -238,18 +289,13 @@ export function calculatePdfSlices(options: {
           (cb) =>
             cb.top <= orphanHeader.top &&
             cb.bottom >= orphanHeader.bottom &&
-            (cb.type === 'recommendations-card' || cb.type === 'day-card')
+            (cb.type === 'recommendations-card' || cb.type === 'meal-card')
         );
         const targetTop = parentContainer ? parentContainer.top : orphanHeader.top;
         if (targetTop - currentY > 50) {
           cutY = Math.max(currentY + 50, targetTop - 12);
         }
       }
-    }
-
-    // 3. Si disponemos de contexto de canvas, buscar una franja blanca exacta (#ffffff)
-    if (canvasCtx && typeof canvasCtx.getImageData === 'function') {
-      cutY = findWhiteRowNear(canvasCtx, canvasWidth, cutY, 30);
     }
 
     // Asegurar avance estricto para prevenir bucles
