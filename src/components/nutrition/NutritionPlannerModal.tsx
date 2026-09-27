@@ -1715,7 +1715,7 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
 
         {/* FOOTER DE ACCIONES */}
         <div className="nutrition-footer-bar">
-          <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)' }}>
+          <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.45)', lineHeight: 1.2 }}>
             Estado: {plan.id ? 'Sincronizado con Supabase' : 'Nuevo plan local'}
           </div>
 
@@ -1735,46 +1735,11 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
             </button>
             <button
               type="button"
-              onClick={() => {
-                const initialFood = uniquePlanFoods[0] || null;
-                if (initialFood) {
-                  equivalentsHook.openEquivalentsModal(initialFood, plan.datos_plan?.equivalencias);
-                } else {
-                  showToast?.('Agrega alimentos al plan primero para configurar sus equivalentes.', 'info');
-                }
-              }}
-              className="nutrition-footer-btn-equiv"
-              title="Configurar qué alimentos tendrán opciones de reemplazo en el PDF"
-              style={{
-                background: configuredEquivalentsCount > 0 ? 'rgba(0, 212, 255, 0.12)' : 'rgba(255, 255, 255, 0.06)',
-                border: configuredEquivalentsCount > 0 ? '1px solid rgba(0, 212, 255, 0.4)' : '1px solid rgba(255, 255, 255, 0.18)',
-                color: configuredEquivalentsCount > 0 ? '#00d4ff' : 'rgba(255, 255, 255, 0.85)',
-                borderRadius: '8px',
-                padding: '8px 14px',
-                fontSize: '12px',
-                fontWeight: 600,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '6px',
-              }}
-            >
-              🔄 Reemplazos PDF ({configuredEquivalentsCount})
-            </button>
-            <button
-              type="button"
               onClick={handleDownloadPDF}
               disabled={downloadingPdf}
               className="nutrition-footer-btn-pdf"
               title={pdfScope === 'all' ? 'Descargar PDF de la semana completa' : `Descargar PDF de ${currentDay?.nombre || activeDayKey}`}
               style={{
-                background: 'rgba(255, 255, 255, 0.08)',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                color: '#ffffff',
-                borderRadius: '8px',
-                padding: '8px 16px',
-                fontSize: '12px',
-                fontWeight: 600,
                 cursor: downloadingPdf ? 'wait' : 'pointer',
               }}
             >
@@ -1786,14 +1751,6 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
               disabled={saving}
               className="nutrition-footer-btn-save"
               style={{
-                background: 'var(--theme-primary, #00d4ff)',
-                border: 'none',
-                borderRadius: '8px',
-                color: '#000000',
-                padding: '10px 20px',
-                fontSize: '12px',
-                fontWeight: 800,
-                fontFamily: "'Orbitron', sans-serif",
                 cursor: saving ? 'wait' : 'pointer',
               }}
             >
