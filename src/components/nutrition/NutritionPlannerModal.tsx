@@ -77,6 +77,7 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
   const [loadDietModalOpen, setLoadDietModalOpen] = useState<boolean>(false);
   const [mealToSaveAsTemplate, setMealToSaveAsTemplate] = useState<Meal | null>(null);
   const [mealIdxToLoadRecipe, setMealIdxToLoadRecipe] = useState<number | null>(null);
+  const [showMacrosSummary, setShowMacrosSummary] = useState<boolean>(true);
 
   // Zoom y gestos táctiles para la vista previa de PDF en móvil y escritorio
   const [pdfZoom, setPdfZoom] = useState<number>(() => {
@@ -765,6 +766,7 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
       <div className="nutrition-modal-window">
         {/* BARRA SUPERIOR: DATOS Y METAS NUTRICIONALES */}
         <div
+          className="nutrition-header-container"
           style={{
             padding: '14px 16px',
             borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
@@ -859,7 +861,8 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
                   gap: '4px',
                 }}
               >
-                🔄 Sincronizar Valoración
+                <span className="nutrition-btn-label-desktop">🔄 Sincronizar Valoración</span>
+                <span className="nutrition-btn-label-mobile">🔄 Sincronizar</span>
               </button>
               <button
                 type="button"
@@ -867,7 +870,8 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
                 title="Guardar esta dieta completa como plantilla reusable"
                 className="nutrition-header-action-btn nutrition-header-btn-template"
               >
-                💾 Guardar Plantilla
+                <span className="nutrition-btn-label-desktop">💾 Guardar Plantilla</span>
+                <span className="nutrition-btn-label-mobile">💾 Guardar</span>
               </button>
               <button
                 type="button"
@@ -875,7 +879,8 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
                 title="Cargar una plantilla de dieta para este atleta"
                 className="nutrition-header-action-btn nutrition-header-btn-template"
               >
-                📂 Cargar Plantilla
+                <span className="nutrition-btn-label-desktop">📂 Cargar Plantilla</span>
+                <span className="nutrition-btn-label-mobile">📂 Cargar</span>
               </button>
               <button
                 type="button"
@@ -903,7 +908,8 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
                   gap: '6px',
                 }}
               >
-                <span>🔄 Alimentos Equivalentes</span>
+                <span className="nutrition-btn-label-desktop">🔄 Alimentos Equivalentes</span>
+                <span className="nutrition-btn-label-mobile">🔄 Equivalentes</span>
                 {configuredEquivalentsCount > 0 ? (
                   <span
                     style={{
@@ -936,100 +942,198 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
                   fontWeight: 600,
                 }}
               >
-                {showPdfView ? '✏️ Modo Editor' : '👁️ Vista Previa PDF'}
+                <span className="nutrition-btn-label-desktop">{showPdfView ? '✏️ Modo Editor' : '👁️ Vista Previa PDF'}</span>
+                <span className="nutrition-btn-label-mobile">{showPdfView ? '✏️ Editor' : '👁️ PDF'}</span>
               </button>
             </div>
           </div>
 
           {/* MONITOR EN TIEMPO REAL: CALORÍAS Y BARRAS DE MACROS */}
-          <div className="nutrition-macro-grid">
-            {/* CALORÍAS */}
-            <div className="nutrition-macro-calorias-col">
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}>
-                <span style={{ color: 'rgba(255,255,255,0.7)', fontWeight: 700 }}>🔥 CALORÍAS</span>
-                <span style={{ fontWeight: 800, color: compliance.status === 'optimo' ? '#10b981' : compliance.status === 'deficit' ? '#00d4ff' : '#f59e0b' }}>
-                  {currentDayTotals.calorias} / {plan.target_calorias} kcal ({compliance.caloriasPct}%)
-                </span>
+          {showMacrosSummary ? (
+            <div className="nutrition-macro-grid">
+              {/* CALORÍAS */}
+              <div className="nutrition-macro-calorias-col">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ color: 'rgba(255,255,255,0.7)', fontWeight: 700 }}>🔥 CALORÍAS</span>
+                    <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)' }}>
+                      ({compliance.caloriasDiff > 0 ? `+${compliance.caloriasDiff}` : compliance.caloriasDiff} kcal)
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontWeight: 800, color: compliance.status === 'optimo' ? '#10b981' : compliance.status === 'deficit' ? '#00d4ff' : '#f59e0b' }}>
+                      {currentDayTotals.calorias} / {plan.target_calorias} kcal ({compliance.caloriasPct}%)
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setShowMacrosSummary(false)}
+                      title="Plegar resumen de macros para ganar espacio"
+                      aria-label="Plegar resumen de macros"
+                      style={{
+                        background: 'rgba(255, 255, 255, 0.08)',
+                        border: '1px solid rgba(255, 255, 255, 0.15)',
+                        color: 'rgba(255, 255, 255, 0.7)',
+                        borderRadius: '4px',
+                        padding: '1px 6px',
+                        fontSize: '10px',
+                        cursor: 'pointer',
+                        lineHeight: 1.2,
+                      }}
+                    >
+                      ▲
+                    </button>
+                  </div>
+                </div>
+                <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', marginTop: '4px', overflow: 'hidden' }}>
+                  <div
+                    style={{
+                      width: `${Math.min(100, compliance.caloriasPct)}%`,
+                      height: '100%',
+                      background: compliance.status === 'optimo' ? '#10b981' : compliance.status === 'deficit' ? '#00d4ff' : '#f59e0b',
+                      borderRadius: '2px',
+                      transition: 'width 0.3s ease',
+                    }}
+                  />
+                </div>
               </div>
-              <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px', marginTop: '6px', overflow: 'hidden' }}>
-                <div
-                  style={{
-                    width: `${Math.min(100, compliance.caloriasPct)}%`,
-                    height: '100%',
-                    background: compliance.status === 'optimo' ? '#10b981' : compliance.status === 'deficit' ? '#00d4ff' : '#f59e0b',
-                    borderRadius: '3px',
-                    transition: 'width 0.3s ease',
-                  }}
-                />
-              </div>
-              <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', marginTop: '4px' }}>
-                Delta: {compliance.caloriasDiff > 0 ? `+${compliance.caloriasDiff}` : compliance.caloriasDiff} kcal
-              </div>
-            </div>
 
-            {/* PROTEÍNAS */}
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}>
-                <span style={{ color: '#3b82f6', fontWeight: 700 }}>🥩 PROTEÍNA</span>
-                <span style={{ fontWeight: 800, color: '#3b82f6' }}>
-                  {currentDayTotals.proteina} / {plan.target_proteina_g}g ({compliance.proteinaPct}%)
-                </span>
+              {/* PROTEÍNAS */}
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}>
+                  <span style={{ color: '#3b82f6', fontWeight: 700 }}>🥩 PROT</span>
+                  <span style={{ fontWeight: 800, color: '#3b82f6' }}>
+                    {currentDayTotals.proteina} / {plan.target_proteina_g}g ({compliance.proteinaPct}%)
+                  </span>
+                </div>
+                <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', marginTop: '4px', overflow: 'hidden' }}>
+                  <div
+                    style={{
+                      width: `${Math.min(100, compliance.proteinaPct)}%`,
+                      height: '100%',
+                      background: '#3b82f6',
+                      borderRadius: '2px',
+                      transition: 'width 0.3s ease',
+                    }}
+                  />
+                </div>
               </div>
-              <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px', marginTop: '6px', overflow: 'hidden' }}>
-                <div
-                  style={{
-                    width: `${Math.min(100, compliance.proteinaPct)}%`,
-                    height: '100%',
-                    background: '#3b82f6',
-                    borderRadius: '3px',
-                    transition: 'width 0.3s ease',
-                  }}
-                />
-              </div>
-            </div>
 
-            {/* CARBOHIDRATOS */}
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}>
-                <span style={{ color: '#10b981', fontWeight: 700 }}>🍚 CARBOS</span>
-                <span style={{ fontWeight: 800, color: '#10b981' }}>
-                  {currentDayTotals.carbohidratos} / {plan.target_carbohidratos_g}g ({compliance.carbohidratosPct}%)
-                </span>
+              {/* CARBOHIDRATOS */}
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}>
+                  <span style={{ color: '#10b981', fontWeight: 700 }}>🍚 CARB</span>
+                  <span style={{ fontWeight: 800, color: '#10b981' }}>
+                    {currentDayTotals.carbohidratos} / {plan.target_carbohidratos_g}g ({compliance.carbohidratosPct}%)
+                  </span>
+                </div>
+                <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', marginTop: '4px', overflow: 'hidden' }}>
+                  <div
+                    style={{
+                      width: `${Math.min(100, compliance.carbohidratosPct)}%`,
+                      height: '100%',
+                      background: '#10b981',
+                      borderRadius: '2px',
+                      transition: 'width 0.3s ease',
+                    }}
+                  />
+                </div>
               </div>
-              <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px', marginTop: '6px', overflow: 'hidden' }}>
-                <div
-                  style={{
-                    width: `${Math.min(100, compliance.carbohidratosPct)}%`,
-                    height: '100%',
-                    background: '#10b981',
-                    borderRadius: '3px',
-                    transition: 'width 0.3s ease',
-                  }}
-                />
-              </div>
-            </div>
 
-            {/* GRASAS */}
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}>
-                <span style={{ color: '#f59e0b', fontWeight: 700 }}>🥑 GRASAS</span>
-                <span style={{ fontWeight: 800, color: '#f59e0b' }}>
-                  {currentDayTotals.grasa} / {plan.target_grasa_g}g ({compliance.grasaPct}%)
-                </span>
-              </div>
-              <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.1)', borderRadius: '3px', marginTop: '6px', overflow: 'hidden' }}>
-                <div
-                  style={{
-                    width: `${Math.min(100, compliance.grasaPct)}%`,
-                    height: '100%',
-                    background: '#f59e0b',
-                    borderRadius: '3px',
-                    transition: 'width 0.3s ease',
-                  }}
-                />
+              {/* GRASAS */}
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}>
+                  <span style={{ color: '#f59e0b', fontWeight: 700 }}>🥑 GRAS</span>
+                  <span style={{ fontWeight: 800, color: '#f59e0b' }}>
+                    {currentDayTotals.grasa} / {plan.target_grasa_g}g ({compliance.grasaPct}%)
+                  </span>
+                </div>
+                <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', marginTop: '4px', overflow: 'hidden' }}>
+                  <div
+                    style={{
+                      width: `${Math.min(100, compliance.grasaPct)}%`,
+                      height: '100%',
+                      background: '#f59e0b',
+                      borderRadius: '2px',
+                      transition: 'width 0.3s ease',
+                    }}
+                  />
+                </div>
               </div>
             </div>
-          </div>
+          ) : (
+            <div
+              className="nutrition-macro-grid nutrition-macro-grid-collapsed"
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  setShowMacrosSummary(true);
+                }
+              }}
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '6px 12px',
+                cursor: 'pointer',
+                borderRadius: '8px',
+                background: 'rgba(0, 0, 0, 0.3)',
+                border: '1px solid rgba(255, 255, 255, 0.08)',
+              }}
+              onClick={() => setShowMacrosSummary(true)}
+              title="Toca para desplegar las metas y barras de macros"
+            >
+              <div
+                className="nutrition-macro-calorias-col"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  fontSize: '11px',
+                  flexWrap: 'wrap',
+                  border: 'none',
+                  padding: 0,
+                  margin: 0,
+                }}
+              >
+                <span style={{ fontWeight: 700, color: compliance.status === 'optimo' ? '#10b981' : compliance.status === 'deficit' ? '#00d4ff' : '#f59e0b' }}>
+                  🔥 {currentDayTotals.calorias}/{plan.target_calorias} kcal ({compliance.caloriasPct}%)
+                </span>
+                <span style={{ color: 'rgba(255,255,255,0.2)' }}>•</span>
+                <span style={{ color: '#3b82f6', fontWeight: 600 }}>🥩 {currentDayTotals.proteina}g</span>
+                <span style={{ color: 'rgba(255,255,255,0.2)' }}>•</span>
+                <span style={{ color: '#10b981', fontWeight: 600 }}>🍚 {currentDayTotals.carbohidratos}g</span>
+                <span style={{ color: 'rgba(255,255,255,0.2)' }}>•</span>
+                <span style={{ color: '#f59e0b', fontWeight: 600 }}>🥑 {currentDayTotals.grasa}g</span>
+              </div>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowMacrosSummary(true);
+                }}
+                title="Desplegar barras de macros"
+                aria-label="Desplegar barras de macros"
+                style={{
+                  background: 'rgba(0, 212, 255, 0.1)',
+                  border: '1px solid rgba(0, 212, 255, 0.3)',
+                  color: '#00d4ff',
+                  borderRadius: '4px',
+                  padding: '2px 8px',
+                  fontSize: '10px',
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '3px',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                <span>▼ Metas</span>
+              </button>
+            </div>
+          )}
         </div>
 
         {/* PESTAÑAS DE DÍAS Y BOTÓN COPIAR DÍA */}
@@ -1053,6 +1157,7 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
                   key={d.key}
                   type="button"
                   onClick={() => setActiveDayKey(d.key)}
+                  className="nutrition-day-tab-btn"
                   style={{
                     padding: '8px 12px',
                     borderRadius: '8px',
@@ -1100,17 +1205,18 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
               whiteSpace: 'nowrap',
             }}
           >
-            📋 COPIAR ESTE DÍA A...
+            <span className="nutrition-btn-label-desktop">📋 COPIAR ESTE DÍA A...</span>
+            <span className="nutrition-btn-label-mobile">📋 Copiar</span>
           </button>
         </div>
 
         {/* CONTENIDO SCROLLEABLE: LISTADO DE COMIDAS O VISTA PREVIA PDF */}
-        <div style={{ flex: 1, overflowY: 'auto', padding: '20px' }}>
+        <div className="nutrition-modal-content-area" style={{ flex: 1, overflowY: 'auto', padding: '20px' }}>
           {showPdfView ? (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
               {/* SELECTOR DE ALCANCE DEL PDF: SEMANA COMPLETA VS DÍA ACTUAL */}
               <div className="nutrition-pdf-toolbar">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                <div className="nutrition-pdf-scope-row" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                   <span style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.7)', fontWeight: 600 }}>
                     Alcance:
                   </span>

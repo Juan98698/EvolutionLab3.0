@@ -278,6 +278,60 @@ describe('Nutrition Planner & Food Selector Mobile Responsiveness Test Suite', (
       expect(container.querySelector('.nutrition-footer-btn-pdf')).toBeInTheDocument();
     });
 
+    it('supports collapsing and expanding macro summary bar for maximum vertical space', () => {
+      const { container } = render(
+        <NutritionPlannerModal
+          isOpen={true}
+          onClose={vi.fn()}
+          atleta={mockAthlete}
+          initialValuation={mockValuation}
+          trainerProfile={mockTrainer}
+        />
+      );
+
+      // Initially expanded
+      expect(container.querySelector('.nutrition-macro-grid')).toBeInTheDocument();
+      expect(container.querySelector('.nutrition-macro-grid-collapsed')).not.toBeInTheDocument();
+
+      // Find and click the collapse button (▲)
+      const collapseBtn = screen.getByRole('button', { name: /Plegar resumen de macros/i });
+      expect(collapseBtn).toBeInTheDocument();
+      fireEvent.click(collapseBtn);
+
+      // Should now be collapsed into slim single-line bar
+      expect(container.querySelector('.nutrition-macro-grid-collapsed')).toBeInTheDocument();
+      expect(container.querySelector('.nutrition-macro-calorias-col')).toBeInTheDocument();
+
+      // Find and click the expand button (▼ Metas)
+      const expandBtn = screen.getByRole('button', { name: /Desplegar barras de macros/i });
+      expect(expandBtn).toBeInTheDocument();
+      fireEvent.click(expandBtn);
+
+      // Should now be expanded back
+      expect(container.querySelector('.nutrition-macro-grid')).toBeInTheDocument();
+      expect(container.querySelector('.nutrition-macro-grid-collapsed')).not.toBeInTheDocument();
+    });
+
+    it('renders responsive desktop and mobile label utilities for header action buttons and copy day', () => {
+      const { container } = render(
+        <NutritionPlannerModal
+          isOpen={true}
+          onClose={vi.fn()}
+          atleta={mockAthlete}
+          initialValuation={mockValuation}
+          trainerProfile={mockTrainer}
+        />
+      );
+
+      // Has desktop and mobile label classes for clean responsive wrapping
+      const desktopLabels = container.querySelectorAll('.nutrition-btn-label-desktop');
+      const mobileLabels = container.querySelectorAll('.nutrition-btn-label-mobile');
+
+      expect(desktopLabels.length).toBeGreaterThan(0);
+      expect(mobileLabels.length).toBeGreaterThan(0);
+      expect(desktopLabels.length).toBe(mobileLabels.length);
+    });
+
     it('renders food items inside meals with 2-tier responsive classes (top & bottom)', async () => {
       const initialPlan = {
         cliente_id: mockAthlete.id,

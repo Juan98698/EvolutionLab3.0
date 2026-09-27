@@ -5119,6 +5119,14 @@ option {
   overflow: hidden;
 }
 
+/* Utilidades responsive para etiquetas de botones en nutrición */
+.nutrition-btn-label-desktop {
+  display: inline;
+}
+.nutrition-btn-label-mobile {
+  display: none;
+}
+
 .nutrition-macro-grid {
   display: grid;
   grid-template-columns: 1.2fr 1fr 1fr 1fr;
@@ -5461,10 +5469,22 @@ option {
     border: none !important;
   }
 
+  .nutrition-btn-label-desktop {
+    display: none !important;
+  }
+  .nutrition-btn-label-mobile {
+    display: inline !important;
+  }
+
+  .nutrition-header-container {
+    padding: 8px 10px !important;
+  }
+
   .nutrition-header-top {
     flex-direction: column !important;
     align-items: flex-start !important;
-    gap: 8px !important;
+    gap: 6px !important;
+    margin-bottom: 6px !important;
   }
 
   .nutrition-header-top-row1 {
@@ -5478,52 +5498,96 @@ option {
     width: 100% !important;
     display: flex !important;
     align-items: center !important;
-    gap: 6px !important;
+    gap: 4px !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+  }
+  .nutrition-header-actions::-webkit-scrollbar {
+    display: none !important;
   }
 
   .nutrition-header-action-btn {
-    flex: 1 !important;
+    flex: 1 1 0% !important;
+    min-width: 0 !important;
     justify-content: center !important;
     text-align: center !important;
-    padding: 7px 8px !important;
-    font-size: 11px !important;
+    padding: 5px 3px !important;
+    font-size: 10px !important;
+    white-space: nowrap !important;
+    line-height: 1.2 !important;
   }
 
-  /* Monitor de macros en móvil: Calorías en fila superior completa, 3 macros en fila inferior */
+  /* Monitor de macros en móvil: diseño compacto y estilizado */
   .nutrition-macro-grid {
     grid-template-columns: repeat(3, 1fr) !important;
-    gap: 8px !important;
-    padding: 10px 12px !important;
+    gap: 6px !important;
+    padding: 6px 10px !important;
   }
 
   .nutrition-macro-calorias-col {
     grid-column: 1 / -1 !important;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
-    padding-bottom: 8px !important;
-    margin-bottom: 2px !important;
+    padding-bottom: 4px !important;
+    margin-bottom: 0px !important;
   }
 
-  /* Barra de días */
+  .nutrition-macro-grid-collapsed {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    padding: 6px 10px !important;
+    gap: 6px !important;
+  }
+
+  .nutrition-macro-grid-collapsed .nutrition-macro-calorias-col {
+    grid-column: auto !important;
+    border-bottom: none !important;
+    padding-bottom: 0 !important;
+    margin-bottom: 0 !important;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+  }
+
+  /* Barra de días en móvil: tabs y botón copiar en una sola fila compacta */
   .nutrition-days-bar {
-    flex-direction: column !important;
-    align-items: stretch !important;
-    gap: 8px !important;
-    padding: 8px 12px !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 6px !important;
+    padding: 6px 10px !important;
   }
 
   .nutrition-days-scroll {
-    width: 100% !important;
+    flex: 1 1 0% !important;
+    min-width: 0 !important;
     display: flex !important;
-    gap: 6px !important;
+    gap: 4px !important;
     overflow-x: auto !important;
     -webkit-overflow-scrolling: touch !important;
-    padding-bottom: 4px !important;
+    padding-bottom: 0px !important;
+    scrollbar-width: none !important;
+  }
+  .nutrition-days-scroll::-webkit-scrollbar {
+    display: none !important;
+  }
+
+  .nutrition-day-tab-btn {
+    padding: 5px 8px !important;
+    min-width: 48px !important;
+    font-size: 10px !important;
   }
 
   .nutrition-copy-day-btn {
-    width: 100% !important;
-    justify-content: center !important;
-    padding: 8px !important;
+    flex: 0 0 auto !important;
+    width: auto !important;
+    padding: 6px 8px !important;
+    font-size: 10px !important;
+    white-space: nowrap !important;
+  }
+
+  /* Área scrolleable de contenido en móvil */
+  .nutrition-modal-content-area {
+    padding: 10px 12px !important;
   }
 
   /* Cabecera de comida */
@@ -5775,8 +5839,18 @@ option {
   .nutrition-pdf-toolbar {
     flex-direction: column !important;
     align-items: stretch !important;
-    gap: 10px !important;
-    padding: 10px 12px !important;
+    gap: 6px !important;
+    padding: 6px 10px !important;
+    margin-bottom: 8px !important;
+  }
+
+  .nutrition-pdf-scope-row {
+    width: 100% !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 6px !important;
+    flex-wrap: wrap !important;
   }
 
   .nutrition-pdf-zoom-group {
