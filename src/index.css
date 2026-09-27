@@ -5511,11 +5511,21 @@ option {
     flex: 1 1 0% !important;
     min-width: 0 !important;
     justify-content: center !important;
+    align-items: center !important;
     text-align: center !important;
     padding: 5px 3px !important;
     font-size: 10px !important;
     white-space: nowrap !important;
     line-height: 1.2 !important;
+    gap: 3px !important;
+    overflow: hidden !important;
+  }
+
+  .nutrition-equiv-badge {
+    padding: 1px 4px !important;
+    font-size: 9px !important;
+    line-height: 1 !important;
+    flex-shrink: 0 !important;
   }
 
   /* Monitor de macros en móvil: diseño compacto y estilizado */

@@ -905,26 +905,27 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
                   fontWeight: 700,
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '6px',
+                  gap: '4px',
                 }}
               >
                 <span className="nutrition-btn-label-desktop">🔄 Alimentos Equivalentes</span>
-                <span className="nutrition-btn-label-mobile">🔄 Equivalentes</span>
+                <span className="nutrition-btn-label-mobile">🔄 Equiv.</span>
                 {configuredEquivalentsCount > 0 ? (
                   <span
+                    className="nutrition-equiv-badge"
                     style={{
                       background: '#00d4ff',
                       color: '#000',
                       borderRadius: '10px',
-                      padding: '1px 6px',
-                      fontSize: '10px',
+                      padding: '1px 5px',
+                      fontSize: '9px',
                       fontWeight: 800,
                     }}
                   >
                     {configuredEquivalentsCount}
                   </span>
                 ) : (
-                  <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)' }}>(0)</span>
+                  <span className="nutrition-equiv-badge" style={{ fontSize: '9px', color: 'rgba(255,255,255,0.4)' }}>(0)</span>
                 )}
               </button>
               <button
