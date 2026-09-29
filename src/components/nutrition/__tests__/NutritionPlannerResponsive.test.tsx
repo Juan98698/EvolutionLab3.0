@@ -5,6 +5,8 @@ import { NutritionPlannerModal } from '../NutritionPlannerModal';
 import { FoodSelectorModal } from '../FoodSelectorModal';
 import { CopyDayModal } from '../CopyDayModal';
 import { Profile, ValoracionAntropometrica } from '../../../types/database.types';
+import { saveNutritionDraft } from '../../../lib/nutritionDraftStore';
+import { createPlanFromValuation } from '../../../lib/nutritionEngine';
 
 // Mock catalog data for testing using vi.hoisted
 const { mockSampleCatalog, mockCustomFoods } = vi.hoisted(() => ({
@@ -226,6 +228,7 @@ const mockValuation: ValoracionAntropometrica = {
 
 describe('Nutrition Planner & Food Selector Mobile Responsiveness Test Suite', () => {
   beforeEach(() => {
+    localStorage.clear();
     mockSupabaseData.remotePlan = null;
     for (const key in mockIdb) delete mockIdb[key];
     vi.clearAllMocks();
@@ -664,5 +667,37 @@ describe('Nutrition Planner & Food Selector Mobile Responsiveness Test Suite', (
       expect(serialized.toLowerCase()).not.toContain('nutrifit');
     });
   });
+
+  describe('Nutrition Draft & Lifecycle Persistence', () => {
+    it('initializes plan from saved draft when reopening modal after app suspension or switch', () => {
+      const mockPlanWithDraft = createPlanFromValuation('atleta-draft-test-1', null);
+      mockPlanWithDraft.nombre = 'Plan en Borrador Restaurado';
+      mockPlanWithDraft.target_calorias = 2850;
+
+      saveNutritionDraft('atleta-draft-test-1', mockPlanWithDraft, 'miercoles');
+
+      render(
+        <NutritionPlannerModal
+          isOpen={true}
+          onClose={vi.fn()}
+          atleta={{
+            id: 'atleta-draft-test-1',
+            nombre: 'Atleta Prueba Borrador',
+            email: 'atleta-draft@test.com',
+            rol: 'cliente',
+            created_at: '2026-01-01',
+          }}
+          initialValuation={null}
+          trainerProfile={null}
+        />
+      );
+
+      // El plan restaurado debe reflejar 2850 kcal del borrador
+      expect(screen.getAllByText(/2850/i).length).toBeGreaterThanOrEqual(1);
+      // Y debe abrir el día activo guardado en el borrador (Miércoles)
+      expect(screen.getByText('Miércoles')).toBeInTheDocument();
+    });
+  });
 });
+
 

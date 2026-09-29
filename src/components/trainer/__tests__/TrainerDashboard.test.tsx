@@ -3,6 +3,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor, cleanup, within } from '@testing-library/react';
 import { TrainerDashboard } from '../TrainerDashboard';
 import { ConfirmDialogProvider } from '../../../context/ConfirmDialogContext';
+import { saveActiveNutritionSession, NUTRITION_ACTIVE_SESSION_KEY } from '../../../lib/nutritionDraftStore';
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -89,6 +90,21 @@ vi.mock('../tabs/TrainerAuditsTab', () => ({
 }));
 vi.mock('../TrainerAlertsHub', () => ({
   default: () => <div data-testid="mock-alerts-hub" />,
+}));
+
+vi.mock('../../nutrition/NutritionPlannerModal', () => ({
+  default: ({ atleta, onClose }: any) => (
+    <div data-testid="mock-nutrition-modal">
+      <span>Modal Nutrición: {atleta.nombre}</span>
+      <button onClick={onClose}>Cerrar Modal</button>
+    </div>
+  ),
+  NutritionPlannerModal: ({ atleta, onClose }: any) => (
+    <div data-testid="mock-nutrition-modal">
+      <span>Modal Nutrición: {atleta.nombre}</span>
+      <button onClick={onClose}>Cerrar Modal</button>
+    </div>
+  ),
 }));
 
 function renderTrainerDashboard() {
@@ -212,5 +228,33 @@ describe('TrainerDashboard — renderizado general', () => {
 
     // Aparece más de una vez (header "Entrenador: X" y atribución "Por X" más abajo).
     expect(screen.getAllByText('Coach Trainer').length).toBeGreaterThan(0);
+  });
+});
+
+describe('TrainerDashboard — persistencia y recuperación de sesión nutricional', () => {
+  it('restaura automáticamente el modal de nutrición si existe una sesión activa no expirada', async () => {
+    const mockAtletaActivo = {
+      id: 'client-1',
+      nombre: 'Ana Torres',
+      email: 'ana@cliente.com',
+      rol: 'cliente' as const,
+      created_at: '2026-01-01',
+    };
+
+    saveActiveNutritionSession(mockAtletaActivo, null, trainerProfile.id);
+
+    renderTrainerDashboard();
+
+    // El modal debe montarse inmediatamente restaurando el atleta
+    const modal = await screen.findByTestId('mock-nutrition-modal');
+    expect(modal).toBeInTheDocument();
+    expect(within(modal).getByText(/Modal Nutrición: Ana Torres/i)).toBeInTheDocument();
+
+    // Al pulsar cerrar modal deliberadamente, limpia la sesión
+    fireEvent.click(within(modal).getByText('Cerrar Modal'));
+    await waitFor(() => {
+      expect(screen.queryByTestId('mock-nutrition-modal')).not.toBeInTheDocument();
+    });
+    expect(localStorage.getItem(NUTRITION_ACTIVE_SESSION_KEY)).toBeNull();
   });
 });

@@ -16,6 +16,11 @@ import { useConfirm } from '../../context/ConfirmDialogContext';
 
 import TrainerClientsTab from './tabs/TrainerClientsTab';
 import TrainerAuditsTab from './tabs/TrainerAuditsTab';
+import {
+  saveActiveNutritionSession,
+  getActiveNutritionSession,
+  clearActiveNutritionSession,
+} from '../../lib/nutritionDraftStore';
 
 // Lazy Loaded Modals
 const RegisterClientModal = lazy(() => import('./modals/RegisterClientModal'));
@@ -80,14 +85,34 @@ export const TrainerDashboard: React.FC = () => {
   const [isAnthropometryModalOpen, setIsAnthropometryModalOpen] = useState<boolean>(false);
   const [selectedAthleteForAnthropometry, setSelectedAthleteForAnthropometry] = useState<Profile | null>(null);
 
-  const [isNutritionModalOpen, setIsNutritionModalOpen] = useState<boolean>(false);
-  const [selectedAthleteForNutrition, setSelectedAthleteForNutrition] = useState<Profile | null>(null);
-  const [selectedValuationForNutrition, setSelectedValuationForNutrition] = useState<ValoracionAntropometrica | null>(null);
+  // Sesión activa persistente de planificación nutricional
+  const initialNutritionSession = useRef(getActiveNutritionSession());
+  const [isNutritionModalOpen, setIsNutritionModalOpen] = useState<boolean>(() => {
+    return Boolean(initialNutritionSession.current?.atleta);
+  });
+  const [selectedAthleteForNutrition, setSelectedAthleteForNutrition] = useState<Profile | null>(() => {
+    return initialNutritionSession.current?.atleta || null;
+  });
+  const [selectedValuationForNutrition, setSelectedValuationForNutrition] = useState<ValoracionAntropometrica | null>(() => {
+    return initialNutritionSession.current?.valuation || null;
+  });
 
   const isPaidTrainer = Boolean(
     (trainerSubscription?.plan && trainerSubscription.plan !== 'free') ||
     (profile?.suscripcion_plan && profile.suscripcion_plan !== 'free')
   );
+
+  // Validación de seguridad: si el perfil de entrenador cargado no coincide con el de la sesión restaurada, cerrar
+  useEffect(() => {
+    if (profile?.id && isNutritionModalOpen && initialNutritionSession.current?.trainerId) {
+      if (initialNutritionSession.current.trainerId !== profile.id) {
+        clearActiveNutritionSession();
+        setIsNutritionModalOpen(false);
+        setSelectedAthleteForNutrition(null);
+        setSelectedValuationForNutrition(null);
+      }
+    }
+  }, [profile?.id, isNutritionModalOpen]);
 
   const handleOpenAnthropometryModal = (atleta: Profile) => {
     if (!isPaidTrainer) {
@@ -104,8 +129,9 @@ export const TrainerDashboard: React.FC = () => {
       return;
     }
     setSelectedAthleteForNutrition(atleta);
-    if (valuation) {
-      setSelectedValuationForNutrition(valuation);
+    let resolvedValuation = valuation || null;
+    if (resolvedValuation) {
+      setSelectedValuationForNutrition(resolvedValuation);
     } else {
       try {
         const { data, error } = await supabase
@@ -116,7 +142,8 @@ export const TrainerDashboard: React.FC = () => {
           .limit(1)
           .maybeSingle();
         if (data && !error) {
-          setSelectedValuationForNutrition(data as ValoracionAntropometrica);
+          resolvedValuation = data as ValoracionAntropometrica;
+          setSelectedValuationForNutrition(resolvedValuation);
         } else {
           setSelectedValuationForNutrition(null);
         }
@@ -125,6 +152,7 @@ export const TrainerDashboard: React.FC = () => {
         setSelectedValuationForNutrition(null);
       }
     }
+    saveActiveNutritionSession(atleta, resolvedValuation, profile?.id);
     setIsNutritionModalOpen(true);
   };
 
@@ -209,6 +237,7 @@ export const TrainerDashboard: React.FC = () => {
       return;
     }
     try {
+      clearActiveNutritionSession();
       await signOut();
       navigate('/login');
     } catch (error) {
@@ -1032,6 +1061,7 @@ export const TrainerDashboard: React.FC = () => {
           <NutritionPlannerModal
             isOpen={isNutritionModalOpen}
             onClose={() => {
+              clearActiveNutritionSession();
               setIsNutritionModalOpen(false);
               setSelectedAthleteForNutrition(null);
               setSelectedValuationForNutrition(null);

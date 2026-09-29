@@ -35,6 +35,12 @@ import { sharePlanWithPdfViaWhatsapp } from '../../lib/nutritionWhatsapp';
 import { useFoodEquivalents } from './useFoodEquivalents';
 import { FoodEquivalentsConfigModal } from './FoodEquivalentsConfigModal';
 import { FoodEquivalentOption } from '../../types/nutrition.types';
+import {
+  saveNutritionDraft,
+  getNutritionDraft,
+  clearNutritionDraft,
+  saveActiveNutritionSession,
+} from '../../lib/nutritionDraftStore';
 
 interface NutritionPlannerModalProps {
   isOpen: boolean;
@@ -53,12 +59,26 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
   trainerProfile,
   showToast,
 }) => {
-  // Plan activo en edición
-  const [plan, setPlan] = useState<NutritionPlan>(() =>
-    createPlanFromValuation(atleta.id, initialValuation, trainerProfile?.id)
-  );
+  // Plan activo en edición (con recuperación instantánea de borrador si existe)
+  const [plan, setPlan] = useState<NutritionPlan>(() => {
+    if (atleta?.id) {
+      const draft = getNutritionDraft(atleta.id);
+      if (draft?.plan) {
+        return draft.plan;
+      }
+    }
+    return createPlanFromValuation(atleta.id, initialValuation, trainerProfile?.id);
+  });
 
-  const [activeDayKey, setActiveDayKey] = useState<DayOfWeek>('lunes');
+  const [activeDayKey, setActiveDayKey] = useState<DayOfWeek>(() => {
+    if (atleta?.id) {
+      const draft = getNutritionDraft(atleta.id);
+      if (draft?.activeDayKey) {
+        return draft.activeDayKey;
+      }
+    }
+    return 'lunes';
+  });
   const [loading, setLoading] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
   const [downloadingPdf, setDownloadingPdf] = useState<boolean>(false);
@@ -156,6 +176,60 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
     ).length;
   }, [plan.datos_plan?.equivalencias]);
 
+  // Referencias a los valores más recientes para sincronización instantánea y ciclo de vida móvil
+  const latestPlanRef = useRef<NutritionPlan>(plan);
+  const latestActiveDayKeyRef = useRef<DayOfWeek>(activeDayKey);
+  const resolvedValuationRef = useRef<ValoracionAntropometrica | null>(initialValuation || null);
+
+  useEffect(() => {
+    latestPlanRef.current = plan;
+  }, [plan]);
+
+  useEffect(() => {
+    latestActiveDayKeyRef.current = activeDayKey;
+  }, [activeDayKey]);
+
+  // Autoguardado con debounce de 250ms cada vez que cambie el plan o el día activo
+  useEffect(() => {
+    if (!isOpen || !atleta?.id || !plan) return;
+
+    const timer = setTimeout(() => {
+      saveNutritionDraft(atleta.id, plan, activeDayKey);
+      saveActiveNutritionSession(atleta, resolvedValuationRef.current, trainerProfile?.id);
+    }, 250);
+
+    return () => clearTimeout(timer);
+  }, [plan, activeDayKey, atleta, trainerProfile?.id, isOpen]);
+
+  // Persistencia inmediata al cambiar de app, minimizar navegador, bloquear pantalla o salir
+  useEffect(() => {
+    if (!isOpen || !atleta?.id) return;
+
+    const flushDraft = () => {
+      if (latestPlanRef.current && atleta?.id) {
+        saveNutritionDraft(atleta.id, latestPlanRef.current, latestActiveDayKeyRef.current);
+        saveActiveNutritionSession(atleta, resolvedValuationRef.current, trainerProfile?.id);
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        flushDraft();
+      }
+    };
+
+    window.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('pagehide', flushDraft);
+    window.addEventListener('beforeunload', flushDraft);
+
+    return () => {
+      window.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('pagehide', flushDraft);
+      window.removeEventListener('beforeunload', flushDraft);
+      flushDraft();
+    };
+  }, [isOpen, atleta, trainerProfile?.id]);
+
   // Cargar plan existente desde Supabase o IndexedDB al abrir, o resolver última valoración
   useEffect(() => {
     if (!isOpen || !atleta?.id) return;
@@ -177,6 +251,7 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
 
           if (valData) {
             resolvedValuation = valData as ValoracionAntropometrica;
+            resolvedValuationRef.current = resolvedValuation;
           }
         } catch (valErr) {
           console.warn('No se pudo verificar valoración en Supabase:', valErr);
@@ -185,6 +260,9 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
         if (resolvedValuation?.fecha && isMounted) {
           setSyncedValuationDate(resolvedValuation.fecha);
         }
+
+        // Revisar si existe un borrador local reciente para este atleta
+        const localDraft = getNutritionDraft(atleta.id);
 
         // 1. Intentar cargar plan guardado desde Supabase
         const { data: remotePlan, error } = await supabase
@@ -197,7 +275,34 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
           .maybeSingle();
 
         if (remotePlan && !error && isMounted) {
+          const remoteTimestamp = remotePlan.updated_at
+            ? new Date(remotePlan.updated_at).getTime()
+            : (remotePlan.created_at ? new Date(remotePlan.created_at).getTime() : 0);
+
+          // Si el borrador local es más reciente que el plan guardado en la nube, conservar el borrador local
+          if (localDraft && localDraft.plan && localDraft.timestamp >= remoteTimestamp) {
+            setPlan(localDraft.plan);
+            if (localDraft.activeDayKey) {
+              setActiveDayKey(localDraft.activeDayKey);
+            }
+            return;
+          }
+
+          // Si la versión en la nube es más reciente, usar la de la nube y limpiar borrador obsoleto
+          if (localDraft && remoteTimestamp > localDraft.timestamp) {
+            clearNutritionDraft(atleta.id);
+          }
+
           setPlan(remotePlan as unknown as NutritionPlan);
+          return;
+        }
+
+        // Si no hay remotePlan pero sí borrador local, usar el borrador
+        if (localDraft && localDraft.plan && isMounted) {
+          setPlan(localDraft.plan);
+          if (localDraft.activeDayKey) {
+            setActiveDayKey(localDraft.activeDayKey);
+          }
           return;
         }
 
@@ -208,7 +313,7 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
           return;
         }
 
-        // 3. Si no hay plan previo guardado, inicializar con la valoración resuelta
+        // 3. Si no hay plan previo guardado ni borrador, inicializar con la valoración resuelta
         if (isMounted) {
           setPlan(createPlanFromValuation(atleta.id, resolvedValuation, trainerProfile?.id));
         }
@@ -622,6 +727,7 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
       }
 
       showToast?.('🎉 ¡Plan nutricional guardado exitosamente!', 'success');
+      clearNutritionDraft(atleta.id);
     } catch (err: any) {
       console.error('Error al guardar plan nutricional:', err);
       showToast?.('Error al sincronizar con la nube: ' + (err.message || err), 'error');

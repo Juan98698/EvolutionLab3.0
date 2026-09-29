@@ -1,6 +1,6 @@
 // @vitest-environment happy-dom
 import { render, screen, fireEvent, cleanup } from '@testing-library/react';
-import { describe, it, expect, vi, afterEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { NutritionReportPDF } from '../NutritionReportPDF';
 import { NutritionPlannerModal } from '../NutritionPlannerModal';
 import { NutritionPlan, NutritionDay } from '../../../types/nutrition.types';
@@ -236,8 +236,14 @@ describe('NutritionReportPDF — Multi-day vs Single-day rendering', () => {
 });
 
 describe('NutritionPlannerModal — Copy Day Navigation & PDF Scope Toggle', () => {
+  beforeEach(() => {
+    localStorage.clear();
+    vi.clearAllMocks();
+  });
+
   afterEach(() => {
     cleanup();
+    localStorage.clear();
     vi.clearAllMocks();
   });
 
