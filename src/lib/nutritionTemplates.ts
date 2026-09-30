@@ -173,9 +173,9 @@ export async function saveNutritionTemplate(
   }
   saveLocalDietTemplates(trainerId, localList);
 
-  // 2. Intentar sincronizar con Supabase si existe la tabla
+  // 2. Intentar sincronizar con Supabase
   try {
-    await supabase.from('plantillas_nutricionales').upsert({
+    const payloadFull = {
       id: template.id,
       entrenador_id: template.entrenador_id,
       nombre: template.nombre,
@@ -187,16 +187,48 @@ export async function saveNutritionTemplate(
       target_grasa_g: template.target_grasa_g,
       datos_plan: template.datos_plan,
       updated_at: template.updated_at,
-    });
-  } catch {
-    // Modo offline o tabla no creada aún; la persistencia local garantiza continuidad
+    };
+
+    const { error } = await supabase.from('plantillas_nutricionales').upsert(payloadFull);
+    if (error) {
+      // Si la tabla en Supabase todavía no tiene las columnas de la migración v15 (código 42703: undefined_column),
+      // reintentar de inmediato con las columnas base para que la plantilla sí llegue a la nube.
+      if (
+        error.code === '42703' ||
+        error.message?.includes('target_proteina_g') ||
+        error.message?.includes('column') ||
+        error.message?.includes('does not exist')
+      ) {
+        console.warn(
+          '[NutritionTemplates] Columnas extendidas no detectadas en Supabase (migración v15 pendiente). Reintentando con esquema base...'
+        );
+        const payloadBase = {
+          id: template.id,
+          entrenador_id: template.entrenador_id,
+          nombre: template.nombre,
+          descripcion: template.descripcion,
+          objetivo: template.objetivo,
+          target_calorias: template.target_calorias,
+          datos_plan: template.datos_plan,
+        };
+        const { error: fallbackError } = await supabase.from('plantillas_nutricionales').upsert(payloadBase);
+        if (fallbackError) {
+          console.warn('[NutritionTemplates] Error al guardar plantilla con esquema base:', fallbackError);
+        }
+      } else {
+        console.warn('[NutritionTemplates] Error al sincronizar plantilla con Supabase:', error.message || error);
+      }
+    }
+  } catch (err) {
+    console.warn('[NutritionTemplates] Error de red al sincronizar con la nube:', err);
   }
 
   return template;
 }
 
 /**
- * Obtiene todas las plantillas de dieta del entrenador
+ * Obtiene todas las plantillas de dieta del entrenador (sincronizando automáticamente
+ * cualquier plantilla local previa que no haya alcanzado la nube).
  */
 export async function getNutritionTemplates(trainerId: string): Promise<NutritionTemplate[]> {
   const localList = getLocalDietTemplates(trainerId);
@@ -206,15 +238,35 @@ export async function getNutritionTemplates(trainerId: string): Promise<Nutritio
       .from('plantillas_nutricionales')
       .select('*')
       .eq('entrenador_id', trainerId)
-      .order('updated_at', { ascending: false });
+      .order('created_at', { ascending: false });
 
-    if (!error && data && data.length > 0) {
-      // Sincronizar cache local con la nube
-      saveLocalDietTemplates(trainerId, data as unknown as NutritionTemplate[]);
-      return data as unknown as NutritionTemplate[];
+    if (!error && Array.isArray(data)) {
+      const remoteTemplates = data as unknown as NutritionTemplate[];
+      const remoteIds = new Set(remoteTemplates.map((r) => r.id));
+
+      // Sincronización automática de plantillas locales históricas hacia la nube:
+      // Si el entrenador tiene plantillas en su navegador que no llegaron a Supabase
+      // debido al desajuste previo de columnas, subirlas en segundo plano.
+      const unsyncedLocals = localList.filter((local) => !remoteIds.has(local.id));
+      if (unsyncedLocals.length > 0) {
+        Promise.allSettled(unsyncedLocals.map((tpl) => saveNutritionTemplate(tpl))).catch(() => {});
+      }
+
+      // Fusionar remotas y locales
+      const mergedMap = new Map<string, NutritionTemplate>();
+      remoteTemplates.forEach((t) => mergedMap.set(t.id, t));
+      localList.forEach((t) => {
+        if (!mergedMap.has(t.id)) mergedMap.set(t.id, t);
+      });
+      const mergedList = Array.from(mergedMap.values());
+
+      saveLocalDietTemplates(trainerId, mergedList);
+      return mergedList;
+    } else if (error) {
+      console.warn('[NutritionTemplates] Error al consultar plantillas:', error.message || error);
     }
-  } catch {
-    // Red no disponible o tabla en desarrollo
+  } catch (err) {
+    console.warn('[NutritionTemplates] Red no disponible al consultar plantillas:', err);
   }
 
   return localList;
@@ -228,9 +280,12 @@ export async function deleteNutritionTemplate(id: string, trainerId: string): Pr
   saveLocalDietTemplates(trainerId, localList);
 
   try {
-    await supabase.from('plantillas_nutricionales').delete().eq('id', id);
-  } catch {
-    // Ignorar si offline
+    const { error } = await supabase.from('plantillas_nutricionales').delete().eq('id', id);
+    if (error) {
+      console.warn('[NutritionTemplates] Error al eliminar plantilla en Supabase:', error.message || error);
+    }
+  } catch (err) {
+    console.warn('[NutritionTemplates] Red no disponible al eliminar plantilla:', err);
   }
 
   return true;
@@ -298,7 +353,7 @@ export async function saveMealTemplate(
   saveLocalMealTemplates(trainerId, updatedList);
 
   try {
-    await supabase.from('recetas_nutricionales').upsert({
+    const { error } = await supabase.from('recetas_nutricionales').upsert({
       id: template.id,
       entrenador_id: template.entrenador_id,
       nombre: template.nombre,
@@ -307,15 +362,19 @@ export async function saveMealTemplate(
       foods: template.foods,
       updated_at: template.updated_at,
     });
-  } catch {
-    // Offline
+    if (error) {
+      console.warn('[MealTemplates] Error de Supabase al guardar receta en la nube:', error.message || error);
+    }
+  } catch (err) {
+    console.warn('[MealTemplates] Error de red al sincronizar receta con la nube:', err);
   }
 
   return template;
 }
 
 /**
- * Obtiene todas las recetas de comida del entrenador
+ * Obtiene todas las recetas de comida del entrenador (sincronizando automáticamente
+ * cualquier receta local previa que no haya alcanzado la nube).
  */
 export async function getMealTemplates(trainerId: string): Promise<MealTemplate[]> {
   const localList = getLocalMealTemplates(trainerId);
@@ -325,14 +384,36 @@ export async function getMealTemplates(trainerId: string): Promise<MealTemplate[
       .from('recetas_nutricionales')
       .select('*')
       .eq('entrenador_id', trainerId)
-      .order('updated_at', { ascending: false });
+      .order('created_at', { ascending: false });
 
-    if (!error && data && data.length > 0) {
-      saveLocalMealTemplates(trainerId, data as unknown as MealTemplate[]);
-      return data as unknown as MealTemplate[];
+    if (!error && Array.isArray(data)) {
+      const remoteRecipes = data as unknown as MealTemplate[];
+      const remoteIds = new Set(remoteRecipes.map((r) => r.id));
+
+      // Sincronizar recetas locales huérfanas hacia la nube
+      const unsyncedLocals = localList.filter(
+        (local) => local.entrenador_id !== 'system' && !remoteIds.has(local.id)
+      );
+      if (unsyncedLocals.length > 0) {
+        Promise.allSettled(unsyncedLocals.map((m) => saveMealTemplate(m))).catch(() => {});
+      }
+
+      // Fusionar remotas con locales y las default del sistema
+      const mergedMap = new Map<string, MealTemplate>();
+      DEFAULT_MEAL_TEMPLATES.forEach((def) => mergedMap.set(def.id, def));
+      remoteRecipes.forEach((m) => mergedMap.set(m.id, m));
+      localList.forEach((m) => {
+        if (!mergedMap.has(m.id)) mergedMap.set(m.id, m);
+      });
+      const mergedList = Array.from(mergedMap.values());
+
+      saveLocalMealTemplates(trainerId, mergedList);
+      return mergedList;
+    } else if (error) {
+      console.warn('[MealTemplates] Error al consultar recetas:', error.message || error);
     }
-  } catch {
-    // Fallback local
+  } catch (err) {
+    console.warn('[MealTemplates] Red no disponible al consultar recetas:', err);
   }
 
   return localList;
@@ -346,9 +427,12 @@ export async function deleteMealTemplate(id: string, trainerId: string): Promise
   saveLocalMealTemplates(trainerId, current);
 
   try {
-    await supabase.from('recetas_nutricionales').delete().eq('id', id);
-  } catch {
-    // Offline
+    const { error } = await supabase.from('recetas_nutricionales').delete().eq('id', id);
+    if (error) {
+      console.warn('[MealTemplates] Error al eliminar receta en Supabase:', error.message || error);
+    }
+  } catch (err) {
+    console.warn('[MealTemplates] Red no disponible al eliminar receta:', err);
   }
 
   return true;

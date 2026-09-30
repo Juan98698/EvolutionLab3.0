@@ -13,6 +13,7 @@ import {
 } from '../nutritionTemplates';
 import { formatDayForWhatsapp, sharePlanViaWhatsapp } from '../nutritionWhatsapp';
 import { NutritionPlan, NutritionTemplate, MealTemplate, MealFoodItem, Meal } from '../../types/nutrition.types';
+import { supabase } from '../supabaseClient';
 
 // Mock de Supabase para pruebas offline
 vi.mock('../supabaseClient', () => ({
@@ -423,6 +424,73 @@ describe('Nutrición 3.0: Opciones 4, 5 y 6 — Plantillas, WhatsApp y Calidad d
 
       const list = await getNutritionTemplates('trainer-01');
       expect(list.some((t) => t.id === saved.id)).toBe(false);
+    });
+
+    it('reintenta el guardado con columnas base si Supabase retorna error 42703 (columna inexistente antes de migración v15)', async () => {
+      const upsertMock = vi.fn()
+        .mockResolvedValueOnce({
+          data: null,
+          error: { code: '42703', message: 'column "target_proteina_g" of relation "plantillas_nutricionales" does not exist' },
+        })
+        .mockResolvedValueOnce({
+          data: null,
+          error: null,
+        });
+
+      vi.spyOn(supabase, 'from').mockReturnValue({
+        upsert: upsertMock,
+      } as any);
+
+      const saved = await saveNutritionTemplate({
+        entrenador_id: 'trainer-01',
+        nombre: 'Dieta con Fallback',
+        target_calorias: 2400,
+        target_proteina_g: 160,
+        target_carbohidratos_g: 250,
+        target_grasa_g: 65,
+        datos_plan: mockPlan.datos_plan,
+      });
+
+      expect(saved.id).toBeDefined();
+      expect(upsertMock).toHaveBeenCalledTimes(2);
+      // El segundo intento (fallback) se envía sin target_proteina_g para salvar la plantilla en Supabase
+      expect(upsertMock.mock.calls[1][0]).not.toHaveProperty('target_proteina_g');
+      expect(upsertMock.mock.calls[1][0]).toHaveProperty('nombre', 'Dieta con Fallback');
+    });
+
+    it('auto-sincroniza plantillas locales históricas hacia Supabase cuando se listan plantillas', async () => {
+      const localTemplate: NutritionTemplate = {
+        id: 'local-only-1',
+        entrenador_id: 'trainer-sync-test',
+        nombre: 'Plantilla Local Histórica',
+        datos_plan: mockPlan.datos_plan,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      localStorage.setItem('evolution_diet_templates_trainer-sync-test', JSON.stringify([localTemplate]));
+
+      const upsertMock = vi.fn().mockResolvedValue({ data: null, error: null });
+      vi.spyOn(supabase, 'from').mockImplementation((table: string) => {
+        if (table === 'plantillas_nutricionales') {
+          return {
+            select: vi.fn().mockReturnValue({
+              eq: vi.fn().mockReturnValue({
+                order: vi.fn().mockResolvedValue({ data: [], error: null }),
+              }),
+            }),
+            upsert: upsertMock,
+          } as any;
+        }
+        return {} as any;
+      });
+
+      const templates = await getNutritionTemplates('trainer-sync-test');
+      expect(templates.length).toBe(1);
+      expect(templates[0].id).toBe('local-only-1');
+      // Debe haber llamado a upsert para subir la plantilla local a Supabase
+      expect(upsertMock).toHaveBeenCalledWith(
+        expect.objectContaining({ id: 'local-only-1', nombre: 'Plantilla Local Histórica' })
+      );
     });
   });
 
