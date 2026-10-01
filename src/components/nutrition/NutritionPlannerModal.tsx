@@ -753,18 +753,20 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
       }
     });
 
-    setPlan((prev) => ({
-      ...prev,
-      target_calorias: prev.target_calorias > 0 ? prev.target_calorias : (template.target_calorias ?? 0),
-      target_proteina_g: prev.target_proteina_g > 0 ? prev.target_proteina_g : (template.target_proteina_g ?? 0),
-      target_carbohidratos_g: prev.target_carbohidratos_g > 0 ? prev.target_carbohidratos_g : (template.target_carbohidratos_g ?? 0),
-      target_grasa_g: prev.target_grasa_g > 0 ? prev.target_grasa_g : (template.target_grasa_g ?? 0),
-      objetivo: template.objetivo || prev.objetivo,
-      datos_plan: {
-        ...prev.datos_plan,
-        days: clonedDays,
-      },
-    }));
+    setPlan((prev) =>
+      healPlanFoodItems({
+        ...prev,
+        target_calorias: prev.target_calorias > 0 ? prev.target_calorias : (template.target_calorias ?? 0),
+        target_proteina_g: prev.target_proteina_g > 0 ? prev.target_proteina_g : (template.target_proteina_g ?? 0),
+        target_carbohidratos_g: prev.target_carbohidratos_g > 0 ? prev.target_carbohidratos_g : (template.target_carbohidratos_g ?? 0),
+        target_grasa_g: prev.target_grasa_g > 0 ? prev.target_grasa_g : (template.target_grasa_g ?? 0),
+        objetivo: template.objetivo || prev.objetivo,
+        datos_plan: {
+          ...prev.datos_plan,
+          days: clonedDays,
+        },
+      })
+    );
 
     setLoadDietModalOpen(false);
     showToast?.(`✅ Plantilla «${template.nombre}» cargada. Es 100% editable para este atleta.`, 'success');
@@ -775,10 +777,13 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
     if (mealIdxToLoadRecipe === null) return;
     const targetIdx = mealIdxToLoadRecipe;
 
-    const clonedFoods: MealFoodItem[] = mealTemplate.foods.map((food, fIdx) => ({
-      ...food,
-      id: `food_${Date.now()}_${targetIdx}_${fIdx}_${Math.random().toString(36).substring(2, 6)}`,
-    }));
+    const clonedFoods: MealFoodItem[] = mealTemplate.foods.map((food, fIdx) => {
+      const resolved = recalculateFoodItemMacros(food, food.cantidad);
+      return {
+        ...resolved,
+        id: `food_${Date.now()}_${targetIdx}_${fIdx}_${Math.random().toString(36).substring(2, 6)}`,
+      };
+    });
 
     setPlan((prev) => {
       const day = prev.datos_plan.days[activeDayKey];
