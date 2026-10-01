@@ -124,6 +124,162 @@ export function calculatePortionMacros(
 }
 
 /**
+ * Recalcula de forma pura y determinista las calorías y macronutrientes de un MealFoodItem
+ * al cambiar la cantidad prescrita por el entrenador.
+ *
+ * Garantiza:
+ * 1. Resiliencia contra borrado temporal: Si el usuario borra la cantidad (0 o campo vacío),
+ *    los macros se muestran en 0 pero los valores nutricionales base (*Base) se conservan intactos.
+ * 2. Si el alimento no tenía los campos *Base (planes o plantillas previas), los resuelve
+ *    del catálogo oficial BASE_FOOD_CATALOG (por foodId o nombre) o los infiere de forma segura.
+ * 3. Al reingresar una cantidad (ej: cambiar de 100g a 90g), escala proporcionalmente
+ *    contra la porción base sin pérdida de precisión ni congelamiento irreversible en cero.
+ */
+export function recalculateFoodItemMacros(
+  food: MealFoodItem,
+  newQty: number
+): MealFoodItem {
+  const safeQty = Math.max(0, Number(newQty) || 0);
+
+  let cantidadBase = food.cantidadBase > 0 ? food.cantidadBase : 100;
+  let caloriasBase = food.caloriasBase;
+  let proteinaBase = food.proteinaBase;
+  let carbohidratosBase = food.carbohidratosBase;
+  let grasaBase = food.grasaBase;
+
+  // Si no cuenta con valores base explícitos, buscarlos en el catálogo oficial
+  if (
+    caloriasBase === undefined ||
+    proteinaBase === undefined ||
+    carbohidratosBase === undefined ||
+    grasaBase === undefined
+  ) {
+    const foodNorm = normalizeFoodSearchText(food.nombre);
+    const catMatch = BASE_FOOD_CATALOG.find(
+      (c) =>
+        (food.foodId && String(c.id) === String(food.foodId)) ||
+        normalizeFoodSearchText(c.nombre) === foodNorm
+    );
+
+    if (catMatch) {
+      cantidadBase = catMatch.cantidadBase > 0 ? catMatch.cantidadBase : 100;
+      caloriasBase = Number(catMatch.caloriasBase) || 0;
+      proteinaBase = Number(catMatch.proteinaBase) || 0;
+      carbohidratosBase = Number(catMatch.carbohidratosBase) || 0;
+      grasaBase = Number(catMatch.grasaBase) || 0;
+    } else if (
+      food.cantidad > 0 &&
+      (food.calorias > 0 || food.proteina > 0 || food.carbohidratos > 0 || food.grasa > 0)
+    ) {
+      const ratio = cantidadBase / food.cantidad;
+      caloriasBase = Math.round(food.calorias * ratio);
+      proteinaBase = round1(food.proteina * ratio);
+      carbohidratosBase = round1(food.carbohidratos * ratio);
+      grasaBase = round1(food.grasa * ratio);
+    }
+  }
+
+  const finalCantidadBase = cantidadBase > 0 ? cantidadBase : 100;
+  const finalCaloriasBase = Number(caloriasBase) || 0;
+  const finalProteinaBase = Number(proteinaBase) || 0;
+  const finalCarbohidratosBase = Number(carbohidratosBase) || 0;
+  const finalGrasaBase = Number(grasaBase) || 0;
+
+  if (safeQty === 0) {
+    return {
+      ...food,
+      cantidad: 0,
+      calorias: 0,
+      proteina: 0,
+      carbohidratos: 0,
+      grasa: 0,
+      cantidadBase: finalCantidadBase,
+      caloriasBase: finalCaloriasBase,
+      proteinaBase: finalProteinaBase,
+      carbohidratosBase: finalCarbohidratosBase,
+      grasaBase: finalGrasaBase,
+    };
+  }
+
+  const ratio = safeQty / finalCantidadBase;
+
+  return {
+    ...food,
+    cantidad: safeQty,
+    cantidadBase: finalCantidadBase,
+    calorias: Math.round(finalCaloriasBase * ratio),
+    proteina: round1(finalProteinaBase * ratio),
+    carbohidratos: round1(finalCarbohidratosBase * ratio),
+    grasa: round1(finalGrasaBase * ratio),
+    caloriasBase: finalCaloriasBase,
+    proteinaBase: finalProteinaBase,
+    carbohidratosBase: finalCarbohidratosBase,
+    grasaBase: finalGrasaBase,
+  };
+}
+
+/**
+ * Autocura y asegura que todos los alimentos de un plan nutricional tengan sus valores
+ * base intactos y que ningún alimento con cantidad > 0 quede congelado en 0 macros
+ * debido a borradores o fallos previos.
+ */
+export function healPlanFoodItems(plan: NutritionPlan): NutritionPlan {
+  if (!plan?.datos_plan?.days) return plan;
+  let hasChanges = false;
+  const newDays = { ...plan.datos_plan.days };
+
+  for (const dayKey of Object.keys(newDays)) {
+    const day = newDays[dayKey];
+    if (!day?.meals) continue;
+
+    let dayChanged = false;
+    const newMeals = day.meals.map((meal) => {
+      let mealChanged = false;
+      const newFoods = meal.foods.map((food) => {
+        // Si tiene cantidad pero macros en 0, o si le faltan las bases
+        if (
+          (food.cantidad > 0 && food.calorias === 0 && food.proteina === 0 && food.grasa === 0) ||
+          food.caloriasBase === undefined
+        ) {
+          const healed = recalculateFoodItemMacros(food, food.cantidad);
+          if (
+            healed.calorias !== food.calorias ||
+            healed.proteina !== food.proteina ||
+            healed.carbohidratos !== food.carbohidratos ||
+            healed.grasa !== food.grasa ||
+            healed.caloriasBase !== food.caloriasBase
+          ) {
+            mealChanged = true;
+            return healed;
+          }
+        }
+        return food;
+      });
+
+      if (mealChanged) {
+        dayChanged = true;
+        return { ...meal, foods: newFoods };
+      }
+      return meal;
+    });
+
+    if (dayChanged) {
+      hasChanges = true;
+      newDays[dayKey] = { ...day, meals: newMeals };
+    }
+  }
+
+  if (!hasChanges) return plan;
+  return {
+    ...plan,
+    datos_plan: {
+      ...plan.datos_plan,
+      days: newDays,
+    },
+  };
+}
+
+/**
  * Detecta el macronutriente dominante de un alimento con rigor clínico y fallback determinista.
  * Funciona tanto con MealFoodItem ({ proteina, carbohidratos, grasa }) como con FoodItem ({ proteinaBase, carbohidratosBase, grasaBase }).
  */

@@ -74,6 +74,8 @@ import {
   searchOpenFoodFacts,
   normalizeFoodSearchText,
   sortMealsChronologically,
+  recalculateFoodItemMacros,
+  healPlanFoodItems,
   DAYS_OF_WEEK,
 } from '../nutritionEngine';
 import { BASE_FOOD_CATALOG } from '../../data/foodCatalog';
@@ -750,6 +752,117 @@ describe('Nutrition Engine — Cálculos, Integridad y Flujo de Principio a Fin'
       const sortedSingle = sortMealsChronologically(singleMeal);
       expect(sortedSingle.length).toBe(1);
       expect(sortedSingle[0].orden).toBe(1);
+    });
+  });
+
+  describe('8. Resiliencia de Modificación de Cantidad y Auto-curación de Alimentos (Aguacate Hass fix)', () => {
+    it('debe recalcular con precisión los macros al cambiar la cantidad de Aguacate Hass de 100g a 90g', () => {
+      const foodItem: MealFoodItem = {
+        id: 'f_aguacate_1',
+        foodId: 'evo_food_1001',
+        nombre: 'Aguacate Hass',
+        grupo: 'Grasas y Frutos Secos',
+        cantidad: 100,
+        cantidadBase: 100,
+        unidad: 'gr',
+        calorias: 160,
+        proteina: 2.0,
+        carbohidratos: 8.5,
+        grasa: 15.0,
+        caloriasBase: 160,
+        proteinaBase: 2.0,
+        carbohidratosBase: 8.5,
+        grasaBase: 15.0,
+      };
+
+      const result = recalculateFoodItemMacros(foodItem, 90);
+      expect(result.cantidad).toBe(90);
+      expect(result.calorias).toBe(144);
+      expect(result.proteina).toBe(1.8);
+      expect(result.carbohidratos).toBe(7.7);
+      expect(result.grasa).toBe(13.5);
+    });
+
+    it('no debe destruir los macros base si la cantidad se borra temporalmente (0 o vacío)', () => {
+      const foodItem: MealFoodItem = {
+        id: 'f_aguacate_1',
+        foodId: 'evo_food_1001',
+        nombre: 'Aguacate Hass',
+        grupo: 'Grasas y Frutos Secos',
+        cantidad: 100,
+        cantidadBase: 100,
+        unidad: 'gr',
+        calorias: 160,
+        proteina: 2.0,
+        carbohidratos: 8.5,
+        grasa: 15.0,
+        caloriasBase: 160,
+        proteinaBase: 2.0,
+        carbohidratosBase: 8.5,
+        grasaBase: 15.0,
+      };
+
+      // Usuario borra el input para escribir 90 -> cantidad pasa por 0
+      const emptyState = recalculateFoodItemMacros(foodItem, 0);
+      expect(emptyState.cantidad).toBe(0);
+      expect(emptyState.calorias).toBe(0);
+      expect(emptyState.proteina).toBe(0);
+      // Las bases DEBEN conservarse intactas
+      expect(emptyState.caloriasBase).toBe(160);
+      expect(emptyState.grasaBase).toBe(15.0);
+
+      // Usuario termina de escribir 90
+      const recovered = recalculateFoodItemMacros(emptyState, 90);
+      expect(recovered.cantidad).toBe(90);
+      expect(recovered.calorias).toBe(144);
+      expect(recovered.grasa).toBe(13.5);
+    });
+
+    it('debe resolver los macros desde BASE_FOOD_CATALOG si el alimento venía sin campos *Base y con 0 macros', () => {
+      // Simula el caso exacto de la captura donde el alimento quedó congelado en 0
+      const brokenFood: MealFoodItem = {
+        id: 'f_broken',
+        foodId: 'evo_food_0950',
+        nombre: 'Aguacate Hass',
+        grupo: 'Grasas y Frutos Secos',
+        cantidad: 90,
+        cantidadBase: 100,
+        unidad: 'gr',
+        calorias: 0,
+        proteina: 0,
+        carbohidratos: 0,
+        grasa: 0,
+      };
+
+      const healed = recalculateFoodItemMacros(brokenFood, 90);
+      expect(healed.calorias).toBe(199);
+      expect(healed.proteina).toBe(1.2);
+      expect(healed.carbohidratos).toBe(12.2);
+      expect(healed.grasa).toBe(14.8);
+    });
+
+    it('healPlanFoodItems debe reparar automáticamente alimentos con macros en cero en cualquier comida y día del plan', () => {
+      const mockPlan = createPlanFromValuation('client-1', null);
+      mockPlan.datos_plan.days.lunes.meals[0].foods.push({
+        id: 'item_aguacate_bug',
+        foodId: 'evo_food_0950',
+        nombre: 'Aguacate Hass',
+        grupo: 'Grasas y Frutos Secos',
+        cantidad: 90,
+        cantidadBase: 100,
+        unidad: 'gr',
+        calorias: 0,
+        proteina: 0,
+        carbohidratos: 0,
+        grasa: 0,
+      });
+
+      const healedPlan = healPlanFoodItems(mockPlan);
+      const food = healedPlan.datos_plan.days.lunes.meals[0].foods[0];
+      expect(food.calorias).toBe(199);
+      expect(food.proteina).toBe(1.2);
+      expect(food.carbohidratos).toBe(12.2);
+      expect(food.grasa).toBe(14.8);
     });
   });
 });

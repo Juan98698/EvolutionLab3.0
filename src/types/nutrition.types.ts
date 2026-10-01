@@ -61,6 +61,10 @@ export interface MealFoodItem {
   notas?: string;
   nombreOriginal?: string;
   esSustituido?: boolean;
+  caloriasBase?: number;
+  proteinaBase?: number;
+  carbohidratosBase?: number;
+  grasaBase?: number;
 }
 
 export interface Meal {

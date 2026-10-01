@@ -281,6 +281,7 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
       foodId: selectedFood.id,
       nombre: selectedFood.nombre,
       grupo: selectedFood.grupo,
+      subgrupo: selectedFood.subgrupo,
       cantidad: Number(portionAmount) || 0,
       cantidadBase: selectedFood.cantidadBase,
       unidad: selectedFood.unidad,
@@ -288,6 +289,10 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
       proteina: portionPreview.proteina,
       carbohidratos: portionPreview.carbohidratos,
       grasa: portionPreview.grasa,
+      caloriasBase: selectedFood.caloriasBase,
+      proteinaBase: selectedFood.proteinaBase,
+      carbohidratosBase: selectedFood.carbohidratosBase,
+      grasaBase: selectedFood.grasaBase,
     };
 
     onAddFood(item);

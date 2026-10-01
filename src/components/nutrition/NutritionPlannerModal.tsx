@@ -22,6 +22,8 @@ import {
   sortMealsChronologically,
   normalizeFoodSearchText,
   getUniquePrescribedFoods,
+  recalculateFoodItemMacros,
+  healPlanFoodItems,
 } from '../../lib/nutritionEngine';
 import { supabase } from '../../lib/supabaseClient';
 import FoodSelectorModal from './FoodSelectorModal';
@@ -64,10 +66,10 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
     if (atleta?.id) {
       const draft = getNutritionDraft(atleta.id);
       if (draft?.plan) {
-        return draft.plan;
+        return healPlanFoodItems(draft.plan);
       }
     }
-    return createPlanFromValuation(atleta.id, initialValuation, trainerProfile?.id);
+    return healPlanFoodItems(createPlanFromValuation(atleta.id, initialValuation, trainerProfile?.id));
   });
 
   const [activeDayKey, setActiveDayKey] = useState<DayOfWeek>(() => {
@@ -281,7 +283,7 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
 
           // Si el borrador local es más reciente que el plan guardado en la nube, conservar el borrador local
           if (localDraft && localDraft.plan && localDraft.timestamp >= remoteTimestamp) {
-            setPlan(localDraft.plan);
+            setPlan(healPlanFoodItems(localDraft.plan));
             if (localDraft.activeDayKey) {
               setActiveDayKey(localDraft.activeDayKey);
             }
@@ -293,13 +295,13 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
             clearNutritionDraft(atleta.id);
           }
 
-          setPlan(remotePlan as unknown as NutritionPlan);
+          setPlan(healPlanFoodItems(remotePlan as unknown as NutritionPlan));
           return;
         }
 
         // Si no hay remotePlan pero sí borrador local, usar el borrador
         if (localDraft && localDraft.plan && isMounted) {
-          setPlan(localDraft.plan);
+          setPlan(healPlanFoodItems(localDraft.plan));
           if (localDraft.activeDayKey) {
             setActiveDayKey(localDraft.activeDayKey);
           }
@@ -309,13 +311,13 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
         // 2. Fallback a IndexedDB
         const offlinePlan = await getPlanOffline(atleta.id);
         if (offlinePlan && isMounted) {
-          setPlan(offlinePlan);
+          setPlan(healPlanFoodItems(offlinePlan));
           return;
         }
 
         // 3. Si no hay plan previo guardado ni borrador, inicializar con la valoración resuelta
         if (isMounted) {
-          setPlan(createPlanFromValuation(atleta.id, resolvedValuation, trainerProfile?.id));
+          setPlan(healPlanFoodItems(createPlanFromValuation(atleta.id, resolvedValuation, trainerProfile?.id)));
         }
       } catch (err) {
         console.error('Error al cargar plan nutricional:', err);
@@ -610,26 +612,7 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
       const food = targetMeal.foods[foodIndex];
       if (!food) return prev;
 
-      const base = food.cantidadBase > 0 ? food.cantidadBase : 100;
-      void base;
-
-      const updatedFood: MealFoodItem = {
-        ...food,
-        cantidad: newQty,
-        // Proporcional contra los valores base
-        calorias: Math.round(
-          food.cantidadBase > 0 ? (food.calorias / (food.cantidad || 1)) * newQty : food.calorias
-        ),
-        proteina: round1(
-          food.cantidadBase > 0 ? (food.proteina / (food.cantidad || 1)) * newQty : food.proteina
-        ),
-        carbohidratos: round1(
-          food.cantidadBase > 0 ? (food.carbohidratos / (food.cantidad || 1)) * newQty : food.carbohidratos
-        ),
-        grasa: round1(
-          food.cantidadBase > 0 ? (food.grasa / (food.cantidad || 1)) * newQty : food.grasa
-        ),
-      };
+      const updatedFood = recalculateFoodItemMacros(food, newQty);
 
       const newFoods = [...targetMeal.foods];
       newFoods[foodIndex] = updatedFood;
@@ -1735,11 +1718,20 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                                   <input
                                     type="number"
-                                    min="1"
-                                    value={food.cantidad}
-                                    onChange={(e) =>
-                                      handleUpdateFoodQuantity(mIdx, fIdx, Number(e.target.value) || 0)
-                                    }
+                                    min="0"
+                                    value={food.cantidad === 0 ? '' : food.cantidad}
+                                    placeholder="0"
+                                    onChange={(e) => {
+                                      const rawVal = e.target.value;
+                                      if (rawVal === '') {
+                                        handleUpdateFoodQuantity(mIdx, fIdx, 0);
+                                      } else {
+                                        const parsed = Number(rawVal);
+                                        if (!isNaN(parsed)) {
+                                          handleUpdateFoodQuantity(mIdx, fIdx, parsed);
+                                        }
+                                      }
+                                    }}
                                     style={{
                                       width: '64px',
                                       background: 'rgba(255, 255, 255, 0.08)',
