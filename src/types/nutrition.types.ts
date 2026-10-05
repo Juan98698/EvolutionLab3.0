@@ -146,6 +146,7 @@ export interface NutritionPlanData {
   vigenciaDias?: number;
   equivalencias?: Record<string, FoodEquivalentOption[]>;
   incluirEquivalenciasPdf?: boolean;
+  aguaRecomendada?: string;
 }
 
 export interface NutritionPlan {

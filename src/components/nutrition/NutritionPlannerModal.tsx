@@ -9,6 +9,7 @@ import {
   MealTemplate,
 } from '../../types/nutrition.types';
 import { Profile, ValoracionAntropometrica } from '../../types/database.types';
+import { calculateWaterRequirement } from '../../lib/anthropometryEngine';
 import {
   createPlanFromValuation,
   copyNutritionDay,
@@ -377,6 +378,10 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
       const targetFat =
         (val.macros as any)?.grasa?.grams || (val as any).grasas_g || 60;
 
+      const waterVal =
+        val.agua_recomendada_l ||
+        (val.peso ? calculateWaterRequirement(val.peso, val.frecuencia_entreno || '3-4').rangoStr : undefined);
+
       setPlan((prev) => ({
         ...prev,
         valoracion_id: val.id || prev.valoracion_id,
@@ -386,6 +391,10 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
         target_grasa_g: round1(targetFat),
         ajuste_calorico_pct: val.ajuste_calorico_pct || prev.ajuste_calorico_pct,
         objetivo: val.objetivo || prev.objetivo,
+        datos_plan: {
+          ...prev.datos_plan,
+          ...(waterVal ? { aguaRecomendada: waterVal } : {}),
+        },
       }));
       setSyncedValuationDate(val.fecha);
       showToast?.(`Macros sincronizados con valoración del ${val.fecha}`, 'success');
@@ -1479,6 +1488,16 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
                       atletaNombre={atleta.nombre}
                       trainerProfile={trainerProfile}
                       activeDayKey={pdfScope === 'all' ? 'todos' : activeDayKey}
+                      aguaRecomendada={
+                        plan.datos_plan?.aguaRecomendada ||
+                        resolvedValuationRef.current?.agua_recomendada_l ||
+                        (resolvedValuationRef.current?.peso
+                          ? calculateWaterRequirement(
+                              resolvedValuationRef.current.peso,
+                              resolvedValuationRef.current.frecuencia_entreno || '3-4'
+                            ).rangoStr
+                          : undefined)
+                      }
                     />
                   </div>
                 </div>
@@ -1920,6 +1939,16 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
             atletaNombre={atleta.nombre}
             trainerProfile={trainerProfile}
             activeDayKey={pdfScope === 'all' ? 'todos' : activeDayKey}
+            aguaRecomendada={
+              plan.datos_plan?.aguaRecomendada ||
+              resolvedValuationRef.current?.agua_recomendada_l ||
+              (resolvedValuationRef.current?.peso
+                ? calculateWaterRequirement(
+                    resolvedValuationRef.current.peso,
+                    resolvedValuationRef.current.frecuencia_entreno || '3-4'
+                  ).rangoStr
+                : undefined)
+            }
           />
         </div>
 

@@ -17,6 +17,7 @@ interface NutritionReportPDFProps {
   trainerProfile: Profile | null;
   activeDayKey?: string;
   id?: string;
+  aguaRecomendada?: string;
 }
 
 /**
@@ -60,10 +61,12 @@ export const NutritionReportPDF: React.FC<NutritionReportPDFProps> = ({
   trainerProfile,
   activeDayKey = 'lunes',
   id = 'nutrition-pdf-content',
+  aguaRecomendada,
 }) => {
   const brandName = trainerProfile?.marca?.nombre_display || trainerProfile?.nombre || 'EVOLUTION LAB';
   const brandEslogan = trainerProfile?.marca?.eslogan || 'Sistemas de Entrenamiento & Nutrición de Alta Precisión';
-  const brandLogo = (trainerProfile?.marca as any)?.logo_url;
+  const brandLogo = trainerProfile?.logo_url || (trainerProfile?.marca as any)?.logo_url;
+  const waterStr = aguaRecomendada || plan.datos_plan?.aguaRecomendada;
 
   const isMultiDay = activeDayKey === 'todos' || activeDayKey === 'all' || !activeDayKey;
 
@@ -151,15 +154,14 @@ export const NutritionReportPDF: React.FC<NutritionReportPDFProps> = ({
           marginBottom: '20px',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-          {brandLogo && (
+        <div>
+          {brandLogo ? (
             <img
               src={brandLogo}
-              alt="Logo"
-              style={{ width: '48px', height: '48px', objectFit: 'contain' }}
+              alt={brandName}
+              style={{ height: '75px', maxHeight: '90px', maxWidth: '340px', objectFit: 'contain', display: 'block' }}
             />
-          )}
-          <div>
+          ) : (
             <h1
               style={{
                 margin: 0,
@@ -172,10 +174,10 @@ export const NutritionReportPDF: React.FC<NutritionReportPDFProps> = ({
             >
               {brandName.toUpperCase()}
             </h1>
-            <p style={{ margin: '2px 0 0', fontSize: '11px', color: '#64748b' }}>
-              {brandEslogan}
-            </p>
-          </div>
+          )}
+          <p style={{ margin: '4px 0 0', fontSize: '11px', color: '#64748b', fontWeight: 600 }}>
+            {brandEslogan}
+          </p>
         </div>
 
         <div style={{ textAlign: 'right' }}>
@@ -324,6 +326,46 @@ export const NutritionReportPDF: React.FC<NutritionReportPDFProps> = ({
           </span>
         </div>
       </div>
+
+      {/* REQUERIMIENTO HÍDRICO DIARIO */}
+      {waterStr && (
+        <div
+          data-pdf-block="water-requirement"
+          style={{
+            backgroundColor: '#f0f9ff',
+            border: '1px solid #bae6fd',
+            borderRadius: '8px',
+            padding: '8px 14px',
+            marginBottom: '20px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ fontSize: '18px' }}>💧</span>
+            <div>
+              <span
+                style={{
+                  fontSize: '9.5px',
+                  fontWeight: 700,
+                  color: '#0369a1',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.5px',
+                }}
+              >
+                Requerimiento Hídrico Diario
+              </span>
+              <div style={{ fontSize: '14px', fontWeight: 900, color: '#0284c7', marginTop: '1px' }}>
+                {waterStr}
+              </div>
+            </div>
+          </div>
+          <div style={{ fontSize: '9.5px', color: '#0369a1', textAlign: 'right', maxWidth: '320px', lineHeight: '1.3' }}>
+            Consumo hídrico sugerido distribuido a lo largo del día para optimizar hidratación celular y asimilación de nutrientes.
+          </div>
+        </div>
+      )}
 
       {/* DETALLE DE COMIDAS E INGESTAS */}
       <div style={{ marginBottom: '24px' }}>
@@ -518,19 +560,24 @@ export const NutritionReportPDF: React.FC<NutritionReportPDFProps> = ({
       {includeEquivalents && foodsWithEquivalents.length > 0 && (
         <div
           data-pdf-block="equivalents-section"
+          data-pdf-break-before={isMultiDay ? 'true' : 'false'}
           style={{
             border: '1px solid #cbd5e1',
             borderRadius: '8px',
             backgroundColor: '#ffffff',
-            padding: '16px 20px',
-            marginBottom: '20px',
+            padding: '10px 14px',
+            marginBottom: '12px',
+            pageBreakInside: 'avoid',
+            breakInside: 'avoid',
+            pageBreakBefore: isMultiDay ? 'always' : 'auto',
+            breakBefore: isMultiDay ? 'page' : 'auto',
           }}
         >
-          <div style={{ borderBottom: '2px solid #00d4ff', paddingBottom: '8px', marginBottom: '14px' }}>
+          <div style={{ borderBottom: '2px solid #00d4ff', paddingBottom: '6px', marginBottom: '10px' }}>
             <h3
               style={{
                 margin: 0,
-                fontSize: '13px',
+                fontSize: '11px',
                 fontWeight: 800,
                 fontFamily: "'Orbitron', sans-serif",
                 color: '#0f172a',
@@ -539,7 +586,7 @@ export const NutritionReportPDF: React.FC<NutritionReportPDFProps> = ({
             >
               🔄 GUÍA DE INTERCAMBIOS Y ALIMENTOS EQUIVALENTES
             </h3>
-            <p style={{ margin: '4px 0 0', fontSize: '10px', color: '#64748b', lineHeight: 1.4 }}>
+            <p style={{ margin: '3px 0 0', fontSize: '9px', color: '#64748b', lineHeight: 1.3 }}>
               Puedes sustituir cualquier alimento prescrito en tu plan por cualquiera de las opciones listadas a continuación.
               Las cantidades han sido calculadas con estricta equivalencia calórica (±10%) para mantener intactos tus objetivos diarios.
             </p>
@@ -550,21 +597,21 @@ export const NutritionReportPDF: React.FC<NutritionReportPDFProps> = ({
             <div
               data-pdf-block="equiv-card"
               style={{
-                marginBottom: '16px',
+                marginBottom: '10px',
                 pageBreakInside: 'avoid',
                 breakInside: 'avoid',
               }}
             >
               <div
                 style={{
-                  fontSize: '11px',
+                  fontSize: '10px',
                   fontWeight: 800,
                   fontFamily: "'Orbitron', sans-serif",
                   color: '#0284c7',
-                  marginBottom: '8px',
+                  marginBottom: '4px',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '6px',
+                  gap: '5px',
                 }}
               >
                 <span>🥩</span>
@@ -574,18 +621,18 @@ export const NutritionReportPDF: React.FC<NutritionReportPDFProps> = ({
                 style={{
                   width: '100%',
                   borderCollapse: 'collapse',
-                  fontSize: '10px',
+                  fontSize: '9px',
                 }}
               >
                 <thead>
                   <tr style={{ background: '#f1f5f9', borderBottom: '1px solid #cbd5e1' }}>
-                    <th style={{ textAlign: 'left', padding: '6px 8px', fontWeight: 700, color: '#334155', width: '32%' }}>
+                    <th style={{ textAlign: 'left', padding: '4px 6px', fontWeight: 700, color: '#334155', width: '32%' }}>
                       Alimento en tu Plan
                     </th>
-                    <th style={{ textAlign: 'center', padding: '6px 8px', fontWeight: 700, color: '#334155', width: '22%' }}>
+                    <th style={{ textAlign: 'center', padding: '4px 6px', fontWeight: 700, color: '#334155', width: '22%' }}>
                       Aporte Nutricional
                     </th>
-                    <th style={{ textAlign: 'left', padding: '6px 8px', fontWeight: 700, color: '#334155', width: '46%' }}>
+                    <th style={{ textAlign: 'left', padding: '4px 6px', fontWeight: 700, color: '#334155', width: '46%' }}>
                       Opciones de Reemplazo Aprobadas (Elige 1)
                     </th>
                   </tr>
@@ -600,24 +647,24 @@ export const NutritionReportPDF: React.FC<NutritionReportPDFProps> = ({
                         background: idx % 2 === 0 ? '#ffffff' : '#f8fafc',
                       }}
                     >
-                      <td style={{ padding: '8px', verticalAlign: 'top' }}>
-                        <div style={{ fontWeight: 700, color: '#0f172a' }}>{food.nombre}</div>
-                        <div style={{ color: '#0284c7', fontWeight: 600, fontSize: '10px', marginTop: '2px' }}>
+                      <td style={{ padding: '4px 6px', verticalAlign: 'top' }}>
+                        <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '9.5px' }}>{food.nombre}</div>
+                        <div style={{ color: '#0284c7', fontWeight: 600, fontSize: '9px', marginTop: '1px' }}>
                           {food.cantidad} {food.unidad}
                         </div>
                       </td>
-                      <td style={{ padding: '8px', textAlign: 'center', verticalAlign: 'top' }}>
-                        <div style={{ fontWeight: 700, color: '#3b82f6' }}>{food.proteina}g Proteína</div>
-                        <div style={{ color: '#64748b', fontSize: '9px', marginTop: '2px' }}>
+                      <td style={{ padding: '4px 6px', textAlign: 'center', verticalAlign: 'top' }}>
+                        <div style={{ fontWeight: 700, color: '#3b82f6', fontSize: '9.5px' }}>{food.proteina}g Proteína</div>
+                        <div style={{ color: '#64748b', fontSize: '8.5px', marginTop: '1px' }}>
                           {food.calorias} kcal • {food.grasa}g G
                         </div>
                       </td>
-                      <td style={{ padding: '8px', verticalAlign: 'top' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <td style={{ padding: '4px 6px', verticalAlign: 'top' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                           {approvedOptions.map((opt, optIdx) => (
-                            <div key={optIdx} style={{ lineHeight: 1.3, color: '#1e293b' }}>
+                            <div key={optIdx} style={{ lineHeight: 1.25, color: '#1e293b', fontSize: '8.5px' }}>
                               • <strong style={{ color: '#0f172a' }}>{opt.cantidad} {opt.unidad}</strong> {opt.nombre}{' '}
-                              <span style={{ color: '#64748b', fontSize: '9px' }}>
+                              <span style={{ color: '#64748b', fontSize: '8px' }}>
                                 ({opt.calorias} kcal)
                               </span>
                             </div>
@@ -636,21 +683,21 @@ export const NutritionReportPDF: React.FC<NutritionReportPDFProps> = ({
             <div
               data-pdf-block="equiv-card"
               style={{
-                marginBottom: '16px',
+                marginBottom: '10px',
                 pageBreakInside: 'avoid',
                 breakInside: 'avoid',
               }}
             >
               <div
                 style={{
-                  fontSize: '11px',
+                  fontSize: '10px',
                   fontWeight: 800,
                   fontFamily: "'Orbitron', sans-serif",
                   color: '#059669',
-                  marginBottom: '8px',
+                  marginBottom: '4px',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '6px',
+                  gap: '5px',
                 }}
               >
                 <span>🍚</span>
@@ -660,18 +707,18 @@ export const NutritionReportPDF: React.FC<NutritionReportPDFProps> = ({
                 style={{
                   width: '100%',
                   borderCollapse: 'collapse',
-                  fontSize: '10px',
+                  fontSize: '9px',
                 }}
               >
                 <thead>
                   <tr style={{ background: '#f1f5f9', borderBottom: '1px solid #cbd5e1' }}>
-                    <th style={{ textAlign: 'left', padding: '6px 8px', fontWeight: 700, color: '#334155', width: '32%' }}>
+                    <th style={{ textAlign: 'left', padding: '4px 6px', fontWeight: 700, color: '#334155', width: '32%' }}>
                       Alimento en tu Plan
                     </th>
-                    <th style={{ textAlign: 'center', padding: '6px 8px', fontWeight: 700, color: '#334155', width: '22%' }}>
+                    <th style={{ textAlign: 'center', padding: '4px 6px', fontWeight: 700, color: '#334155', width: '22%' }}>
                       Aporte Nutricional
                     </th>
-                    <th style={{ textAlign: 'left', padding: '6px 8px', fontWeight: 700, color: '#334155', width: '46%' }}>
+                    <th style={{ textAlign: 'left', padding: '4px 6px', fontWeight: 700, color: '#334155', width: '46%' }}>
                       Opciones de Reemplazo Aprobadas (Elige 1)
                     </th>
                   </tr>
@@ -686,24 +733,24 @@ export const NutritionReportPDF: React.FC<NutritionReportPDFProps> = ({
                         background: idx % 2 === 0 ? '#ffffff' : '#f8fafc',
                       }}
                     >
-                      <td style={{ padding: '8px', verticalAlign: 'top' }}>
-                        <div style={{ fontWeight: 700, color: '#0f172a' }}>{food.nombre}</div>
-                        <div style={{ color: '#059669', fontWeight: 600, fontSize: '10px', marginTop: '2px' }}>
+                      <td style={{ padding: '4px 6px', verticalAlign: 'top' }}>
+                        <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '9.5px' }}>{food.nombre}</div>
+                        <div style={{ color: '#059669', fontWeight: 600, fontSize: '9px', marginTop: '1px' }}>
                           {food.cantidad} {food.unidad}
                         </div>
                       </td>
-                      <td style={{ padding: '8px', textAlign: 'center', verticalAlign: 'top' }}>
-                        <div style={{ fontWeight: 700, color: '#10b981' }}>{food.carbohidratos}g Carbohidratos</div>
-                        <div style={{ color: '#64748b', fontSize: '9px', marginTop: '2px' }}>
+                      <td style={{ padding: '4px 6px', textAlign: 'center', verticalAlign: 'top' }}>
+                        <div style={{ fontWeight: 700, color: '#10b981', fontSize: '9.5px' }}>{food.carbohidratos}g Carbohidratos</div>
+                        <div style={{ color: '#64748b', fontSize: '8.5px', marginTop: '1px' }}>
                           {food.calorias} kcal • {food.proteina}g P
                         </div>
                       </td>
-                      <td style={{ padding: '8px', verticalAlign: 'top' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <td style={{ padding: '4px 6px', verticalAlign: 'top' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                           {approvedOptions.map((opt, optIdx) => (
-                            <div key={optIdx} style={{ lineHeight: 1.3, color: '#1e293b' }}>
+                            <div key={optIdx} style={{ lineHeight: 1.25, color: '#1e293b', fontSize: '8.5px' }}>
                               • <strong style={{ color: '#0f172a' }}>{opt.cantidad} {opt.unidad}</strong> {opt.nombre}{' '}
-                              <span style={{ color: '#64748b', fontSize: '9px' }}>
+                              <span style={{ color: '#64748b', fontSize: '8px' }}>
                                 ({opt.calorias} kcal)
                               </span>
                             </div>
@@ -722,21 +769,21 @@ export const NutritionReportPDF: React.FC<NutritionReportPDFProps> = ({
             <div
               data-pdf-block="equiv-card"
               style={{
-                marginBottom: '8px',
+                marginBottom: '6px',
                 pageBreakInside: 'avoid',
                 breakInside: 'avoid',
               }}
             >
               <div
                 style={{
-                  fontSize: '11px',
+                  fontSize: '10px',
                   fontWeight: 800,
                   fontFamily: "'Orbitron', sans-serif",
                   color: '#d97706',
-                  marginBottom: '8px',
+                  marginBottom: '4px',
                   display: 'flex',
                   alignItems: 'center',
-                  gap: '6px',
+                  gap: '5px',
                 }}
               >
                 <span>🥑</span>
@@ -746,18 +793,18 @@ export const NutritionReportPDF: React.FC<NutritionReportPDFProps> = ({
                 style={{
                   width: '100%',
                   borderCollapse: 'collapse',
-                  fontSize: '10px',
+                  fontSize: '9px',
                 }}
               >
                 <thead>
                   <tr style={{ background: '#f1f5f9', borderBottom: '1px solid #cbd5e1' }}>
-                    <th style={{ textAlign: 'left', padding: '6px 8px', fontWeight: 700, color: '#334155', width: '32%' }}>
+                    <th style={{ textAlign: 'left', padding: '4px 6px', fontWeight: 700, color: '#334155', width: '32%' }}>
                       Alimento en tu Plan
                     </th>
-                    <th style={{ textAlign: 'center', padding: '6px 8px', fontWeight: 700, color: '#334155', width: '22%' }}>
+                    <th style={{ textAlign: 'center', padding: '4px 6px', fontWeight: 700, color: '#334155', width: '22%' }}>
                       Aporte Nutricional
                     </th>
-                    <th style={{ textAlign: 'left', padding: '6px 8px', fontWeight: 700, color: '#334155', width: '46%' }}>
+                    <th style={{ textAlign: 'left', padding: '4px 6px', fontWeight: 700, color: '#334155', width: '46%' }}>
                       Opciones de Reemplazo Aprobadas (Elige 1)
                     </th>
                   </tr>
@@ -772,24 +819,24 @@ export const NutritionReportPDF: React.FC<NutritionReportPDFProps> = ({
                         background: idx % 2 === 0 ? '#ffffff' : '#f8fafc',
                       }}
                     >
-                      <td style={{ padding: '8px', verticalAlign: 'top' }}>
-                        <div style={{ fontWeight: 700, color: '#0f172a' }}>{food.nombre}</div>
-                        <div style={{ color: '#d97706', fontWeight: 600, fontSize: '10px', marginTop: '2px' }}>
+                      <td style={{ padding: '4px 6px', verticalAlign: 'top' }}>
+                        <div style={{ fontWeight: 700, color: '#0f172a', fontSize: '9.5px' }}>{food.nombre}</div>
+                        <div style={{ color: '#d97706', fontWeight: 600, fontSize: '9px', marginTop: '1px' }}>
                           {food.cantidad} {food.unidad}
                         </div>
                       </td>
-                      <td style={{ padding: '8px', textAlign: 'center', verticalAlign: 'top' }}>
-                        <div style={{ fontWeight: 700, color: '#f59e0b' }}>{food.grasa}g Grasas</div>
-                        <div style={{ color: '#64748b', fontSize: '9px', marginTop: '2px' }}>
+                      <td style={{ padding: '4px 6px', textAlign: 'center', verticalAlign: 'top' }}>
+                        <div style={{ fontWeight: 700, color: '#f59e0b', fontSize: '9.5px' }}>{food.grasa}g Grasas</div>
+                        <div style={{ color: '#64748b', fontSize: '8.5px', marginTop: '1px' }}>
                           {food.calorias} kcal
                         </div>
                       </td>
-                      <td style={{ padding: '8px', verticalAlign: 'top' }}>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <td style={{ padding: '4px 6px', verticalAlign: 'top' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
                           {approvedOptions.map((opt, optIdx) => (
-                            <div key={optIdx} style={{ lineHeight: 1.3, color: '#1e293b' }}>
+                            <div key={optIdx} style={{ lineHeight: 1.25, color: '#1e293b', fontSize: '8.5px' }}>
                               • <strong style={{ color: '#0f172a' }}>{opt.cantidad} {opt.unidad}</strong> {opt.nombre}{' '}
-                              <span style={{ color: '#64748b', fontSize: '9px' }}>
+                              <span style={{ color: '#64748b', fontSize: '8px' }}>
                                 ({opt.calorias} kcal)
                               </span>
                             </div>
@@ -813,8 +860,8 @@ export const NutritionReportPDF: React.FC<NutritionReportPDFProps> = ({
             border: '1px solid #cbd5e1',
             borderRadius: '8px',
             backgroundColor: '#f8fafc',
-            padding: '14px 16px',
-            marginBottom: '20px',
+            padding: '10px 14px',
+            marginBottom: '14px',
             pageBreakInside: 'avoid',
             breakInside: 'avoid',
           }}
@@ -822,8 +869,8 @@ export const NutritionReportPDF: React.FC<NutritionReportPDFProps> = ({
           <h3
             data-pdf-block="rec-header"
             style={{
-              margin: '0 0 8px',
-              fontSize: '12px',
+              margin: '0 0 6px',
+              fontSize: '11px',
               fontWeight: 800,
               fontFamily: "'Orbitron', sans-serif",
               color: '#0284c7',
@@ -833,7 +880,16 @@ export const NutritionReportPDF: React.FC<NutritionReportPDFProps> = ({
           >
             📋 RECOMENDACIONES DEL ENTRENADOR
           </h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns:
+                plan.recomendaciones.split('\n').filter((line) => line.trim().length > 0).length > 3
+                  ? 'repeat(2, 1fr)'
+                  : '1fr',
+              gap: '4px 12px',
+            }}
+          >
             {plan.recomendaciones
               .split('\n')
               .filter((line) => line.trim().length > 0)
@@ -843,8 +899,8 @@ export const NutritionReportPDF: React.FC<NutritionReportPDFProps> = ({
                   data-pdf-block="rec-para"
                   style={{
                     margin: 0,
-                    fontSize: '11px',
-                    lineHeight: 1.6,
+                    fontSize: '9px',
+                    lineHeight: 1.35,
                     color: '#334155',
                   }}
                 >

@@ -959,6 +959,7 @@ export const AthleteNutritionCard: React.FC<AthleteNutritionCardProps> = ({
             atletaNombre={profile?.nombre || 'Atleta'}
             trainerProfile={resolvedTrainer}
             activeDayKey={pdfScope === 'all' ? 'todos' : selectedDayKey}
+            aguaRecomendada={planForPdf?.datos_plan?.aguaRecomendada || plan?.datos_plan?.aguaRecomendada}
           />
         </div>
       </div>

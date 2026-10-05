@@ -5,6 +5,7 @@ export interface PdfBlockBoundary {
   top: number;
   bottom: number;
   type: string;
+  breakBefore?: boolean;
 }
 
 export interface PdfSlice {
@@ -67,11 +68,17 @@ export function extractPdfBlockBoundaries(
         }
       }
 
+      const breakBefore =
+        el.getAttribute('data-pdf-break-before') === 'true' ||
+        el.getAttribute('data-pdf-break') === 'before' ||
+        (el.style && (el.style.pageBreakBefore === 'always' || (el.style as any).breakBefore === 'page'));
+
       if (bottom > top) {
         boundaries.push({
           top,
           bottom,
           type: el.getAttribute('data-pdf-block') || 'block',
+          breakBefore: Boolean(breakBefore),
         });
       }
     });
@@ -169,7 +176,17 @@ export function calculatePdfSlices(options: {
 
     let cutY = naiveCutY;
 
-    if (blocks.length > 0) {
+    // 0. Salto forzado (breakBefore): si un bloque pide nueva página y ya hay contenido previo en esta
+    const forcedBreakBlock = blocks.find(
+      (b) =>
+        b.breakBefore &&
+        b.top > currentY + 50 &&
+        b.top <= naiveCutY
+    );
+
+    if (forcedBreakBlock) {
+      cutY = Math.max(currentY + 50, forcedBreakBlock.top - 12);
+    } else if (blocks.length > 0) {
       // 1. Verificar si naiveCutY atraviesa un bloque atómico principal (excluyendo wrappers gigantes)
       const slicedBlock = blocks.find(
         (b) =>
@@ -178,6 +195,8 @@ export function calculatePdfSlices(options: {
           (b.type === 'meal-card' ||
             b.type === 'recommendations-card' ||
             b.type === 'equiv-card' ||
+            b.type === 'equivalents-section' ||
+            b.type === 'water-requirement' ||
             b.type === 'day-header' ||
             b.type === 'athlete-info' ||
             b.type === 'daily-targets' ||
@@ -289,7 +308,10 @@ export function calculatePdfSlices(options: {
           (cb) =>
             cb.top <= orphanHeader.top &&
             cb.bottom >= orphanHeader.bottom &&
-            (cb.type === 'recommendations-card' || cb.type === 'meal-card' || cb.type === 'equiv-card')
+            (cb.type === 'recommendations-card' ||
+              cb.type === 'meal-card' ||
+              cb.type === 'equiv-card' ||
+              cb.type === 'equivalents-section')
         );
         const targetTop = parentContainer ? parentContainer.top : orphanHeader.top;
         if (targetTop - currentY > 50) {
@@ -402,6 +424,7 @@ export const renderNutritionPDFDoc = async (elementId: string): Promise<jsPDF> =
           top: Math.round(b.top * cloneScale),
           bottom: Math.round(b.bottom * cloneScale),
           type: b.type,
+          breakBefore: b.breakBefore,
         }))
         .sort((a, b) => a.top - b.top);
     } else {

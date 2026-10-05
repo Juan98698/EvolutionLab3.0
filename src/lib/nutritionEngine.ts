@@ -14,6 +14,7 @@ import {
   FoodEquivalentsGroupedSuggestions,
 } from '../types/nutrition.types';
 import { ValoracionAntropometrica } from '../types/database.types';
+import { calculateWaterRequirement } from './anthropometryEngine';
 import { idbGet, idbSet } from './indexedDbStore';
 import { supabase } from './supabaseClient';
 import { BASE_FOOD_CATALOG } from '../data/foodCatalog';
@@ -815,6 +816,12 @@ export function createPlanFromValuation(
     days[d.key] = createEmptyNutritionDay(d.key, d.label);
   }
 
+  const waterStr =
+    valuation?.agua_recomendada_l ||
+    (valuation?.peso
+      ? calculateWaterRequirement(valuation.peso, valuation.frecuencia_entreno || '3-4').rangoStr
+      : undefined);
+
   return {
     cliente_id: clienteId,
     entrenador_id: trainerId || valuation?.entrenador_id || null,
@@ -832,6 +839,7 @@ export function createPlanFromValuation(
       days,
       modo: 'semanal',
       vigenciaDias: 28,
+      ...(waterStr ? { aguaRecomendada: waterStr } : {}),
     },
     recomendaciones:
       '• Pesar los alimentos en crudo antes de la cocción.\n• Consumir entre 3 y 4 litros de agua distribuidos a lo largo del día.\n• Sal marina y especias naturales al gusto.\n• Mantener los horarios de ingesta con regularidad.',
