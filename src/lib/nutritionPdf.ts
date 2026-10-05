@@ -78,7 +78,7 @@ export function extractPdfBlockBoundaries(
           top,
           bottom,
           type: el.getAttribute('data-pdf-block') || 'block',
-          breakBefore: Boolean(breakBefore),
+          ...(breakBefore ? { breakBefore: true } : {}),
         });
       }
     });
@@ -424,7 +424,7 @@ export const renderNutritionPDFDoc = async (elementId: string): Promise<jsPDF> =
           top: Math.round(b.top * cloneScale),
           bottom: Math.round(b.bottom * cloneScale),
           type: b.type,
-          breakBefore: b.breakBefore,
+          ...(b.breakBefore ? { breakBefore: true } : {}),
         }))
         .sort((a, b) => a.top - b.top);
     } else {

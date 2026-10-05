@@ -154,14 +154,15 @@ export const NutritionReportPDF: React.FC<NutritionReportPDFProps> = ({
           marginBottom: '20px',
         }}
       >
-        <div>
-          {brandLogo ? (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+          {brandLogo && (
             <img
               src={brandLogo}
               alt={brandName}
-              style={{ height: '75px', maxHeight: '90px', maxWidth: '340px', objectFit: 'contain', display: 'block' }}
+              style={{ height: '65px', maxHeight: '80px', maxWidth: '220px', objectFit: 'contain', display: 'block' }}
             />
-          ) : (
+          )}
+          <div>
             <h1
               style={{
                 margin: 0,
@@ -174,10 +175,10 @@ export const NutritionReportPDF: React.FC<NutritionReportPDFProps> = ({
             >
               {brandName.toUpperCase()}
             </h1>
-          )}
-          <p style={{ margin: '4px 0 0', fontSize: '11px', color: '#64748b', fontWeight: 600 }}>
-            {brandEslogan}
-          </p>
+            <p style={{ margin: '4px 0 0', fontSize: '11px', color: '#64748b', fontWeight: 600 }}>
+              {brandEslogan}
+            </p>
+          </div>
         </div>
 
         <div style={{ textAlign: 'right' }}>
