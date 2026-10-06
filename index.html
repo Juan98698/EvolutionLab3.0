@@ -12,9 +12,49 @@
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <!-- Splash de arranque: transparente sobre el fondo de la app. Compartido con
+         src/components/common/BootSplash.tsx para que no haya salto visual cuando
+         React reemplaza este contenido. -->
+    <style>
+      .evolab-boot {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        min-height: 100vh;
+        color: #fff;
+        font-family: 'Orbitron', sans-serif;
+      }
+      .evolab-boot__spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid rgba(255, 255, 255, 0.08);
+        border-top-color: #00d4ff;
+        border-radius: 50%;
+        animation: evolab-boot-spin 1s linear infinite;
+        margin-bottom: 15px;
+      }
+      .evolab-boot__label {
+        font-size: 11px;
+        letter-spacing: 2px;
+        opacity: 0.8;
+        text-transform: uppercase;
+      }
+      @keyframes evolab-boot-spin {
+        to { transform: rotate(360deg); }
+      }
+    </style>
+    <!-- Red de seguridad contra pantalla en blanco permanente. Script clásico a propósito:
+         debe correr aunque el bundle principal falle. Ver public/boot-guard.js -->
+    <script src="/boot-guard.js"></script>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div class="evolab-boot" role="status" aria-live="polite">
+        <div class="evolab-boot__spinner"></div>
+        <span class="evolab-boot__label">Cargando Evolution Lab...</span>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

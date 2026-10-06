@@ -1,6 +1,7 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useSupabase } from '../../context/SupabaseContext';
+import { BootSplash } from '../common/BootSplash';
 
 interface ProtectedRouteProps {
   children?: React.ReactNode;
@@ -16,9 +17,10 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
 
 
-  // Mientras se verifica la sesión en el inicio, retornar transparente (carga escalonada)
+  // Mientras se verifica la sesión en el inicio, mostrar el splash. Antes retornaba null
+  // (transparente) y si la verificación se alargaba el usuario veía solo el fondo vacío.
   if (loading) {
-    return null;
+    return <BootSplash />;
   }
 
   // Si no está autenticado, redirigir al login y guardar el origen para posterior retorno

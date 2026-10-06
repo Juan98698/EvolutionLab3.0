@@ -333,6 +333,57 @@ describe('SupabaseContext Provider', () => {
     expect(screen.getByTestId('user-email').textContent).toBe('no-email');
   });
 
+  // Regresión: los elementos `.stagger-N` tienen opacity:0 hasta que <body> tenga
+  // `auth-ready`. signOut()/SIGNED_OUT quitaban la clase y nunca se reponía, dejando
+  // login y dashboard invisibles hasta recargar la página.
+  it('should keep body.auth-ready after a SIGNED_OUT event (stagger elements must not stay hidden)', async () => {
+    document.body.classList.remove('auth-ready');
+
+    render(
+      <SupabaseProvider>
+        <TestConsumer />
+      </SupabaseProvider>
+    );
+
+    await act(async () => {
+      await authCallback('INITIAL_SESSION', { user: { id: 'test-user-id', email: 'test@example.com' } });
+    });
+    expect(document.body.classList.contains('auth-ready')).toBe(true);
+
+    await act(async () => {
+      await authCallback('SIGNED_OUT', null);
+    });
+
+    expect(screen.getByTestId('auth-state').textContent).toBe('logged-out');
+    expect(document.body.classList.contains('auth-ready')).toBe(true);
+  });
+
+  it('should keep body.auth-ready after signOut() and a later sign-in without reloading', async () => {
+    document.body.classList.remove('auth-ready');
+
+    render(
+      <SupabaseProvider>
+        <TestConsumer />
+      </SupabaseProvider>
+    );
+
+    await act(async () => {
+      await authCallback('INITIAL_SESSION', { user: { id: 'test-user-id', email: 'test@example.com' } });
+    });
+
+    await act(async () => {
+      fireEvent.click(screen.getByTestId('sign-out-btn'));
+    });
+    expect(screen.getByTestId('auth-state').textContent).toBe('logged-out');
+    expect(document.body.classList.contains('auth-ready')).toBe(true);
+
+    await act(async () => {
+      await authCallback('SIGNED_IN', { user: { id: 'test-user-id', email: 'test@example.com' } });
+    });
+    expect(screen.getByTestId('auth-state').textContent).toBe('logged-in');
+    expect(document.body.classList.contains('auth-ready')).toBe(true);
+  });
+
   it('should end loading state after 6s safety timeout if initialization is delayed', async () => {
     vi.useFakeTimers();
 

@@ -4,6 +4,7 @@ import { useSupabase } from './context/SupabaseContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import { PWAInstallBanner } from './components/common/PWAInstallBanner';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
+import { BootSplash } from './components/common/BootSplash';
 import { ConfirmDialogProvider } from './context/ConfirmDialogContext';
 import Login from './components/auth/Login';
 import RoleSelectionModal from './components/auth/RoleSelectionModal';
@@ -59,7 +60,7 @@ const LoadingFallback = () => (
 const HomeDispatcher = () => {
   const { isAuthenticated, isTrainer, isAdmin, loading, needsRoleSelection } = useSupabase();
 
-  if (loading || needsRoleSelection) return null; // ProtectedRoute y RoleSelectionModal se encargan
+  if (loading || needsRoleSelection) return <BootSplash />; // ProtectedRoute y RoleSelectionModal se encargan
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;

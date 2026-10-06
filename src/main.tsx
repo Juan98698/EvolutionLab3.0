@@ -83,20 +83,42 @@ const purgeOldServiceWorkersAndCaches = async (): Promise<boolean> => {
   return false;
 };
 
+// Límite de tiempo para la purga: getRegistrations()/caches.keys() pueden no resolver
+// nunca en algunos navegadores/estados corruptos. Sin este tope, `await` colgaba el
+// arranque ANTES de montar React y la app quedaba en blanco en cada recarga.
+const PURGE_TIMEOUT_MS = 4000;
+const withTimeout = <T,>(promise: Promise<T>, ms: number, fallback: T): Promise<T> =>
+  Promise.race([
+    promise,
+    new Promise<T>((resolve) => setTimeout(() => resolve(fallback), ms)),
+  ]);
+
 // Ejecutar purga PRIMERO, y solo después registrar el SW y montar React.
 // Esto garantiza que nunca se re-registra un SW viejo/corrupto antes de purgarlo.
-purgeOldServiceWorkersAndCaches().then((wasPurged) => {
+withTimeout(purgeOldServiceWorkersAndCaches(), PURGE_TIMEOUT_MS, false)
+  .catch(() => false)
+  .then((wasPurged) => {
   if (wasPurged) return; // La recarga ya está en curso, no inicializar nada.
 
   // Inicializar el servicio de error tracking ANTES de montar React, para
   // que cualquier error en la inicialización del árbol ya sea capturado.
-  initErrorTracking();
+  // Cada paso va aislado: un fallo en tracking/analíticas/SW nunca debe impedir
+  // que React se monte (antes un throw aquí dejaba la pantalla en blanco).
+  try {
+    initErrorTracking();
+  } catch (error) {
+    console.error('No se pudo inicializar el error tracking:', error);
+  }
 
   // Inicializar analíticas de Vercel
-  inject();
+  try {
+    inject();
+  } catch (error) {
+    console.error('No se pudieron inicializar las analíticas:', error);
+  }
 
   // Registrar el Service Worker de forma defensiva tras verificar caché limpia.
-  registerPwaServiceWorker();
+  registerPwaServiceWorker().catch(() => {});
 
   const GlobalErrorFallback = (error: Error, reset: () => void) => (
     <div style={{

@@ -40,12 +40,17 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   // Ref para evitar doble inicialización de la sesión por la carrera entre initSession y onAuthStateChange
   const initDone = useRef(false);
 
-  // Transición de opacidad suave de la PWA al inicializar la sesión
+  // Transición de opacidad suave de la PWA al inicializar la sesión.
+  // Depende también de `user`: signOut() y el evento SIGNED_OUT quitan la clase para
+  // reiniciar la animación, y como `loading` ya no vuelve a cambiar, antes nunca se
+  // reponía. Resultado: todos los `.stagger-N` (opacity:0 hasta que exista la clase)
+  // quedaban invisibles —login tras cerrar sesión, dashboard tras volver a entrar—
+  // hasta recargar la página.
   useEffect(() => {
     if (!loading) {
       document.body.classList.add('auth-ready');
     }
-  }, [loading]);
+  }, [loading, user]);
 
   const fetchProfile = async (userId: string, currentUser?: User | null): Promise<Profile | null> => {
     try {
