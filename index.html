@@ -44,6 +44,18 @@
         to { transform: rotate(360deg); }
       }
     </style>
+    <!-- Polyfill temprano para navegadores in-app de iOS (Instagram/Facebook/TikTok)
+         evita TypeErrors por window.webkit.messageHandlers antes de que cargue cualquier bundle -->
+    <script>
+      try {
+        if (!window.webkit) window.webkit = {};
+        if (!window.webkit.messageHandlers) {
+          window.webkit.messageHandlers = new Proxy({}, {
+            get: function () { return { postMessage: function () {} }; }
+          });
+        }
+      } catch (e) {}
+    </script>
     <!-- Red de seguridad contra pantalla en blanco permanente. Script clásico a propósito:
          debe correr aunque el bundle principal falle. Ver public/boot-guard.js -->
     <script src="/boot-guard.js"></script>

@@ -4,6 +4,7 @@ import { useSupabase } from '../../context/SupabaseContext';
 import { supabase } from '../../lib/supabaseClient';
 import { isRealEmailDomain } from '../../lib/validations';
 import { useModalA11y } from '../../hooks/useModalA11y';
+import { isInAppBrowser } from '../../lib/inAppBrowser';
 
 function LoginAccordion({
   title,
@@ -1394,6 +1395,12 @@ export const Login: React.FC = () => {
   const handleGoogleLogin = async () => {
     setErrorMsg(null);
     setInfoMsg(null);
+    if (isInAppBrowser()) {
+      setErrorMsg(
+        'Google bloquea el inicio de sesión dentro de Instagram y Facebook por seguridad. Por favor abre este enlace en Safari o Chrome (toca los 3 puntos ••• arriba a la derecha), o inicia sesión con tu correo y contraseña.'
+      );
+      return;
+    }
     try {
       skipAutoRedirect.current = true;
       const { error } = await supabase.auth.signInWithOAuth({
@@ -3025,6 +3032,11 @@ export const Login: React.FC = () => {
                   </svg>
                   CONTINUAR CON GOOGLE
                 </button>
+                {isInAppBrowser() && (
+                  <div style={{ fontSize: '10px', color: '#f59e0b', marginTop: '6px', textAlign: 'center', lineHeight: 1.4, fontFamily: 'system-ui, sans-serif' }}>
+                    ⚠️ Google no permite entrar dentro de Instagram/Facebook. Abre este enlace en Safari o Chrome.
+                  </div>
+                )}
 
                 <button
                   type="button"
@@ -3360,6 +3372,11 @@ export const Login: React.FC = () => {
                   </svg>
                   REGISTRARSE CON GOOGLE
                 </button>
+                {isInAppBrowser() && (
+                  <div style={{ fontSize: '10px', color: '#f59e0b', marginTop: '6px', textAlign: 'center', lineHeight: 1.4, fontFamily: 'system-ui, sans-serif' }}>
+                    ⚠️ Google no permite entrar dentro de Instagram/Facebook. Abre este enlace en Safari o Chrome.
+                  </div>
+                )}
 
                 <button
                   type="button"

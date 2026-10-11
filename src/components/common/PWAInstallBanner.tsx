@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useModalA11y } from '../../hooks/useModalA11y';
+import { isInAppBrowser } from '../../lib/inAppBrowser';
 
 export const PWAInstallBanner: React.FC = () => {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -12,6 +13,13 @@ export const PWAInstallBanner: React.FC = () => {
   });
 
   useEffect(() => {
+    // 0. Si se ejecuta dentro de un navegador In-App (Instagram/Facebook), no mostrar
+    // el banner de instalación PWA: los WebViews no tienen menú nativo de instalación.
+    // InAppBrowserBanner se encarga de guiar al usuario al navegador real.
+    if (isInAppBrowser()) {
+      return;
+    }
+
     // 1. Verificar si ya se está ejecutando como PWA (standalone)
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || 
                          (window.navigator as any).standalone === true;

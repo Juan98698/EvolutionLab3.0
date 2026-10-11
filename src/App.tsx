@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useSupabase } from './context/SupabaseContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
 import { PWAInstallBanner } from './components/common/PWAInstallBanner';
+import { InAppBrowserBanner } from './components/common/InAppBrowserBanner';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { BootSplash } from './components/common/BootSplash';
 import { lazyWithRetry } from './lib/lazyWithRetry';
@@ -273,6 +274,7 @@ export const App: React.FC = () => {
         </Routes>
       </React.Suspense>
       {isAuthenticated && needsRoleSelection && <RoleSelectionModal />}
+      <InAppBrowserBanner />
       <PWAInstallBanner />
     </BrowserRouter>
     </ConfirmDialogProvider>
