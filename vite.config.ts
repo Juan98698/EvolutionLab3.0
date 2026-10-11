@@ -140,6 +140,21 @@ function foodSearchDevPlugin() {
 
 // https://vitejs.dev/config/
 export default defineConfig({
+  resolve: {
+    dedupe: ['react', 'react-dom'],
+  },
+  optimizeDeps: {
+    include: [
+      'react',
+      'react-dom',
+      'react/jsx-runtime',
+      'react/jsx-dev-runtime',
+      'react-dom/client',
+      'react-router-dom',
+      '@sentry/react',
+      '@supabase/supabase-js'
+    ],
+  },
   plugins: [
     react(),
     foodSearchDevPlugin(),

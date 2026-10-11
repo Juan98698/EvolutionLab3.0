@@ -26,6 +26,41 @@ export interface ErrorContext {
 
 let _initialized = false;
 
+/**
+ * Filtro `beforeSend` de Sentry (exportado para poder testearlo).
+ *  - Descarta el ruido de scripts inyectados por navegadores in-app y de recargas de SW.
+ *  - ChunkLoadError (chunk desactualizado que no se pudo resolver recargando): se agrupa
+ *    bajo una huella fija y se descarta si el usuario está sin conexión, porque ahí el
+ *    fallo es de red y no de la aplicación.
+ */
+export function sentryBeforeSend<T extends Sentry.ErrorEvent>(
+  event: T,
+  hint?: Sentry.EventHint
+): T | null {
+  const error = hint?.originalException;
+  if (error && typeof error === 'object') {
+    const message = String((error as any).message || '');
+    const stack = String((error as any).stack || '');
+    if (
+      message.includes('webkit.messageHandlers') ||
+      message.includes('registerSW') ||
+      stack.includes('sendDataToNative') ||
+      stack.includes('sendPageHideMessage')
+    ) {
+      return null; // Ignorar en Sentry (ruido de script inyectado de terceros o recarga de SW)
+    }
+
+    if ((error as any).name === 'ChunkLoadError') {
+      if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+        return null;
+      }
+      event.fingerprint = ['chunk-load-error'];
+      event.tags = { ...event.tags, chunk_load_error: 'true' };
+    }
+  }
+  return event;
+}
+
 function _initSentry(dsn: string): void {
   Sentry.init({
     dsn,
@@ -44,22 +79,7 @@ function _initSentry(dsn: string): void {
       "Cannot destructure property 'registerSW'",
       "registerSW"
     ],
-    beforeSend(event, hint) {
-      const error = hint?.originalException;
-      if (error && typeof error === 'object') {
-        const message = String((error as any).message || '');
-        const stack = String((error as any).stack || '');
-        if (
-          message.includes('webkit.messageHandlers') ||
-          message.includes('registerSW') ||
-          stack.includes('sendDataToNative') ||
-          stack.includes('sendPageHideMessage')
-        ) {
-          return null; // Ignorar en Sentry (ruido de script inyectado de terceros o recarga de SW)
-        }
-      }
-      return event;
-    }
+    beforeSend: sentryBeforeSend
   });
   console.info('[ErrorTracking] Sentry inicializado exitosamente.');
 }

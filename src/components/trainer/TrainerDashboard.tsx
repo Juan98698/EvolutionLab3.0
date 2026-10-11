@@ -1,7 +1,8 @@
-import React, { useState, useEffect, Suspense, lazy, useRef, useCallback } from 'react';
+import React, { useState, useEffect, Suspense, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useSupabase } from '../../context/SupabaseContext';
 import { supabase } from '../../lib/supabaseClient';
+import { lazyWithRetry } from '../../lib/lazyWithRetry';
 import { Profile, ValoracionAntropometrica } from '../../types/database.types';
 import Toast from '../common/Toast';
 import TrainerAlertsHub from './TrainerAlertsHub';
@@ -23,12 +24,12 @@ import {
 } from '../../lib/nutritionDraftStore';
 
 // Lazy Loaded Modals
-const RegisterClientModal = lazy(() => import('./modals/RegisterClientModal'));
-const RegisterSessionModal = lazy(() => import('./modals/RegisterSessionModal'));
-const EvolutionModal = lazy(() => import('./modals/EvolutionModal'));
-const RMCalculatorModal = lazy(() => import('./modals/RMCalculatorModal'));
-const AnthropometryModal = lazy(() => import('./modals/AnthropometryModal'));
-const NutritionPlannerModal = lazy(() => import('../nutrition/NutritionPlannerModal'));
+const RegisterClientModal = lazyWithRetry(() => import('./modals/RegisterClientModal'));
+const RegisterSessionModal = lazyWithRetry(() => import('./modals/RegisterSessionModal'));
+const EvolutionModal = lazyWithRetry(() => import('./modals/EvolutionModal'));
+const RMCalculatorModal = lazyWithRetry(() => import('./modals/RMCalculatorModal'));
+const AnthropometryModal = lazyWithRetry(() => import('./modals/AnthropometryModal'));
+const NutritionPlannerModal = lazyWithRetry(() => import('../nutrition/NutritionPlannerModal'));
 
 export const TrainerDashboard: React.FC = () => {
   const navigate = useNavigate();

@@ -5,6 +5,7 @@ import ProtectedRoute from './components/auth/ProtectedRoute';
 import { PWAInstallBanner } from './components/common/PWAInstallBanner';
 import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { BootSplash } from './components/common/BootSplash';
+import { lazyWithRetry } from './lib/lazyWithRetry';
 import { ConfirmDialogProvider } from './context/ConfirmDialogContext';
 import Login from './components/auth/Login';
 import RoleSelectionModal from './components/auth/RoleSelectionModal';
@@ -12,21 +13,21 @@ import RoleSelectionModal from './components/auth/RoleSelectionModal';
 // Al cargarlos bajo demanda se elimina ese peso del bundle principal (index.js),
 // que bajó de 1,042 KB → ~650 KB. Antes estaban estáticos por error — todos los
 // usuarios descargaban chart.js aunque nunca abrieran el historial ni las métricas.
-const AthleteDashboard = React.lazy(() => import('./components/dashboard/AthleteDashboard'));
-const Historial        = React.lazy(() => import('./components/dashboard/Historial'));
-const Analytics        = React.lazy(() => import('./components/metrics/Analytics'));
+const AthleteDashboard = lazyWithRetry(() => import('./components/dashboard/AthleteDashboard'));
+const Historial        = lazyWithRetry(() => import('./components/dashboard/Historial'));
+const Analytics        = lazyWithRetry(() => import('./components/metrics/Analytics'));
 
-const TrainerDashboard = React.lazy(() => import('./components/trainer/TrainerDashboard'));
-const PlanPlanner = React.lazy(() => import('./components/trainer/PlanPlanner'));
-const ConfigRules = React.lazy(() => import('./components/trainer/ConfigRules'));
-const AdminDashboard = React.lazy(() => import('./components/admin/AdminDashboard'));
-const TrainerBranding = React.lazy(() => import('./components/trainer/TrainerBranding'));
-const QuickStartPlanner = React.lazy(() => import('./components/dashboard/QuickStartPlanner'));
-const SoloConfigRules = React.lazy(() => import('./components/dashboard/SoloConfigRules'));
-const ExerciseLibrary = React.lazy(() => import('./components/dashboard/ExerciseLibrary'));
-const SessionPreview  = React.lazy(() => import('./components/dashboard/SessionPreview'));
-const ActiveSession   = React.lazy(() => import('./components/dashboard/ActiveSession'));
-const SessionComplete = React.lazy(() => import('./components/dashboard/SessionComplete'));
+const TrainerDashboard = lazyWithRetry(() => import('./components/trainer/TrainerDashboard'));
+const PlanPlanner = lazyWithRetry(() => import('./components/trainer/PlanPlanner'));
+const ConfigRules = lazyWithRetry(() => import('./components/trainer/ConfigRules'));
+const AdminDashboard = lazyWithRetry(() => import('./components/admin/AdminDashboard'));
+const TrainerBranding = lazyWithRetry(() => import('./components/trainer/TrainerBranding'));
+const QuickStartPlanner = lazyWithRetry(() => import('./components/dashboard/QuickStartPlanner'));
+const SoloConfigRules = lazyWithRetry(() => import('./components/dashboard/SoloConfigRules'));
+const ExerciseLibrary = lazyWithRetry(() => import('./components/dashboard/ExerciseLibrary'));
+const SessionPreview  = lazyWithRetry(() => import('./components/dashboard/SessionPreview'));
+const ActiveSession   = lazyWithRetry(() => import('./components/dashboard/ActiveSession'));
+const SessionComplete = lazyWithRetry(() => import('./components/dashboard/SessionComplete'));
 
 const LoadingFallback = () => (
   <div style={{

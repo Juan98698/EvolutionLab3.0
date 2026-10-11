@@ -6,6 +6,7 @@ import { ErrorBoundary } from './components/common/ErrorBoundary.tsx';
 import { inject } from '@vercel/analytics';
 import { initErrorTracking } from './lib/errorTracking.ts';
 import { registerPwaServiceWorker } from './lib/pwaRegistration.ts';
+import { reloadOnceForStaleChunk } from './lib/chunkRecovery.ts';
 import './index.css';
 
 // Auto-recuperación de "Failed to fetch dynamically imported module": pasa
@@ -14,20 +15,15 @@ import './index.css';
 // borró del servidor. Vite emite este evento específicamente para este
 // caso — antes esto dejaba al usuario con una pantalla rota hasta que
 // refrescara manualmente una segunda vez.
+//
+// OJO: al cancelar el evento con preventDefault(), Vite traga el error y el import()
+// resuelve `undefined`. Los lazy() de la app usan lazyWithRetry (src/lib/lazyWithRetry.ts)
+// para no terminar en un TypeError críptico cuando la recarga ya se intentó.
 window.addEventListener('vite:preloadError', (event) => {
   console.warn('⚠️ Chunk desactualizado detectado, recargando automáticamente...', event);
   event.preventDefault();
-  try {
-    const lastReload = sessionStorage.getItem('evolab_chunk_reload_ts');
-    const now = Date.now();
-    if (!lastReload || now - Number(lastReload) > 10000) {
-      sessionStorage.setItem('evolab_chunk_reload_ts', String(now));
-      window.location.reload();
-    } else {
-      console.warn('⚠️ Recarga por chunk desactualizado ya ejecutada recientemente. Evitando bucle infinito.');
-    }
-  } catch {
-    window.location.reload();
+  if (!reloadOnceForStaleChunk()) {
+    console.warn('⚠️ Recarga por chunk desactualizado ya ejecutada recientemente. Evitando bucle infinito.');
   }
 });
 
