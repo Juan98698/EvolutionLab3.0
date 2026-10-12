@@ -966,7 +966,7 @@ const ActiveSession: React.FC = () => {
     } finally {
       setSaving(false);
     }
-  }, [plan, exercises, sessionNotes, expressModeActive, expressBlocksAudit, navigate]);
+  }, [plan, exercises, sessionNotes, expressModeActive, expressBlocksAudit, navigate, weightUnit]);
 
   // ─── Guard: no plan or exercises ──────────────────────────────────────────
   if (!plan || exercises.length === 0) {
