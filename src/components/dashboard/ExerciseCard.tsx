@@ -236,11 +236,41 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
           const displayBadgeLabel = getFunctionalVariableLabel(v.id, v.label, isFunc);
 
           // 🤖 REASONING / CALIBRACIÓN INTELIGENTE DEL ROBOT 🤖
-          const isAuto = typeof value === 'string' && value.includes('🤖');
+          let isAuto = typeof value === 'string' && value.includes('🤖');
           const cleanValue = displayValue.replace(/^🤖\s*/, '').trim();
           const isPesoField = varId === 'peso' || cleanLabel.includes('peso');
           const isRepsField = varId === 'repeticiones' || varId === 'reps' || varId === 'reps_objetivo' || cleanLabel.includes('repeticion') || cleanLabel.includes('reps');
           const isDescansoField = varId === 'descanso' || cleanLabel.includes('descanso');
+
+          // Búsqueda de 1RM si aplica para este ejercicio
+          const normName = (exercise.nombre || '').toLowerCase().trim();
+          const marcas = periodizationConfig?.marcas_1rm || {};
+          let oneRM = marcas[normName];
+          if (!oneRM) {
+            const alias = mapExerciseToLiftKey(normName);
+            if (alias) oneRM = marcas[alias];
+          }
+          const hasOneRM = !isFunc && periodizationConfig?.enabled && typeof oneRM === 'number' && oneRM > 0;
+
+          // Si el campo de peso no traía 🤖 pero el atleta tiene 1RM configurado y periodización activa:
+          if (isPesoField && hasOneRM) {
+            isAuto = true;
+          }
+
+          // Verificación de repeticiones automáticas (reps_objetivo o robot en repeticiones)
+          const repsObjRaw = exercise.variables?.['reps_objetivo'];
+          const repsObjClean = repsObjRaw ? String(repsObjRaw).replace(/^🤖\s*/, '').trim() : '';
+          const hasAutoReps = isRepsField && (
+            (typeof value === 'string' && value.includes('🤖')) ||
+            (typeof repsObjRaw === 'string' && repsObjRaw.includes('🤖')) ||
+            (Boolean(repsObjClean) && repsObjClean !== cleanValue)
+          );
+
+          if (isRepsField && hasAutoReps) {
+            isAuto = true;
+          }
+
+          const targetReps = isRepsField ? (repsObjClean || cleanValue.match(/\d+/)?.[0] || cleanValue) : '';
 
           let reasoningSteps: ReasoningStep[] | null = null;
           let reasoningSource = 'Evolution Lab AI - Periodización Científica';
@@ -254,18 +284,11 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
           if (isAuto) {
             if (isPesoField && !isFunc) {
               try {
-                const normName = (exercise.nombre || '').toLowerCase().trim();
-                const marcas = periodizationConfig?.marcas_1rm || {};
-                let oneRM = marcas[normName];
-                if (!oneRM) {
-                  const alias = mapExerciseToLiftKey(normName);
-                  if (alias) oneRM = marcas[alias];
-                }
-                const repsStr = exercise.variables?.['repeticiones'] || '';
-                const repsMatch = repsStr.match(/\d+/);
+                const repsStr = repsObjRaw || exercise.variables?.['repeticiones'] || '';
+                const repsMatch = String(repsStr).match(/\d+/);
                 const reps = repsMatch ? parseInt(repsMatch[0], 10) : 0;
                 const rirStr = exercise.variables?.['rir'] || '0';
-                const rirMatch = rirStr.match(/\d+/);
+                const rirMatch = String(rirStr).match(/\d+/);
                 const targetRIR = rirMatch ? parseFloat(rirMatch[0]) : 0;
 
                 if (oneRM && oneRM > 0 && reps > 0) {
@@ -289,13 +312,49 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
               }
             } else if (isRepsField) {
               reasoningTitle = 'Ajuste Automático de Repeticiones';
+              reasoningResult = `${targetReps} reps`;
+              reasoningConfidence = 'high';
+              reasoningSource = isFunc ? 'Evolution Lab AI - Capacidad de Trabajo' : 'Evolution Lab AI - Doble Progresión';
+
               if (isFunc) {
-                reasoningHumanExplanation = exercise.progression_notes || `En este ejercicio funcional, la app incrementó las repeticiones a ${cleanValue} para aumentar la capacidad de trabajo y resistencia muscular.`;
-                reasoningSessionGoal = `Completa las ${cleanValue} repeticiones manteniendo cadencia uniforme en cada ronda.`;
+                reasoningHumanExplanation = exercise.progression_notes || `En este ejercicio funcional, la app calibró las repeticiones a ${targetReps} para aumentar la capacidad de trabajo y resistencia muscular.`;
+                reasoningSessionGoal = `Completa las ${targetReps} repeticiones manteniendo cadencia uniforme en cada ronda.`;
+              } else if (exercise.progression_notes) {
+                reasoningHumanExplanation = exercise.progression_notes;
+                reasoningSessionGoal = `Mantén tu peso actual y busca completar todas las series en este nuevo objetivo de ${targetReps} repeticiones. Cuando lo logres, la app aumentará automáticamente el peso.`;
+              } else if (cleanValue && cleanValue !== targetReps) {
+                reasoningHumanExplanation = `Para tu rango programado de ${cleanValue} repeticiones, la app fijó tu objetivo en ${targetReps} reps. En el sistema de Doble Progresión, comienzas en la base del rango y buscas progresar sesión a sesión hasta alcanzar el tope antes de que la app incremente automáticamente la carga en los discos.`;
+                const maxRepsStr = cleanValue.includes('-') ? cleanValue.split('-')[1]?.trim() : '';
+                reasoningSessionGoal = maxRepsStr
+                  ? `Realiza tus series buscando completar las ${targetReps} repeticiones con buena técnica y respetando el RIR indicado. Cuando alcances el tope de ${maxRepsStr} reps, la app aumentará el peso automáticamente.`
+                  : `Realiza tus series con el objetivo de ${targetReps} repeticiones manteniendo una técnica controlada.`;
               } else {
-                reasoningHumanExplanation = exercise.progression_notes || `La app aumentó tus repeticiones a ${cleanValue} para acumular mayor volumen de trabajo con buena técnica antes de subir los kilos en los discos (Doble Progresión).`;
-                reasoningSessionGoal = `Mantén tu peso actual y busca completar todas las series en este nuevo objetivo de ${cleanValue} repeticiones. Cuando lo logres, la app aumentará automáticamente el peso.`;
+                reasoningHumanExplanation = `La app calibró tu objetivo en ${targetReps} repeticiones para acumular mayor volumen de trabajo con buena técnica antes de subir los kilos en los discos (Doble Progresión).`;
+                reasoningSessionGoal = `Mantén tu peso actual y busca completar todas las series en este nuevo objetivo de ${targetReps} repeticiones. Cuando lo logres, la app aumentará automáticamente el peso.`;
               }
+
+              reasoningSteps = [
+                {
+                  label: 'Objetivo de Repeticiones',
+                  value: `${targetReps} reps`,
+                  highlight: true,
+                },
+                ...(cleanValue && cleanValue !== targetReps ? [{
+                  label: 'Rango Programado',
+                  value: `${cleanValue} reps`,
+                }] : []),
+                {
+                  label: 'Estrategia de Progresión',
+                  value: 'Doble Progresión / Sobrecarga Adaptativa',
+                  formula: cleanValue && cleanValue !== targetReps
+                    ? `Avanzar desde la base (${targetReps} reps) hacia el tope del rango antes de subir peso`
+                    : 'Acumulación de volumen efectivo con RIR controlado',
+                },
+                ...(exercise.progression_notes ? [{
+                  label: 'Pauta del Motor',
+                  value: exercise.progression_notes.length > 70 ? exercise.progression_notes.substring(0, 67) + '...' : exercise.progression_notes,
+                }] : [])
+              ];
             } else if (isDescansoField) {
               reasoningTitle = 'Ajuste Inteligente de Densidad';
               reasoningHumanExplanation = exercise.progression_notes || `La app optimizó tu tiempo de descanso a ${cleanValue} para incrementar la densidad del estímulo de acuerdo con tu recuperación.`;
@@ -332,6 +391,14 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
                 });
               }
             }
+          }
+
+          // Texto a mostrar en el badge del botón interactivo
+          let badgeText = cleanValue;
+          if (isPesoField && reasoningResult) {
+            badgeText = reasoningResult;
+          } else if (isRepsField && isAuto && targetReps) {
+            badgeText = (cleanValue && cleanValue !== targetReps) ? `${targetReps} (${cleanValue})` : targetReps;
           }
 
           return (
@@ -395,7 +462,7 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
                       title="Toca para ver el motivo del ajuste y tu objetivo"
                     >
                       <span style={{ fontSize: '13px', filter: 'drop-shadow(0 0 5px rgba(194, 255, 0, 0.6))' }}>🤖</span>
-                      <span>{escapeHtml(cleanValue)}</span>
+                      <span>{escapeHtml(badgeText)}</span>
                     </button>
                   }
                 />

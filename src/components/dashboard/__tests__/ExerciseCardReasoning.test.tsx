@@ -70,10 +70,66 @@ describe('ExerciseCard & WorkoutCard Robot Reasoning Tooltip Tests', () => {
       const autoBadge = container.querySelector('.var-badge.badge-auto-calibrated');
       expect(autoBadge).toBeTruthy();
 
-      // Debe renderizar el botón del robot con título explicativo
+      // Debe renderizar el botón del robot con título explicativo mostrando el peso calibrado (57.5 kg, coherente con el modal)
       const robotBtn = container.querySelector('button[title*="motivo del ajuste"]');
       expect(robotBtn).toBeTruthy();
-      expect(robotBtn?.textContent).toContain('47.5 kg');
+      expect(robotBtn?.textContent).toContain('57.5 kg');
+    });
+
+    it('garantiza consistencia absoluta entre la carga mostrada en la tarjeta del plan y el modal de ajuste automático (caso 60 kg vs 87.5 kg reportado)', () => {
+      // Simula el caso exacto de la captura: un ejercicio con peso desactualizado en variables ('🤖 60 kg')
+      // pero cuyo 1RM registrado (122.5 kg) calcula 87.5 kg con 10 reps y RIR 2
+      const config120: PeriodizationConfig = {
+        enabled: true,
+        objetivo: 'hipertrofia',
+        nivel_atleta: 'intermedio',
+        formula_preferida: 'epley',
+        redondeo_peso: 2.5,
+        marcas_1rm: {
+          'sentadilla': 122.5
+        }
+      };
+
+      const exerciseWithStaleWeight: Exercise = {
+        id: 'ex-stale-weight',
+        nombre: 'Sentadilla',
+        variables: {
+          'series de trabajo': '3',
+          'repeticiones': '10',
+          'rir': '2',
+          'descanso': '2',
+          'peso': '🤖 60 kg' // Antiguo valor sin calibrar
+        }
+      };
+
+      const { container } = render(
+        <ExerciseCard
+          exercise={exerciseWithStaleWeight}
+          dayId="day-1"
+          globalVariables={mockGlobalVariables}
+          variableDefinitions={mockVariableDefinitions}
+          isChecked={false}
+          onToggleCheck={vi.fn()}
+          periodizationConfig={config120}
+        />
+      );
+
+      // El badge en la tarjeta del plan DEBE mostrar el peso calibrado (87.5 kg), NO el obsoleto 60 kg
+      const pesoBadge = container.querySelector('.var-badge.badge-auto-calibrated');
+      expect(pesoBadge).toBeTruthy();
+      expect(pesoBadge?.textContent).toContain('87.5 kg');
+      expect(pesoBadge?.textContent).not.toContain('60 kg');
+
+      // Al hacer clic en el botón del robot, el panel DEBE mostrar exactamente 87.5 kg
+      const robotBtn = pesoBadge?.querySelector('button[title*="motivo del ajuste"]');
+      expect(robotBtn).toBeTruthy();
+      fireEvent.click(robotBtn!);
+
+      const panel = container.querySelector('.reasoning-panel');
+      expect(panel).toBeTruthy();
+      expect(panel?.textContent).toContain('87.5 kg');
+      expect(panel?.textContent).toContain('122.5 kg'); // 1RM base
+      expect(panel?.textContent).toContain('Ajuste Automático de Carga');
     });
 
     it('al hacer clic en el robot 🤖 se despliega el panel con 1RM, fórmula de Epley y pauta del entrenador', () => {
@@ -172,6 +228,92 @@ describe('ExerciseCard & WorkoutCard Robot Reasoning Tooltip Tests', () => {
       expect(panel?.textContent).toContain('Press Militar con Mancuernas');
       expect(panel?.textContent).toContain('12');
       expect(panel?.textContent).toContain('Reps incrementadas a 12');
+    });
+
+    it('detecta reps_objetivo con rango (ej. 10 con 10-12), muestra "10 (10-12)" y explica la Doble Progresión al atleta', () => {
+      const exerciseWithRepsRange: Exercise = {
+        id: 'ex-reps-range',
+        nombre: 'Press de Banca Plano',
+        variables: {
+          'series de trabajo': '4',
+          'repeticiones': '10-12',
+          'reps_objetivo': '🤖 10',
+          'rir': '2',
+          'descanso': '2',
+          'peso': '70 kg'
+        }
+      };
+
+      const { container } = render(
+        <ExerciseCard
+          exercise={exerciseWithRepsRange}
+          dayId="day-1"
+          globalVariables={mockGlobalVariables}
+          variableDefinitions={mockVariableDefinitions}
+          isChecked={false}
+          onToggleCheck={vi.fn()}
+          periodizationConfig={mockPeriodizationConfig}
+        />
+      );
+
+      // El badge de repeticiones debe ser auto-calibrado
+      const repsBadges = container.querySelectorAll('.var-badge.badge-auto-calibrated');
+      expect(repsBadges.length).toBeGreaterThan(0);
+
+      // Debe mostrar el objetivo y el rango: "10 (10-12)"
+      const repsBadge = Array.from(repsBadges).find(b => b.textContent?.includes('Repeticiones'));
+      expect(repsBadge).toBeTruthy();
+      expect(repsBadge?.textContent).toContain('10 (10-12)');
+
+      // Abrir modal de razonamiento de repeticiones
+      const repsTrigger = repsBadge?.querySelector('button[title*="motivo del ajuste"]');
+      expect(repsTrigger).toBeTruthy();
+      fireEvent.click(repsTrigger!);
+
+      const panel = container.querySelector('.reasoning-panel');
+      expect(panel).toBeTruthy();
+      expect(panel?.textContent).toContain('Ajuste Automático de Repeticiones');
+      expect(panel?.textContent).toContain('10 reps');
+      expect(panel?.textContent).toContain('Doble Progresión');
+      expect(panel?.textContent).toContain('10-12');
+    });
+
+    it('notifica al atleta cuando la regla de sobrecarga incrementa las repeticiones objetivo (subir_reps_antes_peso)', () => {
+      const exerciseWithVolumeGrowth: Exercise = {
+        id: 'ex-growth',
+        nombre: 'Remo con Barra',
+        variables: {
+          'series de trabajo': '3',
+          'repeticiones': '12',
+          'reps_objetivo': '🤖 13',
+          'peso': '60 kg'
+        },
+        progression_notes: '🎯 Reps objetivo ajustadas a 13 — tu volumen viene creciendo varias sesiones seguidas en este ejercicio. Consolidamos con más reps antes de subir peso.'
+      };
+
+      const { container } = render(
+        <ExerciseCard
+          exercise={exerciseWithVolumeGrowth}
+          dayId="day-1"
+          globalVariables={mockGlobalVariables}
+          variableDefinitions={mockVariableDefinitions}
+          isChecked={false}
+          onToggleCheck={vi.fn()}
+          periodizationConfig={mockPeriodizationConfig}
+        />
+      );
+
+      const repsBadge = container.querySelector('.var-badge.badge-auto-calibrated');
+      expect(repsBadge).toBeTruthy();
+      expect(repsBadge?.textContent).toContain('13');
+
+      const repsTrigger = repsBadge?.querySelector('button[title*="motivo del ajuste"]');
+      fireEvent.click(repsTrigger!);
+
+      const panel = container.querySelector('.reasoning-panel');
+      expect(panel).toBeTruthy();
+      expect(panel?.textContent).toContain('13 reps');
+      expect(panel?.textContent).toContain('tu volumen viene creciendo varias sesiones seguidas');
     });
   });
 

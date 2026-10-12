@@ -13,6 +13,7 @@ import AthleteNavbar from '../common/AthleteNavbar';
 import WorkoutBanner from './WorkoutBanner';
 import WorkoutCard from './WorkoutCard';
 import { analizarSobrecargaProgresiva as analyzeOverload, DEFAULT_OVERLOAD_CONFIG } from '../../lib/overload';
+import { recalculatePlanWeights } from '../../lib/periodizationEngine';
 import {
   flattenSessionsForOverload,
   loadAthleteSessions,
@@ -464,9 +465,20 @@ export const AthleteDashboard: React.FC = () => {
         const data = plansList && plansList.length > 0 ? plansList[0] : null;
 
         if (data && data.datos_plan && Object.keys(data.datos_plan).length > 0) {
-          const padded = padPlanData(data.datos_plan as PlanData);
+          let padded = padPlanData(data.datos_plan as PlanData);
+          if (padded?.periodizationConfig?.enabled && padded?.periodizationConfig?.marcas_1rm && Object.keys(padded.periodizationConfig.marcas_1rm).length > 0) {
+            padded = {
+              ...padded,
+              trainingDays: recalculatePlanWeights(
+                padded.trainingDays || [],
+                padded.periodizationConfig.marcas_1rm,
+                padded.periodizationConfig.formula_preferida,
+                padded.periodizationConfig.redondeo_peso
+              )
+            };
+          }
           setPlan(padded);
-          localStorage.setItem('pwa_client_plan', JSON.stringify(data.datos_plan));
+          localStorage.setItem('pwa_client_plan', JSON.stringify(padded));
           success = true;
           
           if (padded?.periodizationConfig?.has_new_updates) {
@@ -487,7 +499,18 @@ export const AthleteDashboard: React.FC = () => {
           const cached = localStorage.getItem('pwa_client_plan');
           if (cached) {
             const parsed = JSON.parse(cached) as PlanData;
-            const padded = padPlanData(parsed);
+            let padded = padPlanData(parsed);
+            if (padded?.periodizationConfig?.enabled && padded?.periodizationConfig?.marcas_1rm && Object.keys(padded.periodizationConfig.marcas_1rm).length > 0) {
+              padded = {
+                ...padded,
+                trainingDays: recalculatePlanWeights(
+                  padded.trainingDays || [],
+                  padded.periodizationConfig.marcas_1rm,
+                  padded.periodizationConfig.formula_preferida,
+                  padded.periodizationConfig.redondeo_peso
+                )
+              };
+            }
             setPlan(padded);
             showToast('Cargado en modo offline 🔌', 'info');
           } else {
@@ -2669,8 +2692,15 @@ export const AthleteDashboard: React.FC = () => {
             plan={plan}
             onSave={async (config) => {
               if (!plan || !user) return;
+              const recalcedDays = recalculatePlanWeights(
+                plan.trainingDays || [],
+                config.marcas_1rm || {},
+                config.formula_preferida,
+                config.redondeo_peso
+              );
               const updatedPlan = {
                 ...plan,
+                trainingDays: recalcedDays,
                 periodizationConfig: config
               };
               
