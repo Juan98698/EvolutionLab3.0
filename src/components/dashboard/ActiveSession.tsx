@@ -7,7 +7,7 @@ import { autoRegulatePlanForNextWeek } from '../../lib/periodizationEngine';
 import { ErrorBoundary } from '../common/ErrorBoundary';
 import { useModalA11y } from '../../hooks/useModalA11y';
 import { useWakeLock } from '../../hooks/useWakeLock';
-import { isFunctionalExercise } from '../../lib/exerciseUtils';
+import { isFunctionalExercise, lbsToKg, kgToLbs } from '../../lib/exerciseUtils';
 import { computeBlockTags, applyExpressMode, computeNextExerciseStep, chainExercisesWithReorder, swapBlockPartner } from '../../lib/exerciseBlockUtils';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -137,6 +137,22 @@ const ActiveSession: React.FC = () => {
   const [selectedChainIds, setSelectedChainIds] = useState<string[]>([]);
   const [customBlockRest, setCustomBlockRest] = useState<number>(90);
   const [customTransitionRest, setCustomTransitionRest] = useState<number>(10);
+
+  // Unidad de entrada de peso seleccionada por el atleta ('kg' | 'lbs')
+  const [weightUnit, setWeightUnit] = useState<'kg' | 'lbs'>(() => {
+    try {
+      return (localStorage.getItem('active_session_weight_unit') as 'kg' | 'lbs') || 'kg';
+    } catch {
+      return 'kg';
+    }
+  });
+
+  const handleToggleWeightUnit = (unit: 'kg' | 'lbs') => {
+    setWeightUnit(unit);
+    try {
+      localStorage.setItem('active_session_weight_unit', unit);
+    } catch {}
+  };
 
   // Ejercicios de un bloque cuyo `currentIdx` ya avanzó (round-robin) pero que
   // acaban de terminar TODAS sus series — sin esto, su panel de feedback
@@ -455,7 +471,10 @@ const ActiveSession: React.FC = () => {
         } else {
           // Fill in ghost values if the field is still empty
           if (!series[sIdx].peso && copy[exIdx].suggestedPeso) {
-            series[sIdx] = { ...series[sIdx], peso: copy[exIdx].suggestedPeso };
+            const defaultWeight = weightUnit === 'lbs'
+              ? String(kgToLbs(copy[exIdx].suggestedPeso))
+              : copy[exIdx].suggestedPeso;
+            series[sIdx] = { ...series[sIdx], peso: defaultWeight };
           }
           if (!series[sIdx].reps && copy[exIdx].suggestedReps) {
             series[sIdx] = { ...series[sIdx], reps: copy[exIdx].suggestedReps };
@@ -516,7 +535,7 @@ const ActiveSession: React.FC = () => {
         }
       }
     },
-    [exercises, currentIdx, startRestTimer]
+    [exercises, currentIdx, startRestTimer, weightUnit]
   );
 
   const handleFeedbackChange = useCallback(
@@ -785,7 +804,17 @@ const ActiveSession: React.FC = () => {
               return isNaN(r) || r < 1 ? ex.suggestedReps || 1 : r;
             });
           const pesoRaw = (ex.series.find(s => s.done)?.peso || '').trim().toLowerCase();
-          const pesoNum = isFunc ? null : ((pesoRaw === '' || pesoRaw === 'autocarga') ? 0 : parseFloat(pesoRaw) ?? 0);
+          let pesoNum: number | null = null;
+          if (!isFunc) {
+            if (pesoRaw === '' || pesoRaw === 'autocarga') {
+              pesoNum = 0;
+            } else {
+              const parsed = parseFloat(pesoRaw) || 0;
+              // Si el atleta ingresó en LBS, convertimos transparentemente a KG
+              // para garantizar prevalencia canónica en Kilos en la base de datos y periodización
+              pesoNum = weightUnit === 'lbs' ? lbsToKg(parsed) : parsed;
+            }
+          }
           const descansoReal = ex.descansosReales?.length
             ? Math.round(ex.descansosReales.reduce((a, b) => a + b, 0) / ex.descansosReales.length)
             : undefined;
@@ -1122,7 +1151,63 @@ const ActiveSession: React.FC = () => {
         {/* Header row */}
         <div className="active-session-series-header">
           <span className="active-session-col-label">{currentExercise.isFunctional ? 'Ronda' : 'Serie'}</span>
-          <span className="active-session-col-label">{currentExercise.isFunctional ? 'Carga (opc)' : 'Peso (kg)'}</span>
+          <div className="active-session-col-label" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '3px' }}>
+            <span>{currentExercise.isFunctional ? 'Carga (opc)' : `Peso (${weightUnit})`}</span>
+            {!currentExercise.isFunctional && (
+              <div
+                role="group"
+                aria-label="Unidad de peso"
+                style={{
+                  display: 'inline-flex',
+                  background: 'rgba(255,255,255,0.06)',
+                  borderRadius: '6px',
+                  padding: '1px',
+                  border: '1px solid rgba(255,255,255,0.1)'
+                }}
+              >
+                <button
+                  type="button"
+                  onClick={() => handleToggleWeightUnit('kg')}
+                  style={{
+                    border: 'none',
+                    background: weightUnit === 'kg' ? '#00d4ff' : 'transparent',
+                    color: weightUnit === 'kg' ? '#000000' : 'rgba(255,255,255,0.6)',
+                    fontWeight: 800,
+                    fontSize: '8px',
+                    padding: '2px 5px',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    lineHeight: 1,
+                    transition: 'all 0.15s ease'
+                  }}
+                  aria-pressed={weightUnit === 'kg'}
+                  aria-label="Seleccionar Kilos"
+                >
+                  KG
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleToggleWeightUnit('lbs')}
+                  style={{
+                    border: 'none',
+                    background: weightUnit === 'lbs' ? '#00d4ff' : 'transparent',
+                    color: weightUnit === 'lbs' ? '#000000' : 'rgba(255,255,255,0.6)',
+                    fontWeight: 800,
+                    fontSize: '8px',
+                    padding: '2px 5px',
+                    borderRadius: '4px',
+                    cursor: 'pointer',
+                    lineHeight: 1,
+                    transition: 'all 0.15s ease'
+                  }}
+                  aria-pressed={weightUnit === 'lbs'}
+                  aria-label="Seleccionar Libras"
+                >
+                  LBS
+                </button>
+              </div>
+            )}
+          </div>
           <span className="active-session-col-label">{currentExercise.isFunctional ? 'Trabajo / Reps' : 'Reps'}</span>
           <span className="active-session-col-label">✓</span>
         </div>
@@ -1135,17 +1220,104 @@ const ActiveSession: React.FC = () => {
             {/* Series number */}
             <span className="active-session-series-num">{sIdx + 1}</span>
 
-            {/* Peso input */}
-            <input
-              type="text"
-              inputMode="decimal"
-              className={`active-session-input${s.done ? ' done' : ''}`}
-              value={s.peso}
-              placeholder={currentExercise.suggestedPeso || '—'}
-              onChange={e => handleSeriesFieldChange(currentIdx, sIdx, 'peso', e.target.value)}
-              disabled={s.done}
-              aria-label={`Peso serie ${sIdx + 1}`}
-            />
+            {/* Peso input with stepper buttons */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '3px', width: '100%', justifyContent: 'center' }}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const weightStep = weightUnit === 'lbs' ? 5 : 2.5;
+                    const baseVal = s.peso !== ''
+                      ? parseFloat(s.peso)
+                      : (weightUnit === 'lbs'
+                          ? (currentExercise.suggestedPeso ? kgToLbs(currentExercise.suggestedPeso) : 0)
+                          : parseFloat(currentExercise.suggestedPeso) || 0);
+                    const nextVal = Math.max(0, Math.round((baseVal - weightStep) * 10) / 10);
+                    handleSeriesFieldChange(currentIdx, sIdx, 'peso', String(nextVal));
+                  }}
+                  disabled={s.done}
+                  aria-label={`Reducir peso serie ${sIdx + 1}`}
+                  style={{
+                    minWidth: '24px',
+                    padding: '0 3px',
+                    height: '38px',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    background: 'rgba(255,255,255,0.04)',
+                    color: 'white',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 'bold',
+                    fontSize: '10px',
+                    transition: 'all 0.15s ease',
+                    flexShrink: 0
+                  }}
+                  title={weightUnit === 'lbs' ? 'Bajar 5 lbs' : 'Bajar 2.5 kg'}
+                >
+                  {weightUnit === 'lbs' ? '−5' : '−2.5'}
+                </button>
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  className={`active-session-input${s.done ? ' done' : ''}`}
+                  value={s.peso}
+                  placeholder={weightUnit === 'lbs' && currentExercise.suggestedPeso ? String(kgToLbs(currentExercise.suggestedPeso)) : (currentExercise.suggestedPeso || '—')}
+                  onChange={e => handleSeriesFieldChange(currentIdx, sIdx, 'peso', e.target.value)}
+                  disabled={s.done}
+                  aria-label={`Peso serie ${sIdx + 1}`}
+                  style={{
+                    flex: 1,
+                    minWidth: '20px',
+                    padding: '10px 2px',
+                    fontSize: '13px',
+                    height: '38px',
+                    boxSizing: 'border-box'
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const weightStep = weightUnit === 'lbs' ? 5 : 2.5;
+                    const baseVal = s.peso !== ''
+                      ? parseFloat(s.peso)
+                      : (weightUnit === 'lbs'
+                          ? (currentExercise.suggestedPeso ? kgToLbs(currentExercise.suggestedPeso) : 0)
+                          : parseFloat(currentExercise.suggestedPeso) || 0);
+                    const nextVal = Math.round((baseVal + weightStep) * 10) / 10;
+                    handleSeriesFieldChange(currentIdx, sIdx, 'peso', String(nextVal));
+                  }}
+                  disabled={s.done}
+                  aria-label={`Aumentar peso serie ${sIdx + 1}`}
+                  style={{
+                    minWidth: '24px',
+                    padding: '0 3px',
+                    height: '38px',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    background: 'rgba(255,255,255,0.04)',
+                    color: 'white',
+                    cursor: 'pointer',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontWeight: 'bold',
+                    fontSize: '10px',
+                    transition: 'all 0.15s ease',
+                    flexShrink: 0
+                  }}
+                  title={weightUnit === 'lbs' ? 'Subir 5 lbs' : 'Subir 2.5 kg'}
+                >
+                  {weightUnit === 'lbs' ? '+5' : '+2.5'}
+                </button>
+              </div>
+              {weightUnit === 'lbs' && s.peso && !isNaN(parseFloat(s.peso)) && parseFloat(s.peso) > 0 && (
+                <span style={{ fontSize: '9px', color: '#00d4ff', marginTop: '2px', fontWeight: 600 }}>
+                  ≈ {lbsToKg(s.peso)} kg
+                </span>
+              )}
+            </div>
 
             {/* Reps input with +/- buttons */}
             <div style={{ display: 'flex', alignItems: 'center', gap: '3px', width: '100%', justifyContent: 'center' }}>

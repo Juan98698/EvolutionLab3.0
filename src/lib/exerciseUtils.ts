@@ -119,3 +119,27 @@ export function getFunctionalVariablePlaceholder(varId: string, originalPlacehol
 
   return fallbackPlaceholder;
 }
+
+/**
+ * Convierte libras a kilogramos manteniendo prevalencia métrica canónica en el sistema.
+ * Redondea con precisión a 1 decimal (ej. 190 lbs -> 86.2 kg).
+ * 1 lb = 0.45359237 kg
+ */
+export function lbsToKg(lbs: number | string | null | undefined): number {
+  if (lbs === null || lbs === undefined || lbs === '') return 0;
+  const num = typeof lbs === 'number' ? lbs : parseFloat(String(lbs));
+  if (isNaN(num) || num <= 0) return 0;
+  return Math.round(num * 0.45359237 * 10) / 10;
+}
+
+/**
+ * Convierte kilogramos a libras para visualización de referencia del atleta.
+ * Redondea con precisión a 1 decimal (ej. 87.5 kg -> 192.9 lbs).
+ * 1 kg = 2.20462262 lbs
+ */
+export function kgToLbs(kg: number | string | null | undefined): number {
+  if (kg === null || kg === undefined || kg === '') return 0;
+  const num = typeof kg === 'number' ? kg : parseFloat(String(kg));
+  if (isNaN(num) || num <= 0) return 0;
+  return Math.round(num * 2.20462262 * 10) / 10;
+}
