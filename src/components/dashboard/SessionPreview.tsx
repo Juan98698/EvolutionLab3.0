@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { PlanData } from '../../types/database.types';
+import { computeBlockTags } from '../../lib/exerciseBlockUtils';
 
 /**
  * SessionPreview — Day selector + workout preview.
@@ -105,29 +106,49 @@ const SessionPreview: React.FC = () => {
           </h2>
 
           <div className="session-preview-exercise-list">
-            {selectedDayData.exercises.map((ex, idx) => {
-              const vars = ex.variables || {};
-              const series = vars['series de trabajo'] || vars['series'] || '?';
-              const reps = vars['repeticiones'] || vars['reps'] || '?';
-              const peso = (vars['peso'] || '').replace(/^🤖\s*/, '');
-              const rir = vars['rir'];
+            {(() => {
+              const blockTags = computeBlockTags(selectedDayData.exercises || []);
+              return selectedDayData.exercises.map((ex, idx) => {
+                const vars = ex.variables || {};
+                const series = vars['series de trabajo'] || vars['series'] || '?';
+                const reps = vars['repeticiones'] || vars['reps'] || '?';
+                const peso = (vars['peso'] || '').replace(/^🤖\s*/, '');
+                const rir = vars['rir'];
+                const bTag = blockTags[ex.id];
 
-              return (
-                <div key={ex.id || idx} className="session-preview-exercise-row">
-                  <span className="session-preview-exercise-num">{idx + 1}</span>
-                  <div className="session-preview-exercise-info">
-                    <span className="session-preview-exercise-name">{ex.nombre}</span>
-                    <div className="session-preview-exercise-vars">
-                      <span className="session-preview-var-chip">{series}×{reps}</span>
-                      {peso && <span className="session-preview-var-chip accent">{peso}</span>}
-                      {rir !== undefined && rir !== '' && (
-                        <span className="session-preview-var-chip">RIR {rir}</span>
-                      )}
+                return (
+                  <div key={ex.id || idx} className="session-preview-exercise-row">
+                    <span className="session-preview-exercise-num">{idx + 1}</span>
+                    <div className="session-preview-exercise-info">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                        {bTag && (
+                          <span style={{
+                            fontSize: '10px',
+                            fontWeight: 800,
+                            fontFamily: "'Orbitron', sans-serif",
+                            color: '#00d4ff',
+                            background: 'rgba(0, 212, 255, 0.15)',
+                            border: '1px solid rgba(0, 212, 255, 0.4)',
+                            padding: '1px 6px',
+                            borderRadius: '6px',
+                          }}>
+                            ⚡ {bTag}
+                          </span>
+                        )}
+                        <span className="session-preview-exercise-name">{ex.nombre}</span>
+                      </div>
+                      <div className="session-preview-exercise-vars">
+                        <span className="session-preview-var-chip">{series}×{reps}</span>
+                        {peso && <span className="session-preview-var-chip accent">{peso}</span>}
+                        {rir !== undefined && rir !== '' && (
+                          <span className="session-preview-var-chip">RIR {rir}</span>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              });
+            })()}
           </div>
         </div>
       ) : (

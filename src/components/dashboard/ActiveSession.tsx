@@ -176,108 +176,176 @@ const ActiveSession: React.FC = () => {
    * entre series (no lo prescrito). Ver ActiveExercise.descansosReales. */
   const restStartedAtRef = useRef<Record<number, number>>({});
 
-  // ─── Load plan from localStorage ─────────────────────────────────────────
+  // ─── Load plan from localStorage & Supabase fallback ─────────────────────
   useEffect(() => {
-    try {
-      const raw = localStorage.getItem('pwa_client_plan');
-      if (!raw) return;
-      const parsed: PlanData = JSON.parse(raw);
-      setPlan(parsed);
+    let isMounted = true;
 
-      const idx = parseInt(dayIndex || '0', 10);
-      const day = parsed.trainingDays?.[idx];
-      if (!day) return;
+    const loadPlan = async () => {
+      try {
+        let parsed: PlanData | null = null;
+        const raw = localStorage.getItem('pwa_client_plan');
+        if (raw) {
+          try {
+            parsed = JSON.parse(raw);
+          } catch (e) {
+            console.error('Error parsing pwa_client_plan from localStorage:', e);
+          }
+        }
 
-      const blockTags = computeBlockTags(day.exercises);
+        const idx = parseInt(dayIndex || '0', 10);
 
-      // Build ActiveExercise array from plan exercises
-      const built: ActiveExercise[] = day.exercises.map((ex, exIdx) => {
-        const isFunc = isFunctionalExercise(ex);
-        const vars = ex.variables || {};
-        const seriesKey = Object.keys(vars).find(k => {
-          const kl = k.toLowerCase();
-          return kl.includes('series de trabajo') || kl.includes('series') || kl.includes('ronda');
-        });
-        const seriesRaw = seriesKey ? vars[seriesKey] : undefined;
-        const numSeries = parseSeries(seriesRaw);
+        // Fallback a Supabase si no hay plan en caché local o si no existe el día
+        if ((!parsed || !parsed.trainingDays?.[idx]) && navigator.onLine) {
+          try {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session?.user) {
+              const { data: plansList } = await supabase
+                .from('planes')
+                .select('*')
+                .eq('cliente_id', session.user.id)
+                .eq('activo', true)
+                .order('created_at', { ascending: false })
+                .limit(1);
 
-        const repsKey = Object.keys(vars).find(k => {
-          const kl = k.toLowerCase();
-          if (kl === 'reps_objetivo' || kl.includes('series')) return false;
-          return kl.includes('repeticiones') || kl.includes('reps') || kl.includes('trabajo');
-        });
-        const repsRaw = repsKey ? vars[repsKey] : undefined;
+              if (plansList && plansList.length > 0 && plansList[0].datos_plan) {
+                parsed = plansList[0].datos_plan as PlanData;
+                localStorage.setItem('pwa_client_plan', JSON.stringify(parsed));
+              }
+            }
+          } catch (err) {
+            console.warn('ActiveSession: no se pudo sincronizar plan de Supabase:', err);
+          }
+        }
 
-        // Si la periodización ya recalculó un objetivo de reps coherente con
-        // el nuevo peso (repsMin del rango, usado en la misma fórmula que
-        // calculó el peso), se usa ese valor en vez del promedio del rango.
-        // Si el ejercicio nunca tuvo un ajuste algorítmico (o el plan no usa
-        // periodización), no existe 'reps_objetivo' y se cae al comportamiento
-        // original (promedio del rango "10-12" definido por el entrenador).
-        const repsObjetivoKey = Object.keys(vars).find(k => k.toLowerCase().trim() === 'reps_objetivo');
-        const repsObjetivoRaw = repsObjetivoKey ? vars[repsObjetivoKey] : undefined;
-        const repsObjetivoNum = repsObjetivoRaw
-          ? parseInt(repsObjetivoRaw.replace(/^🤖\s*/, '').trim(), 10)
-          : NaN;
-        const numReps = (!isNaN(repsObjetivoNum) && repsObjetivoNum > 0)
-          ? repsObjetivoNum
-          : parseReps(repsRaw);
+        if (!isMounted || !parsed) return;
+        setPlan(parsed);
 
-        const pesoKey = Object.keys(vars).find(k => {
-          const kl = k.toLowerCase();
-          return kl.includes('peso') || kl.includes('carga');
-        });
-        const pesoRaw = pesoKey ? vars[pesoKey] : undefined;
-        const pesoSugerido = parsePeso(pesoRaw);
+        const day = parsed.trainingDays?.[idx];
+        if (!day || !day.exercises) return;
 
-        const descansoKey = Object.keys(vars).find(k => {
-          const kl = k.toLowerCase();
-          return kl.includes('descanso') || kl.includes('pausa');
-        });
-        const descansoRaw = descansoKey ? vars[descansoKey] : undefined;
-        const descanso = parseDescanso(descansoRaw);
-
-        const rirKey = Object.keys(vars).find(k => {
-          const kl = k.toLowerCase().trim();
-          return kl === 'rir' || kl === 'rpe' || kl.includes('intensi');
-        });
-        const rirRaw = rirKey ? vars[rirKey] : '';
-
-        const series: SeriesEntry[] = Array.from({ length: numSeries }, () => ({
-          reps: numReps,
-          peso: pesoSugerido,
-          done: false,
+        // Garantizar IDs estables y únicos para cada ejercicio para cálculo consistente de bloques
+        const normalizedDayExercises = day.exercises.map((ex, exIdx) => ({
+          ...ex,
+          id: ex.id || `ex_${idx}_${exIdx}`,
         }));
 
-        return {
-          id: ex.id || `ex_${idx}_${exIdx}_${Date.now()}`,
-          nombre: ex.nombre || 'Ejercicio',
-          grupo: (ex as any).grupo_muscular || ex.grupo_muscular || '',
-          suggestedPeso: pesoSugerido,
-          suggestedReps: numReps,
-          targetRIR: rirRaw || '',
-          descanso,
-          descansosReales: [],
-          series,
-          feedback_estimulo: 'good',
-          feedback_recuperacion: 'recovered',
-          rirPercibido: !isNaN(parseFloat(rirRaw)) ? Math.min(4, Math.max(0, Math.round(parseFloat(rirRaw)))) : 2,
-          isFunctional: isFunc,
-          video_url: ex.video_url || '',
-          image_url: ex.image_url || '',
-          gif_url: ex.gif_url || '',
-          description: (ex as any).descripcion || (ex as any).description || '',
-          block_id: ex.block_id,
-          block_rest: ex.block_rest,
-          transition_rest: ex.transition_rest,
-          block_tag: blockTags[ex.id]
-        };
-      });
+        const blockTags = computeBlockTags(normalizedDayExercises);
 
-      setExercises(built);
-    } catch (e) {
-      console.error('Error loading plan for ActiveSession:', e);
-    }
+        // Build ActiveExercise array from plan exercises
+        const built: ActiveExercise[] = normalizedDayExercises.map((ex) => {
+          const isFunc = isFunctionalExercise(ex);
+          const vars = ex.variables || {};
+          const seriesKey = Object.keys(vars).find(k => {
+            const kl = k.toLowerCase();
+            return kl.includes('series de trabajo') || kl.includes('series') || kl.includes('ronda');
+          });
+          const seriesRaw = seriesKey ? vars[seriesKey] : undefined;
+          const numSeries = parseSeries(seriesRaw);
+
+          const repsKey = Object.keys(vars).find(k => {
+            const kl = k.toLowerCase();
+            if (kl === 'reps_objetivo' || kl.includes('series')) return false;
+            return kl.includes('repeticiones') || kl.includes('reps') || kl.includes('trabajo');
+          });
+          const repsRaw = repsKey ? vars[repsKey] : undefined;
+
+          // Si la periodización ya recalculó un objetivo de reps coherente con
+          // el nuevo peso (repsMin del rango, usado en la misma fórmula que
+          // calculó el peso), se usa ese valor en vez del promedio del rango.
+          // Si el ejercicio nunca tuvo un ajuste algorítmico (o el plan no usa
+          // periodización), no existe 'reps_objetivo' y se cae al comportamiento
+          // original (promedio del rango "10-12" definido por el entrenador).
+          const repsObjetivoKey = Object.keys(vars).find(k => k.toLowerCase().trim() === 'reps_objetivo');
+          const repsObjetivoRaw = repsObjetivoKey ? vars[repsObjetivoKey] : undefined;
+          const repsObjetivoNum = repsObjetivoRaw
+            ? parseInt(repsObjetivoRaw.replace(/^🤖\s*/, '').trim(), 10)
+            : NaN;
+          const numReps = (!isNaN(repsObjetivoNum) && repsObjetivoNum > 0)
+            ? repsObjetivoNum
+            : parseReps(repsRaw);
+
+          const pesoKey = Object.keys(vars).find(k => {
+            const kl = k.toLowerCase();
+            return kl.includes('peso') || kl.includes('carga');
+          });
+          const pesoRaw = pesoKey ? vars[pesoKey] : undefined;
+          const pesoSugerido = parsePeso(pesoRaw);
+
+          const descansoKey = Object.keys(vars).find(k => {
+            const kl = k.toLowerCase();
+            return kl.includes('descanso') || kl.includes('pausa');
+          });
+          const descansoRaw = descansoKey ? vars[descansoKey] : undefined;
+          const descanso = parseDescanso(descansoRaw);
+
+          const rirKey = Object.keys(vars).find(k => {
+            const kl = k.toLowerCase().trim();
+            return kl === 'rir' || kl === 'rpe' || kl.includes('intensi');
+          });
+          const rirRaw = rirKey ? vars[rirKey] : '';
+
+          const series: SeriesEntry[] = Array.from({ length: numSeries }, () => ({
+            reps: numReps,
+            peso: pesoSugerido,
+            done: false,
+          }));
+
+          return {
+            id: ex.id,
+            nombre: ex.nombre || 'Ejercicio',
+            grupo: (ex as any).grupo_muscular || ex.grupo_muscular || '',
+            suggestedPeso: pesoSugerido,
+            suggestedReps: numReps,
+            targetRIR: rirRaw || '',
+            descanso,
+            descansosReales: [],
+            series,
+            feedback_estimulo: 'good',
+            feedback_recuperacion: 'recovered',
+            rirPercibido: !isNaN(parseFloat(rirRaw)) ? Math.min(4, Math.max(0, Math.round(parseFloat(rirRaw)))) : 2,
+            isFunctional: isFunc,
+            video_url: ex.video_url || '',
+            image_url: ex.image_url || '',
+            gif_url: ex.gif_url || '',
+            description: (ex as any).descripcion || (ex as any).description || '',
+            block_id: ex.block_id,
+            block_rest: ex.block_rest,
+            transition_rest: ex.transition_rest,
+            block_tag: blockTags[ex.id]
+          };
+        });
+
+        setExercises(built);
+
+        // Si el plan ya venía configurado con Súper Series por el entrenador,
+        // activar automáticamente el modo Súper Serie y pre-poblar auditoría
+        const hasPreconfiguredBlocks = built.some(e => Boolean(e.block_id));
+        if (hasPreconfiguredBlocks) {
+          setExpressModeActive(true);
+          const auditMap: Record<string, string[]> = {};
+          built.forEach(e => {
+            if (e.block_id) {
+              auditMap[e.block_id] = auditMap[e.block_id] || [];
+              auditMap[e.block_id].push(e.nombre);
+            }
+          });
+          const initialAudit: ExpressBlockAudit[] = Object.entries(auditMap).map(([bId, names]) => ({
+            block_id: bId,
+            type: names.length === 2 ? 'superset' : names.length === 3 ? 'triset' : 'circuit',
+            exercise_names: names,
+          }));
+          setExpressBlocksAudit(initialAudit);
+        }
+      } catch (e) {
+        console.error('Error loading plan for ActiveSession:', e);
+      }
+    };
+
+    loadPlan();
+
+    return () => {
+      isMounted = false;
+    };
   }, [dayIndex]);
 
   // Set initial active media type based on what is available when selected exercise changes

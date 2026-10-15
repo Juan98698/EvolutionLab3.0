@@ -153,12 +153,16 @@ export const AthleteDashboard: React.FC = () => {
         const paddedDays = (parsed.trainingDays || []).map(day => {
           const exercises = day.exercises || [];
           const normalizedExercises = exercises.map(ex => ({
+            ...ex,
             id: ex.id || 'ex_' + Math.random().toString(36).substring(2, 9),
             nombre: ex.nombre || '',
             variables: ex.variables || {},
             video_url: ex.video_url || '',
             image_url: ex.image_url || '',
-            gif_url: ex.gif_url || ''
+            gif_url: ex.gif_url || '',
+            block_id: ex.block_id,
+            block_rest: ex.block_rest,
+            transition_rest: ex.transition_rest,
           }));
           const currentExCount = normalizedExercises.length;
           if (currentExCount < 3) {
@@ -170,7 +174,10 @@ export const AthleteDashboard: React.FC = () => {
                 variables: {},
                 video_url: '',
                 image_url: '',
-                gif_url: ''
+                gif_url: '',
+                block_id: undefined,
+                block_rest: undefined,
+                transition_rest: undefined
               });
             }
           }
@@ -398,6 +405,7 @@ export const AthleteDashboard: React.FC = () => {
           });
 
           return {
+            ...ex,
             id: ex.id || 'temp_' + Math.random().toString(36).substring(2, 11),
             nombre: ex.nombre !== undefined ? ex.nombre : (ex.name !== undefined ? ex.name : ''),
             nombre_original: ex.nombre_original || '',
@@ -409,7 +417,10 @@ export const AthleteDashboard: React.FC = () => {
             grupo_muscular: ex.grupo_muscular || '',
             progression_notes: ex.progression_notes || '',
             progression_type: ex.progression_type,
-            progression_params: ex.progression_params
+            progression_params: ex.progression_params,
+            block_id: ex.block_id,
+            block_rest: ex.block_rest,
+            transition_rest: ex.transition_rest,
           };
         });
 
@@ -429,7 +440,10 @@ export const AthleteDashboard: React.FC = () => {
               grupo_muscular: '',
               progression_notes: '',
               progression_type: undefined,
-              progression_params: undefined
+              progression_params: undefined,
+              block_id: undefined,
+              block_rest: undefined,
+              transition_rest: undefined
             });
           }
         }
