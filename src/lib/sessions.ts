@@ -180,77 +180,104 @@ export async function fetchAthleteSessions(userId: string): Promise<LocalSesion[
   return formatSessions((data as RawSesionRow[]) || []);
 }
 
-/** Sincroniza las sesiones registradas localmente en modo offline hacia Supabase. */
-export async function syncOfflineSessions(userId: string): Promise<SyncResult> {
+/**
+ * 1RM estimado (promedio Epley + Brzycki) con la serie de más repeticiones,
+ * redondeado a 0.1. Es la misma fórmula para el guardado online y offline:
+ * antes cada camino usaba reps distintas (última serie vs. máximas) y solo
+ * uno redondeaba, así que la misma sesión daba RM distinto según la red.
+ */
+export function estimateOneRepMax(peso: number | null, repsArray: number[]): number | null {
+  if (peso == null || repsArray.length === 0) return null;
+  const maxReps = Math.max(...repsArray);
+  const epley = peso * (1 + maxReps / 30);
+  const brzyckiDenominator = 1.0278 - 0.0278 * maxReps;
+  const brzycki = brzyckiDenominator > 0.01 ? peso / brzyckiDenominator : peso;
+  return Math.round(((epley + brzycki) / 2) * 10) / 10;
+}
+
+/** Filas de `sesiones_ejercicios` para una sesión local. `peso === null` = ejercicio funcional. */
+export function buildEjerciciosRows(sesionId: string, ejercicios: LocalSesion['ejercicios']) {
+  return ejercicios.map((ej) => {
+    const repsArray = ej.repsArray || [];
+    const totalReps = repsArray.reduce((a, b) => a + b, 0);
+    return {
+      sesion_id: sesionId,
+      nombre_ejercicio: ej.nombre,
+      grupo_muscular: ej.grupo || 'General',
+      series_reps: repsArray,
+      peso: ej.peso,
+      rpe_rir: ej.rpe,
+      descanso: ej.descanso,
+      volumen: ej.peso == null ? null : ej.peso * totalReps,
+      rm_estimado: estimateOneRepMax(ej.peso, repsArray),
+      feedback_estimulo: ej.feedback_estimulo || null,
+      feedback_recuperacion: ej.feedback_recuperacion || null,
+    };
+  });
+}
+
+/**
+ * Sube una sesión local (cabecera + ejercicios) y devuelve el id del servidor.
+ * Si fallan los ejercicios se borra la cabecera recién creada, para que el
+ * reintento no deje cabeceras vacías duplicadas en el historial.
+ */
+async function uploadSession(userId: string, s: LocalSesion): Promise<string> {
+  const { data: histData, error: histError } = await supabase
+    .from('sesiones_historial')
+    .insert({
+      cliente_id: userId,
+      fecha: s.fecha,
+      notas_generales: s.notas_sesion || '',
+      express_mode: s.express_mode || false,
+      express_blocks: s.express_blocks || [],
+    })
+    .select('id')
+    .single();
+
+  if (histError) throw histError;
+  const sesionId: string = histData.id;
+
+  const { error: exError } = await supabase
+    .from('sesiones_ejercicios')
+    .insert(buildEjerciciosRows(sesionId, s.ejercicios));
+
+  if (exError) {
+    const { error: rollbackError } = await supabase
+      .from('sesiones_historial')
+      .delete()
+      .eq('id', sesionId);
+    if (rollbackError) {
+      console.error('[Sync] No se pudo borrar la cabecera huérfana:', rollbackError);
+    }
+    throw exError;
+  }
+
+  return sesionId;
+}
+
+async function runSync(userId: string): Promise<SyncResult> {
   if (!navigator.onLine) return { syncedCount: 0, failedCount: 0 };
 
-  const sessions = readSessionsFromCache();
-  const unsynced = sessions.filter((s) => typeof s.id === 'number');
+  const unsynced = readSessionsFromCache().filter((s) => typeof s.id === 'number');
   if (unsynced.length === 0) return { syncedCount: 0, failedCount: 0 };
 
-  let syncedCount = 0;
+  const serverIds = new Map<string | number, string>();
   let failedCount = 0;
   for (const s of unsynced) {
     try {
-      // 1. Insertar cabecera de la sesión
-      const { data: histData, error: histError } = await supabase
-        .from('sesiones_historial')
-        .insert({
-          cliente_id: userId,
-          fecha: s.fecha,
-          notas_generales: s.notas_sesion || '',
-          express_mode: s.express_mode || false,
-          express_blocks: s.express_blocks || [],
-        })
-        .select('id')
-        .single();
-
-      if (histError) throw histError;
-      const sesionId = histData.id;
-
-      // 2. Mapear e insertar ejercicios individuales
-      const ejerciciosInsert = s.ejercicios.map((ej) => {
-        const totalReps = (ej.repsArray || []).reduce((a, b) => a + b, 0);
-        const hasPeso = ej.peso != null && ej.peso > 0;
-        const vol = hasPeso ? ej.peso! * totalReps : null;
-        const maxReps = Math.max(...(ej.repsArray || [0]));
-        const epley = hasPeso ? ej.peso! * (1 + maxReps / 30) : null;
-        const brzyckiDenominator = 1.0278 - 0.0278 * maxReps;
-        const brzycki = hasPeso ? (brzyckiDenominator > 0.01 ? ej.peso! / brzyckiDenominator : ej.peso!) : null;
-        const rmEst = (epley != null && brzycki != null) ? (epley + brzycki) / 2 : null;
-
-        return {
-          sesion_id: sesionId,
-          nombre_ejercicio: ej.nombre,
-          grupo_muscular: ej.grupo || 'General',
-          series_reps: ej.repsArray,
-          peso: ej.peso,
-          rpe_rir: ej.rpe,
-          descanso: ej.descanso,
-          volumen: vol,
-          rm_estimado: rmEst,
-          feedback_estimulo: (ej as any).feedback_estimulo || 'good',
-          feedback_recuperacion: (ej as any).feedback_recuperacion || 'recovered',
-        };
-      });
-
-      const { error: exError } = await supabase
-        .from('sesiones_ejercicios')
-        .insert(ejerciciosInsert);
-
-      if (exError) throw exError;
-
-      // Sincronización exitosa: cambiar ID numérico local por el UUID real del servidor
-      s.id = sesionId;
-      syncedCount++;
+      serverIds.set(s.id, await uploadSession(userId, s));
     } catch (err) {
       console.error('[Sync] Error al sincronizar sesión offline:', err);
       failedCount++;
     }
   }
 
-  if (syncedCount > 0) {
-    writeSessionsToCache(sessions);
+  if (serverIds.size > 0) {
+    // Se relee el caché: mientras subíamos pudo guardarse otra sesión y no hay
+    // que pisarla con la foto que se tomó al empezar.
+    writeSessionsToCache(
+      readSessionsFromCache().map((s) => (serverIds.has(s.id) ? { ...s, id: serverIds.get(s.id)! } : s))
+    );
   }
 
   if (failedCount > 0) {
@@ -260,7 +287,22 @@ export async function syncOfflineSessions(userId: string): Promise<SyncResult> {
     );
   }
 
-  return { syncedCount, failedCount };
+  return { syncedCount: serverIds.size, failedCount };
+}
+
+let syncQueue: Promise<unknown> = Promise.resolve();
+
+/**
+ * Sincroniza las sesiones registradas localmente hacia Supabase.
+ *
+ * Las llamadas se encolan: si el dashboard, Analytics y el guardado de una
+ * sesión piden sincronizar a la vez, cada una espera a la anterior y lee el
+ * caché ya actualizado, así ninguna sesión se sube dos veces.
+ */
+export function syncOfflineSessions(userId: string): Promise<SyncResult> {
+  const run = syncQueue.then(() => runSync(userId));
+  syncQueue = run.catch(() => undefined);
+  return run;
 }
 
 /** Descarga de Supabase con fallback a caché local (offline-first). */

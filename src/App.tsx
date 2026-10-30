@@ -8,12 +8,14 @@ import { ErrorBoundary } from './components/common/ErrorBoundary';
 import { BootSplash } from './components/common/BootSplash';
 import { lazyWithRetry } from './lib/lazyWithRetry';
 import { ConfirmDialogProvider } from './context/ConfirmDialogContext';
-import Login from './components/auth/Login';
 import RoleSelectionModal from './components/auth/RoleSelectionModal';
 // Lazy-loaded: AthleteDashboard, Historial y Analytics importan chart.js (~204 KB).
 // Al cargarlos bajo demanda se elimina ese peso del bundle principal (index.js),
 // que bajó de 1,042 KB → ~650 KB. Antes estaban estáticos por error — todos los
 // usuarios descargaban chart.js aunque nunca abrieran el historial ni las métricas.
+// Lazy: Login.tsx (~3.5k líneas) no hace falta para quien ya tiene sesión
+// iniciada, que es la mayoría de los arranques de la PWA.
+const Login            = lazyWithRetry(() => import('./components/auth/Login'));
 const AthleteDashboard = lazyWithRetry(() => import('./components/dashboard/AthleteDashboard'));
 const Historial        = lazyWithRetry(() => import('./components/dashboard/Historial'));
 const Analytics        = lazyWithRetry(() => import('./components/metrics/Analytics'));

@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from './_lib/types';
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
+import { PLANS, PLAN_CURRENCY } from './_lib/plans';
 
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -126,6 +127,18 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(200).json({ received: true, error: 'Incomplete metadata' });
     }
 
+    // El plan viene de la metadata, pero el monto lo fija lo que realmente se
+    // pagó: solo se activa si coincide con el precio y la moneda del plan.
+    const planInfo = Object.prototype.hasOwnProperty.call(PLANS, plan) ? PLANS[plan] : undefined;
+    const paidAmount = Number(payment.transaction_amount);
+    if (!planInfo || payment.currency_id !== PLAN_CURRENCY || !(paidAmount >= planInfo.amount)) {
+      console.error(
+        `⚠️ Webhook: Pago ${paymentId} no coincide con el plan "${plan}" ` +
+        `(pagado: ${payment.transaction_amount} ${payment.currency_id}, esperado: ${planInfo?.amount} ${PLAN_CURRENCY})`
+      );
+      return res.status(200).json({ received: true, error: 'Payment does not match plan' });
+    }
+
     console.log(`🔔 Webhook: Payment approved! Activating plan "${plan}" for user ID ${userId}${email ? ` (${email})` : ''}`);
 
     // 5. Connect to Supabase
@@ -194,6 +207,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json({ received: true, updated: true, notified: !!email });
   } catch (error: any) {
     console.error('⚠️ Webhook: Database/Internal error processing webhook:', error.message);
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: 'Internal error processing webhook' });
   }
 }

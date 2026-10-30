@@ -75,6 +75,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json({ success: true, message: 'Suscripción push guardada con éxito.' });
   } catch (err: any) {
     console.error('Error in save-subscription api:', err);
-    return res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: 'No se pudo guardar la suscripción push.' });
   }
 }

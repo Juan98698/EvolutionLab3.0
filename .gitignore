@@ -49,3 +49,8 @@ fix-*.cjs
 fix-*.mjs
 e2e/**/*-win32.png
 scripts/catalog_*.json
+
+# Generados: service worker de desarrollo (vite-plugin-pwa) y resultados de Playwright
+dev-dist/
+test-results/
+playwright-report/

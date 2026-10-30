@@ -64,10 +64,16 @@ vi.mock('../../../lib/supabaseClient', () => {
   };
 });
 
-vi.mock('../../../lib/sessions', () => ({
-  readSessionsFromCache: vi.fn().mockReturnValue([]),
-  writeSessionsToCache: vi.fn(),
-}));
+// Caché real (en memoria) envuelto en spies: el guardado online pasa por
+// syncOfflineSessions, que lee y escribe ese mismo caché.
+vi.mock('../../../lib/sessions', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../../lib/sessions')>();
+  return {
+    ...actual,
+    readSessionsFromCache: vi.fn(actual.readSessionsFromCache),
+    writeSessionsToCache: vi.fn(actual.writeSessionsToCache),
+  };
+});
 
 vi.mock('../../../lib/periodizationEngine', () => ({
   autoRegulatePlanForNextWeek: vi.fn().mockReturnValue(null),
@@ -114,8 +120,10 @@ async function fillExercise(idx: number, nombre = 'Sentadilla', peso = '60', rir
   });
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   localStorage.clear();
+  const { __resetSessionsCacheForTests } = await import('../../../lib/sessions');
+  __resetSessionsCacheForTests([]);
   vi.clearAllMocks();
   // Default: online
   Object.defineProperty(navigator, 'onLine', { value: true, writable: true, configurable: true });

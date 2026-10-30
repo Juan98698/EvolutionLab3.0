@@ -35,13 +35,13 @@ describe('boot-guard.js (red de seguridad contra pantalla en blanco)', () => {
 
   it('no muestra el aviso antes de que pase el tiempo de gracia', () => {
     runGuard();
-    vi.advanceTimersByTime(5000);
+    vi.advanceTimersByTime(12000);
     expect(document.querySelector(OVERLAY)).toBeNull();
   });
 
   it('muestra el aviso si la app nunca queda lista (React no montó)', () => {
     runGuard();
-    vi.advanceTimersByTime(9000);
+    vi.advanceTimersByTime(16000);
     expect(document.querySelector(OVERLAY)).not.toBeNull();
     expect(document.querySelector(OVERLAY)?.textContent).toContain('Reparar y recargar');
   });
@@ -49,7 +49,7 @@ describe('boot-guard.js (red de seguridad contra pantalla en blanco)', () => {
   it('muestra el aviso si la app está "lista" pero #root quedó vacío', () => {
     document.body.classList.add('auth-ready');
     runGuard();
-    vi.advanceTimersByTime(9000);
+    vi.advanceTimersByTime(16000);
     expect(document.querySelector(OVERLAY)).not.toBeNull();
   });
 
@@ -62,7 +62,7 @@ describe('boot-guard.js (red de seguridad contra pantalla en blanco)', () => {
 
   it('el aviso desaparece solo cuando la app termina de cargar (red lenta, no fallo)', () => {
     runGuard();
-    vi.advanceTimersByTime(9000);
+    vi.advanceTimersByTime(16000);
     expect(document.querySelector(OVERLAY)).not.toBeNull();
 
     setHealthyApp();
@@ -70,10 +70,20 @@ describe('boot-guard.js (red de seguridad contra pantalla en blanco)', () => {
     expect(document.querySelector(OVERLAY)).toBeNull();
   });
 
+  it('se desarma tras el primer arranque sano: un logout posterior NO muestra el aviso', () => {
+    runGuard();
+    setHealthyApp();
+    vi.advanceTimersByTime(2000);
+    // Logout / sesión expirada: la clase desaparece mucho después del arranque.
+    document.body.classList.remove('auth-ready');
+    vi.advanceTimersByTime(60000);
+    expect(document.querySelector(OVERLAY)).toBeNull();
+  });
+
   it('registra el último error global y lo muestra en el aviso', () => {
     runGuard();
     window.dispatchEvent(new ErrorEvent('error', { message: 'boom: módulo roto' }));
-    vi.advanceTimersByTime(9000);
+    vi.advanceTimersByTime(16000);
 
     expect((window as any).__evolabBootGuard.getLastError()).toBe('boom: módulo roto');
     expect(document.querySelector(OVERLAY)?.textContent).toContain('boom: módulo roto');

@@ -98,10 +98,6 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
     ? (exercise.image_url || exercise.gif_url || '')
     : (exercise.gif_url || exercise.image_url || '');
 
-  // Escapar texto para seguridad
-  const escapeHtml = (str: string): string => {
-    return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  };
 
   // Mapa de iconos SVG por variable
   const iconMap: Record<string, string> = {
@@ -427,7 +423,7 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
                 className="var-badge-label"
                 style={{ fontWeight: 600, color: isAuto ? '#67e8f9' : 'rgba(255,255,255,0.6)', marginRight: '3px' }}
               >
-                {escapeHtml(displayBadgeLabel)}:
+                {displayBadgeLabel}:
               </span>
               {' '}
               {isAuto && reasoningSteps ? (
@@ -462,12 +458,12 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
                       title="Toca para ver el motivo del ajuste y tu objetivo"
                     >
                       <span style={{ fontSize: '13px', filter: 'drop-shadow(0 0 5px rgba(194, 255, 0, 0.6))' }}>🤖</span>
-                      <span>{escapeHtml(badgeText)}</span>
+                      <span>{badgeText}</span>
                     </button>
                   }
                 />
               ) : (
-                <span>{escapeHtml(displayValue)}</span>
+                <span>{displayValue}</span>
               )}
               {definition && (
                 <button

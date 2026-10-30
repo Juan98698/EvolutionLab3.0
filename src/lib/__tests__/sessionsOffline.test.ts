@@ -3,6 +3,8 @@ import 'fake-indexeddb/auto';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import {
   syncOfflineSessions,
+  estimateOneRepMax,
+  writeSessionsToCache,
   loadAthleteSessions,
   fetchAthleteSessions,
   readSessionsFromCache,
@@ -16,6 +18,7 @@ import { idbGet, __resetIndexedDbConnectionForTests } from '../indexedDbStore';
 const mockHistorialInsert = vi.fn();
 const mockEjerciciosInsert = vi.fn();
 const mockSyncHealthInsert = vi.fn();
+const mockHistorialDelete = vi.fn();
 // Resultado configurable del insert de ejercicios, para simular una falla a mitad de sync
 const mockEjerciciosInsertResult = vi.fn(() => ({ error: null as Error | null }));
 // Lista que "el servidor" devuelve cuando se llama a fetchAthleteSessions (select + order)
@@ -28,6 +31,10 @@ vi.mock('../supabaseClient', () => {
         const chain: any = {};
         chain.select = vi.fn().mockReturnValue(chain);
         chain.eq = vi.fn().mockReturnValue(chain);
+        chain.delete = vi.fn().mockImplementation(() => {
+          if (table === 'sesiones_historial') mockHistorialDelete();
+          return chain;
+        });
         // .order() es la llamada terminal de fetchAthleteSessions (select().eq().order())
         chain.order = vi.fn().mockImplementation(() =>
           Promise.resolve({ data: mockServerSessionsRows, error: null })
@@ -354,6 +361,58 @@ describe('Offline Session Synchronization and Cache Preservation', () => {
       { block_id: 'block-x', exercise_names: ['Press Militar', 'Elevaciones Laterales'] }
     ]);
     expect(result[0].ejercicios[0].nombre).toBe('Press Militar');
+  });
+});
+
+describe('Guardado consistente en el servidor', () => {
+  const offlineSession = (id: number) => ({
+    id,
+    fecha: '2026-10-01',
+    notas_sesion: `sesion ${id}`,
+    ejercicios: [{ id_ej: 1, nombre: 'Sentadilla', grupo: 'Piernas', peso: 100, repsArray: [8, 6], rpe: 2, descanso: 120 }],
+  });
+
+  it('borra la cabecera recién creada si fallan los ejercicios (sin cabeceras vacías duplicadas)', async () => {
+    mockHistorialDelete.mockClear();
+    seedCache([offlineSession(1)]);
+    mockEjerciciosInsertResult.mockReturnValueOnce({ error: new Error('fallo ejercicios') });
+
+    const result = await syncOfflineSessions('user-1');
+
+    expect(result).toEqual({ syncedCount: 0, failedCount: 1 });
+    expect(mockHistorialDelete).toHaveBeenCalledTimes(1);
+    expect(readSessionsFromCache()[0].id).toBe(1);
+  });
+
+  it('dos sincronizaciones simultáneas suben cada sesión una sola vez', async () => {
+    mockHistorialInsert.mockClear();
+    seedCache([offlineSession(1)]);
+
+    await Promise.all([syncOfflineSessions('user-1'), syncOfflineSessions('user-1')]);
+
+    expect(mockHistorialInsert).toHaveBeenCalledTimes(1);
+    expect(readSessionsFromCache()[0].id).toBe('uuid-server-id');
+  });
+
+  it('no pisa una sesión guardada mientras la sincronización estaba en curso', async () => {
+    seedCache([offlineSession(1)]);
+    const pending = syncOfflineSessions('user-1');
+    writeSessionsToCache([...readSessionsFromCache(), { ...offlineSession(2), notas_sesion: 'nueva' }]);
+    await pending;
+
+    const notas = readSessionsFromCache().map((s) => s.notas_sesion);
+    expect(notas).toContain('nueva');
+  });
+
+  it('calcula el RM estimado con las reps máximas y redondeado (igual online y offline)', async () => {
+    mockEjerciciosInsert.mockClear();
+    seedCache([offlineSession(1)]);
+    await syncOfflineSessions('user-1');
+
+    const row = mockEjerciciosInsert.mock.calls[0][0][0];
+    expect(row.rm_estimado).toBe(estimateOneRepMax(100, [8, 6]));
+    expect(estimateOneRepMax(100, [8, 6])).toBe(125.4);
+    expect(row.volumen).toBe(1400);
   });
 });
 

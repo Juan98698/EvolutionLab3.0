@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { supabase } from '../../lib/supabaseClient';
-import { writeSessionsToCache, readSessionsFromCache } from '../../lib/sessions';
+import { writeSessionsToCache, readSessionsFromCache, syncOfflineSessions } from '../../lib/sessions';
 import { PlanData } from '../../types/database.types';
 import { autoRegulatePlanForNextWeek } from '../../lib/periodizationEngine';
 import { PeriodizationHelpModal } from '../common/PeriodizationHelpModal';
@@ -306,66 +306,14 @@ export const AddSesion: React.FC<AddSesionProps> = ({
       if (navigator.onLine) {
         showToast('Guardando en la nube... ☁️', 'info');
 
-        // Insertar cabecera
-        const { data: histData, error: histError } = await supabase
-          .from('sesiones_historial')
-          .insert({
-            cliente_id: currentUser.id,
-            fecha,
-            notas_generales: notasSesion
-          })
-          .select('id')
-          .single();
-
-        if (histError) throw histError;
-
-        const sesionId = histData.id;
-
-        // Insertar detalles
-        const ejerciciosInsert = ejerciciosGuardar.map(ej => {
-          const isFunc = isFunctionalExercise(ej);
-          const totalReps = ej.repsArray.reduce((a, b) => a + b, 0);
-          const vol = isFunc || ej.peso == null ? null : ej.peso * totalReps;
-          
-          const maxReps = Math.max(...ej.repsArray);
-          const epley = isFunc || ej.peso == null ? null : ej.peso * (1 + maxReps / 30);
-          const brzyckiDenominator = 1.0278 - 0.0278 * maxReps;
-          const brzycki = isFunc || ej.peso == null ? null : (brzyckiDenominator > 0.01 ? ej.peso / brzyckiDenominator : ej.peso);
-          const rmEst = (epley != null && brzycki != null) ? Math.round(((epley + brzycki) / 2) * 10) / 10 : null;
-
-          return {
-            sesion_id: sesionId,
-            nombre_ejercicio: ej.nombre,
-            grupo_muscular: ej.grupo,
-            series_reps: ej.repsArray,
-            peso: isFunc ? null : ej.peso,
-            rpe_rir: isFunc ? null : ej.rpe,
-            descanso: ej.descanso,
-            volumen: vol,
-            rm_estimado: rmEst,
-            feedback_estimulo: ej.feedback_estimulo || null,
-            feedback_recuperacion: ej.feedback_recuperacion || null
-          };
-        });
-
-        const { data: ejData, error: ejError } = await supabase
-          .from('sesiones_ejercicios')
-          .insert(ejerciciosInsert)
-          .select('id, nombre_ejercicio');
-
-        if (ejError) throw ejError;
-
-        // Actualizar UUIDs de Supabase en localStorage para mantener coherencia
-        nuevaSesion.id = sesionId;
-        if (ejData) {
-          ejData.forEach((inserted: any) => {
-            const match = nuevaSesion.ejercicios.find(e => e.nombre === inserted.nombre_ejercicio);
-            if (match) match.id_ej = inserted.id;
-          });
+        // Misma cola que la sincronización offline: si falla, la sesión queda
+        // en caché con su id local y se reintenta sola.
+        await syncOfflineSessions(currentUser.id);
+        if (readSessionsFromCache().some(s => s.id === nextSesionId)) {
+          showToast('No se pudo subir a la nube. Quedó guardada en este dispositivo y se reintentará sola. 🔌', 'info');
+        } else {
+          showToast('¡Sesión guardada y sincronizada en la nube! ☁️', 'success');
         }
-        writeSessionsToCache(sesiones);
-
-        showToast('¡Sesión guardada y sincronizada en la nube! ☁️', 'success');
       } else {
         // Encolar para sincronizar cuando vuelva a estar online
         const queue = JSON.parse(localStorage.getItem('evolution_sync_queue') || '[]');
