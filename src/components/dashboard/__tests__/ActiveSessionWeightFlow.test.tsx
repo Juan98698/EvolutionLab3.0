@@ -236,5 +236,26 @@ describe('ActiveSession - Weight Stepper & KG/LBS Capture Unit Tests', () => {
         expect(savedEx.peso).toBe(86.2); // Prevalencia canónica en KG
       });
     });
+
+    it('convierte los pesos ya escritos al cambiar de unidad a mitad de la sesión', async () => {
+      render(<ActiveSession />);
+
+      // Empieza en KG y escribe 100 kg en la serie 1
+      const pesoInput = screen.getByRole('textbox', { name: /Peso serie 1/i }) as HTMLInputElement;
+      fireEvent.change(pesoInput, { target: { value: '100' } });
+
+      // Cambia a LBS: el valor escrito se convierte en vez de reinterpretarse
+      fireEvent.click(screen.getByRole('button', { name: /Seleccionar Libras/i }));
+      expect((screen.getByRole('textbox', { name: /Peso serie 1/i }) as HTMLInputElement).value).toBe('220.5');
+
+      fireEvent.click(screen.getByRole('button', { name: /Marcar serie 1 como completada/i }));
+      fireEvent.click(screen.getByRole('button', { name: /Finalizar sesión/i }));
+
+      await waitFor(() => {
+        const cachedSessions = readSessionsFromCache();
+        expect(cachedSessions.length).toBeGreaterThan(0);
+        expect(cachedSessions[cachedSessions.length - 1].ejercicios[0].peso).toBe(100);
+      });
+    });
   });
 });

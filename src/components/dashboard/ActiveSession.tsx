@@ -2,7 +2,7 @@ import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import { PlanData, ExpressBlockAudit } from '../../types/database.types';
-import { writeSessionsToCache, readSessionsFromCache } from '../../lib/sessions';
+import { writeSessionsToCache, readSessionsFromCache, syncOfflineSessions } from '../../lib/sessions';
 import { autoRegulatePlanForNextWeek } from '../../lib/periodizationEngine';
 import { ErrorBoundary } from '../common/ErrorBoundary';
 import { useModalA11y } from '../../hooks/useModalA11y';
@@ -148,6 +148,20 @@ const ActiveSession: React.FC = () => {
   });
 
   const handleToggleWeightUnit = (unit: 'kg' | 'lbs') => {
+    if (unit === weightUnit) return;
+    // Los pesos ya escritos están en la unidad anterior. Al guardar todo se
+    // convierte con la unidad activa, así que hay que pasarlos a la nueva
+    // unidad aquí; si no, 100 kg escritos se guardarían como 100 lbs (45 kg).
+    const convert = unit === 'lbs' ? kgToLbs : lbsToKg;
+    setExercises(prev => prev.map(ex => ({
+      ...ex,
+      series: ex.series.map(s => {
+        const raw = String(s.peso ?? '').trim();
+        return /^\d+([.,]\d+)?$/.test(raw) && parseFloat(raw.replace(',', '.')) > 0
+          ? { ...s, peso: String(convert(raw.replace(',', '.'))) }
+          : s;
+      }),
+    })));
     setWeightUnit(unit);
     try {
       localStorage.setItem('active_session_weight_unit', unit);
@@ -924,50 +938,13 @@ const ActiveSession: React.FC = () => {
       writeSessionsToCache(sesiones);
 
       // ── Online: sync to Supabase ──
+      // Pasa por la misma cola que la sincronización offline: si algo falla, la
+      // sesión queda en caché con su id local y se reintenta sola, sin perder
+      // ejercicios ni duplicar la cabecera.
+      let savedOnline = false;
       if (navigator.onLine) {
-        const { data: histData, error: histError } = await supabase
-          .from('sesiones_historial')
-          .insert({
-            cliente_id: currentUser.id,
-            fecha,
-            notas_generales: finalNotes,
-            express_mode: expressModeActive || false,
-            express_blocks: expressBlocksAudit.length > 0 ? expressBlocksAudit : []
-          })
-          .select('id')
-          .single();
-
-        if (histError) throw histError;
-
-        const sesionId = histData.id;
-        nuevaSesion.id = sesionId;
-
-        const ejerciciosInsert = ejerciciosGuardar.map(ej => {
-          const isFunc = isFunctionalExercise(ej);
-          const totalReps = ej.repsArray.reduce((a, b) => a + b, 0);
-          const vol = isFunc || ej.peso == null ? null : ej.peso * totalReps;
-          const lastSetReps = ej.repsArray.length > 0 ? ej.repsArray[ej.repsArray.length - 1] : 0;
-          const epley = isFunc || ej.peso == null ? null : ej.peso * (1 + lastSetReps / 30);
-          const brzyckiDenominator = 1.0278 - 0.0278 * lastSetReps;
-          const brzycki = isFunc || ej.peso == null ? null : (brzyckiDenominator > 0.01 ? ej.peso / brzyckiDenominator : ej.peso);
-          const rmEst = (epley != null && brzycki != null) ? Math.round(((epley + brzycki) / 2) * 10) / 10 : null;
-          return {
-            sesion_id: sesionId,
-            nombre_ejercicio: ej.nombre,
-            grupo_muscular: ej.grupo,
-            series_reps: ej.repsArray,
-            peso: isFunc ? null : ej.peso,
-            rpe_rir: isFunc ? null : ej.rpe,
-            descanso: ej.descanso,
-            volumen: vol,
-            rm_estimado: rmEst,
-            feedback_estimulo: ej.feedback_estimulo || null,
-            feedback_recuperacion: ej.feedback_recuperacion || null,
-          };
-        });
-
-        await supabase.from('sesiones_ejercicios').insert(ejerciciosInsert);
-        writeSessionsToCache(sesiones);
+        await syncOfflineSessions(currentUser.id);
+        savedOnline = !readSessionsFromCache().some(s => s.id === nextSesionId);
       }
 
       // ── Auto-regulation ──
@@ -1025,7 +1002,7 @@ const ActiveSession: React.FC = () => {
               targetRIR:             ex.targetRIR,
             })),
           fecha,
-          savedOnline: navigator.onLine,
+          savedOnline,
         },
       });
     } catch (err: any) {
