@@ -1,5 +1,6 @@
 import type { VercelRequest, VercelResponse } from './_lib/types';
 import { createClient } from '@supabase/supabase-js';
+import { PLANS, PLAN_CURRENCY } from './_lib/plans';
 
 // Allowlist de orígenes autorizados a hacer requests con credenciales.
 // Antes: se reflejaba cualquier `Origin` recibido junto con
@@ -16,7 +17,7 @@ function isAllowedOrigin(origin: string | undefined): boolean {
   if (!origin) return false;
   if (origin === PRODUCTION_ORIGIN) return true;
   // Previews y dominios de Vercel del proyecto (p.ej. evolution-lab3-0.vercel.app o evolution-lab3-0-<hash>.vercel.app)
-  if (/^https:\/\/(evolutionlab3-0|evolution-lab|evolution-lab-3)(-[a-z0-9-]+)?\.vercel\.app$/i.test(origin)) return true;
+  if (/^https:\/\/(evolution-lab3-0|evolutionlab3-0|evolution-lab|evolution-lab-3)(-[a-z0-9-]+)?\.vercel\.app$/i.test(origin)) return true;
   if (process.env.NODE_ENV !== 'production' && /^https?:\/\/localhost(:\d+)?$/i.test(origin)) return true;
   const extra = (process.env.EXTRA_ALLOWED_ORIGINS || '').split(',').map((s) => s.trim()).filter(Boolean);
   return extra.includes(origin);
@@ -85,34 +86,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(500).json({ error: 'MercadoPago integration is not configured on the server.' });
     }
 
-    let amount = 0;
-    let planName = '';
-    let planDescription = '';
-
-    switch (plan) {
-      case 'premium':
-        amount = 19900;
-        planName = 'Solo Lifter Pro';
-        planDescription = 'Sugerencias de Smart Coach y reglas avanzadas para atletas autónomos.';
-        break;
-      case 'iniciacion':
-        amount = 17900;
-        planName = 'Plan Iniciación (Coach)';
-        planDescription = 'Gestión de hasta 2 atletas vinculados.';
-        break;
-      case 'intermedio':
-        amount = 59900;
-        planName = 'Plan Intermedio (Coach)';
-        planDescription = 'Gestión de hasta 10 atletas vinculados.';
-        break;
-      case 'profesional':
-        amount = 299000;
-        planName = 'Plan Profesional (Coach)';
-        planDescription = 'Gestión de atletas ilimitados.';
-        break;
-      default:
-        return res.status(400).json({ error: 'Invalid plan selected' });
+    const planInfo = Object.prototype.hasOwnProperty.call(PLANS, plan) ? PLANS[plan] : undefined;
+    if (!planInfo) {
+      return res.status(400).json({ error: 'Invalid plan selected' });
     }
+    const { amount, name: planName, description: planDescription } = planInfo;
 
     const host = req.headers.host || '';
     const isLocal = host.includes('localhost') || host.includes('127.0.0.1') || host.includes('[::1]');
@@ -164,7 +142,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           title: planName,
           description: planDescription,
           quantity: 1,
-          currency_id: 'COP',
+          currency_id: PLAN_CURRENCY,
           unit_price: amount,
         },
       ],
@@ -210,6 +188,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json({ id: preference.id, url: redirectUrl });
   } catch (error: any) {
     console.error('Error creating MercadoPago preference:', error);
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: 'No se pudo iniciar el pago. Intenta de nuevo en unos minutos.' });
   }
 }

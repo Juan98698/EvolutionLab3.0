@@ -2,6 +2,7 @@ import type { VercelRequest, VercelResponse } from './_lib/types';
 import { createClient } from '@supabase/supabase-js';
 import webpush from 'web-push';
 import { verifyAuth, isAuthError } from './_lib/verifyAuth';
+import { isInternalPath } from './_lib/isInternalPath';
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL || '';
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
@@ -80,7 +81,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       title,
       body,
       icon: icon || '/icon-192.png',
-      url: url || '/dashboard'
+      url: isInternalPath(url) ? url : '/dashboard'
     });
 
     const sendPromises = subs.map(async (row) => {
@@ -103,6 +104,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json({ success: true, message: 'Notificación push enviada con éxito.' });
   } catch (err: any) {
     console.error('Error in send-push api:', err);
-    return res.status(500).json({ error: err.message });
+    return res.status(500).json({ error: 'No se pudo enviar la notificación push.' });
   }
 }

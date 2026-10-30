@@ -117,6 +117,14 @@ describe('MercadoPago API Security & Webhook Tests', () => {
       expect(resAllowed.headers['Access-Control-Allow-Origin']).toBe('https://evolution-lab.vercel.app');
       expect(resAllowed.headers['Access-Control-Allow-Credentials']).toBe('true');
 
+      // Dominio del proyecto en Vercel
+      const { req: reqProject, res: resProject } = mockReqRes(
+        'OPTIONS',
+        { origin: 'https://evolution-lab3-0.vercel.app' }
+      );
+      await preferenceHandler(reqProject, resProject);
+      expect(resProject.headers['Access-Control-Allow-Origin']).toBe('https://evolution-lab3-0.vercel.app');
+
       // Origen no autorizado
       const { req: reqDenied, res: resDenied } = mockReqRes(
         'OPTIONS',
@@ -142,6 +150,8 @@ describe('MercadoPago API Security & Webhook Tests', () => {
         json: () => Promise.resolve({
           status: 'approved',
           date_approved: approvalDateStr,
+          transaction_amount: 19900,
+          currency_id: 'COP',
           metadata: { user_id: 'u123', plan: 'premium' }
         })
       }) as any;
@@ -152,6 +162,30 @@ describe('MercadoPago API Security & Webhook Tests', () => {
 
       expect(res.statusCode).toBe(200);
       expect(res.responseData.updated).toBe(true);
+
+      global.fetch = globalFetch;
+    });
+
+    it('no activa el plan si el monto pagado no coincide con el precio del plan', async () => {
+      const globalFetch = global.fetch;
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({
+          status: 'approved',
+          date_approved: '2026-08-01T10:00:00.000Z',
+          transaction_amount: 100,
+          currency_id: 'COP',
+          metadata: { user_id: 'u123', plan: 'profesional' }
+        })
+      }) as any;
+
+      const headers = signWebhook('pay_1000', 'test-webhook-secret');
+      const { req, res } = mockReqRes('POST', headers, { type: 'payment', data: { id: 'pay_1000' } });
+      await webhookHandler(req, res);
+
+      expect(res.statusCode).toBe(200);
+      expect(res.responseData.updated).toBeUndefined();
+      expect(res.responseData.error).toMatch(/does not match/i);
 
       global.fetch = globalFetch;
     });
