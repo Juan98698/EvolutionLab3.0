@@ -23,7 +23,9 @@
 (function () {
   'use strict';
 
-  var BLANK_AFTER_MS = 8000;
+  // 8 s era menor que la suma de los timeouts propios del arranque (purga de SW 4 s +
+  // timeout de sesión de Supabase 6 s), así que en redes lentas saltaba sin error real.
+  var BLANK_AFTER_MS = 15000;
   var CHECK_EVERY_MS = 1000;
   var OVERLAY_ID = 'evolab-boot-guard';
 
@@ -220,15 +222,22 @@
     if (overlay && overlay.parentNode) overlay.parentNode.removeChild(overlay);
   }
 
+  var timer = null;
+
   function tick() {
     if (isAppHealthy()) {
+      // El guard vigila SOLO el arranque. Una vez que la app montó bien, se
+      // desarma para siempre: cambios posteriores de `auth-ready` (logout,
+      // sesión expirada) no son fallas de carga.
       hideOverlay();
+      if (timer !== null) window.clearInterval(timer);
+      timer = null;
       return;
     }
     if (Date.now() - startedAt >= BLANK_AFTER_MS) showOverlay();
   }
 
-  window.setInterval(tick, CHECK_EVERY_MS);
+  timer = window.setInterval(tick, CHECK_EVERY_MS);
 
   // API mínima para depurar desde chrome://inspect y para los tests.
   window.__evolabBootGuard = {
