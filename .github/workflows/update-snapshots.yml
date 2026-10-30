@@ -37,7 +37,10 @@ jobs:
         run: npx playwright test --update-snapshots --reporter=list
 
       - name: Configurar Git
+        # Dentro del contenedor el repo pertenece a otro usuario y Git lo rechaza
+        # por "dubious ownership" (se ve como "fatal: not in a git directory").
         run: |
+          git config --global --add safe.directory "$GITHUB_WORKSPACE"
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
