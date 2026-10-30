@@ -11,7 +11,7 @@ import { PLANS, PLAN_CURRENCY } from './_lib/plans';
 // ⚠️ AJUSTAR: confirmar el/los dominio(s) real(es) de producción (p.ej. si
 // usan un dominio propio como evolutionlab.fit además de vercel.app) y
 // agregarlos acá o vía la env var EXTRA_ALLOWED_ORIGINS (coma-separado).
-const PRODUCTION_ORIGIN = process.env.APP_PRODUCTION_ORIGIN || 'https://evolution-lab.vercel.app';
+const PRODUCTION_ORIGIN = process.env.APP_PRODUCTION_ORIGIN || 'https://evolutionlab.fit';
 
 function isAllowedOrigin(origin: string | undefined): boolean {
   if (!origin) return false;
