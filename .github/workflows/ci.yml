@@ -9,6 +9,9 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  # Lanzamiento manual desde Actions → CI → Run workflow (por ejemplo, para
+  # validar una rama después de que el bot de capturas haga su commit).
+  workflow_dispatch:
 
 jobs:
   build-and-test:
