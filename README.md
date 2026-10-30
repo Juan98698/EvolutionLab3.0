@@ -33,6 +33,7 @@ npm run dev
 | `VITE_SUPABASE_URL` | URL del proyecto de Supabase |
 | `VITE_SUPABASE_ANON_KEY` | Clave anónima de Supabase |
 | `VITE_VAPID_PUBLIC_KEY` | Clave pública para notificaciones push |
+| `VITE_SENTRY_DSN` | Opcional: reporte de errores en Sentry (sin ella solo se registra en consola) |
 
 **Servidor** (`api/`, configurarlas en Vercel; nunca en el frontend):
 
@@ -43,7 +44,7 @@ npm run dev
 | `MERCADOPAGO_WEBHOOK_SECRET` | Validar la firma `x-signature` del webhook (obligatoria) |
 | `MERCADOPAGO_WEBHOOK_URL` | Opcional: URL del webhook si no es `https://<host>/api/mercadopago-webhook` |
 | `MERCADOPAGO_SANDBOX` / `MERCADOPAGO_TEST_BUYER_EMAIL` | Opcional: modo pruebas |
-| `APP_PRODUCTION_ORIGIN` | Dominio de producción (p. ej. `https://evolution-lab3-0.vercel.app`). Es a donde MercadoPago devuelve al usuario |
+| `APP_PRODUCTION_ORIGIN` | Dominio de producción (p. ej. `https://evolutionlab.fit`). Es a donde MercadoPago devuelve al usuario |
 | `EXTRA_ALLOWED_ORIGINS` | Opcional: otros dominios permitidos, separados por coma |
 | `VAPID_PRIVATE_KEY` | Clave privada para enviar notificaciones push |
 

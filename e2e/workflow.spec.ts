@@ -77,6 +77,13 @@ test.describe('Evolution Lab 3.0 E2E Workflows', () => {
     // Set mobile viewport
     await page.setViewportSize({ width: 390, height: 844 });
 
+    // Congelar la fecha (no los timers) dentro de la vigencia del plan mock
+    // (startDate 2026-06-30 + 28/30 días). Sin esto el test empezó a fallar
+    // solo en cuanto pasó la fecha real: el dashboard muestra "ACCESO
+    // RESTRINGIDO" en vez del calendario. Mismo criterio que el test visual
+    // del dashboard del atleta.
+    await page.clock.setFixedTime(new Date('2026-07-01T15:00:00'));
+
     // Set client-side testing flag and load mock localStorage keys before page scripts run
     await page.addInitScript(({ projectRef }) => {
       (window as any)._playwright_test = true;
