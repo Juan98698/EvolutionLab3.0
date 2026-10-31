@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from './_lib/types';
 import { createClient } from '@supabase/supabase-js';
 import webpush from 'web-push';
-import { verifyAuth, isAuthError } from './_lib/verifyAuth';
-import { isInternalPath } from './_lib/isInternalPath';
+import { verifyAuth, isAuthError } from './_lib/verifyAuth.js';
+import { isInternalPath } from './_lib/isInternalPath.js';
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL || '';
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';

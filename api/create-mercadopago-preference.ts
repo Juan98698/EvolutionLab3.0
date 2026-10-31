@@ -1,6 +1,6 @@
 import type { VercelRequest, VercelResponse } from './_lib/types';
 import { createClient } from '@supabase/supabase-js';
-import { PLANS, PLAN_CURRENCY } from './_lib/plans';
+import { PLANS, PLAN_CURRENCY } from './_lib/plans.js';
 
 // Allowlist de orígenes autorizados a hacer requests con credenciales.
 // Antes: se reflejaba cualquier `Origin` recibido junto con
