@@ -1601,6 +1601,7 @@ export const PlanPlanner: React.FC = () => {
             event: 'plan-updated',
             payload: { message: 'El entrenador ha modificado tu rutina.' }
           });
+          setTimeout(() => { supabase.removeChannel(channel); }, 1000);
         }
       });
 

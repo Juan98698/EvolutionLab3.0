@@ -6,6 +6,7 @@ import { useLocalStorage } from '../../hooks/useLocalStorage';
 import { useLocation, useNavigate } from 'react-router-dom';
 import confetti from 'canvas-confetti';
 import { useSupabase } from '../../context/SupabaseContext';
+import { usePaymentReturn } from '../../hooks/usePaymentReturn';
 
 import { PlanData, TrainingDay, GlobalVariable, Rule, LocalSesion, FilosofiaPilar } from '../../types/database.types';
 
@@ -60,23 +61,6 @@ export const AthleteDashboard: React.FC = () => {
   const [showShareCard, setShowShareCard] = useState<boolean>(false);
     const [hideEvaluation, setHideEvaluation] = useState<boolean>(false);
 
-  // Manejar redirección exitosa o cancelada de MercadoPago
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const paymentSuccess = params.get('payment_success');
-    const paymentCancel = params.get('payment_cancel');
-
-    if (paymentSuccess === 'true') {
-      showToast('🎉 ¡Tu suscripción ha sido activada con éxito! Disfruta de las herramientas Pro.', 'success');
-      refreshProfile();
-      // Limpiar parámetros de la URL
-      navigate(location.pathname, { replace: true });
-    } else if (paymentCancel === 'true') {
-      showToast('Pago cancelado. Si tienes dudas, ponte en contacto con soporte.', 'info');
-      // Limpiar parámetros de la URL
-      navigate(location.pathname, { replace: true });
-    }
-  }, [location.search, navigate, location.pathname, refreshProfile]);
 
   useEffect(() => {
     const comprobarPush = async () => {
@@ -324,6 +308,12 @@ export const AthleteDashboard: React.FC = () => {
       setToastState((prev) => ({ ...prev, visible: false }));
     }, 3000);
   };
+
+  // Regreso desde MercadoPago: espera a que el webhook active el plan antes de anunciarlo.
+  usePaymentReturn(showToast, {
+    success: '🎉 ¡Tu suscripción ha sido activada con éxito! Disfruta de las herramientas Pro.',
+    cancel: 'Pago cancelado. Si tienes dudas, ponte en contacto con soporte.',
+  });
 
   // Cargar plan de Supabase o localCache fallback
   useEffect(() => {
