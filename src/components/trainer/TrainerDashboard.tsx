@@ -1,6 +1,7 @@
 import React, { useState, useEffect, Suspense, useRef, useCallback } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useSupabase } from '../../context/SupabaseContext';
+import { usePaymentReturn } from '../../hooks/usePaymentReturn';
 import { supabase } from '../../lib/supabaseClient';
 import { lazyWithRetry } from '../../lib/lazyWithRetry';
 import { Profile, ValoracionAntropometrica } from '../../types/database.types';
@@ -33,7 +34,6 @@ const NutritionPlannerModal = lazyWithRetry(() => import('../nutrition/Nutrition
 
 export const TrainerDashboard: React.FC = () => {
   const navigate = useNavigate();
-  const location = useLocation();
   const { profile, signOut, refreshProfile } = useSupabase();
   const confirm = useConfirm();
 
@@ -204,17 +204,11 @@ export const TrainerDashboard: React.FC = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    if (params.get('payment_success') === 'true') {
-      showToast('🎉 ¡Tu membresía ha sido renovada/actualizada!', 'success');
-      refreshProfile();
-      navigate(location.pathname, { replace: true });
-    } else if (params.get('payment_cancel') === 'true') {
-      showToast('Pago cancelado.', 'info');
-      navigate(location.pathname, { replace: true });
-    }
-  }, [location, navigate, refreshProfile, showToast]);
+  // Regreso desde MercadoPago: espera a que el webhook active el plan antes de anunciarlo.
+  usePaymentReturn(showToast, {
+    success: '🎉 ¡Tu membresía ha sido renovada/actualizada!',
+    cancel: 'Pago cancelado.',
+  });
 
   useEffect(() => {
     if (profile?.id) {

@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { isE2EContext } from './e2eMode';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://placeholder-project.supabase.co';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'placeholder-anon-key';
@@ -24,11 +25,18 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   }
 });
 
-if (typeof window !== 'undefined') {
+// Mocks para los tests E2E (Playwright corre contra `npm run dev`). Todo este
+// bloque va dentro de `import.meta.env.DEV`: en el build de producción Vite lo
+// elimina, así que `?e2e=true` no activa datos falsos y los stubs de abajo no
+// tocan el cliente real.
+if (import.meta.env.DEV && typeof window !== 'undefined') {
   (window as any).supabase = supabase;
 
-  // Determine if execution context is an E2E testing environment
-  const isE2E = navigator.userAgent.includes('Headless') || (window as any)._playwright_test === true || window.location.search.includes('e2e=true');
+  const isE2E = isE2EContext({
+    userAgent: navigator.userAgent,
+    search: window.location.search,
+    playwrightFlag: (window as any)._playwright_test,
+  });
   console.log('⚡ Supabase Client Init - isE2E:', isE2E, 'userAgent:', navigator.userAgent, '_playwright_test:', (window as any)._playwright_test);
 
   let mockPlanObj: any = null;
@@ -262,14 +270,17 @@ if (typeof window !== 'undefined') {
     return builder;
   };
 
-  // Stub realtime channel subscription to bypass live WebSocket connections
-  supabase.channel = (_name: string) => {
-    const dummyChannel = {
-      on: (_event: string, _filter: any, _callback: any) => dummyChannel,
-      subscribe: () => dummyChannel
+  // Stub realtime channel subscription to bypass live WebSocket connections.
+  // Solo en E2E: antes se aplicaba siempre y el tiempo real nunca funcionaba.
+  if (isE2E) {
+    supabase.channel = (_name: string) => {
+      const dummyChannel = {
+        on: (_event: string, _filter: any, _callback: any) => dummyChannel,
+        subscribe: () => dummyChannel
+      };
+      return dummyChannel as any;
     };
-    return dummyChannel as any;
-  };
 
-  supabase.removeChannel = (_channel: any) => Promise.resolve() as any;
+    supabase.removeChannel = (_channel: any) => Promise.resolve() as any;
+  }
 }
