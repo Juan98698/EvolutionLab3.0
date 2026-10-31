@@ -1,7 +1,7 @@
 import type { VercelRequest, VercelResponse } from './_lib/types';
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
-import { PLANS, PLAN_CURRENCY } from './_lib/plans';
+import { PLANS, PLAN_CURRENCY } from './_lib/plans.js';
 
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
