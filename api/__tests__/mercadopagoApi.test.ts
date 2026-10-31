@@ -190,6 +190,54 @@ describe('MercadoPago API Security & Webhook Tests', () => {
       global.fetch = globalFetch;
     });
 
+    it('acepta la notificación de prueba de MercadoPago (data.id en la URL) y luego consulta el pago', async () => {
+      const globalFetch = global.fetch;
+      // El pago 123456 de la simulación no existe: MercadoPago responde 404.
+      global.fetch = vi.fn().mockResolvedValue({ ok: false, status: 404 }) as any;
+
+      const headers = signWebhook('123456', 'test-webhook-secret');
+      const { req, res } = mockReqRes(
+        'POST',
+        headers,
+        { action: 'payment.updated', api_version: 'v1', data: { id: '123456' }, type: 'payment', live_mode: false },
+        { 'data.id': '123456', type: 'payment' }
+      );
+      await webhookHandler(req, res);
+
+      expect(res.statusCode).toBe(200);
+      expect(global.fetch).toHaveBeenCalledWith(
+        'https://api.mercadopago.com/v1/payments/123456',
+        expect.anything()
+      );
+      global.fetch = globalFetch;
+    });
+
+    it('ignora espacios o saltos de línea pegados junto a la clave secreta', async () => {
+      process.env.MERCADOPAGO_WEBHOOK_SECRET = '  test-webhook-secret\n';
+      const globalFetch = global.fetch;
+      global.fetch = vi.fn().mockResolvedValue({ ok: false, status: 404 }) as any;
+
+      const headers = signWebhook('123456', 'test-webhook-secret');
+      const { req, res } = mockReqRes('POST', headers, { type: 'payment', data: { id: '123456' } });
+      await webhookHandler(req, res);
+
+      expect(res.statusCode).toBe(200);
+      global.fetch = globalFetch;
+    });
+
+    it('omite request-id de la firma cuando MercadoPago no envía x-request-id', async () => {
+      const globalFetch = global.fetch;
+      global.fetch = vi.fn().mockResolvedValue({ ok: false, status: 404 }) as any;
+
+      const ts = Math.floor(Date.now() / 1000).toString();
+      const v1 = crypto.createHmac('sha256', 'test-webhook-secret').update(`id:123456;ts:${ts};`).digest('hex');
+      const { req, res } = mockReqRes('POST', { 'x-signature': `ts=${ts},v1=${v1}` }, { type: 'payment', data: { id: '123456' } });
+      await webhookHandler(req, res);
+
+      expect(res.statusCode).toBe(200);
+      global.fetch = globalFetch;
+    });
+
     it('rechaza con 500 si MERCADOPAGO_WEBHOOK_SECRET no está configurado (falla cerrado, no abierto)', async () => {
       delete process.env.MERCADOPAGO_WEBHOOK_SECRET;
 

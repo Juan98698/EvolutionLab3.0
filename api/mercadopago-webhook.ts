@@ -27,6 +27,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       paymentId = String(req.body.data.id);
       topic = req.body.type || '';
     }
+    // Webhook con los datos solo en la URL (?data.id=...&type=payment)
+    else if (req.query && req.query['data.id'] && req.query.type) {
+      paymentId = String(req.query['data.id']);
+      topic = String(req.query.type);
+    }
     // IPN (GET / POST query parameters)
     else if (req.query && req.query.id && req.query.topic) {
       paymentId = req.query.id as string;
@@ -44,7 +49,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     // parseo de la firma fallaba, el código seguía de largo sin rechazar la
     // request (fail-open). Ahora: sin secreto configurado, sin cabecera de
     // firma, o con firma inválida ⇒ se rechaza con 401 siempre (o 500 si falta el secreto).
-    const webhookSecret = process.env.MERCADOPAGO_WEBHOOK_SECRET;
+    // trim(): un espacio o salto de línea al pegar la clave en Vercel basta
+    // para que ninguna firma coincida.
+    const webhookSecret = (process.env.MERCADOPAGO_WEBHOOK_SECRET || '').trim();
     const xSignature = (req.headers['x-signature'] || req.headers['X-Signature']) as string;
     const xRequestId = (req.headers['x-request-id'] || req.headers['X-Request-Id']) as string;
 
@@ -58,7 +65,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(401).json({ error: 'Missing webhook signature' });
     }
 
+    // Plantilla de la firma según la documentación de MercadoPago:
+    //   id:[data.id de la URL];request-id:[x-request-id];ts:[ts];
+    // El id sale del query `data.id` (en minúsculas si es alfanumérico) y cada
+    // parte ausente se omite de la plantilla en vez de dejarla vacía.
+    const queryDataId = req.query && req.query['data.id'] ? String(req.query['data.id']) : '';
+    const manifestId = (queryDataId || paymentId).toLowerCase();
+
     let signatureValid = false;
+    let failureReason = '';
     try {
       const parts = xSignature.split(',');
       let ts = '';
@@ -70,19 +85,30 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       }
 
       if (ts && v1) {
-        const manifest = `id:${paymentId};request-id:${xRequestId || ''};ts:${ts};`;
+        const manifest =
+          (manifestId ? `id:${manifestId};` : '') +
+          (xRequestId ? `request-id:${xRequestId};` : '') +
+          `ts:${ts};`;
         const hmac = crypto.createHmac('sha256', webhookSecret).update(manifest).digest('hex');
         const hmacBuf = Buffer.from(hmac);
         const v1Buf = Buffer.from(v1);
         signatureValid = hmacBuf.length === v1Buf.length && crypto.timingSafeEqual(hmacBuf, v1Buf);
+        if (!signatureValid) failureReason = 'la firma no coincide con MERCADOPAGO_WEBHOOK_SECRET';
+      } else {
+        failureReason = 'la cabecera x-signature no trae ts y v1';
       }
     } catch (err: any) {
-      console.warn('⚠️ Webhook: Error al parsear/verificar firma x-signature:', err.message);
+      failureReason = `error al verificar: ${err.message}`;
       signatureValid = false;
     }
 
     if (!signatureValid) {
-      console.error('⚠️ Webhook MercadoPago: Firma x-signature inválida o no verificable.');
+      // Sin datos sensibles: solo lo necesario para saber qué revisar.
+      console.error(
+        `⚠️ Webhook MercadoPago: Firma x-signature inválida (${failureReason}). ` +
+        `id=${manifestId || '-'} (${queryDataId ? 'query' : 'body'}), ` +
+        `x-request-id=${xRequestId ? 'presente' : 'ausente'}, longitud del secreto=${webhookSecret.length}`
+      );
       return res.status(401).json({ error: 'Invalid webhook signature' });
     }
 
