@@ -5,6 +5,7 @@ import AddSesion from '../AddSesion';
 
 // ── Mocks ──────────────────────────────────────────────────────────────────
 
+const { mockSync } = vi.hoisted(() => ({ mockSync: vi.fn().mockResolvedValue({ syncedCount: 1, failedCount: 0 }) }));
 const mockHistorialInsert = vi.fn();
 const mockEjerciciosInsert = vi.fn();
 
@@ -65,6 +66,7 @@ vi.mock('../../../lib/supabaseClient', () => {
 });
 
 vi.mock('../../../lib/sessions', () => ({
+  syncOfflineSessions: mockSync,
   readSessionsFromCache: vi.fn().mockReturnValue([]),
   writeSessionsToCache: vi.fn(),
 }));
@@ -211,13 +213,7 @@ describe('AddSesion — registro de sesión', () => {
     });
 
     await waitFor(() => {
-      expect(mockHistorialInsert).toHaveBeenCalledWith(
-        expect.objectContaining({ cliente_id: 'u1', fecha: expect.any(String) })
-      );
-    }, { timeout: 3000 });
-
-    await waitFor(() => {
-      expect(mockEjerciciosInsert).toHaveBeenCalled();
+      expect(mockSync).toHaveBeenCalledWith('u1');
     }, { timeout: 3000 });
   });
 
@@ -247,8 +243,7 @@ describe('AddSesion — registro de sesión', () => {
     });
 
     await waitFor(() => {
-      const queue = JSON.parse(localStorage.getItem('evolution_sync_queue') || '[]');
-      expect(queue.length).toBeGreaterThan(0);
+      expect(mockSync).toHaveBeenCalledWith('u1');
     }, { timeout: 3000 });
 
     // No debe llamar a Supabase directamente

@@ -1,3 +1,4 @@
+import { EstimateNotice } from '../common/EstimateNotice';
 import React, { useMemo } from 'react';
 import { TrainingDay, PeriodizationConfig, Exercise } from '../../types/database.types';
 import { InfoTooltip } from '../common/InfoTooltip';
@@ -244,7 +245,8 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
     <>
       {/* SECCIÓN 3.5: CONFIGURACIÓN DE PERIODIZACIÓN CIENTÍFICA (RIR) */}
       {config && (
-  <div data-testid="periodization-card" style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '16px', padding: '20px', marginBottom: '24px', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', boxShadow: '0 8px 32px 0 var(--theme-glow)' }}>
+  <div data-testid="periodization-card" style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '16px', padding: '20px', marginBottom: '24px', backdropFilter: 'none', WebkitBackdropFilter: 'none', boxShadow: 'none' }}>
+      <EstimateNotice />
     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
       <h3 style={{ fontFamily: 'var(--text-title-family)', fontSize: 'var(--text-title-size)', fontWeight: 'var(--text-title-weight)', color: 'var(--theme-primary)', letterSpacing: 'var(--text-title-spacing)', textTransform: 'var(--text-title-transform)', margin: 0, display: 'flex', alignItems: 'center' }}>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px' }}><polygon points="6 2 18 2 18 6 6 6 6 2"/><rect x="3" y="6" width="18" height="16" rx="2"/><line x1="10" y1="12" x2="14" y2="12"/></svg>
@@ -252,7 +254,7 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
         <InfoTooltip title="Periodización Científica RIR" body="Activa la autorregulación automatizada de volumen y cargas (fórmulas RP e intensidad basada en 1RM) para optimizar el progreso del atleta y ahorrar tiempo de planificación." />
       </h3>
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-        <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', fontFamily: "'Orbitron', sans-serif", userSelect: 'none' }}>
+        <span style={{ fontSize: '12px', color: '#a4b0a8', fontFamily: "'Inter', sans-serif", userSelect: 'none' }}>
           {config.enabled ? 'ACTIVO' : 'DESACTIVADO'}
         </span>
         <button
@@ -289,19 +291,19 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
       </div>
     </div>
 
-    <p style={{ margin: '0 0 16px 0', fontSize: '11px', color: 'rgba(255,255,255,0.4)', lineHeight: '1.4' }}>
+    <p style={{ margin: '0 0 16px 0', fontSize: '12px', color: '#a4b0a8', lineHeight: '1.4' }}>
       Al activar este módulo, el plan del atleta calculará automáticamente las series y las intensidades recomendadas (pesos) basándose en su rendimiento. El atleta registrará su RIR y recuperación real al final de cada ejercicio para actualizar el volumen para la siguiente semana.
     </p>
 
     {/* Guía visual inline para el entrenador */}
     <div className="periodization-flow-guide-panel" style={{
-      background: 'linear-gradient(135deg, rgba(0, 212, 255, 0.04), rgba(0, 100, 200, 0.04))',
-      border: '1px solid rgba(0, 212, 255, 0.1)',
+      background: 'linear-gradient(135deg, rgba(145, 182, 161, 0.04), rgba(0, 100, 200, 0.04))',
+      border: '1px solid rgba(145, 182, 161, 0.1)',
       borderRadius: '12px',
       padding: '16px',
       marginBottom: '20px'
     }}>
-      <div style={{ fontSize: '10px', fontWeight: 800, color: 'var(--theme-primary)', fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.5px', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+      <div style={{ fontSize: '12px', fontWeight: 800, color: 'var(--theme-primary)', fontFamily: "'Inter', sans-serif", letterSpacing: '0', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px' }}>
         <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
         ¿CÓMO FUNCIONA? — FLUJO COMPLETO
       </div>
@@ -320,9 +322,9 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
             padding: '10px',
             textAlign: 'center'
           }}>
-            <div style={{ fontSize: '16px', fontWeight: 900, color: 'var(--theme-primary)', fontFamily: "'Orbitron', sans-serif", marginBottom: '4px' }}>{item.step}</div>
-            <div style={{ fontSize: '9px', fontWeight: 700, color: 'white', marginBottom: '4px', textTransform: 'uppercase' }}>{item.title}</div>
-            <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.45)', lineHeight: '1.3' }}>{item.desc}</div>
+            <div style={{ fontSize: '16px', fontWeight: 900, color: 'var(--theme-primary)', fontFamily: "'Inter', sans-serif", marginBottom: '4px' }}>{item.step}</div>
+            <div style={{ fontSize: '12px', fontWeight: 700, color: 'white', marginBottom: '4px', textTransform: 'none' }}>{item.title}</div>
+            <div style={{ fontSize: '12px', color: '#a4b0a8', lineHeight: '1.3' }}>{item.desc}</div>
           </div>
         ))}
       </div>
@@ -333,31 +335,31 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
         
         {/* Ajustes del Bloque */}
         <div>
-          <h4 style={{ fontFamily: 'var(--text-section-family)', fontSize: 'var(--text-section-size)', fontWeight: 'var(--text-section-weight)', color: 'var(--theme-primary)', letterSpacing: 'var(--text-section-spacing)', marginBottom: '12px', marginTop: 0, textTransform: 'uppercase', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+          <h4 style={{ fontFamily: 'var(--text-section-family)', fontSize: 'var(--text-section-size)', fontWeight: 'var(--text-section-weight)', color: 'var(--theme-primary)', letterSpacing: 'var(--text-section-spacing)', marginBottom: '12px', marginTop: 0, textTransform: 'none', display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
             Ajustes del Bloque de Entrenamiento
             <InfoTooltip title="Bloque de Entrenamiento (Mesociclo)" body="Un bloque o mesociclo es un período de entrenamiento de varias semanas (típicamente 4-6). El volumen empieza bajo y sube gradualmente cada semana hasta llegar a una descarga automática al final. Así evitas el sobreentrenamiento y maximizas las ganancias." />
             <button
               type="button"
               onClick={() => onOpenHelpModal()}
               style={{
-                background: 'rgba(0, 212, 255, 0.08)',
-                border: '1px solid rgba(0, 212, 255, 0.2)',
+                background: 'rgba(145, 182, 161, 0.08)',
+                border: '1px solid rgba(145, 182, 161, 0.2)',
                 borderRadius: '6px',
-                color: 'var(--theme-primary, #00d4ff)',
-                fontSize: '9px',
+                color: 'var(--theme-primary, #91b6a1)',
+                fontSize: '12px',
                 fontWeight: 800,
-                fontFamily: "'Orbitron', sans-serif",
+                fontFamily: "'Inter', sans-serif",
                 padding: '4px 8px',
                 cursor: 'pointer',
                 transition: 'all 0.2s',
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px'
+                textTransform: 'none',
+                letterSpacing: '0'
               }}
               onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(0, 212, 255, 0.15)';
+                e.currentTarget.style.background = 'rgba(145, 182, 161, 0.15)';
               }}
               onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(0, 212, 255, 0.08)';
+                e.currentTarget.style.background = 'rgba(145, 182, 161, 0.08)';
               }}
             >
               📘 Guía Científica y FAQ
@@ -366,7 +368,7 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px' }}>
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                <label htmlFor="period-objetivo" style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700 }}>OBJETIVO DEL BLOQUE</label>
+                <label htmlFor="period-objetivo" style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700 }}>OBJETIVO DEL BLOQUE</label>
               </div>
               <select
                 id="period-objetivo"
@@ -377,14 +379,14 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
                 }}
                 style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '12px', height: '38px', boxSizing: 'border-box' }}
               >
-                <option value="hipertrofia" style={{ background: '#0b0f19' }}>Hipertrofia (Acumulación)</option>
-                <option value="fuerza" style={{ background: '#0b0f19' }}>Fuerza (Intensificación)</option>
-                <option value="mantenimiento" style={{ background: '#0b0f19' }}>Mantenimiento / Calórico</option>
+                <option value="hipertrofia" style={{ background: '#121716' }}>Hipertrofia (Acumulación)</option>
+                <option value="fuerza" style={{ background: '#121716' }}>Fuerza (Intensificación)</option>
+                <option value="mantenimiento" style={{ background: '#121716' }}>Mantenimiento / Calórico</option>
               </select>
             </div>
 
             <div>
-              <label htmlFor="period-semanas" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>SEMANAS TOTALES DEL BLOQUE</label>
+              <label htmlFor="period-semanas" style={{ display: 'block', fontSize: '12px', color: '#a4b0a8', fontWeight: 700, marginBottom: '6px' }}>SEMANAS TOTALES DEL BLOQUE</label>
               <input
                 id="period-semanas"
                 type="number"
@@ -400,7 +402,7 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
             </div>
 
             <div>
-              <label htmlFor="period-semana-actual" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>SEMANA ACTUAL (MICROCICLO)</label>
+              <label htmlFor="period-semana-actual" style={{ display: 'block', fontSize: '12px', color: '#a4b0a8', fontWeight: 700, marginBottom: '6px' }}>SEMANA ACTUAL (MICROCICLO)</label>
               <input
                 id="period-semana-actual"
                 type="number"
@@ -433,7 +435,7 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
               <div style={{ marginTop: '16px' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '14px' }}>
                   <div>
-                    <label style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>RIR INICIAL DEL BLOQUE</label>
+                    <label style={{ display: 'block', fontSize: '12px', color: '#a4b0a8', fontWeight: 700, marginBottom: '6px' }}>RIR INICIAL DEL BLOQUE</label>
                     <select
                       value={rirIni}
                       onChange={(e) => {
@@ -442,13 +444,13 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
                       }}
                       style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '12px', height: '38px', boxSizing: 'border-box' }}
                     >
-                      <option value={2} style={{ background: '#0b0f19' }}>RIR 2 — Bloque corto / alta intensidad</option>
-                      <option value={3} style={{ background: '#0b0f19' }}>RIR 3 — Estándar (Principiante / Intermedio)</option>
-                      <option value={4} style={{ background: '#0b0f19' }}>RIR 4 — Bloque largo / Avanzado</option>
+                      <option value={2} style={{ background: '#121716' }}>RIR 2 — Bloque corto / alta intensidad</option>
+                      <option value={3} style={{ background: '#121716' }}>RIR 3 — Estándar (Principiante / Intermedio)</option>
+                      <option value={4} style={{ background: '#121716' }}>RIR 4 — Bloque largo / Avanzado</option>
                     </select>
                   </div>
                   <div>
-                    <label style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>VELOCIDAD DE PROGRESIÓN RIR</label>
+                    <label style={{ display: 'block', fontSize: '12px', color: '#a4b0a8', fontWeight: 700, marginBottom: '6px' }}>VELOCIDAD DE PROGRESIÓN RIR</label>
                     <select
                       value={rirProg}
                       onChange={(e) => {
@@ -457,9 +459,9 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
                       }}
                       style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '12px', height: '38px', boxSizing: 'border-box' }}
                     >
-                      <option value="lenta" style={{ background: '#0b0f19' }}>Lenta — −1 RIR cada 2 semanas (Principiante)</option>
-                      <option value="normal" style={{ background: '#0b0f19' }}>Normal — −1 RIR por semana (Intermedio)</option>
-                      <option value="agresiva" style={{ background: '#0b0f19' }}>Agresiva — −1 RIR/semana desde RIR 4 (Avanzado)</option>
+                      <option value="lenta" style={{ background: '#121716' }}>Lenta — −1 RIR cada 2 semanas (Principiante)</option>
+                      <option value="normal" style={{ background: '#121716' }}>Normal — −1 RIR por semana (Intermedio)</option>
+                      <option value="agresiva" style={{ background: '#121716' }}>Agresiva — −1 RIR/semana desde RIR 4 (Avanzado)</option>
                     </select>
                   </div>
                 </div>
@@ -492,10 +494,10 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
                       onClick={() => setConfig(prev => prev ? { ...prev, rir_override_manual: !prev.rir_override_manual } : undefined)}
                     >
                       <div>
-                        <div style={{ fontSize: '11px', fontWeight: 700, color: isOverride ? 'rgba(251,191,36,0.9)' : 'rgba(255,255,255,0.5)', marginBottom: '2px' }}>
+                        <div style={{ fontSize: '12px', fontWeight: 700, color: isOverride ? 'rgba(251,191,36,0.9)' : '#a4b0a8', marginBottom: '2px' }}>
                           {isOverride ? '🔒 RIR MANUAL ACTIVO' : '🤖 RIR AUTOMÁTICO'}
                         </div>
-                        <div style={{ fontSize: '10px', color: isOverride ? 'rgba(251,191,36,0.6)' : 'rgba(255,255,255,0.3)', lineHeight: '1.3' }}>
+                        <div style={{ fontSize: '12px', color: isOverride ? 'rgba(251,191,36,0.6)' : '#a4b0a8', lineHeight: '1.3' }}>
                           {isOverride
                             ? 'El motor no tocará el RIR. Tú controlas cada ejercicio. Toca para volver al automático.'
                             : 'El motor actualiza el RIR semana a semana. Toca para tomar control manual.'}
@@ -568,10 +570,10 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
                       marginBottom: '14px',
                     }}>
                       <div style={{ marginBottom: '8px' }}>
-                        <div style={{ fontSize: '11px', fontWeight: 700, color: especializacionActiva ? 'rgba(192,132,252,0.9)' : 'rgba(255,255,255,0.5)', marginBottom: '2px' }}>
+                        <div style={{ fontSize: '12px', fontWeight: 700, color: especializacionActiva ? 'rgba(192,132,252,0.9)' : '#a4b0a8', marginBottom: '2px' }}>
                           {especializacionActiva ? '🎯 ESPECIALIZACIÓN ACTIVA' : '🎯 GRUPOS EN FOCO (opcional)'}
                         </div>
-                        <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', lineHeight: '1.3' }}>
+                        <div style={{ fontSize: '12px', color: '#a4b0a8', lineHeight: '1.3' }}>
                           {especializacionActiva
                             ? `Solo ${focoActual.length === 1 ? 'el grupo seleccionado recibe' : 'los grupos seleccionados reciben'} progresión dinámica completa. El resto se mantiene en volumen de mantenimiento (MV).`
                             : 'Selecciona 1–2 grupos rezagados para priorizar. Sin selección, todos los grupos progresan igual.'}
@@ -586,13 +588,13 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
                               type="button"
                               onClick={() => toggleGrupo(grupo)}
                               style={{
-                                fontSize: '11px',
+                                fontSize: '12px',
                                 fontWeight: 600,
                                 padding: '5px 12px',
                                 borderRadius: '999px',
                                 border: `1px solid ${activo ? 'rgba(168,85,247,0.6)' : 'rgba(255,255,255,0.12)'}`,
                                 background: activo ? 'rgba(168,85,247,0.25)' : 'rgba(255,255,255,0.04)',
-                                color: activo ? 'rgba(216,180,254,1)' : 'rgba(255,255,255,0.5)',
+                                color: activo ? 'rgba(216,180,254,1)' : '#a4b0a8',
                                 cursor: 'pointer',
                                 textTransform: 'capitalize',
                                 transition: 'all 0.15s',
@@ -614,9 +616,9 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
                             padding: 0,
                             margin: 0,
                             font: 'inherit',
-                            fontSize: '10px',
+                            fontSize: '12px',
                             lineHeight: 'normal',
-                            color: 'rgba(255,255,255,0.35)',
+                            color: '#a4b0a8',
                             marginTop: '8px',
                             cursor: 'pointer',
                             textDecoration: 'underline',
@@ -631,22 +633,22 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
 
                 {/* Indicador visual: RIR actual + proyección del bloque */}
                 <div style={{
-                  background: 'linear-gradient(135deg, rgba(0,212,255,0.06), rgba(99,102,241,0.06))',
-                  border: '1px solid rgba(0,212,255,0.15)',
+                  background: 'linear-gradient(135deg, rgba(145, 182, 161,0.06), rgba(99,102,241,0.06))',
+                  border: '1px solid rgba(145, 182, 161,0.15)',
                   borderRadius: '12px',
                   padding: '14px 16px',
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                    <span style={{ fontSize: '10px', fontWeight: 800, color: 'var(--theme-primary)', fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.5px' }}>
+                    <span style={{ fontSize: '12px', fontWeight: 800, color: 'var(--theme-primary)', fontFamily: "'Inter', sans-serif", letterSpacing: '0' }}>
                       📊 RIR SEMANA A SEMANA
                     </span>
                     <span style={{
-                      fontSize: '11px',
+                      fontSize: '12px',
                       fontWeight: 800,
                       color: 'var(--theme-primary)',
-                      fontFamily: "'Orbitron', sans-serif",
-                      background: 'rgba(0,212,255,0.12)',
-                      border: '1px solid rgba(0,212,255,0.3)',
+                      fontFamily: "'Inter', sans-serif",
+                      background: 'rgba(145, 182, 161,0.12)',
+                      border: '1px solid rgba(145, 182, 161,0.3)',
                       borderRadius: '6px',
                       padding: '3px 10px',
                     }}>
@@ -663,15 +665,15 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
                           style={{
                             flex: '1 1 36px',
                             minWidth: '36px',
-                            background: isNow ? 'rgba(0,212,255,0.18)' : 'rgba(0,0,0,0.25)',
-                            border: isNow ? '1px solid rgba(0,212,255,0.5)' : '1px solid rgba(255,255,255,0.06)',
+                            background: isNow ? 'rgba(145, 182, 161,0.18)' : 'rgba(0,0,0,0.25)',
+                            border: isNow ? '1px solid rgba(145, 182, 161,0.5)' : '1px solid rgba(255,255,255,0.06)',
                             borderRadius: '8px',
                             padding: '8px 4px',
                             textAlign: 'center',
                           }}
                         >
-                          <div style={{ fontSize: '8px', color: isNow ? 'var(--theme-primary)' : 'rgba(255,255,255,0.35)', marginBottom: '4px', fontWeight: 700 }}>S{sem}</div>
-                          <div style={{ fontSize: '14px', fontWeight: 900, color: isNow ? 'var(--theme-primary)' : 'rgba(255,255,255,0.65)', fontFamily: "'Orbitron', sans-serif" }}>{r}</div>
+                          <div style={{ fontSize: '12px', color: isNow ? 'var(--theme-primary)' : '#a4b0a8', marginBottom: '4px', fontWeight: 700 }}>S{sem}</div>
+                          <div style={{ fontSize: '14px', fontWeight: 900, color: isNow ? 'var(--theme-primary)' : '#a4b0a8', fontFamily: "'Inter', sans-serif" }}>{r}</div>
                           <div style={{ fontSize: '7px', color: 'rgba(255,255,255,0.25)', marginTop: '2px' }}>RIR</div>
                         </div>
                       );
@@ -686,12 +688,12 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
                       padding: '8px 4px',
                       textAlign: 'center',
                     }}>
-                      <div style={{ fontSize: '8px', color: 'rgba(167,139,250,0.6)', marginBottom: '4px', fontWeight: 700 }}>DL</div>
-                      <div style={{ fontSize: '14px', fontWeight: 900, color: 'rgba(167,139,250,0.8)', fontFamily: "'Orbitron', sans-serif" }}>4</div>
+                      <div style={{ fontSize: '12px', color: 'rgba(167,139,250,0.6)', marginBottom: '4px', fontWeight: 700 }}>DL</div>
+                      <div style={{ fontSize: '14px', fontWeight: 900, color: 'rgba(167,139,250,0.8)', fontFamily: "'Inter', sans-serif" }}>4</div>
                       <div style={{ fontSize: '7px', color: 'rgba(167,139,250,0.4)', marginTop: '2px' }}>RIR</div>
                     </div>
                   </div>
-                  <p style={{ margin: '10px 0 0 0', fontSize: '10px', color: 'rgba(255,255,255,0.35)', lineHeight: '1.4' }}>
+                  <p style={{ margin: '10px 0 0 0', fontSize: '12px', color: '#a4b0a8', lineHeight: '1.4' }}>
                     {nivAtl === 'principiante'
                       ? '⚠️ Principiante: nunca llega a RIR 0 — protege la técnica y previene lesiones.'
                       : '🤖 El peso sube automáticamente al bajar el RIR. El 1RM actualizado lo potencia aún más.'}
@@ -704,17 +706,17 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
 
         {/* Diagnóstico Inicial */}
         <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '20px' }}>
-          <h4 style={{ fontFamily: 'var(--text-section-family)', fontSize: 'var(--text-section-size)', fontWeight: 'var(--text-section-weight)', color: 'var(--theme-primary)', letterSpacing: 'var(--text-section-spacing)', marginBottom: '12px', marginTop: 0, textTransform: 'uppercase', display: 'flex', alignItems: 'center' }}>
+          <h4 style={{ fontFamily: 'var(--text-section-family)', fontSize: 'var(--text-section-size)', fontWeight: 'var(--text-section-weight)', color: 'var(--theme-primary)', letterSpacing: 'var(--text-section-spacing)', marginBottom: '12px', marginTop: 0, textTransform: 'none', display: 'flex', alignItems: 'center' }}>
             Diagnóstico Inicial del Atleta (Trainer Overrides)
             <InfoTooltip title="Sobreescritura del Entrenador" body="Estos valores los puede completar el atleta en su evaluación inicial, PERO si tú los editas aquí, tus valores prevalecen. Usa esta sección para pre-configurar atletas que ya conoces bien, o para corregir datos incorrectos sin que el atleta tenga que repetir el diagnóstico." />
           </h4>
-          <p style={{ margin: '0 0 16px 0', fontSize: '11px', color: 'rgba(255,255,255,0.4)', lineHeight: '1.4' }}>
+          <p style={{ margin: '0 0 16px 0', fontSize: '12px', color: '#a4b0a8', lineHeight: '1.4' }}>
             Puedes preconfigurar o anular estos valores subjetivos y marcas de fuerza estimadas. El atleta los completará o los verá actualizados según su progreso.
           </p>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px', marginBottom: '16px', flexWrap: 'wrap' }}>
             <div>
-              <label htmlFor="period-nivel" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>NIVEL DEL ATLETA</label>
+              <label htmlFor="period-nivel" style={{ display: 'block', fontSize: '12px', color: '#a4b0a8', fontWeight: 700, marginBottom: '6px' }}>NIVEL DEL ATLETA</label>
               <select
                 id="period-nivel"
                 value={config.nivel_atleta || 'intermedio'}
@@ -724,13 +726,13 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
                 }}
                 style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '12px', height: '38px', boxSizing: 'border-box' }}
               >
-                <option value="principiante" style={{ background: '#0b0f19' }}>Principiante (Bajo Volumen)</option>
-                <option value="intermedio" style={{ background: '#0b0f19' }}>Intermedio (Estándar RP)</option>
-                <option value="avanzado" style={{ background: '#0b0f19' }}>Avanzado (Alto Volumen)</option>
+                <option value="principiante" style={{ background: '#121716' }}>Principiante (Bajo Volumen)</option>
+                <option value="intermedio" style={{ background: '#121716' }}>Intermedio (Estándar RP)</option>
+                <option value="avanzado" style={{ background: '#121716' }}>Avanzado (Alto Volumen)</option>
               </select>
             </div>
             <div>
-              <label htmlFor="period-edad" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>EDAD DEL ATLETA</label>
+              <label htmlFor="period-edad" style={{ display: 'block', fontSize: '12px', color: '#a4b0a8', fontWeight: 700, marginBottom: '6px' }}>EDAD DEL ATLETA</label>
               <input
                 id="period-edad"
                 type="text" inputMode="numeric" pattern="[0-9]*" value={config.edad ?? 25}
@@ -743,7 +745,7 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
             </div>
 
             <div>
-              <label htmlFor="period-recup" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>CAPACIDAD DE RECUPERACIÓN</label>
+              <label htmlFor="period-recup" style={{ display: 'block', fontSize: '12px', color: '#a4b0a8', fontWeight: 700, marginBottom: '6px' }}>CAPACIDAD DE RECUPERACIÓN</label>
               <select
                 id="period-recup"
                 value={config.capacidad_recuperacion || 'media'}
@@ -753,9 +755,9 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
                 }}
                 style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '12px', height: '38px', boxSizing: 'border-box' }}
               >
-                <option value="alta" style={{ background: '#0b0f19' }}>Alta (Sueño profundo, bajo estrés)</option>
-                <option value="media" style={{ background: '#0b0f19' }}>Media (Recuperación estándar)</option>
-                <option value="baja" style={{ background: '#0b0f19' }}>Baja (Alto estrés o insomnio)</option>
+                <option value="alta" style={{ background: '#121716' }}>Alta (Sueño profundo, bajo estrés)</option>
+                <option value="media" style={{ background: '#121716' }}>Media (Recuperación estándar)</option>
+                <option value="baja" style={{ background: '#121716' }}>Baja (Alto estrés o insomnio)</option>
               </select>
             </div>
           </div>
@@ -763,7 +765,7 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
           {/* ─── Fórmula de Prescripción + Redondeo ─── */}
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
             <div>
-              <label htmlFor="period-formula" style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>
+              <label htmlFor="period-formula" style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: '#a4b0a8', fontWeight: 700, marginBottom: '6px' }}>
                 FÓRMULA DE PRESCRIPCIÓN DE CARGA
                 <InfoTooltip
                   title="Fórmula de Prescripción"
@@ -787,13 +789,13 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
                 }}
                 style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(167,139,250,0.2)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '12px', height: '38px', boxSizing: 'border-box' }}
               >
-                <option value="epley" style={{ background: '#0b0f19' }}>Epley (1985) — Estándar powerlifting</option>
-                <option value="brzycki" style={{ background: '#0b0f19' }}>Brzycki (1993) — Precisa en 6-12 reps</option>
-                <option value="epley_brzycki_avg" style={{ background: '#0b0f19' }}>Promedio Epley-Brzycki — Conservador</option>
+                <option value="epley" style={{ background: '#121716' }}>Epley (1985) — Estándar powerlifting</option>
+                <option value="brzycki" style={{ background: '#121716' }}>Brzycki (1993) — Precisa en 6-12 reps</option>
+                <option value="epley_brzycki_avg" style={{ background: '#121716' }}>Promedio Epley-Brzycki — Conservador</option>
               </select>
             </div>
             <div>
-              <label htmlFor="period-redondeo" style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>
+              <label htmlFor="period-redondeo" style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '12px', color: '#a4b0a8', fontWeight: 700, marginBottom: '6px' }}>
                 INCREMENTO DE REDONDEO (KG)
                 <InfoTooltip
                   title="Redondeo de Peso"
@@ -817,12 +819,12 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
                 }}
                 style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(167,139,250,0.2)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '12px', height: '38px', boxSizing: 'border-box' }}
               >
-                <option value={0.5} style={{ background: '#0b0f19' }}>0.5 kg — Máxima precisión</option>
-                <option value={1} style={{ background: '#0b0f19' }}>1.0 kg — Discos finos</option>
-                <option value={1.25} style={{ background: '#0b0f19' }}>1.25 kg — Micro-discos olímpicos</option>
-                <option value={2} style={{ background: '#0b0f19' }}>2.0 kg — Mancuernas estándar</option>
-                <option value={2.5} style={{ background: '#0b0f19' }}>2.5 kg — Estándar (por defecto)</option>
-                <option value={5} style={{ background: '#0b0f19' }}>5.0 kg — Gimnasio básico</option>
+                <option value={0.5} style={{ background: '#121716' }}>0.5 kg — Máxima precisión</option>
+                <option value={1} style={{ background: '#121716' }}>1.0 kg — Discos finos</option>
+                <option value={1.25} style={{ background: '#121716' }}>1.25 kg — Micro-discos olímpicos</option>
+                <option value={2} style={{ background: '#121716' }}>2.0 kg — Mancuernas estándar</option>
+                <option value={2.5} style={{ background: '#121716' }}>2.5 kg — Estándar (por defecto)</option>
+                <option value={5} style={{ background: '#121716' }}>5.0 kg — Gimnasio básico</option>
               </select>
             </div>
           </div>
@@ -854,7 +856,7 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
 
           <div style={{ marginBottom: '16px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-              <label style={{ display: 'flex', alignItems: 'center', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, margin: 0, textTransform: 'uppercase' }}>
+              <label style={{ display: 'flex', alignItems: 'center', fontSize: '12px', color: '#a4b0a8', fontWeight: 700, margin: 0, textTransform: 'none' }}>
                 Fuerza Máxima Estimada (1RM)
                 <InfoTooltip title="1RM — Repetición Máxima" body="Es el peso máximo que el atleta puede levantar una sola vez con buena técnica. Se calcula automáticamente usando las fórmulas Epley+Brzycki a partir del peso, reps y RIR que el atleta ingrese. Este valor se usa para sugerir las cargas de entrenamiento: ej. si tu 1RM de sentadilla es 120kg y el plan dice 'RIR 2 x 8 reps', la app sugiere ~82.5kg." />
               </label>
@@ -862,18 +864,18 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
                 type="button"
                 onClick={() => onOpenCalculator()}
                 style={{
-                  background: 'rgba(194, 255, 0, 0.1)',
-                  border: '1px solid rgba(194, 255, 0, 0.3)',
-                  color: '#c2ff00',
+                  background: 'rgba(145, 182, 161, 0.1)',
+                  border: '1px solid rgba(145, 182, 161, 0.3)',
+                  color: '#91b6a1',
                   borderRadius: '6px',
                   padding: '4px 10px',
-                  fontSize: '10px',
+                  fontSize: '12px',
                   fontWeight: 'bold',
                   cursor: 'pointer',
                   display: 'flex',
                   alignItems: 'center',
                   gap: '4px',
-                  fontFamily: "'Orbitron', sans-serif"
+                  fontFamily: "'Inter', sans-serif"
                 }}
               >
                 🧮 Calculadora 1RM
@@ -901,13 +903,13 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
                       return (
                         <div key={lift} style={{
                           background: 'rgba(0,0,0,0.2)',
-                          border: '1px solid ' + (isBaseLift ? 'rgba(0, 212, 255, 0.1)' : 'rgba(255,255,255,0.04)'),
+                          border: '1px solid ' + (isBaseLift ? 'rgba(145, 182, 161, 0.1)' : 'rgba(255,255,255,0.04)'),
                           borderRadius: '10px',
                           padding: '10px',
                           position: 'relative'
                         }}>
                           {isBaseLift && (
-                            <span style={{ position: 'absolute', top: '4px', right: '6px', fontSize: '7px', color: 'var(--theme-primary)', fontFamily: "'Orbitron', sans-serif", opacity: 0.5 }}>BASE</span>
+                            <span style={{ position: 'absolute', top: '4px', right: '6px', fontSize: '7px', color: 'var(--theme-primary)', fontFamily: "'Inter', sans-serif", opacity: 0.5 }}>BASE</span>
                           )}
                           <label htmlFor={`1rm-${lift}`} style={{ display: 'block', fontSize: 'var(--text-label-size)', fontWeight: 'var(--text-label-weight)', color: isBaseLift ? 'var(--theme-primary)' : 'var(--text-label-color)', marginBottom: '4px', textTransform: 'var(--text-label-transform)', letterSpacing: 'var(--text-label-spacing)', fontFamily: 'var(--text-label-family)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{lift}</label>
                           <input
@@ -933,7 +935,7 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
                       );
                     })}
                   </div>
-                  <p style={{ margin: '4px 0 0 0', fontSize: '9px', color: 'rgba(255,255,255,0.3)', lineHeight: '1.3' }}>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#a4b0a8', lineHeight: '1.3' }}>
                     Se muestran los 3 levantamientos base + todos los ejercicios del plan. Solo los ejercicios con 1RM registrado recibirán cargas sugeridas. El atleta también actualizará estas marcas automáticamente al registrar sus sesiones.
                   </p>
                 </div>
@@ -943,7 +945,7 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
 
           {/* Puntos Débiles */}
           <div>
-            <label style={{ display: 'flex', alignItems: 'center', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '8px', textTransform: 'uppercase' }}>
+            <label style={{ display: 'flex', alignItems: 'center', fontSize: '12px', color: '#a4b0a8', fontWeight: 700, marginBottom: '8px', textTransform: 'none' }}>
               Puntos Débiles Mecánicos
               <InfoTooltip title="Puntos Débiles (Sticking Points)" body="Indica en qué parte del movimiento el atleta tiende a fallar cuando está cerca de su límite. El sistema usará esta información para sugerir ejercicios accesorios correctivos específicos (ej: Pause Squats si falla en la fase profunda de la sentadilla, o Close Grip Bench si falla en el bloqueo del press)." />
             </label>
@@ -963,11 +965,11 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
                       return { ...prev, puntos_debiles: updatedPoints };
                     });
                   }}
-                  style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.1)', color: 'white', padding: '4px 0', fontSize: '11px', outline: 'none', cursor: 'pointer' }}
+                  style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.1)', color: 'white', padding: '4px 0', fontSize: '12px', outline: 'none', cursor: 'pointer' }}
                 >
-                  <option value="abajo" style={{ background: '#0b0f19' }}>Fase Profunda (Salida)</option>
-                  <option value="mitad" style={{ background: '#0b0f19' }}>Punto Medio</option>
-                  <option value="arriba" style={{ background: '#0b0f19' }}>Bloqueo Arriba</option>
+                  <option value="abajo" style={{ background: '#121716' }}>Fase Profunda (Salida)</option>
+                  <option value="mitad" style={{ background: '#121716' }}>Punto Medio</option>
+                  <option value="arriba" style={{ background: '#121716' }}>Bloqueo Arriba</option>
                 </select>
               </div>
 
@@ -985,11 +987,11 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
                       return { ...prev, puntos_debiles: updatedPoints };
                     });
                   }}
-                  style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.1)', color: 'white', padding: '4px 0', fontSize: '11px', outline: 'none', cursor: 'pointer' }}
+                  style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.1)', color: 'white', padding: '4px 0', fontSize: '12px', outline: 'none', cursor: 'pointer' }}
                 >
-                  <option value="pecho" style={{ background: '#0b0f19' }}>Del Pecho (Salida)</option>
-                  <option value="mitad" style={{ background: '#0b0f19' }}>Mitad de Camino</option>
-                  <option value="bloqueo" style={{ background: '#0b0f19' }}>Bloqueo Final</option>
+                  <option value="pecho" style={{ background: '#121716' }}>Del Pecho (Salida)</option>
+                  <option value="mitad" style={{ background: '#121716' }}>Mitad de Camino</option>
+                  <option value="bloqueo" style={{ background: '#121716' }}>Bloqueo Final</option>
                 </select>
               </div>
 
@@ -1007,11 +1009,11 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
                       return { ...prev, puntos_debiles: updatedPoints };
                     });
                   }}
-                  style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.1)', color: 'white', padding: '4px 0', fontSize: '11px', outline: 'none', cursor: 'pointer' }}
+                  style={{ width: '100%', background: 'transparent', border: 'none', borderBottom: '1px solid rgba(255,255,255,0.1)', color: 'white', padding: '4px 0', fontSize: '12px', outline: 'none', cursor: 'pointer' }}
                 >
-                  <option value="despegue" style={{ background: '#0b0f19' }}>Despegue Suelo</option>
-                  <option value="rodillas" style={{ background: '#0b0f19' }}>Bajo Rodillas</option>
-                  <option value="bloqueo" style={{ background: '#0b0f19' }}>Bloqueo Arriba</option>
+                  <option value="despegue" style={{ background: '#121716' }}>Despegue Suelo</option>
+                  <option value="rodillas" style={{ background: '#121716' }}>Bajo Rodillas</option>
+                  <option value="bloqueo" style={{ background: '#121716' }}>Bloqueo Arriba</option>
                 </select>
               </div>
 
@@ -1048,8 +1050,8 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
               return (
                 <div className="smart-coach-suggestions-panel" style={{
                   marginTop: '20px',
-                  background: 'rgba(0, 212, 255, 0.03)',
-                  border: '1px solid rgba(0, 212, 255, 0.15)',
+                  background: 'rgba(145, 182, 161, 0.03)',
+                  border: '1px solid rgba(145, 182, 161, 0.15)',
                   borderRadius: '12px',
                   padding: '16px',
                   display: 'flex',
@@ -1059,12 +1061,12 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <span style={{ fontSize: '16px' }}>💡</span>
                     <span style={{
-                      fontSize: '11px',
+                      fontSize: '12px',
                       fontWeight: 800,
-                      fontFamily: "'Orbitron', sans-serif",
-                      color: 'var(--theme-primary, #00d4ff)',
-                      letterSpacing: '1px',
-                      textTransform: 'uppercase'
+                      fontFamily: "'Inter', sans-serif",
+                      color: 'var(--theme-primary, #91b6a1)',
+                      letterSpacing: '0',
+                      textTransform: 'none'
                     }}>
                       Sugerencias del Smart Coach
                     </span>
@@ -1088,39 +1090,39 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '8px' }}>
                             <div>
                               <strong style={{ fontSize: '12px', color: 'white' }}>{correction.name}</strong>
-                              <div style={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.4)', marginTop: '2px' }}>
-                                Correctivo para {item.liftLabel} (Punto crítico: <span style={{ color: 'var(--theme-primary, #00d4ff)' }}>{item.point}</span>)
+                              <div style={{ fontSize: '12px', color: '#a4b0a8', marginTop: '2px' }}>
+                                Correctivo para {item.liftLabel} (Punto crítico: <span style={{ color: 'var(--theme-primary, #91b6a1)' }}>{item.point}</span>)
                               </div>
                             </div>
                             <button
                               type="button"
                               onClick={() => handleAddCorrectiveExercise(item.liftKey, correction)}
                               style={{
-                                background: 'rgba(0, 212, 255, 0.1)',
-                                border: '1px solid rgba(0, 212, 255, 0.25)',
+                                background: 'rgba(145, 182, 161, 0.1)',
+                                border: '1px solid rgba(145, 182, 161, 0.25)',
                                 borderRadius: '6px',
-                                color: 'var(--theme-primary, #00d4ff)',
-                                fontSize: '10px',
+                                color: 'var(--theme-primary, #91b6a1)',
+                                fontSize: '12px',
                                 fontWeight: 800,
-                                fontFamily: "'Orbitron', sans-serif",
+                                fontFamily: "'Inter', sans-serif",
                                 padding: '6px 12px',
                                 cursor: 'pointer',
                                 transition: 'all 0.2s'
                               }}
                               onMouseEnter={(e) => {
-                                e.currentTarget.style.background = 'rgba(0, 212, 255, 0.2)';
-                                e.currentTarget.style.borderColor = 'var(--theme-primary, #00d4ff)';
+                                e.currentTarget.style.background = 'rgba(145, 182, 161, 0.2)';
+                                e.currentTarget.style.borderColor = 'var(--theme-primary, #91b6a1)';
                               }}
                               onMouseLeave={(e) => {
-                                e.currentTarget.style.background = 'rgba(0, 212, 255, 0.1)';
-                                e.currentTarget.style.borderColor = 'rgba(0, 212, 255, 0.25)';
+                                e.currentTarget.style.background = 'rgba(145, 182, 161, 0.1)';
+                                e.currentTarget.style.borderColor = 'rgba(145, 182, 161, 0.25)';
                               }}
                             >
                               ➕ Agregar a {item.dayName}
                             </button>
                           </div>
                           
-                          <p style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.7)', margin: 0, lineHeight: '1.4' }}>
+                          <p style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.7)', margin: 0, lineHeight: '1.4' }}>
                             {correction.description}
                           </p>
 
@@ -1129,11 +1131,11 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
                             border: '1px solid rgba(249, 115, 22, 0.15)',
                             borderRadius: '8px',
                             padding: '10px',
-                            fontSize: '11px',
+                            fontSize: '12px',
                             color: '#ffaa66',
                             lineHeight: '1.4'
                           }}>
-                            <strong style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '9px', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#ff7e2e', display: 'block', marginBottom: '4px' }}>
+                            <strong style={{ fontFamily: "'Inter', sans-serif", fontSize: '12px', textTransform: 'none', letterSpacing: '0', color: '#ff7e2e', display: 'block', marginBottom: '4px' }}>
                               ⏱️ Explicación del Tempo ({correction.tempo})
                             </strong>
                             {formatTempoDetail(correction.tempo).split('\n').slice(1).join('\n')}
@@ -1151,7 +1153,7 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
 
         {/* PANEL DE AUDITORÍA DE VOLUMEN MRV */}
         <div className="weekly-volume-audit-panel" style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '20px', marginTop: '10px' }}>
-          <h4 style={{ fontFamily: 'var(--text-section-family)', fontSize: 'var(--text-section-size)', fontWeight: 'var(--text-section-weight)', color: 'var(--theme-primary)', letterSpacing: 'var(--text-section-spacing)', marginBottom: '12px', marginTop: 0, textTransform: 'uppercase', display: 'flex', alignItems: 'center' }}>
+          <h4 style={{ fontFamily: 'var(--text-section-family)', fontSize: 'var(--text-section-size)', fontWeight: 'var(--text-section-weight)', color: 'var(--theme-primary)', letterSpacing: 'var(--text-section-spacing)', marginBottom: '12px', marginTop: 0, textTransform: 'none', display: 'flex', alignItems: 'center' }}>
             {config?.objetivo === 'fuerza' ? 'Auditoría de Volumen de Fuerza Semanal (Patrones RP)' : 'Auditoría de Volumen Semanal (Periodización RP)'}
             <InfoTooltip 
               title={config?.objetivo === 'fuerza' ? 'Auditoría de Fuerza' : 'Auditoría MRV'} 
@@ -1160,7 +1162,7 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
                 : 'Muestra la sumatoria de todas las series de trabajo programadas en la semana por grupo muscular. Si superas el MRV (Volumen Máximo Recuperable), el algoritmo bloqueará incrementos adicionales para prevenir el sobreentrenamiento.'} 
             />
           </h4>
-          <p style={{ margin: '0 0 16px 0', fontSize: '11px', color: 'rgba(255,255,255,0.4)', lineHeight: '1.4' }}>
+          <p style={{ margin: '0 0 16px 0', fontSize: '12px', color: '#a4b0a8', lineHeight: '1.4' }}>
             {config?.objetivo === 'fuerza' 
               ? 'Vigila que no hayas programado exceso de NL. Si el medidor está en rojo, reduce el volumen de levantamientos para evitar sobreentrenamiento neural.' 
               : 'Vigila que no hayas programado exceso de series. Si el medidor está en rojo, reduce el volumen inicial para que el atleta pueda progresar hacia el MRV durante el mesociclo.'}
@@ -1198,32 +1200,32 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
                     }}>
                       {isDanger && <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: color }} />}
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                        <strong style={{ fontSize: '11px', color: 'white', fontFamily: "'Orbitron', sans-serif" }}>{threshold.label}</strong>
+                        <strong style={{ fontSize: '12px', color: 'white', fontFamily: "'Inter', sans-serif" }}>{threshold.label}</strong>
                         <span style={{ fontSize: '12px', fontWeight: 800, color }}>{nl} NL★</span>
                       </div>
                       {/* Mensaje humanizado — siempre visible */}
-                      <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.75)', lineHeight: 1.4, marginBottom: humanized.action ? '6px' : 0 }}>
+                      <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.75)', lineHeight: 1.4, marginBottom: humanized.action ? '6px' : 0 }}>
                         {humanized.headline}
                       </div>
                       {humanized.action && (
-                        <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.45)', lineHeight: 1.4, marginBottom: languageMode === 'tecnico' ? '6px' : 0 }}>
+                        <div style={{ fontSize: '12px', color: '#a4b0a8', lineHeight: 1.4, marginBottom: languageMode === 'tecnico' ? '6px' : 0 }}>
                           → {humanized.action}
                         </div>
                       )}
                       {/* Dato técnico — solo en modo técnico */}
                       {languageMode === 'tecnico' && (
-                        <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.25)', fontFamily: 'monospace', marginTop: '4px', paddingTop: '4px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                        <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.25)', fontFamily: 'monospace', marginTop: '4px', paddingTop: '4px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
                           {humanized.technical}
                         </div>
                       )}
                       {/* Señales MRV — solo en danger */}
                       {isDanger && humanized.signals && humanized.signals.length > 0 && (
                         <div style={{ marginTop: '6px', paddingTop: '6px', borderTop: '1px solid rgba(239,68,68,0.15)' }}>
-                          <div style={{ fontSize: '9px', color: 'rgba(239,68,68,0.7)', fontWeight: 700, marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                          <div style={{ fontSize: '12px', color: 'rgba(239,68,68,0.7)', fontWeight: 700, marginBottom: '4px', textTransform: 'none', letterSpacing: '0.06em' }}>
                             Señales a observar en el atleta
                           </div>
                           {humanized.signals.map((s, i) => (
-                            <div key={i} style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', marginBottom: '2px' }}>
+                            <div key={i} style={{ fontSize: '12px', color: '#a4b0a8', marginBottom: '2px' }}>
                               › {s}
                             </div>
                           ))}
@@ -1262,21 +1264,21 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
                     }}>
                       {isDanger && <div style={{ position: 'absolute', top: 0, left: 0, width: '4px', height: '100%', background: color }} />}
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                        <strong style={{ fontSize: '11px', color: 'white', fontFamily: "'Orbitron', sans-serif" }}>{gm}</strong>
+                        <strong style={{ fontSize: '12px', color: 'white', fontFamily: "'Inter', sans-serif" }}>{gm}</strong>
                         <span style={{ fontSize: '12px', fontWeight: 800, color }}>{volume} series</span>
                       </div>
                       {/* Mensaje humanizado — siempre visible */}
-                      <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.75)', lineHeight: 1.4, marginBottom: humanized.action ? '6px' : 0 }}>
+                      <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.75)', lineHeight: 1.4, marginBottom: humanized.action ? '6px' : 0 }}>
                         {humanized.headline}
                       </div>
                       {humanized.action && (
-                        <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.45)', lineHeight: 1.4, marginBottom: languageMode === 'tecnico' ? '6px' : 0 }}>
+                        <div style={{ fontSize: '12px', color: '#a4b0a8', lineHeight: 1.4, marginBottom: languageMode === 'tecnico' ? '6px' : 0 }}>
                           → {humanized.action}
                         </div>
                       )}
                       {/* Dato técnico — solo en modo técnico */}
                       {languageMode === 'tecnico' && (
-                        <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.25)', fontFamily: 'monospace', marginTop: '4px', paddingTop: '4px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                        <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.25)', fontFamily: 'monospace', marginTop: '4px', paddingTop: '4px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
                           {humanized.technical}
                         </div>
                       )}
@@ -1285,7 +1287,7 @@ export const PeriodizationPanel: React.FC<PeriodizationPanelProps> = ({
                 })
             )}
             {((config?.objetivo === 'fuerza' ? Object.values(weeklyNLData).reduce((a, b) => a + b, 0) : Object.values(weeklyVolumeData).reduce((a, b) => a + b, 0)) === 0) && (
-              <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)' }}>
+              <div style={{ fontSize: '12px', color: '#a4b0a8' }}>
                 {config?.objetivo === 'fuerza' ? 'No hay levantamientos de fuerza programados aún.' : 'No hay series programadas aún.'}
               </div>
             )}

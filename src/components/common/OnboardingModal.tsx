@@ -32,7 +32,7 @@ interface OnboardingModalProps {
   trainerId?:       string; // id del entrenador — necesario para crear el plan sandbox
 }
 
-const ACCENT = '#c2ff00';
+const ACCENT = '#91b6a1';
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -197,18 +197,18 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
     const isLast = clientStep === clientSlides.length;
 
     return (
-      <div style={{ position: 'fixed', inset: 0, background: 'rgba(5,8,16,0.96)', backdropFilter: 'blur(12px)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+      <div style={{ position: 'fixed', inset: 0, background: 'rgba(5,8,16,0.96)', backdropFilter: 'none', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
         <div
           ref={dialogRef}
           role="dialog"
           aria-modal="true"
           aria-labelledby="onboarding-client-title"
           tabIndex={-1}
-          style={{ background: 'rgba(15,23,42,0.9)', border: `1px solid ${ACCENT}22`, borderRadius: '24px', maxWidth: '420px', width: '100%', padding: '36px 28px', textAlign: 'center', boxShadow: `0 20px 50px rgba(0,0,0,0.5)` }}
+          style={{ background: '#1a211e', border: `1px solid ${ACCENT}22`, borderRadius: '24px', maxWidth: '420px', width: '100%', padding: '36px 28px', textAlign: 'center', boxShadow: 'none' }}
         >
           <div style={{ fontSize: '48px', marginBottom: '20px' }}>{slide.emoji}</div>
           <h2 id="onboarding-client-title" style={{ fontSize: '20px', fontWeight: 800, color: '#fff', marginBottom: '12px' }}>{slide.title}</h2>
-          <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.55)', lineHeight: 1.6, marginBottom: '28px' }}>{slide.text}</p>
+          <p style={{ fontSize: '14px', color: '#a4b0a8', lineHeight: 1.6, marginBottom: '28px' }}>{slide.text}</p>
           <div style={{ display: 'flex', gap: '6px', justifyContent: 'center', marginBottom: '20px' }}>
             {clientSlides.map((_, i) => (
               <div key={i} style={{ height: '4px', width: i + 1 <= clientStep ? '24px' : '8px', borderRadius: '2px', background: i + 1 <= clientStep ? ACCENT : 'rgba(255,255,255,0.1)', transition: 'all 0.3s' }} />
@@ -234,14 +234,14 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
   const canNext = step === 1 ? metodologia !== null : step === 2 ? objetivo !== null : true;
 
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(5,8,16,0.97)', backdropFilter: 'blur(16px)', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', fontFamily: "'Inter','Roboto',sans-serif" }}>
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(5,8,16,0.97)', backdropFilter: 'none', zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px', fontFamily: "'Inter','Roboto',sans-serif" }}>
       <div
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby="onboarding-trainer-title"
         tabIndex={-1}
-        style={{ width: '100%', maxWidth: '520px', background: 'rgba(15,23,42,0.92)', border: `1px solid ${ACCENT}22`, borderRadius: '24px', padding: '36px 32px', position: 'relative', overflow: 'hidden', boxShadow: `0 24px 64px rgba(0,0,0,0.6)` }}
+        style={{ width: '100%', maxWidth: '520px', background: '#1a211e', border: `1px solid ${ACCENT}22`, borderRadius: '24px', padding: '36px 32px', position: 'relative', overflow: 'hidden', boxShadow: 'none' }}
       >
 
         {/* Glow */}
@@ -257,9 +257,9 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
         {/* ── Paso 1 — Metodología ── */}
         {step === 1 && (
           <div>
-            <p style={{ fontSize: '11px', color: ACCENT, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '6px' }}>Paso 1 de 5</p>
+            <p style={{ fontSize: '12px', color: ACCENT, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'none', marginBottom: '6px' }}>Paso 1 de 5</p>
             <h2 id="onboarding-trainer-title" style={{ fontSize: '21px', fontWeight: 800, color: '#fff', marginBottom: '6px', lineHeight: 1.3 }}>¿Cómo describes tu metodología de entrenamiento?</h2>
-            <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)', marginBottom: '22px' }}>Esto adapta el lenguaje de la app a tu nivel de familiaridad con la ciencia del ejercicio.</p>
+            <p style={{ fontSize: '13px', color: '#a4b0a8', marginBottom: '22px' }}>Esto adapta el lenguaje de la app a tu nivel de familiaridad con la ciencia del ejercicio.</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {([
                 { value: 'intuitiva',   emoji: '🎯', label: 'Intuitiva',            hint: 'Ajusto según cómo se ve y siente el atleta' },
@@ -271,7 +271,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                   <span style={{ fontSize: '22px', flexShrink: 0 }}>{opt.emoji}</span>
                   <div>
                     <div style={{ fontSize: '14px', fontWeight: 700, color: metodologia === opt.value ? ACCENT : '#e5e7eb', marginBottom: '2px' }}>{opt.label}</div>
-                    <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.35)' }}>{opt.hint}</div>
+                    <div style={{ fontSize: '12px', color: '#a4b0a8' }}>{opt.hint}</div>
                   </div>
                   {metodologia === opt.value && <span style={{ marginLeft: 'auto', color: ACCENT }}>✓</span>}
                 </button>
@@ -283,9 +283,9 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
         {/* ── Paso 2 — Objetivo del plan sandbox ── */}
         {step === 2 && (
           <div>
-            <p style={{ fontSize: '11px', color: ACCENT, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '6px' }}>Paso 2 de 5</p>
+            <p style={{ fontSize: '12px', color: ACCENT, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'none', marginBottom: '6px' }}>Paso 2 de 5</p>
             <h2 id="onboarding-trainer-title" style={{ fontSize: '21px', fontWeight: 800, color: '#fff', marginBottom: '6px', lineHeight: 1.3 }}>Crea un plan de práctica para explorar la app</h2>
-            <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)', marginBottom: '22px' }}>Se creará bajo tu perfil, puedes modificarlo o eliminarlo cuando quieras. ¿Cuál sería el objetivo?</p>
+            <p style={{ fontSize: '13px', color: '#a4b0a8', marginBottom: '22px' }}>Se creará bajo tu perfil, puedes modificarlo o eliminarlo cuando quieras. ¿Cuál sería el objetivo?</p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
               {([
                 { value: 'hipertrofia',    emoji: '💪', label: 'Ganar músculo' },
@@ -306,12 +306,12 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
         {/* ── Paso 3 — Estructura ── */}
         {step === 3 && (
           <div>
-            <p style={{ fontSize: '11px', color: ACCENT, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '6px' }}>Paso 3 de 5</p>
+            <p style={{ fontSize: '12px', color: ACCENT, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'none', marginBottom: '6px' }}>Paso 3 de 5</p>
             <h2 id="onboarding-trainer-title" style={{ fontSize: '21px', fontWeight: 800, color: '#fff', marginBottom: '6px', lineHeight: 1.3 }}>¿Cómo estructurarías el plan?</h2>
-            <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)', marginBottom: '22px' }}>Estos valores se pueden cambiar después.</p>
+            <p style={{ fontSize: '13px', color: '#a4b0a8', marginBottom: '22px' }}>Estos valores se pueden cambiar después.</p>
 
             <div style={{ marginBottom: '22px' }}>
-              <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)', fontWeight: 600, marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Días por semana</p>
+              <p style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 600, marginBottom: '10px', textTransform: 'none', letterSpacing: '0.06em' }}>Días por semana</p>
               <div style={{ display: 'flex', gap: '8px' }}>
                 {[3, 4, 5, 6].map(d => (
                   <button key={d} onClick={() => setDias(d)}
@@ -323,7 +323,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
             </div>
 
             <div>
-              <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)', fontWeight: 600, marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Duración del bloque</p>
+              <p style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 600, marginBottom: '10px', textTransform: 'none', letterSpacing: '0.06em' }}>Duración del bloque</p>
               <div style={{ display: 'flex', gap: '8px' }}>
                 {[4, 6, 8, 12].map(w => (
                   <button key={w} onClick={() => setSemanas(w)}
@@ -339,9 +339,9 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
         {/* ── Paso 4 — Calculadora 1RM (Explicación) ── */}
         {step === 4 && (
           <div>
-            <p style={{ fontSize: '11px', color: ACCENT, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '6px' }}>Paso 4 de 5</p>
+            <p style={{ fontSize: '12px', color: ACCENT, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'none', marginBottom: '6px' }}>Paso 4 de 5</p>
             <h2 id="onboarding-trainer-title" style={{ fontSize: '21px', fontWeight: 800, color: '#fff', marginBottom: '8px', lineHeight: 1.3 }}>🧮 Calibra la Fuerza Máxima (1RM)</h2>
-            <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.45)', marginBottom: '16px', lineHeight: 1.5 }}>
+            <p style={{ fontSize: '13px', color: '#a4b0a8', marginBottom: '16px', lineHeight: 1.5 }}>
               Para que el robot inteligente 🤖 pueda prescribir pesos precisos en los ejercicios, necesita conocer la <strong>Fuerza Máxima (1RM)</strong> del atleta en cada movimiento.
             </p>
 
@@ -359,7 +359,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                 </span>
               </div>
             </div>
-            <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)', marginTop: '12px', textAlign: 'center' }}>
+            <p style={{ fontSize: '12px', color: '#a4b0a8', marginTop: '12px', textAlign: 'center' }}>
               Recuerda rellenar las casillas de 1RM al crear o modificar tus planes.
             </p>
           </div>
@@ -369,7 +369,7 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
         {step === 5 && objetivo && metodologia && (
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: '48px', marginBottom: '16px' }}>🚀</div>
-            <p style={{ fontSize: '11px', color: ACCENT, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '8px' }}>Paso 5 de 5</p>
+            <p style={{ fontSize: '12px', color: ACCENT, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'none', marginBottom: '8px' }}>Paso 5 de 5</p>
             <h2 id="onboarding-trainer-title" style={{ fontSize: '21px', fontWeight: 800, color: '#fff', marginBottom: '12px', lineHeight: 1.3 }}>Todo listo para crear tu plan de práctica</h2>
 
             <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '12px', padding: '16px', marginBottom: '20px', textAlign: 'left' }}>
@@ -380,11 +380,11 @@ export const OnboardingModal: React.FC<OnboardingModalProps> = ({
                 { label: 'Duración',   value: `${semanas} semanas` },
               ].map(row => (
                 <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                  <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)' }}>{row.label}</span>
+                  <span style={{ fontSize: '13px', color: '#a4b0a8' }}>{row.label}</span>
                   <span style={{ fontSize: '13px', fontWeight: 600, color: '#e5e7eb' }}>{row.value}</span>
                 </div>
               ))}
-              <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)', marginTop: '8px', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+              <div style={{ fontSize: '12px', color: '#a4b0a8', marginTop: '8px', paddingTop: '8px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
                 El plan aparecerá en tu lista bajo el nombre "🧪 Plan de práctica"
               </div>
             </div>

@@ -334,6 +334,7 @@ export interface SesionEjercicio {
 
 // Interfaz para la sesión en el estado local de la app
 export interface LocalSesion {
+  operation_id?: string; // Stable client key, retained across retries and server acknowledgement.
   id: string | number; // UUID en DB, número autoincrementable en offline temporal
   fecha: string;
   notas_sesion: string;

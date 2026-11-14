@@ -335,29 +335,29 @@ const EvolutionModal: React.FC<EvolutionModalProps> = ({
         <div
           ref={dialogRef}
           className="modal-box modal-enter"
-          style={{ maxWidth: '800px', width: '95%', maxHeight: '85vh', overflowY: 'auto', border: '1px solid var(--theme-border)', boxShadow: '0 20px 50px var(--theme-glow)' }}
+          style={{ maxWidth: '800px', width: '95%', maxHeight: '85vh', overflowY: 'auto', border: '1px solid var(--theme-border)', boxShadow: 'none' }}
           role="dialog"
           aria-modal="true"
           aria-labelledby="evolution-modal-title"
           tabIndex={-1}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '12px', marginBottom: '15px' }}>
-            <h3 id="evolution-modal-title" style={{ margin: 0, fontFamily: "'Orbitron', sans-serif", color: 'var(--theme-primary)', fontSize: '1.05rem', letterSpacing: '0.5px' }}>
+            <h3 id="evolution-modal-title" style={{ margin: 0, fontFamily: "'Inter', sans-serif", color: 'var(--theme-primary)', fontSize: '1.05rem', letterSpacing: '0' }}>
               📈 EVOLUCIÓN Y REPORTES
             </h3>
-            <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '20px', cursor: 'pointer' }}>&times;</button>
+            <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#a4b0a8', fontSize: '20px', cursor: 'pointer' }}>&times;</button>
           </div>
 
-          <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)', marginBottom: '15px' }}>
+          <div style={{ fontSize: '12px', color: '#a4b0a8', marginBottom: '15px' }}>
             Atleta: <span style={{ color: 'white', fontWeight: 700 }}>{selectedAthleteForEvolution.nombre}</span> | Objetivo: <span style={{ color: 'var(--theme-secondary)', fontWeight: 600 }}>{selectedAthleteForEvolution.objetivo || 'Sin objetivo'}</span>
           </div>
 
           {loadingEvolution ? (
-            <div style={{ textAlign: 'center', padding: '40px', color: 'var(--theme-primary)', fontFamily: 'Orbitron, sans-serif', fontSize: '12px' }}>
+            <div style={{ textAlign: 'center', padding: '40px', color: 'var(--theme-primary)', fontFamily: 'Inter, sans-serif', fontSize: '12px' }}>
               Cargando historial de progresión del atleta...
             </div>
           ) : evolutionHistoryData.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '40px', color: 'rgba(255,255,255,0.4)', fontSize: '12px', background: 'rgba(255,255,255,0.01)', border: '1px dashed rgba(255,255,255,0.1)', borderRadius: '10px' }}>
+            <div style={{ textAlign: 'center', padding: '40px', color: '#a4b0a8', fontSize: '12px', background: 'rgba(255,255,255,0.01)', border: '1px dashed rgba(255,255,255,0.1)', borderRadius: '10px' }}>
               El atleta aún no tiene sesiones registradas. Registra entrenamientos para ver las métricas de evolución.
             </div>
           ) : (
@@ -365,11 +365,11 @@ const EvolutionModal: React.FC<EvolutionModalProps> = ({
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', background: 'rgba(255,255,255,0.01)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.04)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
-                    <span style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(255,255,255,0.4)', fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.5px' }}>AUDITAR EJERCICIO</span>
+                    <span style={{ fontSize: '12px', fontWeight: 700, color: '#a4b0a8', fontFamily: "'Inter', sans-serif", letterSpacing: '0' }}>AUDITAR EJERCICIO</span>
                     <select
                       value={selectedEvolutionExercise}
                       onChange={(e) => setSelectedEvolutionExercise(e.target.value)}
-                      style={{ background: 'rgba(0,0,0,0.35)', border: '1px solid var(--theme-border)', borderRadius: '6px', color: 'white', padding: '6px 12px', fontSize: '11px', outline: 'none' }}
+                      style={{ background: 'rgba(0,0,0,0.35)', border: '1px solid var(--theme-border)', borderRadius: '6px', color: 'white', padding: '6px 12px', fontSize: '12px', outline: 'none' }}
                     >
                       {evolutionExercises.map(exName => (
                         <option key={exName} value={exName}>🏋️ {exName}</option>
@@ -378,7 +378,7 @@ const EvolutionModal: React.FC<EvolutionModalProps> = ({
                   </div>
 
                   {chartPoints.length === 0 ? (
-                    <div style={{ textAlign: 'center', padding: '30px', color: 'rgba(255,255,255,0.4)', fontSize: '11px' }}>
+                    <div style={{ textAlign: 'center', padding: '30px', color: '#a4b0a8', fontSize: '12px' }}>
                       Selecciona un ejercicio válido del historial.
                     </div>
                   ) : (
@@ -395,7 +395,7 @@ const EvolutionModal: React.FC<EvolutionModalProps> = ({
                             <path d={svgElements.pathRm} fill="none" stroke="#fbbf24" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ filter: 'drop-shadow(0 0 4px rgba(251, 191, 36, 0.4))' }} />
                           )}
                           {svgElements.pathVol && (
-                            <path d={svgElements.pathVol} fill="none" stroke="#00d4ff" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="4,2" style={{ filter: 'drop-shadow(0 0 3px rgba(0, 212, 255, 0.3))' }} />
+                            <path d={svgElements.pathVol} fill="none" stroke="#91b6a1" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="4,2" style={{ filter: 'drop-shadow(0 0 3px rgba(145, 182, 161, 0.3))' }} />
                           )}
                           {svgElements.points.map((pt, idx) => (
                             <g key={idx}>
@@ -405,9 +405,9 @@ const EvolutionModal: React.FC<EvolutionModalProps> = ({
                           ))}
                         </svg>
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', fontSize: '10px', fontFamily: "'Orbitron', sans-serif", color: 'rgba(255,255,255,0.6)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', fontSize: '12px', fontFamily: "'Inter', sans-serif", color: '#a4b0a8' }}>
                         <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#fbbf24' }}></span> Fuerza (1RM)</span>
-                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#00d4ff' }}></span> Volumen</span>
+                        <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#91b6a1' }}></span> Volumen</span>
                       </div>
                     </div>
                   )}
@@ -415,9 +415,9 @@ const EvolutionModal: React.FC<EvolutionModalProps> = ({
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', background: 'rgba(255,255,255,0.01)', padding: '16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.04)', justifyContent: 'space-between' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    <span style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(255,255,255,0.4)', fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.5px' }}>GENERADOR DE REPORTES PDF</span>
+                    <span style={{ fontSize: '12px', fontWeight: 700, color: '#a4b0a8', fontFamily: "'Inter', sans-serif", letterSpacing: '0' }}>GENERADOR DE REPORTES PDF</span>
                     <div>
-                      <label style={{ display: 'block', fontSize: '9px', fontWeight: 700, color: 'rgba(255,255,255,0.5)', fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.5px', marginBottom: '4px' }}>RANGO DE FECHAS</label>
+                      <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#a4b0a8', fontFamily: "'Inter', sans-serif", letterSpacing: '0', marginBottom: '4px' }}>RANGO DE FECHAS</label>
                       <select value={pdfDateRange} onChange={(e) => handlePdfDateRangeChange(e.target.value as any)} style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'white', padding: '8px 10px', fontSize: '12px', outline: 'none', marginBottom: '8px' }}>
                         <option value="30">📅 Últimos 30 días</option>
                         <option value="60">📅 Últimos 60 días</option>
@@ -426,24 +426,24 @@ const EvolutionModal: React.FC<EvolutionModalProps> = ({
                       </select>
                       {pdfDateRange === 'custom' && (
                         <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
-                          <input type="date" value={pdfStartDate} onChange={(e) => setPdfStartDate(e.target.value)} style={{ flex: 1, background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px', fontSize: '11px' }} />
-                          <input type="date" value={pdfEndDate} onChange={(e) => setPdfEndDate(e.target.value)} style={{ flex: 1, background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px', fontSize: '11px' }} />
+                          <input type="date" value={pdfStartDate} onChange={(e) => setPdfStartDate(e.target.value)} style={{ flex: 1, background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px', fontSize: '12px' }} />
+                          <input type="date" value={pdfEndDate} onChange={(e) => setPdfEndDate(e.target.value)} style={{ flex: 1, background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px', fontSize: '12px' }} />
                         </div>
                       )}
                     </div>
                     <div>
-                      <label style={{ display: 'block', fontSize: '9px', fontWeight: 700, color: 'rgba(255,255,255,0.5)', fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.5px', marginBottom: '4px' }}>COMENTARIOS / FEEDBACK DEL COACH</label>
+                      <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#a4b0a8', fontFamily: "'Inter', sans-serif", letterSpacing: '0', marginBottom: '4px' }}>COMENTARIOS / FEEDBACK DEL COACH</label>
                       <textarea placeholder="Consejos de recuperación, fatiga percibida, qué mejorar el próximo mes..." value={pdfFeedbackText} onChange={(e) => setPdfFeedbackText(e.target.value)} rows={3} style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '12px', resize: 'vertical' }} />
                     </div>
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
                     {trainerSubscription?.plan === 'free' ? (
-                      <div style={{ background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(123, 47, 247, 0.05))', border: '1px solid rgba(239, 68, 68, 0.25)', borderRadius: '10px', padding: '10px 14px', fontSize: '10px', color: 'rgba(255,255,255,0.85)', lineHeight: '1.4' }}>
+                      <div style={{ background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(118, 152, 136, 0.05))', border: '1px solid rgba(239, 68, 68, 0.25)', borderRadius: '10px', padding: '10px 14px', fontSize: '12px', color: 'rgba(255,255,255,0.85)', lineHeight: '1.4' }}>
                         🔒 <strong>REPORTES DE PROGRESO PDF:</strong> Esta es una función exclusiva de los planes premium (Iniciación, Intermedio, Profesional). Permite generar reportes de progreso listos para imprimir con tu logotipo y eslogan.
                       </div>
                     ) : (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '10px', color: '#34d399', fontFamily: "'Orbitron', sans-serif" }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#34d399', fontFamily: "'Inter', sans-serif" }}>
                         ⭐ Premium Activo ({trainerSubscription?.plan.toUpperCase()}) — Reportes ilimitados habilitados.
                       </div>
                     )}
@@ -455,11 +455,11 @@ const EvolutionModal: React.FC<EvolutionModalProps> = ({
                         width: '100%',
                         background: trainerSubscription?.plan === 'free' ? 'rgba(255,255,255,0.03)' : 'var(--theme-btn-gradient)',
                         border: trainerSubscription?.plan === 'free' ? '1px solid rgba(255,255,255,0.08)' : 'none',
-                        color: trainerSubscription?.plan === 'free' ? 'rgba(255,255,255,0.4)' : 'white',
+                        color: trainerSubscription?.plan === 'free' ? '#a4b0a8' : 'white',
                         padding: '12px',
                         borderRadius: '8px',
-                        fontSize: '11px',
-                        fontFamily: "'Orbitron', sans-serif",
+                        fontSize: '12px',
+                        fontFamily: "'Inter', sans-serif",
                         fontWeight: 700,
                         cursor: 'pointer',
                         boxShadow: trainerSubscription?.plan === 'free' ? 'none' : '0 0 15px var(--theme-btn-glow)',
@@ -486,10 +486,10 @@ const EvolutionModal: React.FC<EvolutionModalProps> = ({
                   gap: '12px'
                 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
-                    <span style={{ fontSize: '11px', fontWeight: 700, color: '#eab308', fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ fontSize: '12px', fontWeight: 700, color: '#eab308', fontFamily: "'Inter', sans-serif", letterSpacing: '0', display: 'flex', alignItems: 'center', gap: '6px' }}>
                       ⚡ AUDITORÍA DE SÚPER SERIES (ADAPTACIONES EN VIVO)
                     </span>
-                    <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)' }}>
+                    <span style={{ fontSize: '12px', color: '#a4b0a8' }}>
                       El atleta adaptó ejercicios en súper series / circuitos
                     </span>
                   </div>
@@ -508,7 +508,7 @@ const EvolutionModal: React.FC<EvolutionModalProps> = ({
                         }}
                       >
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontSize: '11px', fontWeight: 600, color: 'white' }}>
+                          <span style={{ fontSize: '12px', fontWeight: 600, color: 'white' }}>
                             📅 {sesion.fecha ? sesion.fecha.split('-').reverse().join('/') : '-'}
                           </span>
                           <span style={{
@@ -516,9 +516,9 @@ const EvolutionModal: React.FC<EvolutionModalProps> = ({
                             color: '#eab308',
                             borderRadius: '4px',
                             padding: '1px 6px',
-                            fontSize: '9px',
+                            fontSize: '12px',
                             fontWeight: 700,
-                            fontFamily: "'Orbitron', sans-serif"
+                            fontFamily: "'Inter', sans-serif"
                           }}>
                             SÚPER SERIE
                           </span>
@@ -533,7 +533,7 @@ const EvolutionModal: React.FC<EvolutionModalProps> = ({
                                   border: '1px solid rgba(234, 179, 8, 0.2)',
                                   borderRadius: '4px',
                                   padding: '3px 6px',
-                                  fontSize: '10px',
+                                  fontSize: '12px',
                                   color: 'rgba(255,255,255,0.85)'
                                 }}
                               >
@@ -543,12 +543,12 @@ const EvolutionModal: React.FC<EvolutionModalProps> = ({
                             ))}
                           </div>
                         ) : (
-                          <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', fontStyle: 'italic' }}>
+                          <span style={{ fontSize: '12px', color: '#a4b0a8', fontStyle: 'italic' }}>
                             Sin detalle de bloques registrado.
                           </span>
                         )}
                         {sesion.notas_generales && (
-                          <span style={{ fontSize: '10px', fontStyle: 'italic', color: 'rgba(255,255,255,0.5)' }}>
+                          <span style={{ fontSize: '12px', fontStyle: 'italic', color: '#a4b0a8' }}>
                             "{sesion.notas_generales}"
                           </span>
                         )}
@@ -586,23 +586,23 @@ const EvolutionModal: React.FC<EvolutionModalProps> = ({
             {profile?.logo_url ? (
               <img src={profile.logo_url} alt="Logo" style={{ maxHeight: '60px', maxWidth: '150px', objectFit: 'contain' }} />
             ) : (
-              <h2 style={{ margin: 0, color: '#ff6b00', fontFamily: "'Orbitron', sans-serif", fontSize: '20px' }}>
+              <h2 style={{ margin: 0, color: '#ff6b00', fontFamily: "'Inter', sans-serif", fontSize: '20px' }}>
                 {profile?.marca?.nombre_display || 'EVOLUTION LAB'}
               </h2>
             )}
             {profile?.marca?.eslogan && (
-              <p style={{ margin: '4px 0 0 0', fontSize: '9px', fontStyle: 'italic', color: '#666' }}>{profile.marca.eslogan}</p>
+              <p style={{ margin: '4px 0 0 0', fontSize: '12px', fontStyle: 'italic', color: '#666' }}>{profile.marca.eslogan}</p>
             )}
           </div>
           <div style={{ textAlign: 'right' }}>
-            <h1 style={{ margin: 0, fontSize: '16px', fontFamily: "'Orbitron', sans-serif" }}>REPORTE DE EVOLUCIÓN MENSUAL</h1>
-            <p style={{ margin: '4px 0 0 0', fontSize: '10px', color: '#555' }}>
+            <h1 style={{ margin: 0, fontSize: '16px', fontFamily: "'Inter', sans-serif" }}>REPORTE DE EVOLUCIÓN MENSUAL</h1>
+            <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#555' }}>
               Periodo: {new Date(pdfStartDate).toLocaleDateString()} al {new Date(pdfEndDate).toLocaleDateString()}
             </p>
           </div>
         </div>
 
-        <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '12px 15px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#333' }}>
+        <div style={{ background: '#edf2ee', border: '1px solid #e2e8f0', borderRadius: '8px', padding: '12px 15px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#333' }}>
           <div>
             <p style={{ margin: '0 0 4px 0' }}><strong>Atleta:</strong> {selectedAthleteForEvolution.nombre}</p>
             <p style={{ margin: 0 }}><strong>Email:</strong> {selectedAthleteForEvolution.email}</p>
@@ -613,14 +613,14 @@ const EvolutionModal: React.FC<EvolutionModalProps> = ({
           </div>
         </div>
 
-        <h3 style={{ fontFamily: "'Orbitron', sans-serif", borderBottom: '1px solid #ddd', paddingBottom: '4px', fontSize: '12px', color: '#1a1a1a', marginTop: '20px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+        <h3 style={{ fontFamily: "'Inter', sans-serif", borderBottom: '1px solid #ddd', paddingBottom: '4px', fontSize: '12px', color: '#1a1a1a', marginTop: '20px', textTransform: 'none', letterSpacing: '0' }}>
           📊 ANÁLISIS DE SOBRECARGA PROGRESIVA
         </h3>
         
         {pdfReportSummary.length === 0 ? (
-          <p style={{ fontSize: '11px', fontStyle: 'italic', color: '#666', padding: '15px 0' }}>No hay registros de ejercicios completados en este periodo.</p>
+          <p style={{ fontSize: '12px', fontStyle: 'italic', color: '#666', padding: '15px 0' }}>No hay registros de ejercicios completados en este periodo.</p>
         ) : (
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '10px', marginTop: '10px', textAlign: 'left' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', marginTop: '10px', textAlign: 'left' }}>
             <thead>
               <tr style={{ background: '#f1f5f9', borderBottom: '2px solid #cbd5e1', color: '#334155' }}>
                 <th style={{ padding: '8px 10px' }}>Ejercicio</th>
@@ -635,7 +635,7 @@ const EvolutionModal: React.FC<EvolutionModalProps> = ({
             </thead>
             <tbody>
               {pdfReportSummary.map((item, idx) => (
-                <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0', color: '#0f172a' }}>
+                <tr key={idx} style={{ borderBottom: '1px solid #e2e8f0', color: '#1a211e' }}>
                   <td style={{ padding: '8px 10px', fontWeight: 'bold' }}>{item.ejercicio}</td>
                   <td style={{ padding: '8px 10px', textAlign: 'center' }}>{item.sesionesRegistradas}</td>
                   <td style={{ padding: '8px 10px', textAlign: 'right' }}>{Math.round(item.rmInicial)} kg</td>
@@ -656,16 +656,16 @@ const EvolutionModal: React.FC<EvolutionModalProps> = ({
 
         {pdfFeedbackText.trim() && (
           <div style={{ marginTop: '25px' }}>
-            <h3 style={{ fontFamily: "'Orbitron', sans-serif", borderBottom: '1px solid #ddd', paddingBottom: '4px', fontSize: '12px', color: '#1a1a1a', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <h3 style={{ fontFamily: "'Inter', sans-serif", borderBottom: '1px solid #ddd', paddingBottom: '4px', fontSize: '12px', color: '#1a1a1a', textTransform: 'none', letterSpacing: '0' }}>
               📝 CONSEJOS Y FEEDBACK DEL COACH
             </h3>
-            <div style={{ padding: '12px 16px', background: '#f8fafc', borderLeft: '3px solid #ff6b00', fontSize: '11px', color: '#334155', fontStyle: 'italic', whiteSpace: 'pre-line', lineHeight: '1.5', marginTop: '8px' }}>
+            <div style={{ padding: '12px 16px', background: '#edf2ee', borderLeft: '3px solid #ff6b00', fontSize: '12px', color: '#334155', fontStyle: 'italic', whiteSpace: 'pre-line', lineHeight: '1.5', marginTop: '8px' }}>
               "{pdfFeedbackText}"
             </div>
           </div>
         )}
 
-        <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '12px', marginTop: '30px', display: 'flex', justifyContent: 'space-between', fontSize: '8px', color: '#64748b' }}>
+        <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '12px', marginTop: '30px', display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#64748b' }}>
           <span>Generado automáticamente por Evolution Lab</span>
           <span>© {new Date().getFullYear()} {profile?.marca?.nombre_display || profile?.nombre}</span>
         </div>

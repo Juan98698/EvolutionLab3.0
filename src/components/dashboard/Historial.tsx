@@ -3,7 +3,7 @@ import { useSupabase } from '../../context/SupabaseContext';
 import { useConfirm } from '../../context/ConfirmDialogContext';
 import { supabase } from '../../lib/supabaseClient';
 import {
-  fetchAthleteSessions,
+  loadAthleteSessions,
   writeSessionsToCache,
   readSessionsFromCache,
 } from '../../lib/sessions';
@@ -165,7 +165,7 @@ export const Historial: React.FC = () => {
       });
 
       setSesiones(updatedSesiones);
-      writeSessionsToCache(updatedSesiones);
+      writeSessionsToCache(updatedSesiones, user?.id);
 
       // 3. Sincronizar en Supabase (si está online)
       if (navigator.onLine && supabase) {
@@ -211,9 +211,9 @@ export const Historial: React.FC = () => {
     let success = false;
 
     try {
-      const formatted = await fetchAthleteSessions(user.id);
+      const formatted = await loadAthleteSessions(user.id);
       setSesiones(formatted);
-      writeSessionsToCache(formatted);
+      writeSessionsToCache(formatted, user?.id);
       success = true;
     } catch (err) {
       console.warn('No se pudo descargar el historial de la nube, usando caché local:', err);
@@ -221,7 +221,7 @@ export const Historial: React.FC = () => {
 
     if (!success) {
       try {
-        const cached = readSessionsFromCache();
+        const cached = readSessionsFromCache(user?.id);
         if (cached.length > 0) {
           setSesiones(cached);
         } else {
@@ -411,7 +411,7 @@ export const Historial: React.FC = () => {
       }
 
       setSesiones(updatedSesiones);
-      writeSessionsToCache(updatedSesiones);
+      writeSessionsToCache(updatedSesiones, user?.id);
 
       // 2. Eliminar en Supabase (si está online y el ID es UUID string)
       if (navigator.onLine && supabase) {
@@ -464,37 +464,37 @@ export const Historial: React.FC = () => {
         {/* METRICS GRID */}
         <div className="metrics" id="metrics" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginTop: '20px', marginBottom: '20px' }}>
           
-          <div className="mcard" style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderRadius: '12px', padding: '16px' }}>
-            <div className="mcard-label" style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>Mejor 1RM estimado</div>
-            <div className="mcard-value" style={{ color: 'var(--theme-primary)', fontSize: '24px', fontWeight: 800, fontFamily: "'Orbitron', sans-serif", display: 'flex', alignItems: 'center', gap: '6px' }}>
-              {metrics.mejor1RMGlobal > 0 ? metrics.mejor1RMGlobal.toFixed(1) : '-'} <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.6)' }}>kg</span>
+          <div className="mcard" style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', backdropFilter: 'none', WebkitBackdropFilter: 'none', borderRadius: '12px', padding: '16px' }}>
+            <div className="mcard-label" style={{ fontSize: '12px', color: '#a4b0a8', textTransform: 'none', letterSpacing: '0.05em', marginBottom: '4px' }}>Mejor 1RM estimado</div>
+            <div className="mcard-value" style={{ color: 'var(--theme-primary)', fontSize: '24px', fontWeight: 800, fontFamily: "'Inter', sans-serif", display: 'flex', alignItems: 'center', gap: '6px' }}>
+              {metrics.mejor1RMGlobal > 0 ? metrics.mejor1RMGlobal.toFixed(1) : '-'} <span style={{ fontSize: '13px', color: '#a4b0a8' }}>kg</span>
             </div>
           </div>
 
-          <div className="mcard" style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderRadius: '12px', padding: '16px' }}>
-            <div className="mcard-label" style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>Volumen última sesión</div>
-            <div className="mcard-value" style={{ color: 'white', fontSize: '24px', fontWeight: 800, fontFamily: "'Orbitron', sans-serif", display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-              {metrics.ultimoVolumen > 0 ? metrics.ultimoVolumen.toLocaleString() : '-'} <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.6)' }}>kg</span>
+          <div className="mcard" style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', backdropFilter: 'none', WebkitBackdropFilter: 'none', borderRadius: '12px', padding: '16px' }}>
+            <div className="mcard-label" style={{ fontSize: '12px', color: '#a4b0a8', textTransform: 'none', letterSpacing: '0.05em', marginBottom: '4px' }}>Volumen última sesión</div>
+            <div className="mcard-value" style={{ color: 'white', fontSize: '24px', fontWeight: 800, fontFamily: "'Inter', sans-serif", display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+              {metrics.ultimoVolumen > 0 ? metrics.ultimoVolumen.toLocaleString() : '-'} <span style={{ fontSize: '13px', color: '#a4b0a8' }}>kg</span>
               {metrics.trendHtml && (
-                <span style={{ color: metrics.trendHtml.includes('↑') ? 'var(--color-success)' : 'var(--color-danger)', fontSize: '11px', fontWeight: 700, marginLeft: '4px' }}>
+                <span style={{ color: metrics.trendHtml.includes('↑') ? 'var(--color-success)' : 'var(--color-danger)', fontSize: '12px', fontWeight: 700, marginLeft: '4px' }}>
                   {metrics.trendHtml}
                 </span>
               )}
             </div>
           </div>
 
-          <div className="mcard" style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderRadius: '12px', padding: '16px' }}>
-            <div className="mcard-label" style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
+          <div className="mcard" style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', backdropFilter: 'none', WebkitBackdropFilter: 'none', borderRadius: '12px', padding: '16px' }}>
+            <div className="mcard-label" style={{ fontSize: '12px', color: '#a4b0a8', textTransform: 'none', letterSpacing: '0.05em', marginBottom: '4px' }}>
               {selectedEx ? 'Sesiones Realizadas' : 'Ejercicios Registrados'}
             </div>
-            <div className="mcard-value" style={{ color: 'white', fontSize: '24px', fontWeight: 800, fontFamily: "'Orbitron', sans-serif" }}>
+            <div className="mcard-value" style={{ color: 'white', fontSize: '24px', fontWeight: 800, fontFamily: "'Inter', sans-serif" }}>
               {metrics.count}
             </div>
           </div>
 
-          <div className="mcard" style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', borderRadius: '12px', padding: '16px' }}>
-            <div className="mcard-label" style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>RIR promedio</div>
-            <div className="mcard-value" style={{ color: 'white', fontSize: '24px', fontWeight: 800, fontFamily: "'Orbitron', sans-serif" }}>
+          <div className="mcard" style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', backdropFilter: 'none', WebkitBackdropFilter: 'none', borderRadius: '12px', padding: '16px' }}>
+            <div className="mcard-label" style={{ fontSize: '12px', color: '#a4b0a8', textTransform: 'none', letterSpacing: '0.05em', marginBottom: '4px' }}>RIR promedio</div>
+            <div className="mcard-value" style={{ color: 'white', fontSize: '24px', fontWeight: 800, fontFamily: "'Inter', sans-serif" }}>
               {metrics.avgRpe}
             </div>
           </div>
@@ -503,8 +503,8 @@ export const Historial: React.FC = () => {
 
         {/* Strongest Exercise Panel */}
         {!selectedEx && metrics.bestExRM > 0 && (
-          <div id="strongestExercisePanel" style={{ marginBottom: '20px', padding: '12px 16px', background: 'rgba(123, 47, 247, 0.08)', borderRadius: '12px', border: '1px solid rgba(123, 47, 247, 0.2)' }}>
-            <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>Tu ejercicio más fuerte</div>
+          <div id="strongestExercisePanel" style={{ marginBottom: '20px', padding: '12px 16px', background: 'rgba(118, 152, 136, 0.08)', borderRadius: '12px', border: '1px solid rgba(118, 152, 136, 0.2)' }}>
+            <div style={{ fontSize: '12px', color: '#a4b0a8', textTransform: 'none', letterSpacing: '0.05em', marginBottom: '4px' }}>Tu ejercicio más fuerte</div>
             <div id="strongestExerciseText" style={{ fontWeight: 700, fontSize: '14px', color: 'var(--theme-primary)', display: 'flex', justifyContent: 'space-between' }}>
               <span>{metrics.bestExName}</span>
               <span>{metrics.bestExRM.toFixed(1)} kg (1RM est.)</span>
@@ -513,15 +513,15 @@ export const Historial: React.FC = () => {
         )}
 
         {/* Motivacional Hook */}
-        <div className="hook-banner" id="dynamicHookBanner" style={{ display: 'block', marginBottom: '25px', padding: '20px', background: 'var(--theme-card-bg)', borderRadius: '14px', border: '1px solid var(--theme-border)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
+        <div className="hook-banner" id="dynamicHookBanner" style={{ display: 'block', marginBottom: '25px', padding: '20px', background: 'var(--theme-card-bg)', borderRadius: '14px', border: '1px solid var(--theme-border)', backdropFilter: 'none', WebkitBackdropFilter: 'none' }}>
           <span className="hook-quote-mark" style={{ display: 'block', fontSize: '32px', color: '#ff7e2e', lineHeight: 0.5, marginBottom: '10px' }}>&ldquo;</span>
-          <p className="hook-text desc-text" id="dynamicHookText" style={{ margin: 0, fontSize: '12px', lineHeight: 1.6, color: '#94a3b8' }}>
+          <p className="hook-text desc-text" id="dynamicHookText" style={{ margin: 0, fontSize: '12px', lineHeight: 1.6, color: '#a4b0a8' }}>
             <strong style={{ fontSize: '15px', color: 'white', display: 'block', marginBottom: '8px' }}>
               {sesiones.length} sesiones completadas en total
             </strong>
             La sobrecarga progresiva — el principio más importante del entrenamiento de fuerza — requiere que sepas exactamente qué y cuánto hiciste la última vez para poder superarlo. Sin esa información, ese esfuerzo se pierde en el aire. Un registro completo convierte cada sesión en información útil.
           </p>
-          <span className="hook-closing desc-text" id="dynamicHookSubtext" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#ff9f43', marginTop: '12px', fontWeight: 600 }}>
+          <span className="hook-closing desc-text" id="dynamicHookSubtext" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#ff9f43', marginTop: '12px', fontWeight: 600 }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#ff9f43" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
               <line x1="12" y1="9" x2="12" y2="13"/>
@@ -549,29 +549,29 @@ export const Historial: React.FC = () => {
             return isNew;
           });
 
-          const pointBackgroundColors = isPR.map(pr => pr ? 'var(--color-highlight)' : 'rgba(0, 212, 255, 0.8)');
-          const pointBorderColors = isPR.map(pr => pr ? 'var(--color-highlight-deep)' : 'rgba(0, 212, 255, 0.5)');
+          const pointBackgroundColors = isPR.map(pr => pr ? 'var(--color-highlight)' : 'rgba(145, 182, 161, 0.8)');
+          const pointBorderColors = isPR.map(pr => pr ? 'var(--color-highlight-deep)' : 'rgba(145, 182, 161, 0.5)');
           const pointRadii = isPR.map(pr => pr ? 6 : 3);
 
           return (
-            <div style={{ marginBottom: '20px', padding: '20px', background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '16px', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
+            <div style={{ marginBottom: '20px', padding: '20px', background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '16px', backdropFilter: 'none', WebkitBackdropFilter: 'none' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--theme-primary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                     <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/>
                   </svg>
-                  <span style={{ fontSize: '13px', fontWeight: 700, fontFamily: "'Orbitron', sans-serif", color: 'var(--theme-primary)', letterSpacing: '0.5px' }}>
+                  <span style={{ fontSize: '13px', fontWeight: 700, fontFamily: "'Inter', sans-serif", color: 'var(--theme-primary)', letterSpacing: '0' }}>
                     PROGRESIÓN DE FUERZA (e1RM)
                   </span>
                   <InfoTooltip title="Progresión de Fuerza" body="Gráfica de tu 1RM estimado a lo largo del tiempo para el ejercicio seleccionado. Los puntos dorados ⭐ marcan récords personales (PR). Una línea ascendente indica que estás ganando fuerza progresivamente." />
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '10px', color: 'rgba(255,255,255,0.5)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', fontSize: '12px', color: '#a4b0a8' }}>
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                     <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'var(--color-highlight)', display: 'inline-block' }} />
                     PR
                   </span>
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'rgba(0,212,255,0.8)', display: 'inline-block' }} />
+                    <span style={{ width: 8, height: 8, borderRadius: '50%', background: 'rgba(145, 182, 161,0.8)', display: 'inline-block' }} />
                     Sesión
                   </span>
                 </div>
@@ -583,8 +583,8 @@ export const Historial: React.FC = () => {
                     datasets: [{
                       label: '1RM est. (kg)',
                       data: rmValues,
-                      borderColor: 'rgba(0, 212, 255, 0.7)',
-                      backgroundColor: 'rgba(0, 212, 255, 0.05)',
+                      borderColor: 'rgba(145, 182, 161, 0.7)',
+                      backgroundColor: 'rgba(145, 182, 161, 0.05)',
                       pointBackgroundColor: pointBackgroundColors,
                       pointBorderColor: pointBorderColors,
                       pointRadius: pointRadii,
@@ -608,7 +608,7 @@ export const Historial: React.FC = () => {
                         bodyColor: 'rgba(255,255,255,0.8)',
                         padding: 10,
                         cornerRadius: 8,
-                        titleFont: { family: "'Orbitron', sans-serif", size: 11, weight: 'bold' as const },
+                        titleFont: { family: "'Inter', sans-serif", size: 11, weight: 'bold' as const },
                         bodyFont: { size: 12 },
                         callbacks: {
                           label: (ctx: any) => `${ctx.parsed.y} kg`,
@@ -619,11 +619,11 @@ export const Historial: React.FC = () => {
                     scales: {
                       x: {
                         grid: { color: 'rgba(255,255,255,0.03)' },
-                        ticks: { color: 'rgba(255,255,255,0.4)', font: { size: 10 } },
+                        ticks: { color: '#a4b0a8', font: { size: 10 } },
                       },
                       y: {
                         grid: { color: 'rgba(255,255,255,0.04)' },
-                        ticks: { color: 'rgba(255,255,255,0.4)', font: { size: 10 }, callback: (val: any) => `${val} kg` },
+                        ticks: { color: '#a4b0a8', font: { size: 10 }, callback: (val: any) => `${val} kg` },
                       },
                     },
                   }}
@@ -634,11 +634,11 @@ export const Historial: React.FC = () => {
         })()}
 
         {/* HISTORIAL TABLE */}
-        <div className="section-title" style={{ fontSize: '16px', fontWeight: 800, fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.5px', marginBottom: '15px' }}>
+        <div className="section-title" style={{ fontSize: '16px', fontWeight: 800, fontFamily: "'Inter', sans-serif", letterSpacing: '0', marginBottom: '15px' }}>
           Historial de Sesiones
         </div>
 
-        <div className="table-wrap" style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '16px', overflow: 'hidden', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
+        <div className="table-wrap" style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '16px', overflow: 'hidden', backdropFilter: 'none', WebkitBackdropFilter: 'none' }}>
           <div className="table-scroll" style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', textAlign: 'left' }}>
               <thead>
@@ -661,14 +661,14 @@ export const Historial: React.FC = () => {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={13} style={{ textAlign: 'center', padding: '30px', color: 'rgba(255,255,255,0.4)' }}>
+                    <td colSpan={13} style={{ textAlign: 'center', padding: '30px', color: '#a4b0a8' }}>
                       Cargando historial de entrenamiento...
                     </td>
                   </tr>
                 ) : filasFiltradas.length === 0 ? (
                   <tr>
                     <td colSpan={13} style={{ textAlign: 'center', padding: '40px' }}>
-                      <p style={{ margin: '0 0 10px 0', fontSize: '13px', color: 'rgba(255,255,255,0.5)' }}>No hay sesiones registradas.</p>
+                      <p style={{ margin: '0 0 10px 0', fontSize: '13px', color: '#a4b0a8' }}>No hay sesiones registradas.</p>
                       <p style={{ margin: 0, fontSize: '12px', color: 'var(--theme-primary)', fontWeight: 600 }}>Toca "+ Sesión" en la barra de navegación para empezar.</p>
                     </td>
                   </tr>
@@ -679,13 +679,13 @@ export const Historial: React.FC = () => {
 
                     if (isEditing) {
                       return (
-                        <tr key={index} style={{ borderBottom: '1px solid rgba(0, 212, 255, 0.2)', background: 'rgba(0, 212, 255, 0.02)' }}>
+                        <tr key={index} style={{ borderBottom: '1px solid rgba(145, 182, 161, 0.2)', background: 'rgba(145, 182, 161, 0.02)' }}>
                           <td style={{ padding: '8px 12px', whiteSpace: 'nowrap' }}>
                             <input
                               type="date"
                               value={editFecha}
                               onChange={(e) => setEditFecha(e.target.value)}
-                              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--theme-border)', color: 'white', borderRadius: '6px', padding: '6px 8px', width: '120px', fontSize: '11px' }}
+                              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--theme-border)', color: 'white', borderRadius: '6px', padding: '6px 8px', width: '120px', fontSize: '12px' }}
                             />
                           </td>
                           <td style={{ padding: '8px 12px', whiteSpace: 'nowrap' }}>
@@ -693,17 +693,17 @@ export const Historial: React.FC = () => {
                               type="text"
                               value={editNombre}
                               onChange={(e) => setEditNombre(e.target.value)}
-                              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--theme-border)', color: 'white', borderRadius: '6px', padding: '6px 8px', width: '140px', fontSize: '11px', fontWeight: 600 }}
+                              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--theme-border)', color: 'white', borderRadius: '6px', padding: '6px 8px', width: '140px', fontSize: '12px', fontWeight: 600 }}
                             />
                           </td>
                           <td style={{ padding: '8px 12px' }}>
                             <select
                               value={editGrupo}
                               onChange={(e) => setEditGrupo(e.target.value)}
-                              style={{ background: 'rgba(15,23,42,0.8)', border: '1px solid var(--theme-border)', color: 'white', borderRadius: '6px', padding: '6px 8px', width: '100px', fontSize: '11px' }}
+                              style={{ background: '#1a211e', border: '1px solid var(--theme-border)', color: 'white', borderRadius: '6px', padding: '6px 8px', width: '100px', fontSize: '12px' }}
                             >
                               {GRUPOS_MUSCULARES.map(g => (
-                                <option key={g} value={g} style={{ background: '#0f172a' }}>{g}</option>
+                                <option key={g} value={g} style={{ background: '#1a211e' }}>{g}</option>
                               ))}
                             </select>
                           </td>
@@ -716,7 +716,7 @@ export const Historial: React.FC = () => {
                               value={editRepsStr}
                               onChange={(e) => setEditRepsStr(e.target.value)}
                               placeholder="e.g. 10, 10"
-                              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--theme-border)', color: 'white', borderRadius: '6px', padding: '6px 8px', width: '100px', fontSize: '11px', textAlign: 'center' }}
+                              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--theme-border)', color: 'white', borderRadius: '6px', padding: '6px 8px', width: '100px', fontSize: '12px', textAlign: 'center' }}
                             />
                           </td>
                           <td style={{ padding: '8px 12px', textAlign: 'center' }}>
@@ -725,7 +725,7 @@ export const Historial: React.FC = () => {
                               step="any"
                               value={editPeso}
                               onChange={(e) => setEditPeso(e.target.value)}
-                              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--theme-border)', color: 'white', borderRadius: '6px', padding: '6px 8px', width: '70px', fontSize: '11px', textAlign: 'center', fontWeight: 700 }}
+                              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--theme-border)', color: 'white', borderRadius: '6px', padding: '6px 8px', width: '70px', fontSize: '12px', textAlign: 'center', fontWeight: 700 }}
                             />
                           </td>
                           <td style={{ padding: '8px 12px', textAlign: 'center' }}>
@@ -734,7 +734,7 @@ export const Historial: React.FC = () => {
                               step="0.5"
                               value={editRpe}
                               onChange={(e) => setEditRpe(e.target.value)}
-                              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--theme-border)', color: 'white', borderRadius: '6px', padding: '6px 8px', width: '60px', fontSize: '11px', textAlign: 'center' }}
+                              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--theme-border)', color: 'white', borderRadius: '6px', padding: '6px 8px', width: '60px', fontSize: '12px', textAlign: 'center' }}
                             />
                           </td>
                           <td style={{ padding: '8px 12px', textAlign: 'center' }}>
@@ -743,9 +743,9 @@ export const Historial: React.FC = () => {
                                 type="number"
                                 value={editDescanso}
                                 onChange={(e) => setEditDescanso(e.target.value)}
-                                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--theme-border)', color: 'white', borderRadius: '6px', padding: '6px 8px', width: '60px', fontSize: '11px', textAlign: 'center' }}
+                                style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--theme-border)', color: 'white', borderRadius: '6px', padding: '6px 8px', width: '60px', fontSize: '12px', textAlign: 'center' }}
                               />
-                              <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)' }}>s</span>
+                              <span style={{ fontSize: '12px', color: '#a4b0a8' }}>s</span>
                             </div>
                           </td>
                           <td style={{ padding: '8px 12px', textAlign: 'right', fontWeight: 600 }}>
@@ -768,7 +768,7 @@ export const Historial: React.FC = () => {
                               return rm > 0 ? rm.toFixed(1) : '—';
                             })()}
                           </td>
-                          <td style={{ padding: '8px 12px', textAlign: 'center', color: 'rgba(255,255,255,0.3)' }}>
+                          <td style={{ padding: '8px 12px', textAlign: 'center', color: '#a4b0a8' }}>
                             —
                           </td>
                           <td style={{ padding: '8px 12px' }}>
@@ -777,7 +777,7 @@ export const Historial: React.FC = () => {
                               value={editNotas}
                               onChange={(e) => setEditNotas(e.target.value)}
                               placeholder="Notas del ejercicio..."
-                              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--theme-border)', color: 'white', borderRadius: '6px', padding: '6px 8px', width: '150px', fontSize: '11px' }}
+                              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid var(--theme-border)', color: 'white', borderRadius: '6px', padding: '6px 8px', width: '150px', fontSize: '12px' }}
                             />
                           </td>
                           <td style={{ padding: '8px 12px', textAlign: 'center', whiteSpace: 'nowrap' }}>
@@ -844,9 +844,9 @@ export const Historial: React.FC = () => {
                                   color: '#eab308',
                                   borderRadius: '4px',
                                   padding: '1px 5px',
-                                  fontSize: '9px',
+                                  fontSize: '12px',
                                   fontWeight: 700,
-                                  fontFamily: "'Orbitron', sans-serif",
+                                  fontFamily: "'Inter', sans-serif",
                                   cursor: 'default'
                                 }}
                               >
@@ -857,7 +857,7 @@ export const Historial: React.FC = () => {
                         </td>
                         <td style={{ padding: '12px 16px', fontWeight: 600, whiteSpace: 'nowrap' }}>{f.ejercicio}</td>
                         <td style={{ padding: '12px 16px' }}>
-                          <span className={`badge badge-${f.grupo.toLowerCase()}`} style={{ padding: '3px 8px', borderRadius: '6px', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' }}>
+                          <span className={`badge badge-${f.grupo.toLowerCase()}`} style={{ padding: '3px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: 700, textTransform: 'none' }}>
                             {f.grupo}
                           </span>
                         </td>
@@ -871,7 +871,7 @@ export const Historial: React.FC = () => {
                         <td style={{ padding: '12px 16px', textAlign: 'center' }}>
                           {f.deltaType === 'up' && <span style={{ color: 'var(--color-success)', fontWeight: 700 }}>{f.deltaHtml}</span>}
                           {f.deltaType === 'dn' && <span style={{ color: 'var(--color-danger)', fontWeight: 700 }}>{f.deltaHtml}</span>}
-                          {f.deltaType === 'eq' && <span style={{ color: 'rgba(255,255,255,0.4)' }}>{f.deltaHtml}</span>}
+                          {f.deltaType === 'eq' && <span style={{ color: '#a4b0a8' }}>{f.deltaHtml}</span>}
                         </td>
                         <td style={{ padding: '12px 16px', maxWidth: '160px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={f.notas_ej}>
                           {f.notas_ej}

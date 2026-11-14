@@ -95,7 +95,7 @@ export const SomatochartCanvas: React.FC<SomatochartCanvasProps> = ({
         <polygon
           points={`${mesoApexX},${mesoApexY} ${endoApexX},${endoApexY} ${ectoApexX},${ectoApexY}`}
           fill="none"
-          stroke="rgba(0, 212, 255, 0.5)"
+          stroke="rgba(145, 182, 161, 0.5)"
           strokeWidth="2"
         />
 

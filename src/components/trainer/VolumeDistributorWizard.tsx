@@ -178,7 +178,7 @@ export function VolumeDistributorWizard({ onClose, onApply, athleteLevel = 'inte
       zIndex: 9999,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       background: 'rgba(0, 0, 0, 0.85)',
-      backdropFilter: 'blur(5px)',
+      backdropFilter: 'none',
       padding: '10px', /* Reduced padding for mobile */
       fontFamily: "'Inter', 'Roboto', sans-serif",
       color: '#fff'
@@ -226,7 +226,7 @@ export function VolumeDistributorWizard({ onClose, onApply, athleteLevel = 'inte
         height: isMobile ? '95vh' : 'auto',
         display: 'flex',
         flexDirection: isMobile ? 'column' : 'row',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
+        boxShadow: 'none',
         overflow: 'hidden'
       }}>
         
@@ -249,15 +249,15 @@ export function VolumeDistributorWizard({ onClose, onApply, athleteLevel = 'inte
               <span style={{ fontSize: '20px' }}>{isStrength ? '🏋️' : '⚡'}</span> Asistente de Distribución
             </h2>
             <p style={{ fontSize: '14px', color: '#9ca3af', margin: '4px 0 0 0' }}>
-              Nivel actual: <strong style={{ color: '#818cf8', textTransform: 'uppercase' }}>{athleteLevel}</strong>
+              Nivel actual: <strong style={{ color: '#818cf8', textTransform: 'none' }}>{athleteLevel}</strong>
               <span style={{
                 display: 'inline-block',
                 marginLeft: '8px',
                 padding: '2px 8px',
                 borderRadius: '4px',
-                fontSize: '11px',
+                fontSize: '12px',
                 fontWeight: 'bold',
-                textTransform: 'uppercase',
+                textTransform: 'none',
                 letterSpacing: '0.05em',
                 background: isStrength ? 'rgba(239, 68, 68, 0.15)' : 'rgba(99, 102, 241, 0.15)',
                 color: isStrength ? '#f87171' : '#a5b4fc',
@@ -304,7 +304,7 @@ export function VolumeDistributorWizard({ onClose, onApply, athleteLevel = 'inte
                 lineHeight: 1.5,
                 color: '#d1d5db',
               }}>
-                <div style={{ fontWeight: 'bold', color: '#f87171', marginBottom: '4px', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                <div style={{ fontWeight: 'bold', color: '#f87171', marginBottom: '4px', fontSize: '12px', textTransform: 'none', letterSpacing: '0.05em' }}>
                   🏋️ Modo Fuerza
                 </div>
                 En bloques de fuerza, el volumen se mide en <strong style={{ color: '#f87171' }}>NL (Número de Levantamientos)</strong> a 
@@ -332,7 +332,7 @@ export function VolumeDistributorWizard({ onClose, onApply, athleteLevel = 'inte
             {/* ── Constructor Estilo Libre (solo hipertrofia/mantenimiento) ── */}
             {!isStrength && splitType === 'estilo_libre' && (
               <div style={{ border: '1px solid #444', borderRadius: '8px', padding: '16px', background: '#1E1E1E', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                <h3 style={{ fontSize: '14px', fontWeight: 'bold', color: '#818cf8', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>Días Personalizados</h3>
+                <h3 style={{ fontSize: '14px', fontWeight: 'bold', color: '#818cf8', textTransform: 'none', letterSpacing: '0.05em', margin: 0 }}>Días Personalizados</h3>
                 {customDays.map((day, idx) => (
                   <div key={idx} style={{ background: '#222', border: '1px solid #333', borderRadius: '4px', padding: '12px' }}>
                     <input 
@@ -388,7 +388,7 @@ export function VolumeDistributorWizard({ onClose, onApply, athleteLevel = 'inte
                 ══════════════════════════════════════════════════ */}
             {(isStrength || splitType !== 'estilo_libre' || activeItems.length > 0) && (
               <div>
-                <h3 style={{ fontSize: '14px', fontWeight: 'bold', color: '#d1d5db', margin: '0 0 16px 0', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                <h3 style={{ fontSize: '14px', fontWeight: 'bold', color: '#d1d5db', margin: '0 0 16px 0', textTransform: 'none', letterSpacing: '0.05em' }}>
                   {isStrength ? 'Ajuste de NL Semanal por Patrón' : 'Ajuste de Volumen Semanal'}
                 </h3>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -405,7 +405,7 @@ export function VolumeDistributorWizard({ onClose, onApply, athleteLevel = 'inte
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
                             <div>
                               <span style={{ fontSize: '14px', color: '#e5e7eb', fontWeight: '500' }}>{threshold.label}</span>
-                              <span style={{ fontSize: '11px', color: '#6b7280', marginLeft: '6px' }}>
+                              <span style={{ fontSize: '12px', color: '#6b7280', marginLeft: '6px' }}>
                                 ({threshold.intensityZone})
                               </span>
                             </div>
@@ -434,17 +434,17 @@ export function VolumeDistributorWizard({ onClose, onApply, athleteLevel = 'inte
                             <div style={{ position: 'absolute', top: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
                               {/* MEV Marker */}
                               <div style={{ position: 'absolute', display: 'flex', flexDirection: 'column', alignItems: 'center', left: `${(threshold.mev / sliderMax) * 100}%`, transform: 'translateX(-50%)' }}>
-                                <span style={{ fontSize: '9px', fontWeight: 'bold', color: '#E6E6FA', marginBottom: '2px' }}>MEV</span>
+                                <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#E6E6FA', marginBottom: '2px' }}>MEV</span>
                                 <div style={{ width: '2px', height: '12px', background: '#E6E6FA' }} />
                               </div>
                               {/* MAV Min Marker */}
                               <div style={{ position: 'absolute', display: 'flex', flexDirection: 'column', alignItems: 'center', left: `${(threshold.mavMin / sliderMax) * 100}%`, transform: 'translateX(-50%)' }}>
-                                <span style={{ fontSize: '9px', fontWeight: 'bold', color: '#E0FFF0', marginBottom: '2px' }}>MAV</span>
+                                <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#E0FFF0', marginBottom: '2px' }}>MAV</span>
                                 <div style={{ width: '2px', height: '12px', background: '#E0FFF0' }} />
                               </div>
                               {/* MRV Marker */}
                               <div style={{ position: 'absolute', display: 'flex', flexDirection: 'column', alignItems: 'center', left: `${(threshold.mrv / sliderMax) * 100}%`, transform: 'translateX(-50%)' }}>
-                                <span style={{ fontSize: '9px', fontWeight: 'bold', color: '#FFE4E1', marginBottom: '2px' }}>MRV</span>
+                                <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#FFE4E1', marginBottom: '2px' }}>MRV</span>
                                 <div style={{ width: '2px', height: '12px', background: '#FFE4E1' }} />
                               </div>
                             </div>
@@ -453,7 +453,7 @@ export function VolumeDistributorWizard({ onClose, onApply, athleteLevel = 'inte
                           {/* Ejemplos de ejercicios — solo en modo fuerza */}
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '2px' }}>
                             {threshold.exampleExercises.slice(0, 3).map((ex, i) => (
-                              <span key={i} style={{ fontSize: '10px', color: '#555', background: '#1E1E1E', padding: '1px 6px', borderRadius: '3px' }}>
+                              <span key={i} style={{ fontSize: '12px', color: '#555', background: '#1E1E1E', padding: '1px 6px', borderRadius: '3px' }}>
                                 {ex}
                               </span>
                             ))}
@@ -497,17 +497,17 @@ export function VolumeDistributorWizard({ onClose, onApply, athleteLevel = 'inte
                             <div style={{ position: 'absolute', top: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
                               {/* MEV Marker */}
                               <div style={{ position: 'absolute', display: 'flex', flexDirection: 'column', alignItems: 'center', left: `${(threshold.mev / sliderMax) * 100}%`, transform: 'translateX(-50%)' }}>
-                                <span style={{ fontSize: '9px', fontWeight: 'bold', color: '#E6E6FA', marginBottom: '2px' }}>MEV</span>
+                                <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#E6E6FA', marginBottom: '2px' }}>MEV</span>
                                 <div style={{ width: '2px', height: '12px', background: '#E6E6FA' }} />
                               </div>
                               {/* MAV Min Marker */}
                               <div style={{ position: 'absolute', display: 'flex', flexDirection: 'column', alignItems: 'center', left: `${(threshold.mavMin / sliderMax) * 100}%`, transform: 'translateX(-50%)' }}>
-                                <span style={{ fontSize: '9px', fontWeight: 'bold', color: '#E0FFF0', marginBottom: '2px' }}>MAV</span>
+                                <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#E0FFF0', marginBottom: '2px' }}>MAV</span>
                                 <div style={{ width: '2px', height: '12px', background: '#E0FFF0' }} />
                               </div>
                               {/* MRV Marker */}
                               <div style={{ position: 'absolute', display: 'flex', flexDirection: 'column', alignItems: 'center', left: `${(threshold.mrv / sliderMax) * 100}%`, transform: 'translateX(-50%)' }}>
-                                <span style={{ fontSize: '9px', fontWeight: 'bold', color: '#FFE4E1', marginBottom: '2px' }}>MRV</span>
+                                <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#FFE4E1', marginBottom: '2px' }}>MRV</span>
                                 <div style={{ width: '2px', height: '12px', background: '#FFE4E1' }} />
                               </div>
                             </div>
@@ -538,7 +538,7 @@ export function VolumeDistributorWizard({ onClose, onApply, athleteLevel = 'inte
             background: '#1A1A1A', zIndex: 10
           }}>
             <div>
-              <h3 style={{ fontSize: '14px', fontWeight: 'bold', color: '#9ca3af', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0 }}>
+              <h3 style={{ fontSize: '14px', fontWeight: 'bold', color: '#9ca3af', textTransform: 'none', letterSpacing: '0.05em', margin: 0 }}>
                 {isStrength ? 'Resumen de NL Semanal' : 'Distribución Generada'}
               </h3>
               <p style={{ fontSize: '12px', color: '#6b7280', margin: '4px 0 0 0' }}>
@@ -596,7 +596,7 @@ export function VolumeDistributorWizard({ onClose, onApply, athleteLevel = 'inte
                           <span style={{ fontWeight: 'bold', color: '#fff', fontSize: '14px' }}>
                             {threshold.label}
                           </span>
-                          <span style={{ fontSize: '11px', color: '#6b7280', marginLeft: '8px' }}>
+                          <span style={{ fontSize: '12px', color: '#6b7280', marginLeft: '8px' }}>
                             {threshold.intensityZone}
                           </span>
                         </div>
@@ -612,7 +612,7 @@ export function VolumeDistributorWizard({ onClose, onApply, athleteLevel = 'inte
                         <span style={{ fontSize: '12px', color: statusColor, fontWeight: '500' }}>
                           {statusLabel}
                         </span>
-                        <span style={{ fontSize: '11px', color: '#555' }}>
+                        <span style={{ fontSize: '12px', color: '#555' }}>
                           MEV {threshold.mev} · MAV {threshold.mavMin}–{threshold.mavMax} · MRV {threshold.mrv}
                         </span>
                       </div>
@@ -641,7 +641,7 @@ export function VolumeDistributorWizard({ onClose, onApply, athleteLevel = 'inte
                   const sessionSets = session.muscleTargets.reduce((a, b) => a + b.plannedSets, 0);
                   
                   return (
-                    <div key={session.id} style={{ background: '#222', border: '1px solid #333', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.5)' }}>
+                    <div key={session.id} style={{ background: '#222', border: '1px solid #333', borderRadius: '12px', overflow: 'hidden', boxShadow: 'none' }}>
                       <div style={{ background: '#2A2A2A', padding: '12px 16px', borderBottom: '1px solid #333', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <span style={{ fontWeight: 'bold', color: '#fff', fontSize: '14px' }}>{session.label}</span>
                         <span style={{ fontSize: '12px', fontWeight: '500', background: '#151515', color: '#9ca3af', padding: '4px 8px', borderRadius: '4px' }}>

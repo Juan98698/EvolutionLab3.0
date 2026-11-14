@@ -1,4 +1,6 @@
 import React from 'react';
+import { StudioShell } from './components/common/StudioShell';
+import { RouteScrollReset } from './components/common/RouteScrollReset';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useSupabase } from './context/SupabaseContext';
 import ProtectedRoute from './components/auth/ProtectedRoute';
@@ -37,20 +39,20 @@ const LoadingFallback = () => (
     justifyContent: 'center',
     alignItems: 'center',
     minHeight: '100vh',
-    background: '#0b0f19',
-    color: 'white',
-    fontFamily: "'Orbitron', sans-serif"
+    background: 'var(--studio-bg)',
+    color: 'var(--studio-text)',
+    fontFamily: 'var(--studio-font)'
   }}>
     <div style={{
       width: '40px',
       height: '40px',
       border: '3px solid rgba(255, 255, 255, 0.05)',
-      borderTopColor: '#00d4ff',
+      borderTopColor: 'var(--studio-accent)',
       borderRadius: '50%',
       animation: 'spinner 1s linear infinite',
       marginBottom: '15px'
     }} />
-    <span style={{ fontSize: '11px', letterSpacing: '2px', opacity: 0.8, textTransform: 'uppercase' }}>Cargando Evolution Lab...</span>
+    <span style={{ fontSize: '13px', color: 'var(--studio-muted)' }}>Cargando Evolution Lab…</span>
     <style>{`
       @keyframes spinner {
         to { transform: rotate(360deg); }
@@ -84,7 +86,7 @@ const ProtectedPage: React.FC<{
   children: React.ReactNode;
 }> = ({ allowedRoles, label, children }) => (
   <ProtectedRoute allowedRoles={allowedRoles}>
-    <ErrorBoundary label={label}>{children}</ErrorBoundary>
+    <StudioShell><ErrorBoundary label={label}>{children}</ErrorBoundary></StudioShell>
   </ProtectedRoute>
 );
 
@@ -139,6 +141,7 @@ export const App: React.FC = () => {
   return (
     <ConfirmDialogProvider>
       <BrowserRouter>
+        <RouteScrollReset />
         <React.Suspense fallback={<LoadingFallback />}>
           <Routes>
           {/* Rutas Públicas */}

@@ -23,6 +23,7 @@ vi.mock('@supabase/supabase-js', () => ({
         return Promise.resolve({ data: { user: null }, error: { message: 'Invalid token' } });
       })
     },
+    rpc: vi.fn().mockResolvedValue({ data: { updated: true }, error: null }),
     from: vi.fn(() => ({
       update: vi.fn().mockReturnThis(),
       eq: vi.fn().mockResolvedValue({ error: null }),
@@ -103,18 +104,23 @@ describe('MercadoPago API Security & Webhook Tests', () => {
       const callArgs = (global.fetch as any).mock.calls[0];
       const prefBody = JSON.parse(callArgs[1].body);
       expect(prefBody.metadata.user_id).toBe('verified-user-123');
+      expect(prefBody.items[0]).toMatchObject({ currency_id: 'COP', unit_price: 19900, quantity: 1 });
+      expect(prefBody.back_urls.success).toBe('https://evolutionlab.fit/dashboard?payment_success=true&plan=premium');
 
       global.fetch = globalFetch;
     });
 
     it('permite CORS solo para orígenes en la allowlist y bloquea orígenes no autorizados', async () => {
+      const production = mockReqRes('OPTIONS', { origin: 'https://evolutionlab.fit' });
+      await preferenceHandler(production.req, production.res);
+      expect(production.res.headers['Access-Control-Allow-Origin']).toBe('https://evolutionlab.fit');
       // Origen autorizado
       const { req: reqAllowed, res: resAllowed } = mockReqRes(
         'OPTIONS',
-        { origin: 'https://evolution-lab.vercel.app' }
+        { origin: 'https://evolutionlab.fit' }
       );
       await preferenceHandler(reqAllowed, resAllowed);
-      expect(resAllowed.headers['Access-Control-Allow-Origin']).toBe('https://evolution-lab.vercel.app');
+      expect(resAllowed.headers['Access-Control-Allow-Origin']).toBe('https://evolutionlab.fit');
       expect(resAllowed.headers['Access-Control-Allow-Credentials']).toBe('true');
 
       // Origen no autorizado
@@ -125,6 +131,9 @@ describe('MercadoPago API Security & Webhook Tests', () => {
       await preferenceHandler(reqDenied, resDenied);
       expect(resDenied.headers['Access-Control-Allow-Origin']).toBeUndefined();
       expect(resDenied.headers['Access-Control-Allow-Credentials']).toBeUndefined();
+      const lookalike = mockReqRes('OPTIONS', { origin: 'https://evolution-lab-attacker.vercel.app' });
+      await preferenceHandler(lookalike.req, lookalike.res);
+      expect(lookalike.res.headers['Access-Control-Allow-Origin']).toBeUndefined();
     });
   });
 
@@ -141,6 +150,7 @@ describe('MercadoPago API Security & Webhook Tests', () => {
         ok: true,
         json: () => Promise.resolve({
           status: 'approved',
+          currency_id: 'COP', transaction_amount: 19900,
           date_approved: approvalDateStr,
           metadata: { user_id: 'u123', plan: 'premium' }
         })
@@ -180,6 +190,20 @@ describe('MercadoPago API Security & Webhook Tests', () => {
 
       expect(res.statusCode).toBe(401);
       expect(res.responseData.error).toMatch(/Invalid webhook signature/i);
+    });
+    it('responde 503 ante un fallo de verificación para permitir un reintento', async () => {
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: false, status: 503 }));
+      const { req, res } = mockReqRes('POST', signWebhook('pay_retry', 'test-webhook-secret'), { type: 'payment', data: { id: 'pay_retry' } });
+      await webhookHandler(req, res);
+      expect(res.statusCode).toBe(503);
+      vi.unstubAllGlobals();
+    });
+    it('rechaza un pago aprobado cuyo importe no coincide con el catálogo', async () => {
+      vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, json: async () => ({ status: 'approved', currency_id: 'COP', transaction_amount: 1, metadata: { user_id: 'u123', plan: 'premium' } }) }));
+      const { req, res } = mockReqRes('POST', signWebhook('pay_wrong', 'test-webhook-secret'), { type: 'payment', data: { id: 'pay_wrong' } });
+      await webhookHandler(req, res);
+      expect(res.statusCode).toBe(422);
+      vi.unstubAllGlobals();
     });
   });
 });

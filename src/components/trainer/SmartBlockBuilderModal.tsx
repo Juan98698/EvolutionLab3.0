@@ -192,7 +192,7 @@ export const SmartBlockBuilderModal: React.FC<SmartBlockBuilderModalProps> = ({
   return (
     <div style={{
       position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-      background: 'rgba(5, 5, 8, 0.85)', backdropFilter: 'blur(16px)', WebkitBackdropFilter: 'blur(16px)',
+      background: 'rgba(5, 5, 8, 0.85)', backdropFilter: 'none', WebkitBackdropFilter: 'none',
       zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center',
       animation: 'fadeIn 0.2s ease', padding: '16px'
     }}>
@@ -206,16 +206,16 @@ export const SmartBlockBuilderModal: React.FC<SmartBlockBuilderModalProps> = ({
           background: 'linear-gradient(165deg, rgba(20,20,24,0.98), rgba(12,12,16,0.99))',
           border: '1px solid rgba(255, 255, 255, 0.08)', borderRadius: '20px',
           width: '100%', maxWidth: '520px', padding: '24px',
-          boxShadow: '0 24px 60px rgba(0,0,0,0.8)',
+          boxShadow: 'none',
           display: 'flex', flexDirection: 'column', gap: '20px'
         }}>
         {/* Cabecera */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
           <div>
-            <span style={{ fontSize: '9px', fontWeight: 800, color: 'var(--theme-primary)', fontFamily: "'Orbitron', sans-serif", letterSpacing: '1px', textTransform: 'uppercase' }}>
+            <span style={{ fontSize: '12px', fontWeight: 800, color: 'var(--theme-primary)', fontFamily: "'Inter', sans-serif", letterSpacing: '0', textTransform: 'none' }}>
               Smart Block Builder
             </span>
-            <h3 id="smart-block-builder-title" style={{ margin: '4px 0 0 0', fontSize: '18px', fontWeight: 800, fontFamily: "'Orbitron', sans-serif", color: 'white', letterSpacing: '0.5px' }}>
+            <h3 id="smart-block-builder-title" style={{ margin: '4px 0 0 0', fontSize: '18px', fontWeight: 800, fontFamily: "'Inter', sans-serif", color: 'white', letterSpacing: '0' }}>
               {progModal.template === 'linear' && '📈 CONFIGURAR PROGRESIÓN LINEAL'}
               {progModal.template === 'double' && '🔁 CONFIGURAR PROGRESIÓN DOBLE'}
               {progModal.template === 'undulating' && '🌊 CONFIGURAR PERIODIZACIÓN ONDULANTE'}
@@ -225,9 +225,9 @@ export const SmartBlockBuilderModal: React.FC<SmartBlockBuilderModalProps> = ({
           <button
             type="button"
             onClick={() => setProgModal(null)}
-            style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', fontSize: '18px', cursor: 'pointer', transition: 'color 0.2s', fontWeight: 'bold' }}
+            style={{ background: 'none', border: 'none', color: '#a4b0a8', fontSize: '18px', cursor: 'pointer', transition: 'color 0.2s', fontWeight: 'bold' }}
             onMouseEnter={e => (e.currentTarget.style.color = 'white')}
-            onMouseLeave={e => (e.currentTarget.style.color = 'rgba(255,255,255,0.4)')}
+            onMouseLeave={e => (e.currentTarget.style.color = '#a4b0a8')}
           >
             ✕
           </button>
@@ -238,7 +238,7 @@ export const SmartBlockBuilderModal: React.FC<SmartBlockBuilderModalProps> = ({
         {TEMPLATES_CON_AUTOMATIZACION_REAL.has(progModal.template) ? (
           <div style={{
             background: 'rgba(34, 197, 94, 0.08)', border: '1px solid rgba(34, 197, 94, 0.25)',
-            borderRadius: '10px', padding: '10px 12px', fontSize: '11px', lineHeight: 1.5,
+            borderRadius: '10px', padding: '10px 12px', fontSize: '12px', lineHeight: 1.5,
             color: 'rgba(255,255,255,0.75)'
           }}>
             <strong style={{ color: '#4ade80' }}>🤖 Esto activa automatización real:</strong>{' '}
@@ -272,7 +272,7 @@ export const SmartBlockBuilderModal: React.FC<SmartBlockBuilderModalProps> = ({
           {progModal.template === 'linear' && (
             <>
               <div>
-                <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>DURACIÓN (SEMANAS)</label>
+                <label style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700, display: 'block', marginBottom: '4px' }}>DURACIÓN (SEMANAS)</label>
                 <input
                   type="number"
                   min={1}
@@ -283,7 +283,7 @@ export const SmartBlockBuilderModal: React.FC<SmartBlockBuilderModalProps> = ({
                 />
               </div>
               <div>
-                <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>CARGA INICIAL</label>
+                <label style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700, display: 'block', marginBottom: '4px' }}>CARGA INICIAL</label>
                 <input
                   type="text"
                   value={progModal.params.cargaInicial}
@@ -292,7 +292,7 @@ export const SmartBlockBuilderModal: React.FC<SmartBlockBuilderModalProps> = ({
                 />
               </div>
               <div>
-                <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>INCREMENTO (KG)</label>
+                <label style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700, display: 'block', marginBottom: '4px' }}>INCREMENTO (KG)</label>
                 <input
                   type="text"
                   value={progModal.params.incremento}
@@ -301,7 +301,7 @@ export const SmartBlockBuilderModal: React.FC<SmartBlockBuilderModalProps> = ({
                 />
               </div>
               <div>
-                <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>SERIES</label>
+                <label style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700, display: 'block', marginBottom: '4px' }}>SERIES</label>
                 <input
                   type="text"
                   value={progModal.params.series}
@@ -310,7 +310,7 @@ export const SmartBlockBuilderModal: React.FC<SmartBlockBuilderModalProps> = ({
                 />
               </div>
               <div>
-                <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>REPETICIONES</label>
+                <label style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700, display: 'block', marginBottom: '4px' }}>REPETICIONES</label>
                 <input
                   type="text"
                   value={progModal.params.repeticiones}
@@ -319,7 +319,7 @@ export const SmartBlockBuilderModal: React.FC<SmartBlockBuilderModalProps> = ({
                 />
               </div>
               <div>
-                <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>RIR</label>
+                <label style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700, display: 'block', marginBottom: '4px' }}>RIR</label>
                 <input
                   type="text"
                   value={progModal.params.rir}
@@ -334,7 +334,7 @@ export const SmartBlockBuilderModal: React.FC<SmartBlockBuilderModalProps> = ({
           {progModal.template === 'double' && (
             <>
               <div>
-                <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>DURACIÓN (SEMANAS)</label>
+                <label style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700, display: 'block', marginBottom: '4px' }}>DURACIÓN (SEMANAS)</label>
                 <input
                   type="number"
                   min={1}
@@ -345,7 +345,7 @@ export const SmartBlockBuilderModal: React.FC<SmartBlockBuilderModalProps> = ({
                 />
               </div>
               <div>
-                <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>CARGA INICIAL</label>
+                <label style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700, display: 'block', marginBottom: '4px' }}>CARGA INICIAL</label>
                 <input
                   type="text"
                   value={progModal.params.cargaInicial}
@@ -354,7 +354,7 @@ export const SmartBlockBuilderModal: React.FC<SmartBlockBuilderModalProps> = ({
                 />
               </div>
               <div>
-                <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>INCREMENTO (KG)</label>
+                <label style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700, display: 'block', marginBottom: '4px' }}>INCREMENTO (KG)</label>
                 <input
                   type="text"
                   value={progModal.params.incremento}
@@ -363,7 +363,7 @@ export const SmartBlockBuilderModal: React.FC<SmartBlockBuilderModalProps> = ({
                 />
               </div>
               <div>
-                <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>SERIES</label>
+                <label style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700, display: 'block', marginBottom: '4px' }}>SERIES</label>
                 <input
                   type="text"
                   value={progModal.params.series}
@@ -372,7 +372,7 @@ export const SmartBlockBuilderModal: React.FC<SmartBlockBuilderModalProps> = ({
                 />
               </div>
               <div>
-                <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>REPS INICIALES</label>
+                <label style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700, display: 'block', marginBottom: '4px' }}>REPS INICIALES</label>
                 <input
                   type="text"
                   value={progModal.params.repsIniciales}
@@ -381,7 +381,7 @@ export const SmartBlockBuilderModal: React.FC<SmartBlockBuilderModalProps> = ({
                 />
               </div>
               <div>
-                <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>REPS INTERMEDIAS</label>
+                <label style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700, display: 'block', marginBottom: '4px' }}>REPS INTERMEDIAS</label>
                 <input
                   type="text"
                   value={progModal.params.repsIntermedias}
@@ -390,7 +390,7 @@ export const SmartBlockBuilderModal: React.FC<SmartBlockBuilderModalProps> = ({
                 />
               </div>
               <div>
-                <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>REPS MÁXIMAS</label>
+                <label style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700, display: 'block', marginBottom: '4px' }}>REPS MÁXIMAS</label>
                 <input
                   type="text"
                   value={progModal.params.repsMaximas}
@@ -399,7 +399,7 @@ export const SmartBlockBuilderModal: React.FC<SmartBlockBuilderModalProps> = ({
                 />
               </div>
               <div>
-                <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>RIR</label>
+                <label style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700, display: 'block', marginBottom: '4px' }}>RIR</label>
                 <input
                   type="text"
                   value={progModal.params.rir}
@@ -414,7 +414,7 @@ export const SmartBlockBuilderModal: React.FC<SmartBlockBuilderModalProps> = ({
           {progModal.template === 'undulating' && (
             <>
               <div>
-                <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>DURACIÓN (SEMANAS)</label>
+                <label style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700, display: 'block', marginBottom: '4px' }}>DURACIÓN (SEMANAS)</label>
                 <input
                   type="number"
                   min={1}
@@ -425,7 +425,7 @@ export const SmartBlockBuilderModal: React.FC<SmartBlockBuilderModalProps> = ({
                 />
               </div>
               <div>
-                <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>CARGA INICIAL</label>
+                <label style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700, display: 'block', marginBottom: '4px' }}>CARGA INICIAL</label>
                 <input
                   type="text"
                   value={progModal.params.cargaInicial}
@@ -434,7 +434,7 @@ export const SmartBlockBuilderModal: React.FC<SmartBlockBuilderModalProps> = ({
                 />
               </div>
               <div>
-                <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>INCREMENTO FUERZA (KG)</label>
+                <label style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700, display: 'block', marginBottom: '4px' }}>INCREMENTO FUERZA (KG)</label>
                 <input
                   type="text"
                   value={progModal.params.incrementoFuerza}
@@ -443,11 +443,11 @@ export const SmartBlockBuilderModal: React.FC<SmartBlockBuilderModalProps> = ({
                 />
               </div>
               <div></div>
-              <div style={{ gridColumn: '1 / -1', fontSize: '9px', fontWeight: 800, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '4px' }}>
+              <div style={{ gridColumn: '1 / -1', fontSize: '12px', fontWeight: 800, color: '#a4b0a8', textTransform: 'none', letterSpacing: '0', marginTop: '4px' }}>
                 Semanas Impares — Fuerza
               </div>
               <div>
-                <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>SERIES (FUERZA)</label>
+                <label style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700, display: 'block', marginBottom: '4px' }}>SERIES (FUERZA)</label>
                 <input
                   type="text"
                   value={progModal.params.seriesFuerza}
@@ -456,7 +456,7 @@ export const SmartBlockBuilderModal: React.FC<SmartBlockBuilderModalProps> = ({
                 />
               </div>
               <div>
-                <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>REPS (FUERZA)</label>
+                <label style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700, display: 'block', marginBottom: '4px' }}>REPS (FUERZA)</label>
                 <input
                   type="text"
                   value={progModal.params.repsFuerza}
@@ -465,7 +465,7 @@ export const SmartBlockBuilderModal: React.FC<SmartBlockBuilderModalProps> = ({
                 />
               </div>
               <div>
-                <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>RIR (FUERZA)</label>
+                <label style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700, display: 'block', marginBottom: '4px' }}>RIR (FUERZA)</label>
                 <input
                   type="text"
                   value={progModal.params.rirFuerza}
@@ -474,11 +474,11 @@ export const SmartBlockBuilderModal: React.FC<SmartBlockBuilderModalProps> = ({
                 />
               </div>
               <div></div>
-              <div style={{ gridColumn: '1 / -1', fontSize: '9px', fontWeight: 800, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '0.5px', marginTop: '4px' }}>
+              <div style={{ gridColumn: '1 / -1', fontSize: '12px', fontWeight: 800, color: '#a4b0a8', textTransform: 'none', letterSpacing: '0', marginTop: '4px' }}>
                 Semanas Pares — Hipertrofia
               </div>
               <div>
-                <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>SERIES (HIPERTROFIA)</label>
+                <label style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700, display: 'block', marginBottom: '4px' }}>SERIES (HIPERTROFIA)</label>
                 <input
                   type="text"
                   value={progModal.params.seriesHipertrofia}
@@ -487,7 +487,7 @@ export const SmartBlockBuilderModal: React.FC<SmartBlockBuilderModalProps> = ({
                 />
               </div>
               <div>
-                <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>REPS (HIPERTROFIA)</label>
+                <label style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700, display: 'block', marginBottom: '4px' }}>REPS (HIPERTROFIA)</label>
                 <input
                   type="text"
                   value={progModal.params.repsHipertrofia}
@@ -496,7 +496,7 @@ export const SmartBlockBuilderModal: React.FC<SmartBlockBuilderModalProps> = ({
                 />
               </div>
               <div>
-                <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>RIR (HIPERTROFIA)</label>
+                <label style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700, display: 'block', marginBottom: '4px' }}>RIR (HIPERTROFIA)</label>
                 <input
                   type="text"
                   value={progModal.params.rirHipertrofia}
@@ -511,7 +511,7 @@ export const SmartBlockBuilderModal: React.FC<SmartBlockBuilderModalProps> = ({
           {progModal.template === 'deload' && (
             <>
               <div>
-                <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>DURACIÓN (SEMANAS)</label>
+                <label style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700, display: 'block', marginBottom: '4px' }}>DURACIÓN (SEMANAS)</label>
                 <input
                   type="number"
                   min={1}
@@ -522,7 +522,7 @@ export const SmartBlockBuilderModal: React.FC<SmartBlockBuilderModalProps> = ({
                 />
               </div>
               <div>
-                <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>REDUCCIÓN VOLUMEN (%)</label>
+                <label style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700, display: 'block', marginBottom: '4px' }}>REDUCCIÓN VOLUMEN (%)</label>
                 <input
                   type="text"
                   value={progModal.params.reduccionVolumen}
@@ -531,7 +531,7 @@ export const SmartBlockBuilderModal: React.FC<SmartBlockBuilderModalProps> = ({
                 />
               </div>
               <div>
-                <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>CARGA RECOMENDADA</label>
+                <label style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700, display: 'block', marginBottom: '4px' }}>CARGA RECOMENDADA</label>
                 <input
                   type="text"
                   value={progModal.params.cargaRecomendada}
@@ -540,7 +540,7 @@ export const SmartBlockBuilderModal: React.FC<SmartBlockBuilderModalProps> = ({
                 />
               </div>
               <div>
-                <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>SERIES</label>
+                <label style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700, display: 'block', marginBottom: '4px' }}>SERIES</label>
                 <input
                   type="text"
                   value={progModal.params.series}
@@ -549,7 +549,7 @@ export const SmartBlockBuilderModal: React.FC<SmartBlockBuilderModalProps> = ({
                 />
               </div>
               <div>
-                <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>RIR</label>
+                <label style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700, display: 'block', marginBottom: '4px' }}>RIR</label>
                 <input
                   type="text"
                   value={progModal.params.rir}
@@ -564,16 +564,16 @@ export const SmartBlockBuilderModal: React.FC<SmartBlockBuilderModalProps> = ({
         {/* Vista Previa del Texto autogenerado */}
         <div style={{ background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '10px', padding: '12px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <span style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(255,255,255,0.4)', fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.5px' }}>
+            <span style={{ fontSize: '12px', fontWeight: 700, color: '#a4b0a8', fontFamily: "'Inter', sans-serif", letterSpacing: '0' }}>
               VISTA PREVIA DE LA PAUTA
             </span>
-            <span style={{ fontSize: '9px', color: '#ff7e2e', background: 'rgba(255, 126, 46, 0.1)', padding: '2px 8px', borderRadius: '4px', fontFamily: "'Orbitron', sans-serif" }}>
+            <span style={{ fontSize: '12px', color: '#ff7e2e', background: 'rgba(255, 126, 46, 0.1)', padding: '2px 8px', borderRadius: '4px', fontFamily: "'Inter', sans-serif" }}>
               AUTOGENERADO
             </span>
           </div>
           <pre style={{
             margin: 0,
-            fontSize: '11px',
+            fontSize: '12px',
             color: 'rgba(255,255,255,0.85)',
             whiteSpace: 'pre-wrap',
             fontFamily: 'monospace',
@@ -591,7 +591,7 @@ export const SmartBlockBuilderModal: React.FC<SmartBlockBuilderModalProps> = ({
             type="button"
             className="btn btn-ghost"
             onClick={() => setProgModal(null)}
-            style={{ flex: 1, height: '42px', fontSize: '11px', fontFamily: "'Orbitron', sans-serif", fontWeight: 700 }}
+            style={{ flex: 1, height: '42px', fontSize: '12px', fontFamily: "'Inter', sans-serif", fontWeight: 700 }}
           >
             CANCELAR
           </button>
@@ -601,8 +601,8 @@ export const SmartBlockBuilderModal: React.FC<SmartBlockBuilderModalProps> = ({
             style={{
               flex: 2, height: '42px', borderRadius: '10px', border: 'none',
               background: 'linear-gradient(135deg, #ff7e2e, #ff9a52)',
-              color: 'white', fontSize: '11px', fontFamily: "'Orbitron', sans-serif", fontWeight: 800,
-              cursor: 'pointer', transition: 'all 0.2s', boxShadow: '0 4px 15px rgba(255, 126, 46, 0.25)'
+              color: 'white', fontSize: '12px', fontFamily: "'Inter', sans-serif", fontWeight: 800,
+              cursor: 'pointer', transition: 'all 0.2s', boxShadow: 'none'
             }}
             onMouseEnter={e => (e.currentTarget.style.transform = 'translateY(-1px)')}
             onMouseLeave={e => (e.currentTarget.style.transform = 'none')}

@@ -364,8 +364,8 @@ export const AthleteNutritionCard: React.FC<AthleteNutritionCardProps> = ({
           borderRadius: '16px',
           padding: '24px',
           textAlign: 'center',
-          color: 'rgba(255,255,255,0.5)',
-          fontFamily: "'Orbitron', sans-serif",
+          color: '#a4b0a8',
+          fontFamily: "'Inter', sans-serif",
           fontSize: '12px',
         }}
       >
@@ -378,8 +378,8 @@ export const AthleteNutritionCard: React.FC<AthleteNutritionCardProps> = ({
     return (
       <div
         style={{
-          background: 'linear-gradient(180deg, rgba(0, 212, 255, 0.04) 0%, rgba(255, 255, 255, 0.01) 100%)',
-          border: '1px solid rgba(0, 212, 255, 0.2)',
+          background: 'linear-gradient(180deg, rgba(145, 182, 161, 0.04) 0%, rgba(255, 255, 255, 0.01) 100%)',
+          border: '1px solid rgba(145, 182, 161, 0.2)',
           borderRadius: '16px',
           padding: '28px',
           textAlign: 'center',
@@ -387,7 +387,7 @@ export const AthleteNutritionCard: React.FC<AthleteNutritionCardProps> = ({
         }}
       >
         <div style={{ fontSize: '36px', marginBottom: '8px' }}>🥗</div>
-        <h3 style={{ margin: '0 0 6px', fontFamily: "'Orbitron', sans-serif", fontSize: '16px', color: '#00d4ff' }}>
+        <h3 style={{ margin: '0 0 6px', fontFamily: "'Inter', sans-serif", fontSize: '16px', color: '#91b6a1' }}>
           PLAN NUTRICIONAL Y MACROS
         </h3>
         <p style={{ margin: '0 auto', maxWidth: '420px', fontSize: '13px', color: 'rgba(255,255,255,0.7)', lineHeight: 1.5 }}>
@@ -400,11 +400,11 @@ export const AthleteNutritionCard: React.FC<AthleteNutritionCardProps> = ({
   return (
     <div
       style={{
-        background: 'linear-gradient(180deg, rgba(0, 212, 255, 0.06) 0%, rgba(13, 19, 34, 0.8) 100%)',
-        border: '1px solid rgba(0, 212, 255, 0.3)',
+        background: 'linear-gradient(180deg, rgba(145, 182, 161, 0.06) 0%, rgba(13, 19, 34, 0.8) 100%)',
+        border: '1px solid rgba(145, 182, 161, 0.3)',
         borderRadius: '16px',
         padding: '16px 20px',
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.4)',
+        boxShadow: 'none',
         color: '#ffffff',
         fontFamily: "'Inter', sans-serif",
       }}
@@ -436,10 +436,10 @@ export const AthleteNutritionCard: React.FC<AthleteNutritionCardProps> = ({
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
             <span
               style={{
-                fontSize: '10px',
-                fontFamily: "'Orbitron', sans-serif",
+                fontSize: '12px',
+                fontFamily: "'Inter', sans-serif",
                 fontWeight: 800,
-                background: 'var(--theme-primary, #00d4ff)',
+                background: 'var(--theme-primary, #91b6a1)',
                 color: '#000',
                 padding: '2px 8px',
                 borderRadius: '4px',
@@ -447,16 +447,16 @@ export const AthleteNutritionCard: React.FC<AthleteNutritionCardProps> = ({
             >
               🥗 MI DIETA
             </span>
-            <h3 style={{ margin: 0, fontSize: '15px', fontFamily: "'Orbitron', sans-serif", color: '#fff' }}>
+            <h3 style={{ margin: 0, fontSize: '15px', fontFamily: "'Inter', sans-serif", color: '#fff' }}>
               {plan.nombre}
             </h3>
             {plan.objetivo && (
               <span
                 style={{
-                  fontSize: '10px',
-                  color: '#00d4ff',
-                  border: '1px solid rgba(0, 212, 255, 0.3)',
-                  background: 'rgba(0, 212, 255, 0.1)',
+                  fontSize: '12px',
+                  color: '#91b6a1',
+                  border: '1px solid rgba(145, 182, 161, 0.3)',
+                  background: 'rgba(145, 182, 161, 0.1)',
                   padding: '1px 6px',
                   borderRadius: '4px',
                   fontWeight: 600,
@@ -466,7 +466,7 @@ export const AthleteNutritionCard: React.FC<AthleteNutritionCardProps> = ({
               </span>
             )}
           </div>
-          <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', marginTop: '4px', display: 'block' }}>
+          <span style={{ fontSize: '12px', color: '#a4b0a8', marginTop: '4px', display: 'block' }}>
             {isExpanded
               ? 'Toca para contraer y reducir el scroll de la pantalla'
               : 'Toca para desplegar las comidas del día y registrar alimentos consumidos'}
@@ -481,14 +481,14 @@ export const AthleteNutritionCard: React.FC<AthleteNutritionCardProps> = ({
             disabled={downloadingPdf}
             title={pdfScope === 'all' ? 'Descargar plan de la semana completa en PDF' : `Descargar día ${selectedDayKey} en PDF`}
             style={{
-              background: 'rgba(0, 212, 255, 0.12)',
-              border: '1px solid rgba(0, 212, 255, 0.4)',
-              color: '#00d4ff',
+              background: 'rgba(145, 182, 161, 0.12)',
+              border: '1px solid rgba(145, 182, 161, 0.4)',
+              color: '#91b6a1',
               borderRadius: '8px',
               padding: '6px 12px',
-              fontSize: '11px',
+              fontSize: '12px',
               fontWeight: 700,
-              fontFamily: "'Orbitron', sans-serif",
+              fontFamily: "'Inter', sans-serif",
               cursor: downloadingPdf ? 'wait' : 'pointer',
               display: 'inline-flex',
               alignItems: 'center',
@@ -504,14 +504,14 @@ export const AthleteNutritionCard: React.FC<AthleteNutritionCardProps> = ({
             onClick={toggleExpanded}
             aria-expanded={isExpanded}
             style={{
-              background: isExpanded ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 212, 255, 0.18)',
-              border: isExpanded ? '1px solid rgba(255, 255, 255, 0.2)' : '1px solid #00d4ff',
+              background: isExpanded ? 'rgba(255, 255, 255, 0.08)' : 'rgba(145, 182, 161, 0.18)',
+              border: isExpanded ? '1px solid rgba(255, 255, 255, 0.2)' : '1px solid #91b6a1',
               color: isExpanded ? 'rgba(255, 255, 255, 0.85)' : '#ffffff',
               borderRadius: '8px',
               padding: '6px 12px',
-              fontSize: '11px',
+              fontSize: '12px',
               fontWeight: 700,
-              fontFamily: "'Orbitron', sans-serif",
+              fontFamily: "'Inter', sans-serif",
               cursor: 'pointer',
               display: 'inline-flex',
               alignItems: 'center',
@@ -520,7 +520,7 @@ export const AthleteNutritionCard: React.FC<AthleteNutritionCardProps> = ({
             }}
           >
             <span>{isExpanded ? 'Ocultar' : 'Ver Comidas'}</span>
-            <span style={{ fontSize: '10px' }}>{isExpanded ? '▲' : '▼'}</span>
+            <span style={{ fontSize: '12px' }}>{isExpanded ? '▲' : '▼'}</span>
           </button>
         </div>
       </div>
@@ -538,16 +538,16 @@ export const AthleteNutritionCard: React.FC<AthleteNutritionCardProps> = ({
             borderTop: '1px solid rgba(255, 255, 255, 0.08)',
           }}
         >
-          <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)', fontWeight: 600 }}>
+          <div style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 600 }}>
             Meta Hoy ({DAYS_OF_WEEK.find((d) => d.key === selectedDayKey)?.label || selectedDayKey}):
           </div>
           <div
             style={{
-              fontSize: '11px',
+              fontSize: '12px',
               fontWeight: 700,
               color: '#ffffff',
-              background: 'rgba(0, 212, 255, 0.1)',
-              border: '1px solid rgba(0, 212, 255, 0.25)',
+              background: 'rgba(145, 182, 161, 0.1)',
+              border: '1px solid rgba(145, 182, 161, 0.25)',
               borderRadius: '6px',
               padding: '3px 8px',
             }}
@@ -556,7 +556,7 @@ export const AthleteNutritionCard: React.FC<AthleteNutritionCardProps> = ({
           </div>
           <div
             style={{
-              fontSize: '11px',
+              fontSize: '12px',
               fontWeight: 700,
               color: '#3b82f6',
               background: 'rgba(59, 130, 246, 0.1)',
@@ -569,7 +569,7 @@ export const AthleteNutritionCard: React.FC<AthleteNutritionCardProps> = ({
           </div>
           <div
             style={{
-              fontSize: '11px',
+              fontSize: '12px',
               fontWeight: 700,
               color: '#10b981',
               background: 'rgba(16, 185, 129, 0.1)',
@@ -582,7 +582,7 @@ export const AthleteNutritionCard: React.FC<AthleteNutritionCardProps> = ({
           </div>
           <div
             style={{
-              fontSize: '11px',
+              fontSize: '12px',
               fontWeight: 700,
               color: '#f59e0b',
               background: 'rgba(245, 158, 11, 0.1)',
@@ -614,7 +614,7 @@ export const AthleteNutritionCard: React.FC<AthleteNutritionCardProps> = ({
               marginBottom: '14px',
             }}
           >
-            <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>
+            <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>
               Formato de descarga PDF:
             </div>
             <div
@@ -631,14 +631,14 @@ export const AthleteNutritionCard: React.FC<AthleteNutritionCardProps> = ({
                 onClick={() => setPdfScope('all')}
                 style={{
                   padding: '4px 10px',
-                  fontSize: '11px',
+                  fontSize: '12px',
                   borderRadius: '6px',
                   border: 'none',
-                  background: pdfScope === 'all' ? 'var(--theme-primary, #00d4ff)' : 'transparent',
+                  background: pdfScope === 'all' ? 'var(--theme-primary, #91b6a1)' : 'transparent',
                   color: pdfScope === 'all' ? '#000000' : 'rgba(255, 255, 255, 0.7)',
                   fontWeight: 700,
                   cursor: 'pointer',
-                  fontFamily: "'Orbitron', sans-serif",
+                  fontFamily: "'Inter', sans-serif",
                 }}
               >
                 📅 Semana Completa
@@ -648,14 +648,14 @@ export const AthleteNutritionCard: React.FC<AthleteNutritionCardProps> = ({
                 onClick={() => setPdfScope('current')}
                 style={{
                   padding: '4px 10px',
-                  fontSize: '11px',
+                  fontSize: '12px',
                   borderRadius: '6px',
                   border: 'none',
-                  background: pdfScope === 'current' ? 'var(--theme-primary, #00d4ff)' : 'transparent',
+                  background: pdfScope === 'current' ? 'var(--theme-primary, #91b6a1)' : 'transparent',
                   color: pdfScope === 'current' ? '#000000' : 'rgba(255, 255, 255, 0.7)',
                   fontWeight: 700,
                   cursor: 'pointer',
-                  fontFamily: "'Orbitron', sans-serif",
+                  fontFamily: "'Inter', sans-serif",
                 }}
               >
                 🔍 Solo {currentDay?.nombre || selectedDayKey}
@@ -678,23 +678,23 @@ export const AthleteNutritionCard: React.FC<AthleteNutritionCardProps> = ({
               }}
             >
               <div>
-                <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)', fontWeight: 700 }}>
+                <span style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700 }}>
                   🔥 CALORÍAS HOY
                 </span>
                 <div style={{ fontSize: '16px', fontWeight: 900, color: '#fff' }}>
-                  {dayTotals.calorias} <span style={{ fontSize: '11px', fontWeight: 500 }}>/ {plan.target_calorias} kcal</span>
+                  {dayTotals.calorias} <span style={{ fontSize: '12px', fontWeight: 500 }}>/ {plan.target_calorias} kcal</span>
                 </div>
                 <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', marginTop: '4px', overflow: 'hidden' }}>
-                  <div style={{ width: `${Math.min(100, compliance.caloriasPct)}%`, height: '100%', background: '#00d4ff', borderRadius: '2px' }} />
+                  <div style={{ width: `${Math.min(100, compliance.caloriasPct)}%`, height: '100%', background: '#91b6a1', borderRadius: '2px' }} />
                 </div>
               </div>
 
               <div>
-                <span style={{ fontSize: '10px', color: '#3b82f6', fontWeight: 700 }}>
+                <span style={{ fontSize: '12px', color: '#3b82f6', fontWeight: 700 }}>
                   🥩 PROTEÍNA
                 </span>
                 <div style={{ fontSize: '16px', fontWeight: 900, color: '#3b82f6' }}>
-                  {dayTotals.proteina}g <span style={{ fontSize: '11px', fontWeight: 500 }}>/ {plan.target_proteina_g}g</span>
+                  {dayTotals.proteina}g <span style={{ fontSize: '12px', fontWeight: 500 }}>/ {plan.target_proteina_g}g</span>
                 </div>
                 <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', marginTop: '4px', overflow: 'hidden' }}>
                   <div style={{ width: `${Math.min(100, compliance.proteinaPct)}%`, height: '100%', background: '#3b82f6', borderRadius: '2px' }} />
@@ -702,11 +702,11 @@ export const AthleteNutritionCard: React.FC<AthleteNutritionCardProps> = ({
               </div>
 
               <div>
-                <span style={{ fontSize: '10px', color: '#10b981', fontWeight: 700 }}>
+                <span style={{ fontSize: '12px', color: '#10b981', fontWeight: 700 }}>
                   🍚 CARBOS
                 </span>
                 <div style={{ fontSize: '16px', fontWeight: 900, color: '#10b981' }}>
-                  {dayTotals.carbohidratos}g <span style={{ fontSize: '11px', fontWeight: 500 }}>/ {plan.target_carbohidratos_g}g</span>
+                  {dayTotals.carbohidratos}g <span style={{ fontSize: '12px', fontWeight: 500 }}>/ {plan.target_carbohidratos_g}g</span>
                 </div>
                 <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', marginTop: '4px', overflow: 'hidden' }}>
                   <div style={{ width: `${Math.min(100, compliance.carbohidratosPct)}%`, height: '100%', background: '#10b981', borderRadius: '2px' }} />
@@ -714,11 +714,11 @@ export const AthleteNutritionCard: React.FC<AthleteNutritionCardProps> = ({
               </div>
 
               <div>
-                <span style={{ fontSize: '10px', color: '#f59e0b', fontWeight: 700 }}>
+                <span style={{ fontSize: '12px', color: '#f59e0b', fontWeight: 700 }}>
                   🥑 GRASAS
                 </span>
                 <div style={{ fontSize: '16px', fontWeight: 900, color: '#f59e0b' }}>
-                  {dayTotals.grasa}g <span style={{ fontSize: '11px', fontWeight: 500 }}>/ {plan.target_grasa_g}g</span>
+                  {dayTotals.grasa}g <span style={{ fontSize: '12px', fontWeight: 500 }}>/ {plan.target_grasa_g}g</span>
                 </div>
                 <div style={{ width: '100%', height: '4px', background: 'rgba(255,255,255,0.1)', borderRadius: '2px', marginTop: '4px', overflow: 'hidden' }}>
                   <div style={{ width: `${Math.min(100, compliance.grasaPct)}%`, height: '100%', background: '#f59e0b', borderRadius: '2px' }} />
@@ -740,10 +740,10 @@ export const AthleteNutritionCard: React.FC<AthleteNutritionCardProps> = ({
                   style={{
                     padding: '6px 12px',
                     borderRadius: '8px',
-                    border: isSelected ? '1px solid #00d4ff' : '1px solid rgba(255, 255, 255, 0.1)',
-                    background: isSelected ? 'rgba(0, 212, 255, 0.2)' : 'rgba(255, 255, 255, 0.03)',
-                    color: isSelected ? '#00d4ff' : 'rgba(255, 255, 255, 0.7)',
-                    fontSize: '11px',
+                    border: isSelected ? '1px solid #91b6a1' : '1px solid rgba(255, 255, 255, 0.1)',
+                    background: isSelected ? 'rgba(145, 182, 161, 0.2)' : 'rgba(255, 255, 255, 0.03)',
+                    color: isSelected ? '#91b6a1' : 'rgba(255, 255, 255, 0.7)',
+                    fontSize: '12px',
                     fontWeight: 700,
                     cursor: 'pointer',
                     whiteSpace: 'nowrap',
@@ -781,19 +781,19 @@ export const AthleteNutritionCard: React.FC<AthleteNutritionCardProps> = ({
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <span style={{ fontSize: '13px', fontWeight: 800 }}>{meal.nombre}</span>
                       {meal.horario && (
-                        <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>
+                        <span style={{ fontSize: '12px', color: '#a4b0a8' }}>
                           🕒 {meal.horario}
                         </span>
                       )}
                     </div>
-                    <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)' }}>
+                    <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)' }}>
                       <strong>{mTotals.calorias} kcal</strong>
                     </div>
                   </div>
 
                   <div style={{ padding: '8px 12px' }}>
                     {meal.foods.length === 0 ? (
-                      <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', fontStyle: 'italic' }}>
+                      <div style={{ fontSize: '12px', color: '#a4b0a8', fontStyle: 'italic' }}>
                         Sin alimentos asignados para esta comida.
                       </div>
                     ) : (
@@ -841,19 +841,19 @@ export const AthleteNutritionCard: React.FC<AthleteNutritionCardProps> = ({
                                       style={{
                                         fontSize: '12px',
                                         textDecoration: isDone ? 'line-through' : 'none',
-                                        color: isDone ? 'rgba(255,255,255,0.5)' : '#ffffff',
+                                        color: isDone ? '#a4b0a8' : '#ffffff',
                                       }}
                                     >
                                       {food.nombre}
                                     </span>
                                     {substitution && (
-                                      <span style={{ display: 'block', fontSize: '10px', color: '#00d4ff' }}>
+                                      <span style={{ display: 'block', fontSize: '12px', color: '#91b6a1' }}>
                                         🔄 Sustituido hoy
                                       </span>
                                     )}
                                   </div>
                                 </div>
-                                <span style={{ fontSize: '11px', fontWeight: 600, color: 'rgba(255,255,255,0.8)' }}>
+                                <span style={{ fontSize: '12px', fontWeight: 600, color: 'rgba(255,255,255,0.8)' }}>
                                   {food.cantidad} {food.unidad} • {food.calorias} kcal
                                 </span>
                               </button>
@@ -863,12 +863,12 @@ export const AthleteNutritionCard: React.FC<AthleteNutritionCardProps> = ({
                                 type="button"
                                 onClick={() => handleOpenSubstitution(meal.id, food)}
                                 style={{
-                                  background: substitution ? 'rgba(0, 212, 255, 0.15)' : 'rgba(255, 255, 255, 0.05)',
-                                  border: substitution ? '1px solid #00d4ff' : '1px solid rgba(255, 255, 255, 0.12)',
+                                  background: substitution ? 'rgba(145, 182, 161, 0.15)' : 'rgba(255, 255, 255, 0.05)',
+                                  border: substitution ? '1px solid #91b6a1' : '1px solid rgba(255, 255, 255, 0.12)',
                                   borderRadius: '6px',
-                                  color: substitution ? '#00d4ff' : 'rgba(255, 255, 255, 0.75)',
+                                  color: substitution ? '#91b6a1' : 'rgba(255, 255, 255, 0.75)',
                                   padding: '6px 9px',
-                                  fontSize: '11px',
+                                  fontSize: '12px',
                                   fontWeight: 600,
                                   cursor: 'pointer',
                                   whiteSpace: 'nowrap',
@@ -897,16 +897,16 @@ export const AthleteNutritionCard: React.FC<AthleteNutritionCardProps> = ({
             <div
               style={{
                 marginTop: '16px',
-                background: 'rgba(0, 212, 255, 0.05)',
-                border: '1px solid rgba(0, 212, 255, 0.2)',
+                background: 'rgba(145, 182, 161, 0.05)',
+                border: '1px solid rgba(145, 182, 161, 0.2)',
                 borderRadius: '10px',
                 padding: '12px 14px',
               }}
             >
-              <span style={{ fontSize: '11px', color: '#00d4ff', fontWeight: 800 }}>
+              <span style={{ fontSize: '12px', color: '#91b6a1', fontWeight: 800 }}>
                 📋 PAUTAS DE TU ENTRENADOR:
               </span>
-              <p style={{ margin: '4px 0 0', fontSize: '11px', color: 'rgba(255,255,255,0.8)', lineHeight: 1.5, whiteSpace: 'pre-line' }}>
+              <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'rgba(255,255,255,0.8)', lineHeight: 1.5, whiteSpace: 'pre-line' }}>
                 {plan.recomendaciones}
               </p>
             </div>
@@ -923,10 +923,10 @@ export const AthleteNutritionCard: React.FC<AthleteNutritionCardProps> = ({
                 borderRadius: '8px',
                 color: 'rgba(255, 255, 255, 0.7)',
                 padding: '8px 18px',
-                fontSize: '11px',
+                fontSize: '12px',
                 fontWeight: 700,
                 cursor: 'pointer',
-                fontFamily: "'Orbitron', sans-serif",
+                fontFamily: "'Inter', sans-serif",
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '6px',

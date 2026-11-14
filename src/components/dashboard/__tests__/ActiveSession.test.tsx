@@ -17,6 +17,7 @@ const mockUpdate = vi.fn().mockReturnValue({
 });
 vi.mock('../../../lib/supabaseClient', () => ({
   supabase: {
+    rpc: vi.fn().mockResolvedValue({ data: { id: 'server-session-id', ejercicios: [] }, error: null }),
     auth: {
       getSession: vi.fn().mockResolvedValue({
         data: {
@@ -174,7 +175,7 @@ describe('ActiveSession Component', () => {
 
     // Verify redirect and cache write
     expect(mockNavigate).toHaveBeenCalledWith('/session/complete', expect.any(Object));
-    expect(localStorage.getItem('sobrecarga_v5')).not.toBeNull();
+    expect(localStorage.getItem('evolution:sessions:v6:test-user-id')).not.toBeNull();
 
     // ── Verificar que el motor de periodización realmente procesó la sesión ──
     const updatedPlanRaw = localStorage.getItem('pwa_client_plan');

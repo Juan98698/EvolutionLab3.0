@@ -198,8 +198,8 @@ export const ExerciseLibrary: React.FC = () => {
   };
 
   // Estilos de la marca blanca si aplica
-  const themePrimaryColor = trainerProfile?.marca?.color_primario || 'var(--theme-primary, #00d4ff)';
-  const themeFontFamily = trainerProfile?.marca?.tipografia || "'Orbitron', sans-serif";
+  const themePrimaryColor = trainerProfile?.marca?.color_primario || 'var(--theme-primary, #91b6a1)';
+  const themeFontFamily = trainerProfile?.marca?.tipografia || "'Inter', sans-serif";
   const brandName = trainerProfile?.marca?.nombre_display || 'EVOLUTION LAB';
 
   return (
@@ -217,10 +217,10 @@ export const ExerciseLibrary: React.FC = () => {
                   background: 'none',
                   border: '1px solid var(--theme-border)',
                   color: 'var(--theme-primary)',
-                  fontSize: '11px',
+                  fontSize: '12px',
                   fontWeight: 700,
                   cursor: 'pointer',
-                  fontFamily: "'Orbitron', sans-serif",
+                  fontFamily: "'Inter', sans-serif",
                   padding: '8px 14px',
                   borderRadius: '8px',
                   display: 'flex',
@@ -231,11 +231,11 @@ export const ExerciseLibrary: React.FC = () => {
                 ← Volver al Panel
               </button>
               <div>
-                <h1 style={{ fontFamily: 'Orbitron, sans-serif', fontSize: '15px', fontWeight: 800, margin: 0, letterSpacing: '1px', display: 'flex', alignItems: 'baseline', gap: '6px', flexWrap: 'wrap' }}>
+                <h1 style={{ fontFamily: 'Inter, sans-serif', fontSize: '15px', fontWeight: 800, margin: 0, letterSpacing: '0', display: 'flex', alignItems: 'baseline', gap: '6px', flexWrap: 'wrap' }}>
                   <span style={{ color: '#ffffff' }}>{profile?.marca?.nombre_display?.toUpperCase() || 'EVOLUTION'}</span> <span className="theme-text-gradient">{profile?.marca ? '' : 'LAB'}</span>
-                  <span style={{ fontSize: '9px', fontWeight: 500, color: 'rgba(255,255,255,0.45)', fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.5px' }}>Developed by Juan Manuel Cardona</span>
+                  <span style={{ fontSize: '12px', fontWeight: 500, color: '#a4b0a8', fontFamily: "'Inter', sans-serif", letterSpacing: '0' }}>Developed by Juan Manuel Cardona</span>
                 </h1>
-                <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <div style={{ fontSize: '12px', color: '#a4b0a8', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                   Entrenador: <span style={{ color: 'var(--theme-secondary)', fontWeight: 600 }}>{profile?.marca?.nombre_display || profile?.nombre || 'Trainer'}</span>
                 </div>
               </div>
@@ -248,7 +248,7 @@ export const ExerciseLibrary: React.FC = () => {
                   <button
                     className="tab"
                     onClick={() => navigate('/trainer')}
-                    style={{ fontSize: '11px', padding: '8px 14px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '6px', border: 'none', cursor: 'pointer', fontFamily: "'Orbitron', sans-serif" }}
+                    style={{ fontSize: '12px', padding: '8px 14px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '6px', border: 'none', cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}
                   >
                     <svg className="tab-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
@@ -261,7 +261,7 @@ export const ExerciseLibrary: React.FC = () => {
                   <button
                     className="tab"
                     onClick={() => navigate('/trainer')}
-                    style={{ fontSize: '11px', padding: '8px 14px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '6px', border: 'none', cursor: 'pointer', fontFamily: "'Orbitron', sans-serif" }}
+                    style={{ fontSize: '12px', padding: '8px 14px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '6px', border: 'none', cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}
                   >
                     <svg className="tab-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                       <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
@@ -271,7 +271,7 @@ export const ExerciseLibrary: React.FC = () => {
                   <button
                     className="tab active"
                     onClick={() => navigate('/biblioteca')}
-                    style={{ fontSize: '11px', padding: '8px 14px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '6px', border: 'none', cursor: 'pointer', fontFamily: "'Orbitron', sans-serif" }}
+                    style={{ fontSize: '12px', padding: '8px 14px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '6px', border: 'none', cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}
                   >
                     <svg className="tab-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
@@ -282,7 +282,7 @@ export const ExerciseLibrary: React.FC = () => {
                   <button
                     className="tab"
                     onClick={() => navigate('/trainer/config')}
-                    style={{ fontSize: '11px', padding: '8px 14px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '6px', border: 'none', cursor: 'pointer', fontFamily: "'Orbitron', sans-serif" }}
+                    style={{ fontSize: '12px', padding: '8px 14px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '6px', border: 'none', cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}
                   >
                     <svg className="tab-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                       <circle cx="12" cy="12" r="3" />
@@ -293,7 +293,7 @@ export const ExerciseLibrary: React.FC = () => {
                   <button
                     className="tab"
                     onClick={() => navigate('/trainer/branding')}
-                    style={{ fontSize: '11px', padding: '8px 14px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '6px', border: 'none', cursor: 'pointer', fontFamily: "'Orbitron', sans-serif" }}
+                    style={{ fontSize: '12px', padding: '8px 14px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '6px', border: 'none', cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}
                   >
                     <svg className="tab-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M12 2L2 7l10 5 10-5-10-5z" />
@@ -305,7 +305,7 @@ export const ExerciseLibrary: React.FC = () => {
                   <button
                     className="tab"
                     onClick={() => navigate('/dashboard')}
-                    style={{ fontSize: '11px', padding: '8px 14px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '6px', border: 'none', cursor: 'pointer', fontFamily: "'Orbitron', sans-serif", color: 'var(--theme-primary)' }}
+                    style={{ fontSize: '12px', padding: '8px 14px', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '6px', border: 'none', cursor: 'pointer', fontFamily: "'Inter', sans-serif", color: 'var(--theme-primary)' }}
                   >
                     <svg className="tab-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M18 8h1a4 4 0 0 1 0 8h-1" />
@@ -338,17 +338,17 @@ export const ExerciseLibrary: React.FC = () => {
           <h2 style={{
             fontSize: '24px',
             fontWeight: 800,
-            letterSpacing: '2px',
+            letterSpacing: '0',
             margin: '0 0 8px 0',
             color: 'white'
           }}>
             BIBLIOTECA DE EJERCICIOS
           </h2>
           <p style={{
-            fontSize: '11px',
-            color: 'rgba(255, 255, 255, 0.5)',
-            letterSpacing: '1px',
-            textTransform: 'uppercase',
+            fontSize: '12px',
+            color: '#a4b0a8',
+            letterSpacing: '0',
+            textTransform: 'none',
             margin: 0
           }}>
             Guía Ilustrada de Anatomía y Biomecánica{' '}
@@ -368,12 +368,12 @@ export const ExerciseLibrary: React.FC = () => {
             alignItems: 'center',
             justifyContent: 'center',
             minHeight: '450px',
-            background: 'var(--theme-card-bg, #0f172a)',
+            background: 'var(--theme-card-bg, #1a211e)',
             border: '1px solid var(--theme-border, rgba(255, 255, 255, 0.08))',
             borderRadius: '24px',
             padding: '40px',
             textAlign: 'center',
-            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.3)',
+            boxShadow: 'none',
             maxWidth: '560px',
             margin: '40px auto 0 auto',
             position: 'relative',
@@ -387,7 +387,7 @@ export const ExerciseLibrary: React.FC = () => {
               transform: 'translateX(-50%)',
               width: '250px',
               height: '250px',
-              background: 'radial-gradient(circle, rgba(0,212,255,0.15) 0%, transparent 70%)',
+              background: 'radial-gradient(circle, rgba(145, 182, 161,0.15) 0%, transparent 70%)',
               filter: 'blur(30px)',
               pointerEvents: 'none'
             }} />
@@ -396,25 +396,25 @@ export const ExerciseLibrary: React.FC = () => {
               width: '64px',
               height: '64px',
               borderRadius: '50%',
-              background: 'rgba(0, 212, 255, 0.1)',
-              border: '1px solid rgba(0, 212, 255, 0.3)',
+              background: 'rgba(145, 182, 161, 0.1)',
+              border: '1px solid rgba(145, 182, 161, 0.3)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               marginBottom: '20px',
-              boxShadow: '0 0 20px rgba(0, 212, 255, 0.2)'
+              boxShadow: 'none'
             }}>
-              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--theme-primary, #00d4ff)" strokeWidth="2.5">
+              <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--theme-primary, #91b6a1)" strokeWidth="2.5">
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                 <path d="M7 11V7a5 5 0 0 1 10 0v4" />
               </svg>
             </div>
 
             <h3 style={{
-              fontFamily: "'Orbitron', sans-serif",
+              fontFamily: "'Inter', sans-serif",
               fontSize: '18px',
               fontWeight: 800,
-              letterSpacing: '1px',
+              letterSpacing: '0',
               color: '#fff',
               margin: '0 0 12px 0'
             }}>
@@ -453,7 +453,7 @@ export const ExerciseLibrary: React.FC = () => {
               onClick={handleUpgradeClick}
               className="theme-btn-gradient"
               style={{
-                fontFamily: "'Orbitron', sans-serif",
+                fontFamily: "'Inter', sans-serif",
                 fontWeight: 800,
                 fontSize: '12px',
                 padding: '12px 30px',
@@ -461,8 +461,8 @@ export const ExerciseLibrary: React.FC = () => {
                 border: 'none',
                 color: '#000',
                 cursor: 'pointer',
-                letterSpacing: '1px',
-                boxShadow: '0 0 20px var(--theme-glow)'
+                letterSpacing: '0',
+                boxShadow: 'none'
               }}
             >
               OBTENER PREMIUM PRO 🚀
@@ -490,10 +490,10 @@ export const ExerciseLibrary: React.FC = () => {
                   onClick={() => { setSelectedModality('todos'); setSelectedMuscle(null); }}
                   style={{
                     padding: '8px 16px', borderRadius: '10px',
-                    border: '1px solid ' + (selectedModality === 'todos' ? 'var(--theme-primary, #00d4ff)' : 'rgba(255,255,255,0.08)'),
-                    background: selectedModality === 'todos' ? 'var(--theme-primary-alpha, rgba(0,212,255,0.15))' : 'rgba(15,23,42,0.6)',
-                    color: selectedModality === 'todos' ? '#fff' : 'rgba(255,255,255,0.6)',
-                    fontFamily: "'Orbitron', sans-serif", fontSize: '11px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s'
+                    border: '1px solid ' + (selectedModality === 'todos' ? 'var(--theme-primary, #91b6a1)' : 'rgba(255,255,255,0.08)'),
+                    background: selectedModality === 'todos' ? 'var(--theme-primary-alpha, rgba(145, 182, 161,0.15))' : '#1a211e',
+                    color: selectedModality === 'todos' ? '#fff' : '#a4b0a8',
+                    fontFamily: "'Inter', sans-serif", fontSize: '12px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s'
                   }}
                 >
                   TODOS
@@ -503,10 +503,10 @@ export const ExerciseLibrary: React.FC = () => {
                   onClick={() => { setSelectedModality('musculacion'); setSelectedMuscle(null); }}
                   style={{
                     padding: '8px 16px', borderRadius: '10px',
-                    border: '1px solid ' + (selectedModality === 'musculacion' ? '#00d4ff' : 'rgba(255,255,255,0.08)'),
-                    background: selectedModality === 'musculacion' ? 'rgba(0,212,255,0.15)' : 'rgba(15,23,42,0.6)',
-                    color: selectedModality === 'musculacion' ? '#fff' : 'rgba(255,255,255,0.6)',
-                    fontFamily: "'Orbitron', sans-serif", fontSize: '11px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s'
+                    border: '1px solid ' + (selectedModality === 'musculacion' ? '#91b6a1' : 'rgba(255,255,255,0.08)'),
+                    background: selectedModality === 'musculacion' ? 'rgba(145, 182, 161,0.15)' : '#1a211e',
+                    color: selectedModality === 'musculacion' ? '#fff' : '#a4b0a8',
+                    fontFamily: "'Inter', sans-serif", fontSize: '12px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s'
                   }}
                 >
                   🏋️‍♂️ FUERZA
@@ -517,9 +517,9 @@ export const ExerciseLibrary: React.FC = () => {
                   style={{
                     padding: '8px 16px', borderRadius: '10px',
                     border: '1px solid ' + (selectedModality === 'funcional' ? '#ff7e2e' : 'rgba(255,255,255,0.08)'),
-                    background: selectedModality === 'funcional' ? 'rgba(255,126,46,0.15)' : 'rgba(15,23,42,0.6)',
-                    color: selectedModality === 'funcional' ? '#ff7e2e' : 'rgba(255,255,255,0.6)',
-                    fontFamily: "'Orbitron', sans-serif", fontSize: '11px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s'
+                    background: selectedModality === 'funcional' ? 'rgba(255,126,46,0.15)' : '#1a211e',
+                    color: selectedModality === 'funcional' ? '#ff7e2e' : '#a4b0a8',
+                    fontFamily: "'Inter', sans-serif", fontSize: '12px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s'
                   }}
                 >
                   ⚡ FUNCIONAL & HIIT
@@ -530,9 +530,9 @@ export const ExerciseLibrary: React.FC = () => {
                   style={{
                     padding: '8px 16px', borderRadius: '10px',
                     border: '1px solid ' + (selectedModality === 'calistenia' ? '#10b981' : 'rgba(255,255,255,0.08)'),
-                    background: selectedModality === 'calistenia' ? 'rgba(16,185,129,0.15)' : 'rgba(15,23,42,0.6)',
-                    color: selectedModality === 'calistenia' ? '#10b981' : 'rgba(255,255,255,0.6)',
-                    fontFamily: "'Orbitron', sans-serif", fontSize: '11px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s'
+                    background: selectedModality === 'calistenia' ? 'rgba(16,185,129,0.15)' : '#1a211e',
+                    color: selectedModality === 'calistenia' ? '#10b981' : '#a4b0a8',
+                    fontFamily: "'Inter', sans-serif", fontSize: '12px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s'
                   }}
                 >
                   🤸 CALISTENIA
@@ -541,16 +541,16 @@ export const ExerciseLibrary: React.FC = () => {
 
               {/* Buscador de Texto */}
               <div style={{
-                background: 'var(--theme-card-bg, #0f172a)',
+                background: 'var(--theme-card-bg, #1a211e)',
                 border: '1px solid var(--theme-border, rgba(255, 255, 255, 0.08))',
                 borderRadius: '16px',
                 padding: '16px',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '12px',
-                boxShadow: '0 4px 20px rgba(0, 0, 0, 0.15)'
+                boxShadow: 'none'
               }}>
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2.5">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#a4b0a8" strokeWidth="2.5">
                   <circle cx="11" cy="11" r="8" />
                   <line x1="21" y1="21" x2="16.65" y2="16.65" />
                 </svg>
@@ -575,7 +575,7 @@ export const ExerciseLibrary: React.FC = () => {
                     style={{
                       background: 'none',
                       border: 'none',
-                      color: 'rgba(255, 255, 255, 0.4)',
+                      color: '#a4b0a8',
                       cursor: 'pointer',
                       fontSize: '14px'
                     }}
@@ -615,7 +615,7 @@ export const ExerciseLibrary: React.FC = () => {
                       width: '100%', marginTop: '12px', padding: '10px', borderRadius: '12px',
                       border: '1px solid ' + (selectedMuscle === 'full body' ? '#ff7e2e' : 'rgba(255,126,46,0.3)'),
                       background: selectedMuscle === 'full body' ? 'rgba(255,126,46,0.2)' : 'rgba(255,126,46,0.06)',
-                      color: '#ff7e2e', fontFamily: "'Orbitron', sans-serif", fontSize: '11px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s'
+                      color: '#ff7e2e', fontFamily: "'Inter', sans-serif", fontSize: '12px', fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s'
                     }}
                   >
                     ⚡ VER EJERCICIOS FULL BODY / FUNCIONALES
@@ -630,17 +630,17 @@ export const ExerciseLibrary: React.FC = () => {
                   gap: '20px'
                 }}>
                   {loadingExercises ? (
-                    <div style={{ textAlign: 'center', padding: '40px', color: 'rgba(255, 255, 255, 0.4)' }}>
+                    <div style={{ textAlign: 'center', padding: '40px', color: '#a4b0a8' }}>
                       Cargando ejercicios de la biblioteca...
                     </div>
                   ) : filteredExercises.length === 0 ? (
                     <div style={{
                       textAlign: 'center',
                       padding: '40px',
-                      background: 'var(--theme-card-bg, #0f172a)',
+                      background: 'var(--theme-card-bg, #1a211e)',
                       border: '1px solid var(--theme-border, rgba(255, 255, 255, 0.08))',
                       borderRadius: '16px',
-                      color: 'rgba(255, 255, 255, 0.4)',
+                      color: '#a4b0a8',
                       fontFamily: 'sans-serif'
                     }}>
                       No se encontraron ejercicios con los filtros seleccionados.
@@ -657,13 +657,13 @@ export const ExerciseLibrary: React.FC = () => {
                         <div
                           key={exercise.id}
                           style={{
-                            background: 'var(--theme-card-bg, #0f172a)',
+                            background: 'var(--theme-card-bg, #1a211e)',
                             border: '1px solid var(--theme-border, rgba(255, 255, 255, 0.08))',
                             borderRadius: '16px',
                             overflow: 'hidden',
                             display: 'flex',
                             flexDirection: 'column',
-                            boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+                            boxShadow: 'none',
                             transition: 'transform 0.25s ease, border-color 0.25s ease',
                             cursor: 'pointer'
                           }}
@@ -699,7 +699,7 @@ export const ExerciseLibrary: React.FC = () => {
                                 }}
                               />
                             ) : (
-                              <div style={{ color: 'rgba(255,255,255,0.2)', fontSize: '11px', textTransform: 'uppercase', fontFamily: "'Orbitron', sans-serif" }}>
+                              <div style={{ color: 'rgba(255,255,255,0.2)', fontSize: '12px', textTransform: 'none', fontFamily: "'Inter', sans-serif" }}>
                                 Ilustración Biomecánica
                               </div>
                             )}
@@ -712,11 +712,11 @@ export const ExerciseLibrary: React.FC = () => {
                               border: '1px solid rgba(255, 255, 255, 0.1)',
                               borderRadius: '20px',
                               padding: '4px 10px',
-                              fontSize: '9px',
+                              fontSize: '12px',
                               fontWeight: 700,
                               color: 'white',
-                              backdropFilter: 'blur(4px)',
-                              fontFamily: "'Orbitron', sans-serif"
+                              backdropFilter: 'none',
+                              fontFamily: "'Inter', sans-serif"
                             }}>
                               {exercise.grupo_muscular.toUpperCase()}
                             </span>
@@ -725,7 +725,7 @@ export const ExerciseLibrary: React.FC = () => {
                           {/* Info Detalle */}
                           <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
                             <h4 style={{
-                              fontFamily: "'Orbitron', sans-serif",
+                              fontFamily: "'Inter', sans-serif",
                               fontSize: '13px',
                               fontWeight: 800,
                               margin: '0 0 10px 0',
@@ -735,8 +735,8 @@ export const ExerciseLibrary: React.FC = () => {
                               {exercise.nombre}
                             </h4>
                             <p style={{
-                              fontSize: '11px',
-                              color: 'rgba(255, 255, 255, 0.55)',
+                              fontSize: '12px',
+                              color: '#a4b0a8',
                               lineHeight: '1.6',
                               margin: '0 0 16px 0',
                               fontFamily: 'sans-serif',
@@ -757,24 +757,24 @@ export const ExerciseLibrary: React.FC = () => {
                                     alignItems: 'center',
                                     justifyContent: 'center',
                                     gap: '6px',
-                                    background: 'rgba(0, 212, 255, 0.08)',
-                                    border: '1px solid rgba(0, 212, 255, 0.25)',
+                                    background: 'rgba(145, 182, 161, 0.08)',
+                                    border: '1px solid rgba(145, 182, 161, 0.25)',
                                     borderRadius: '8px',
                                     padding: '8px 12px',
-                                    fontSize: '11px',
+                                    fontSize: '12px',
                                     fontWeight: 800,
-                                    color: 'var(--theme-primary, #00d4ff)',
-                                    fontFamily: "'Orbitron', sans-serif",
+                                    color: 'var(--theme-primary, #91b6a1)',
+                                    fontFamily: "'Inter', sans-serif",
                                     cursor: 'pointer',
                                     transition: 'background 0.2s ease, box-shadow 0.2s ease',
                                     width: '100%',
                                   }}
                                   onMouseEnter={(e) => {
-                                    e.currentTarget.style.background = 'rgba(0, 212, 255, 0.15)';
-                                    e.currentTarget.style.boxShadow = '0 0 12px rgba(0, 212, 255, 0.2)';
+                                    e.currentTarget.style.background = 'rgba(145, 182, 161, 0.15)';
+                                    e.currentTarget.style.boxShadow = '0 0 12px rgba(145, 182, 161, 0.2)';
                                   }}
                                   onMouseLeave={(e) => {
-                                    e.currentTarget.style.background = 'rgba(0, 212, 255, 0.08)';
+                                    e.currentTarget.style.background = 'rgba(145, 182, 161, 0.08)';
                                     e.currentTarget.style.boxShadow = 'none';
                                   }}
                                 >
@@ -800,17 +800,17 @@ export const ExerciseLibrary: React.FC = () => {
                                     border: '1px solid rgba(255, 255, 255, 0.08)',
                                     borderRadius: '8px',
                                     padding: '8px 12px',
-                                    fontSize: '11px',
+                                    fontSize: '12px',
                                     fontWeight: 800,
                                     color: 'white',
                                     textDecoration: 'none',
-                                    fontFamily: "'Orbitron', sans-serif",
+                                    fontFamily: "'Inter', sans-serif",
                                     transition: 'background 0.2s ease'
                                   }}
                                   onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.1)'}
                                   onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255, 255, 255, 0.05)'}
                                 >
-                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--theme-primary, #00d4ff)" strokeWidth="2.5">
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--theme-primary, #91b6a1)" strokeWidth="2.5">
                                     <polygon points="5 3 19 12 5 21 5 3" />
                                   </svg>
                                   VER VIDEO GUÍA
@@ -835,7 +835,7 @@ export const ExerciseLibrary: React.FC = () => {
                             fontSize: '12px',
                             fontWeight: 800,
                             cursor: 'pointer',
-                            letterSpacing: '1px',
+                            letterSpacing: '0',
                             transition: 'all 0.2s ease',
                           }}
                           onMouseEnter={(e) => {
@@ -870,7 +870,7 @@ export const ExerciseLibrary: React.FC = () => {
           position: 'fixed',
           inset: 0,
           background: 'rgba(0, 0, 0, 0.88)',
-          backdropFilter: 'blur(8px)',
+          backdropFilter: 'none',
           zIndex: 9999,
           display: 'flex',
           alignItems: 'center',
@@ -897,7 +897,7 @@ export const ExerciseLibrary: React.FC = () => {
             maxHeight: '90vh',
             display: 'flex',
             flexDirection: 'column',
-            boxShadow: '0 0 60px rgba(0, 212, 255, 0.15)',
+            boxShadow: 'none',
           }}
         >
           {/* Botón cerrar */}
@@ -921,7 +921,7 @@ export const ExerciseLibrary: React.FC = () => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              backdropFilter: 'blur(4px)',
+              backdropFilter: 'none',
             }}
           >
             ✕
@@ -970,16 +970,16 @@ export const ExerciseLibrary: React.FC = () => {
                 id="gif-viewer-title"
                 style={{
                   margin: 0,
-                  fontFamily: "'Orbitron', sans-serif",
+                  fontFamily: "'Inter', sans-serif",
                   fontSize: '12px',
                   fontWeight: 800,
                   color: 'white',
-                  letterSpacing: '0.5px',
+                  letterSpacing: '0',
                 }}
               >
                 {gifViewerExercise.nombre}
               </p>
-              <p style={{ margin: '4px 0 0 0', fontSize: '10px', color: 'rgba(255,255,255,0.4)', fontFamily: 'sans-serif', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#a4b0a8', fontFamily: 'sans-serif', textTransform: 'none', letterSpacing: '0' }}>
                 {gifViewerExercise.grupo_muscular}
               </p>
             </div>
@@ -990,20 +990,20 @@ export const ExerciseLibrary: React.FC = () => {
                 type="button"
                 onClick={() => setGifViewerMediaType((prev) => (prev === 'gif' ? 'image' : 'gif'))}
                 style={{
-                  background: 'rgba(0, 212, 255, 0.1)',
-                  border: '1px solid rgba(0, 212, 255, 0.3)',
+                  background: 'rgba(145, 182, 161, 0.1)',
+                  border: '1px solid rgba(145, 182, 161, 0.3)',
                   borderRadius: '20px',
                   padding: '6px 16px',
-                  fontSize: '11px',
-                  fontFamily: "'Orbitron', sans-serif",
+                  fontSize: '12px',
+                  fontFamily: "'Inter', sans-serif",
                   fontWeight: 700,
-                  color: 'var(--theme-primary, #00d4ff)',
+                  color: 'var(--theme-primary, #91b6a1)',
                   cursor: 'pointer',
                   transition: 'background 0.2s ease',
                   whiteSpace: 'nowrap',
                 }}
-                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(0, 212, 255, 0.2)'}
-                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(0, 212, 255, 0.1)'}
+                onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(145, 182, 161, 0.2)'}
+                onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(145, 182, 161, 0.1)'}
               >
                 {gifViewerMediaType === 'gif' ? '🖼️ Ver Foto' : '🎬 Ver GIF'}
               </button>

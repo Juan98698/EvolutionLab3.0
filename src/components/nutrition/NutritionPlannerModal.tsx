@@ -27,6 +27,7 @@ import {
   healPlanFoodItems,
 } from '../../lib/nutritionEngine';
 import { supabase } from '../../lib/supabaseClient';
+import { useModalA11y } from '../../hooks/useModalA11y';
 import FoodSelectorModal from './FoodSelectorModal';
 import CopyDayModal from './CopyDayModal';
 import NutritionReportPDF from './NutritionReportPDF';
@@ -62,6 +63,7 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
   trainerProfile,
   showToast,
 }) => {
+  const dialogRef = useModalA11y({ isOpen, onClose });
   // Plan activo en edición (con recuperación instantánea de borrador si existe)
   const [plan, setPlan] = useState<NutritionPlan>(() => {
     if (atleta?.id) {
@@ -866,14 +868,14 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
       className="nutrition-modal-backdrop"
       onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
-      <div className="nutrition-modal-window">
+      <div className="nutrition-modal-window" ref={dialogRef} role="dialog" aria-modal="true" aria-label={`Plan nutricional de ${atleta.nombre}`} tabIndex={-1}>
         {/* BARRA SUPERIOR: DATOS Y METAS NUTRICIONALES */}
         <div
           className="nutrition-header-container"
           style={{
             padding: '14px 16px',
             borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-            background: 'linear-gradient(180deg, rgba(0, 212, 255, 0.08) 0%, rgba(11, 15, 25, 0.6) 100%)',
+            background: 'linear-gradient(180deg, rgba(145, 182, 161, 0.08) 0%, rgba(18, 23, 22, 0.6) 100%)',
           }}
         >
           <div className="nutrition-header-top" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
@@ -881,26 +883,26 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                 <span
                   style={{
-                    fontSize: '11px',
-                    fontFamily: "'Orbitron', sans-serif",
+                    fontSize: '12px',
+                    fontFamily: "'Inter', sans-serif",
                     fontWeight: 800,
-                    background: 'var(--theme-primary, #00d4ff)',
+                    background: 'var(--theme-primary, #91b6a1)',
                     color: '#000000',
                     padding: '3px 8px',
                     borderRadius: '4px',
-                    letterSpacing: '1px',
+                    letterSpacing: '0',
                   }}
                 >
                   🥗 NUTRICIÓN & DIETAS
                 </span>
                 <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)' }}>
                   Atleta: <strong style={{ color: '#fff' }}>{atleta.nombre}</strong>
-                  {loading && <span style={{ marginLeft: '6px', fontSize: '11px', color: '#00d4ff' }}>(Cargando...)</span>}
+                  {loading && <span style={{ marginLeft: '6px', fontSize: '12px', color: '#91b6a1' }}>(Cargando...)</span>}
                 </span>
                 {syncedValuationDate && (
                   <span
                     style={{
-                      fontSize: '10px',
+                      fontSize: '12px',
                       background: 'rgba(16, 185, 129, 0.15)',
                       border: '1px solid rgba(16, 185, 129, 0.4)',
                       color: '#34d399',
@@ -915,7 +917,7 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
                 {plan.valoracion_id && !syncedValuationDate && (
                   <span
                     style={{
-                      fontSize: '10px',
+                      fontSize: '12px',
                       background: 'rgba(168, 85, 247, 0.2)',
                       border: '1px solid rgba(168, 85, 247, 0.5)',
                       color: '#c084fc',
@@ -932,7 +934,7 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
                 style={{
                   background: 'transparent',
                   border: 'none',
-                  color: 'rgba(255, 255, 255, 0.6)',
+                  color: '#a4b0a8',
                   fontSize: '22px',
                   cursor: 'pointer',
                   lineHeight: 1,
@@ -956,7 +958,7 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
                   color: 'rgba(255, 255, 255, 0.85)',
                   borderRadius: '8px',
                   padding: '6px 12px',
-                  fontSize: '11px',
+                  fontSize: '12px',
                   cursor: 'pointer',
                   fontWeight: 600,
                   display: 'flex',
@@ -998,12 +1000,12 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
                 title="Configurar opciones de intercambio y equivalentes de alimentos para el PDF"
                 className="nutrition-header-action-btn"
                 style={{
-                  background: configuredEquivalentsCount > 0 ? 'rgba(0, 212, 255, 0.18)' : 'rgba(255, 255, 255, 0.05)',
-                  border: configuredEquivalentsCount > 0 ? '1px solid #00d4ff' : '1px solid rgba(255, 255, 255, 0.15)',
-                  color: configuredEquivalentsCount > 0 ? '#00d4ff' : 'rgba(255, 255, 255, 0.85)',
+                  background: configuredEquivalentsCount > 0 ? 'rgba(145, 182, 161, 0.18)' : 'rgba(255, 255, 255, 0.05)',
+                  border: configuredEquivalentsCount > 0 ? '1px solid #91b6a1' : '1px solid rgba(255, 255, 255, 0.15)',
+                  color: configuredEquivalentsCount > 0 ? '#91b6a1' : 'rgba(255, 255, 255, 0.85)',
                   borderRadius: '8px',
                   padding: '6px 12px',
-                  fontSize: '11px',
+                  fontSize: '12px',
                   cursor: 'pointer',
                   fontWeight: 700,
                   display: 'flex',
@@ -1017,18 +1019,18 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
                   <span
                     className="nutrition-equiv-badge"
                     style={{
-                      background: '#00d4ff',
+                      background: '#91b6a1',
                       color: '#000',
                       borderRadius: '10px',
                       padding: '1px 5px',
-                      fontSize: '9px',
+                      fontSize: '12px',
                       fontWeight: 800,
                     }}
                   >
                     {configuredEquivalentsCount}
                   </span>
                 ) : (
-                  <span className="nutrition-equiv-badge" style={{ fontSize: '9px', color: 'rgba(255,255,255,0.4)' }}>(0)</span>
+                  <span className="nutrition-equiv-badge" style={{ fontSize: '12px', color: '#a4b0a8' }}>(0)</span>
                 )}
               </button>
               <button
@@ -1036,12 +1038,12 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
                 onClick={() => setShowPdfView(!showPdfView)}
                 className="nutrition-header-action-btn"
                 style={{
-                  background: showPdfView ? 'rgba(0, 212, 255, 0.2)' : 'rgba(255, 255, 255, 0.05)',
-                  border: '1px solid rgba(0, 212, 255, 0.3)',
-                  color: '#00d4ff',
+                  background: showPdfView ? 'rgba(145, 182, 161, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(145, 182, 161, 0.3)',
+                  color: '#91b6a1',
                   borderRadius: '8px',
                   padding: '6px 12px',
-                  fontSize: '11px',
+                  fontSize: '12px',
                   cursor: 'pointer',
                   fontWeight: 600,
                 }}
@@ -1057,15 +1059,15 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
             <div className="nutrition-macro-grid">
               {/* CALORÍAS */}
               <div className="nutrition-macro-calorias-col">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '11px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '12px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <span style={{ color: 'rgba(255,255,255,0.7)', fontWeight: 700 }}>🔥 CALORÍAS</span>
-                    <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)' }}>
+                    <span style={{ fontSize: '12px', color: '#a4b0a8' }}>
                       ({compliance.caloriasDiff > 0 ? `+${compliance.caloriasDiff}` : compliance.caloriasDiff} kcal)
                     </span>
                   </div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontWeight: 800, color: compliance.status === 'optimo' ? '#10b981' : compliance.status === 'deficit' ? '#00d4ff' : '#f59e0b' }}>
+                    <span style={{ fontWeight: 800, color: compliance.status === 'optimo' ? '#10b981' : compliance.status === 'deficit' ? '#91b6a1' : '#f59e0b' }}>
                       {currentDayTotals.calorias} / {plan.target_calorias} kcal ({compliance.caloriasPct}%)
                     </span>
                     <button
@@ -1079,7 +1081,7 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
                         color: 'rgba(255, 255, 255, 0.7)',
                         borderRadius: '4px',
                         padding: '1px 6px',
-                        fontSize: '10px',
+                        fontSize: '12px',
                         cursor: 'pointer',
                         lineHeight: 1.2,
                       }}
@@ -1093,7 +1095,7 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
                     style={{
                       width: `${Math.min(100, compliance.caloriasPct)}%`,
                       height: '100%',
-                      background: compliance.status === 'optimo' ? '#10b981' : compliance.status === 'deficit' ? '#00d4ff' : '#f59e0b',
+                      background: compliance.status === 'optimo' ? '#10b981' : compliance.status === 'deficit' ? '#91b6a1' : '#f59e0b',
                       borderRadius: '2px',
                       transition: 'width 0.3s ease',
                     }}
@@ -1103,7 +1105,7 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
 
               {/* PROTEÍNAS */}
               <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
                   <span style={{ color: '#3b82f6', fontWeight: 700 }}>🥩 PROT</span>
                   <span style={{ fontWeight: 800, color: '#3b82f6' }}>
                     {currentDayTotals.proteina} / {plan.target_proteina_g}g ({compliance.proteinaPct}%)
@@ -1124,7 +1126,7 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
 
               {/* CARBOHIDRATOS */}
               <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
                   <span style={{ color: '#10b981', fontWeight: 700 }}>🍚 CARB</span>
                   <span style={{ fontWeight: 800, color: '#10b981' }}>
                     {currentDayTotals.carbohidratos} / {plan.target_carbohidratos_g}g ({compliance.carbohidratosPct}%)
@@ -1145,7 +1147,7 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
 
               {/* GRASAS */}
               <div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
                   <span style={{ color: '#f59e0b', fontWeight: 700 }}>🥑 GRAS</span>
                   <span style={{ fontWeight: 800, color: '#f59e0b' }}>
                     {currentDayTotals.grasa} / {plan.target_grasa_g}g ({compliance.grasaPct}%)
@@ -1194,14 +1196,14 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
                   display: 'flex',
                   alignItems: 'center',
                   gap: '8px',
-                  fontSize: '11px',
+                  fontSize: '12px',
                   flexWrap: 'wrap',
                   border: 'none',
                   padding: 0,
                   margin: 0,
                 }}
               >
-                <span style={{ fontWeight: 700, color: compliance.status === 'optimo' ? '#10b981' : compliance.status === 'deficit' ? '#00d4ff' : '#f59e0b' }}>
+                <span style={{ fontWeight: 700, color: compliance.status === 'optimo' ? '#10b981' : compliance.status === 'deficit' ? '#91b6a1' : '#f59e0b' }}>
                   🔥 {currentDayTotals.calorias}/{plan.target_calorias} kcal ({compliance.caloriasPct}%)
                 </span>
                 <span style={{ color: 'rgba(255,255,255,0.2)' }}>•</span>
@@ -1220,12 +1222,12 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
                 title="Desplegar barras de macros"
                 aria-label="Desplegar barras de macros"
                 style={{
-                  background: 'rgba(0, 212, 255, 0.1)',
-                  border: '1px solid rgba(0, 212, 255, 0.3)',
-                  color: '#00d4ff',
+                  background: 'rgba(145, 182, 161, 0.1)',
+                  border: '1px solid rgba(145, 182, 161, 0.3)',
+                  color: '#91b6a1',
                   borderRadius: '4px',
                   padding: '2px 8px',
-                  fontSize: '10px',
+                  fontSize: '12px',
                   cursor: 'pointer',
                   fontWeight: 600,
                   display: 'flex',
@@ -1265,12 +1267,12 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
                   style={{
                     padding: '8px 12px',
                     borderRadius: '8px',
-                    border: isActive ? '1px solid #00d4ff' : '1px solid rgba(255, 255, 255, 0.1)',
-                    background: isActive ? 'rgba(0, 212, 255, 0.15)' : 'rgba(255, 255, 255, 0.02)',
-                    color: isActive ? '#00d4ff' : 'rgba(255, 255, 255, 0.7)',
-                    fontSize: '11px',
+                    border: isActive ? '1px solid #91b6a1' : '1px solid rgba(255, 255, 255, 0.1)',
+                    background: isActive ? 'rgba(145, 182, 161, 0.15)' : 'rgba(255, 255, 255, 0.02)',
+                    color: isActive ? '#91b6a1' : 'rgba(255, 255, 255, 0.7)',
+                    fontSize: '12px',
                     fontWeight: 700,
-                    fontFamily: "'Orbitron', sans-serif",
+                    fontFamily: "'Inter', sans-serif",
                     cursor: 'pointer',
                     display: 'flex',
                     flexDirection: 'column',
@@ -1281,7 +1283,7 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
                   }}
                 >
                   <span>{d.label}</span>
-                  <span style={{ fontSize: '9px', fontWeight: 400, opacity: 0.8 }}>
+                  <span style={{ fontSize: '12px', fontWeight: 400, opacity: 0.8 }}>
                     {dTotals.calorias > 0 ? `${dTotals.calorias} kcal` : '—'}
                   </span>
                 </button>
@@ -1297,14 +1299,14 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              background: 'rgba(0, 212, 255, 0.1)',
-              border: '1px solid rgba(0, 212, 255, 0.35)',
-              color: '#00d4ff',
+              background: 'rgba(145, 182, 161, 0.1)',
+              border: '1px solid rgba(145, 182, 161, 0.35)',
+              color: '#91b6a1',
               borderRadius: '8px',
               padding: '8px 14px',
-              fontSize: '11px',
+              fontSize: '12px',
               fontWeight: 700,
-              fontFamily: "'Orbitron', sans-serif",
+              fontFamily: "'Inter', sans-serif",
               cursor: 'pointer',
               whiteSpace: 'nowrap',
             }}
@@ -1321,7 +1323,7 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
               {/* SELECTOR DE ALCANCE DEL PDF: SEMANA COMPLETA VS DÍA ACTUAL */}
               <div className="nutrition-pdf-toolbar">
                 <div className="nutrition-pdf-scope-row" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.7)', fontWeight: 600 }}>
+                  <span style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.7)', fontWeight: 600 }}>
                     Alcance:
                   </span>
                   <div style={{ display: 'inline-flex', gap: '4px' }}>
@@ -1332,12 +1334,12 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
                         padding: '5px 12px',
                         borderRadius: '6px',
                         border: 'none',
-                        background: pdfScope === 'all' ? 'var(--theme-primary, #00d4ff)' : 'rgba(255, 255, 255, 0.05)',
+                        background: pdfScope === 'all' ? 'var(--theme-primary, #91b6a1)' : 'rgba(255, 255, 255, 0.05)',
                         color: pdfScope === 'all' ? '#000000' : 'rgba(255, 255, 255, 0.8)',
-                        fontSize: '11px',
+                        fontSize: '12px',
                         fontWeight: 700,
                         cursor: 'pointer',
-                        fontFamily: "'Orbitron', sans-serif",
+                        fontFamily: "'Inter', sans-serif",
                       }}
                     >
                       📅 Plan Completo (Semana)
@@ -1349,12 +1351,12 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
                         padding: '5px 12px',
                         borderRadius: '6px',
                         border: 'none',
-                        background: pdfScope === 'current' ? 'var(--theme-primary, #00d4ff)' : 'rgba(255, 255, 255, 0.05)',
+                        background: pdfScope === 'current' ? 'var(--theme-primary, #91b6a1)' : 'rgba(255, 255, 255, 0.05)',
                         color: pdfScope === 'current' ? '#000000' : 'rgba(255, 255, 255, 0.8)',
-                        fontSize: '11px',
+                        fontSize: '12px',
                         fontWeight: 700,
                         cursor: 'pointer',
-                        fontFamily: "'Orbitron', sans-serif",
+                        fontFamily: "'Inter', sans-serif",
                       }}
                     >
                       🔍 Solo {currentDay?.nombre || activeDayKey}
@@ -1367,14 +1369,14 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '6px',
-                      fontSize: '11px',
+                      fontSize: '12px',
                       color: 'rgba(255, 255, 255, 0.85)',
                       cursor: 'pointer',
                       userSelect: 'none',
-                      background: 'rgba(0, 212, 255, 0.08)',
+                      background: 'rgba(145, 182, 161, 0.08)',
                       padding: '4px 10px',
                       borderRadius: '6px',
-                      border: '1px solid rgba(0, 212, 255, 0.2)',
+                      border: '1px solid rgba(145, 182, 161, 0.2)',
                     }}
                   >
                     <input
@@ -1397,7 +1399,7 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
 
                 {/* CONTROLES DE ZOOM PARA MÓVIL Y ESCRITORIO */}
                 <div className="nutrition-pdf-zoom-group">
-                  <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)', marginRight: '2px' }}>
+                  <span style={{ fontSize: '12px', color: '#a4b0a8', marginRight: '2px' }}>
                     Zoom:
                   </span>
                   <button
@@ -1411,12 +1413,12 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
                   </button>
                   <span
                     style={{
-                      fontSize: '11px',
+                      fontSize: '12px',
                       fontWeight: 700,
-                      color: '#00d4ff',
+                      color: '#91b6a1',
                       minWidth: '38px',
                       textAlign: 'center',
-                      fontFamily: "'Orbitron', monospace",
+                      fontFamily: "'Inter', monospace",
                     }}
                   >
                     {Math.round(pdfZoom * 100)}%
@@ -1478,7 +1480,7 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
                       transform: `scale(${pdfZoom})`,
                       transformOrigin: 'top center',
                       width: '794px',
-                      boxShadow: '0 8px 30px rgba(0,0,0,0.6)',
+                      boxShadow: 'none',
                       borderRadius: '4px',
                     }}
                   >
@@ -1559,7 +1561,7 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
                             }}
                             title="Modificar horario de la comida"
                           >
-                            <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)' }}>🕒</span>
+                            <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)' }}>🕒</span>
                             <input
                               type="time"
                               value={meal.horario || '08:00'}
@@ -1568,7 +1570,7 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
                               style={{
                                 background: 'transparent',
                                 border: 'none',
-                                color: '#00d4ff',
+                                color: '#91b6a1',
                                 fontSize: '12px',
                                 fontWeight: 700,
                                 outline: 'none',
@@ -1601,7 +1603,7 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
                       </div>
 
                       <div className="nutrition-meal-header-row2">
-                        <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.8)' }}>
+                        <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.8)' }}>
                           <strong>{mealTotals.calorias} kcal</strong> ({mealKcalPct}% del día) •{' '}
                           <span style={{ color: '#3b82f6' }}>P: {mealTotals.proteina}g</span> |{' '}
                           <span style={{ color: '#10b981' }}>C: {mealTotals.carbohidratos}g</span> |{' '}
@@ -1629,12 +1631,12 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
                             type="button"
                             onClick={() => handleOpenFoodModal(mIdx)}
                             style={{
-                              background: 'rgba(0, 212, 255, 0.12)',
-                              border: '1px solid rgba(0, 212, 255, 0.4)',
-                              color: '#00d4ff',
+                              background: 'rgba(145, 182, 161, 0.12)',
+                              border: '1px solid rgba(145, 182, 161, 0.4)',
+                              color: '#91b6a1',
                               borderRadius: '6px',
                               padding: '6px 14px',
-                              fontSize: '11px',
+                              fontSize: '12px',
                               fontWeight: 700,
                               cursor: 'pointer',
                             }}
@@ -1653,7 +1655,7 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
                             padding: '18px',
                             textAlign: 'center',
                             fontSize: '12px',
-                            color: 'rgba(255,255,255,0.4)',
+                            color: '#a4b0a8',
                             fontStyle: 'italic',
                           }}
                         >
@@ -1668,7 +1670,7 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
                                   <div style={{ fontSize: '13px', fontWeight: 600, color: '#ffffff' }}>
                                     {food.nombre}
                                   </div>
-                                  <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.5)', marginTop: '2px' }}>
+                                  <div style={{ fontSize: '12px', color: '#a4b0a8', marginTop: '2px' }}>
                                     {food.grupo}
                                   </div>
                                 </div>
@@ -1692,14 +1694,14 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
                                         style={{
                                           background: isConfigured
                                             ? 'rgba(16, 185, 129, 0.15)'
-                                            : 'rgba(0, 212, 255, 0.1)',
+                                            : 'rgba(145, 182, 161, 0.1)',
                                           border: isConfigured
                                             ? '1px solid rgba(16, 185, 129, 0.4)'
-                                            : '1px solid rgba(0, 212, 255, 0.3)',
-                                          color: isConfigured ? '#34d399' : '#00d4ff',
+                                            : '1px solid rgba(145, 182, 161, 0.3)',
+                                          color: isConfigured ? '#34d399' : '#91b6a1',
                                           borderRadius: '6px',
                                           padding: '3px 8px',
-                                          fontSize: '11px',
+                                          fontSize: '12px',
                                           fontWeight: 600,
                                           cursor: 'pointer',
                                           display: 'inline-flex',
@@ -1768,15 +1770,15 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
                                       fontWeight: 700,
                                     }}
                                   />
-                                  <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)' }}>
+                                  <span style={{ fontSize: '12px', color: '#a4b0a8' }}>
                                     {food.unidad}
                                   </span>
                                 </div>
 
                                 {/* Macros del alimento */}
-                                <div style={{ fontSize: '11px', textAlign: 'right' }}>
+                                <div style={{ fontSize: '12px', textAlign: 'right' }}>
                                   <strong style={{ color: '#fff' }}>{food.calorias} kcal</strong>
-                                  <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>
+                                  <div style={{ fontSize: '12px', color: '#a4b0a8' }}>
                                     <span style={{ color: '#3b82f6' }}>P: {food.proteina}g</span> |{' '}
                                     <span style={{ color: '#10b981' }}>C: {food.carbohidratos}g</span> |{' '}
                                     <span style={{ color: '#f59e0b' }}>G: {food.grasa}g</span>
@@ -1809,11 +1811,11 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                   <span
                     style={{
-                      fontSize: '11px',
+                      fontSize: '12px',
                       fontWeight: 700,
                       color: 'rgba(255,255,255,0.7)',
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
+                      textTransform: 'none',
+                      letterSpacing: '0',
                     }}
                   >
                     + Añadir Comida rápida:
@@ -1828,13 +1830,13 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
                         border: '1px solid rgba(255, 255, 255, 0.12)',
                         borderRadius: '6px',
                         color: '#fff',
-                        fontSize: '11px',
+                        fontSize: '12px',
                         fontWeight: 600,
                         padding: '4px 10px',
                         cursor: 'pointer',
                         transition: 'all 0.2s',
                       }}
-                      onMouseEnter={(e) => (e.currentTarget.style.borderColor = '#00d4ff')}
+                      onMouseEnter={(e) => (e.currentTarget.style.borderColor = '#91b6a1')}
                       onMouseLeave={(e) => (e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.12)')}
                     >
                       + {preset}
@@ -1849,11 +1851,11 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
                       }
                     }}
                     style={{
-                      background: 'rgba(0, 212, 255, 0.15)',
-                      border: '1px solid #00d4ff',
+                      background: 'rgba(145, 182, 161, 0.15)',
+                      border: '1px solid #91b6a1',
                       borderRadius: '6px',
-                      color: '#00d4ff',
-                      fontSize: '11px',
+                      color: '#91b6a1',
+                      fontSize: '12px',
                       fontWeight: 700,
                       padding: '4px 10px',
                       cursor: 'pointer',
@@ -1872,7 +1874,7 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
                       border: '1px solid rgba(255, 255, 255, 0.15)',
                       borderRadius: '6px',
                       color: 'rgba(255, 255, 255, 0.7)',
-                      fontSize: '11px',
+                      fontSize: '12px',
                       padding: '4px 10px',
                       cursor: 'pointer',
                     }}
@@ -1892,7 +1894,7 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
                   padding: '16px',
                 }}
               >
-                <label style={{ fontSize: '12px', color: '#00d4ff', fontWeight: 700, letterSpacing: '1px' }}>
+                <label style={{ fontSize: '12px', color: '#91b6a1', fontWeight: 700, letterSpacing: '0' }}>
                   📋 RECOMENDACIONES Y PAUTAS PARA EL ATLETA
                 </label>
                 <textarea
@@ -1954,7 +1956,7 @@ export const NutritionPlannerModal: React.FC<NutritionPlannerModalProps> = ({
 
         {/* FOOTER DE ACCIONES */}
         <div className="nutrition-footer-bar">
-          <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.45)', lineHeight: 1.2 }}>
+          <div style={{ fontSize: '12px', color: '#a4b0a8', lineHeight: 1.2 }}>
             Estado: {plan.id ? 'Sincronizado con Supabase' : 'Nuevo plan local'}
           </div>
 

@@ -1,6 +1,7 @@
 import type { VercelRequest, VercelResponse } from './_lib/types';
 import { createClient } from '@supabase/supabase-js';
 import crypto from 'crypto';
+import { BILLING_PLANS, isBillingPlan } from './_lib/billing';
 
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
@@ -31,6 +32,8 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       paymentId = req.query.id as string;
       topic = req.query.topic as string;
     }
+
+    if (paymentId && !/^[a-zA-Z0-9_-]{1,160}$/.test(paymentId)) return res.status(400).json({ error: 'Invalid payment ID' });
 
     // MercadoPago sometimes sends test notifications or notifications about other topics (e.g. merchant_order, subscription)
     if (topic !== 'payment' || !paymentId) {
@@ -91,42 +94,25 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
     // 2. Query payment details from MercadoPago API for absolute security
     const mpResponse = await fetch(`https://api.mercadopago.com/v1/payments/${paymentId}`, {
-      headers: {
-        'Authorization': `Bearer ${accessToken}`,
-      },
+      headers: { 'Authorization': `Bearer ${accessToken}` },
+      signal: AbortSignal.timeout(10000),
     });
 
     if (!mpResponse.ok) {
       console.error(`⚠️ Webhook: Failed to fetch payment details from MercadoPago (status: ${mpResponse.status})`);
-      return res.status(200).json({ received: true, error: 'Failed to verify payment with MercadoPago' });
+      return res.status(503).json({ error: 'Payment verification temporarily unavailable' });
     }
 
     const payment = await mpResponse.json();
 
-    // 3. Check if the payment status is approved
-    if (payment.status !== 'approved') {
-      console.log(`🔔 MercadoPago Webhook: Payment ${paymentId} is not approved (status: ${payment.status})`);
-      return res.status(200).json({ received: true, approved: false });
+    const userId = payment.metadata?.user_id;
+    const plan = payment.metadata?.plan;
+    if (!userId || !isBillingPlan(plan)) return res.status(422).json({ error: 'Invalid payment metadata' });
+    if (payment.status === 'approved' && (payment.currency_id !== 'COP' || Number(payment.transaction_amount) !== BILLING_PLANS[plan].amount)) {
+      return res.status(422).json({ error: 'Payment amount or currency does not match the plan' });
     }
-
-    // 4. Retrieve metadata
-    const metadata = payment.metadata;
-    if (!metadata) {
-      console.error(`⚠️ Webhook: Approved payment ${paymentId} has no metadata attached.`);
-      return res.status(200).json({ received: true, error: 'Missing metadata' });
-    }
-
-    // MercadoPago API returns metadata keys in lower_snake_case
-    const userId = metadata.user_id || metadata.userId;
-    const plan   = metadata.plan;
-    const email  = metadata.email || payment.payer?.email || null;
-
-    if (!userId || !plan) {
-      console.error(`⚠️ Webhook: Missing required metadata values (userId: ${userId}, plan: ${plan})`);
-      return res.status(200).json({ received: true, error: 'Incomplete metadata' });
-    }
-
-    console.log(`🔔 Webhook: Payment approved! Activating plan "${plan}" for user ID ${userId}${email ? ` (${email})` : ''}`);
+    const updatedAt = payment.date_last_updated || payment.date_approved || payment.date_created;
+    if (!updatedAt || !Number.isFinite(Date.parse(updatedAt))) return res.status(422).json({ error: 'Invalid payment timestamp' });
 
     // 5. Connect to Supabase
     const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || '';
@@ -143,57 +129,16 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       },
     });
 
-    // CÁLCULO PRECISO DE EXPIRACIÓN: Basado en la fecha real de aprobación del pago (date_approved)
-    // para evitar que reintentos automáticos del webhook extiendan indebidamente la vigencia.
-    const approvalDate = payment.date_approved ? new Date(payment.date_approved) : (payment.date_created ? new Date(payment.date_created) : new Date());
-    const baseTime = !isNaN(approvalDate.getTime()) ? approvalDate.getTime() : Date.now();
-    const expirationDate = new Date(baseTime + 30 * 24 * 60 * 60 * 1000).toISOString(); // 30 days of access from payment approval
-
-    // 6. Update profiles table
-    const { error: profileError } = await supabaseAdmin
-      .from('profiles')
-      .update({
-        suscripcion_plan: plan,
-        suscripcion_estado: 'activo',
-        suscripcion_expira_at: expirationDate,
-        vigencia_dias: 30,
-      })
-      .eq('id', userId);
-
-    if (profileError) {
-      throw new Error(`Supabase profile update failed: ${profileError.message}`);
-    }
-
-    console.log(`✅ Profiles updated for user: ${userId}`);
-
-    // 7. If premium, update the suscripciones table
-    if (plan === 'premium') {
-      const { error: subError } = await supabaseAdmin
-        .from('suscripciones')
-        .upsert({
-          cliente_id: userId,
-          tipo: 'premium',
-          estado: 'activa',
-          fecha_inicio: approvalDate.toISOString(),
-          fecha_expiracion: expirationDate,
-        }, { onConflict: 'cliente_id' });
-
-      if (subError) {
-        throw new Error(`Supabase suscripciones upsert failed: ${subError.message}`);
-      }
-
-      console.log(`✅ Suscripciones table upserted for user: ${userId}`);
-    }
-
-    if (email) {
-      console.log(`📧 Confirmación de pago pendiente de envío → ${email} | plan: ${plan} | expira: ${expirationDate}`);
-    } else {
-      console.warn(`⚠️ Webhook: No se encontró email para el usuario ${userId} — no se puede enviar confirmación.`);
-    }
-
-    return res.status(200).json({ received: true, updated: true, notified: !!email });
+    const { data, error } = await supabaseAdmin.rpc('apply_verified_payment', {
+      p_payment_id: paymentId, p_user_id: userId, p_plan: plan, p_status: payment.status,
+      p_approved_at: payment.date_approved || null, p_updated_at: updatedAt,
+    });
+    if (error) throw error;
+    // An acknowledgement only means the durable transaction committed. No email
+    // is claimed until a delivery provider actually confirms a send.
+    return res.status(200).json({ received: true, ...data, notified: false });
   } catch (error: any) {
     console.error('⚠️ Webhook: Database/Internal error processing webhook:', error.message);
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: 'Payment processing temporarily unavailable' });
   }
 }

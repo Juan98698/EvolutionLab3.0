@@ -317,14 +317,14 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
             display: 'flex',
             justifyContent: 'space-between',
             alignItems: 'center',
-            background: 'rgba(0, 212, 255, 0.03)',
+            background: 'rgba(145, 182, 161, 0.03)',
           }}
         >
           <div>
-            <span style={{ fontSize: '10px', color: '#00d4ff', letterSpacing: '1px', fontWeight: 700, textTransform: 'uppercase' }}>
+            <span style={{ fontSize: '12px', color: '#91b6a1', letterSpacing: '0', fontWeight: 700, textTransform: 'none' }}>
               AGREGAR ALIMENTO A:
             </span>
-            <h3 style={{ margin: '2px 0 0', fontSize: '15px', fontFamily: "'Orbitron', sans-serif", color: '#fff' }}>
+            <h3 style={{ margin: '2px 0 0', fontSize: '15px', fontFamily: "'Inter', sans-serif", color: '#fff' }}>
               {mealName}
             </h3>
           </div>
@@ -333,7 +333,7 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
             style={{
               background: 'transparent',
               border: 'none',
-              color: 'rgba(255, 255, 255, 0.6)',
+              color: '#a4b0a8',
               fontSize: '22px',
               cursor: 'pointer',
               lineHeight: 1,
@@ -359,13 +359,13 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
             style={{
               flex: 1,
               padding: '10px 8px',
-              background: activeSourceTab === 'base' ? 'rgba(0, 212, 255, 0.1)' : 'transparent',
+              background: activeSourceTab === 'base' ? 'rgba(145, 182, 161, 0.1)' : 'transparent',
               border: 'none',
-              borderBottom: activeSourceTab === 'base' ? '2px solid #00d4ff' : '2px solid transparent',
-              color: activeSourceTab === 'base' ? '#00d4ff' : 'rgba(255, 255, 255, 0.6)',
-              fontSize: '11px',
+              borderBottom: activeSourceTab === 'base' ? '2px solid #91b6a1' : '2px solid transparent',
+              color: activeSourceTab === 'base' ? '#91b6a1' : '#a4b0a8',
+              fontSize: '12px',
               fontWeight: 700,
-              fontFamily: "'Orbitron', sans-serif",
+              fontFamily: "'Inter', sans-serif",
               cursor: 'pointer',
               whiteSpace: 'nowrap',
               overflow: 'hidden',
@@ -380,13 +380,13 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
             style={{
               flex: 1,
               padding: '10px 8px',
-              background: activeSourceTab === 'openfoodfacts' ? 'rgba(0, 212, 255, 0.1)' : 'transparent',
+              background: activeSourceTab === 'openfoodfacts' ? 'rgba(145, 182, 161, 0.1)' : 'transparent',
               border: 'none',
-              borderBottom: activeSourceTab === 'openfoodfacts' ? '2px solid #00d4ff' : '2px solid transparent',
-              color: activeSourceTab === 'openfoodfacts' ? '#00d4ff' : 'rgba(255, 255, 255, 0.6)',
-              fontSize: '11px',
+              borderBottom: activeSourceTab === 'openfoodfacts' ? '2px solid #91b6a1' : '2px solid transparent',
+              color: activeSourceTab === 'openfoodfacts' ? '#91b6a1' : '#a4b0a8',
+              fontSize: '12px',
               fontWeight: 700,
-              fontFamily: "'Orbitron', sans-serif",
+              fontFamily: "'Inter', sans-serif",
               cursor: 'pointer',
               whiteSpace: 'nowrap',
               overflow: 'hidden',
@@ -401,13 +401,13 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
             style={{
               flex: 1,
               padding: '10px 8px',
-              background: activeSourceTab === 'custom' ? 'rgba(0, 212, 255, 0.1)' : 'transparent',
+              background: activeSourceTab === 'custom' ? 'rgba(145, 182, 161, 0.1)' : 'transparent',
               border: 'none',
-              borderBottom: activeSourceTab === 'custom' ? '2px solid #00d4ff' : '2px solid transparent',
-              color: activeSourceTab === 'custom' ? '#00d4ff' : 'rgba(255, 255, 255, 0.6)',
-              fontSize: '11px',
+              borderBottom: activeSourceTab === 'custom' ? '2px solid #91b6a1' : '2px solid transparent',
+              color: activeSourceTab === 'custom' ? '#91b6a1' : '#a4b0a8',
+              fontSize: '12px',
               fontWeight: 700,
-              fontFamily: "'Orbitron', sans-serif",
+              fontFamily: "'Inter', sans-serif",
               cursor: 'pointer',
               whiteSpace: 'nowrap',
               overflow: 'hidden',
@@ -456,9 +456,9 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
                       flex: '0 0 auto',
                       maxWidth: '100%',
                       background: '#121829',
-                      border: '1px solid rgba(0, 212, 255, 0.35)',
+                      border: '1px solid rgba(145, 182, 161, 0.35)',
                       borderRadius: '8px',
-                      color: '#00d4ff',
+                      color: '#91b6a1',
                       padding: '10px 12px',
                       fontSize: '12px',
                       fontWeight: 600,
@@ -467,7 +467,7 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
                     }}
                   >
                     {availableCategories.map((c) => (
-                      <option key={c.id} value={c.id} style={{ background: '#0d1322', color: '#ffffff' }}>
+                      <option key={c.id} value={c.id} style={{ background: '#1a211e', color: '#ffffff' }}>
                         {c.label} ({c.count})
                       </option>
                     ))}
@@ -477,8 +477,8 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
                 {/* Filtro activo / Limpiar filtro rápido */}
                 {selectedGroup !== 'Todos' && (
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 2px' }}>
-                    <span style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.6)' }}>
-                      Grupo activo: <strong style={{ color: '#00d4ff' }}>{selectedGroup}</strong>
+                    <span style={{ fontSize: '12px', color: '#a4b0a8' }}>
+                      Grupo activo: <strong style={{ color: '#91b6a1' }}>{selectedGroup}</strong>
                     </span>
                     <button
                       type="button"
@@ -486,8 +486,8 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
                       style={{
                         background: 'transparent',
                         border: 'none',
-                        color: 'rgba(255, 255, 255, 0.5)',
-                        fontSize: '11px',
+                        color: '#a4b0a8',
+                        fontSize: '12px',
                         cursor: 'pointer',
                         textDecoration: 'underline',
                       }}
@@ -521,19 +521,19 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
                         whiteSpace: 'nowrap',
                         padding: '4px 10px',
                         borderRadius: '16px',
-                        fontSize: '11px',
+                        fontSize: '12px',
                         border: isSelected
-                          ? '1px solid #00d4ff'
+                          ? '1px solid #91b6a1'
                           : isCustom
-                          ? '1px solid rgba(0, 212, 255, 0.45)'
+                          ? '1px solid rgba(145, 182, 161, 0.45)'
                           : '1px solid rgba(255, 255, 255, 0.1)',
                         background: isSelected
-                          ? 'rgba(0, 212, 255, 0.25)'
+                          ? 'rgba(145, 182, 161, 0.25)'
                           : isCustom
-                          ? 'rgba(0, 212, 255, 0.1)'
+                          ? 'rgba(145, 182, 161, 0.1)'
                           : 'rgba(255, 255, 255, 0.03)',
                         color: isSelected
-                          ? '#00d4ff'
+                          ? '#91b6a1'
                           : isCustom
                           ? '#38bdf8'
                           : 'rgba(255, 255, 255, 0.7)',
@@ -548,11 +548,11 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
                       <span>{cat.label}</span>
                       <span
                         style={{
-                          fontSize: '9px',
+                          fontSize: '12px',
                           padding: '0 4px',
                           borderRadius: '8px',
-                          background: isSelected ? 'rgba(0, 212, 255, 0.3)' : 'rgba(255, 255, 255, 0.08)',
-                          color: isSelected ? '#ffffff' : 'rgba(255, 255, 255, 0.55)',
+                          background: isSelected ? 'rgba(145, 182, 161, 0.3)' : 'rgba(255, 255, 255, 0.08)',
+                          color: isSelected ? '#ffffff' : '#a4b0a8',
                         }}
                       >
                         {cat.count}
@@ -564,11 +564,11 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
 
               {/* Lista de alimentos */}
               {loadingBase ? (
-                <div style={{ textAlign: 'center', padding: '40px', color: 'rgba(255,255,255,0.5)', fontSize: '13px' }}>
+                <div style={{ textAlign: 'center', padding: '40px', color: '#a4b0a8', fontSize: '13px' }}>
                   Cargando catálogo oficial...
                 </div>
               ) : filteredBaseFoods.length === 0 ? (
-                <div style={{ textAlign: 'center', padding: '40px', color: 'rgba(255,255,255,0.5)', fontSize: '13px' }}>
+                <div style={{ textAlign: 'center', padding: '40px', color: '#a4b0a8', fontSize: '13px' }}>
                   No se encontraron alimentos con ese término. Puedes buscar en <strong>Supermercado (Open Food)</strong> o <strong>Crear uno Personalizado</strong>.
                 </div>
               ) : (
@@ -589,24 +589,24 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
                         }}
                         className="food-selector-item-card"
                         style={{
-                          background: isSelected ? 'rgba(0, 212, 255, 0.15)' : 'rgba(255, 255, 255, 0.03)',
-                          border: isSelected ? '1px solid #00d4ff' : '1px solid rgba(255, 255, 255, 0.06)',
+                          background: isSelected ? 'rgba(145, 182, 161, 0.15)' : 'rgba(255, 255, 255, 0.03)',
+                          border: isSelected ? '1px solid #91b6a1' : '1px solid rgba(255, 255, 255, 0.06)',
                         }}
                       >
                         <div className="food-selector-card-top">
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                            <span style={{ fontSize: '13px', fontWeight: 600, color: isSelected ? '#00d4ff' : '#ffffff' }}>
+                            <span style={{ fontSize: '13px', fontWeight: 600, color: isSelected ? '#91b6a1' : '#ffffff' }}>
                               {f.nombre}
                             </span>
                             {f.esPersonalizado && (
                               <span
                                 style={{
-                                  fontSize: '9px',
+                                  fontSize: '12px',
                                   padding: '1px 5px',
                                   borderRadius: '4px',
-                                  background: 'rgba(0, 212, 255, 0.15)',
-                                  color: '#00d4ff',
-                                  border: '1px solid rgba(0, 212, 255, 0.3)',
+                                  background: 'rgba(145, 182, 161, 0.15)',
+                                  color: '#91b6a1',
+                                  border: '1px solid rgba(145, 182, 161, 0.3)',
                                   fontWeight: 700,
                                 }}
                                 title="Alimento personalizado sincronizado en la nube"
@@ -617,11 +617,11 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
                             {f.subgrupo && !f.esPersonalizado && (
                               <span
                                 style={{
-                                  fontSize: '9px',
+                                  fontSize: '12px',
                                   padding: '1px 5px',
                                   borderRadius: '4px',
                                   background: 'rgba(255, 255, 255, 0.06)',
-                                  color: 'rgba(255, 255, 255, 0.6)',
+                                  color: '#a4b0a8',
                                   border: '1px solid rgba(255, 255, 255, 0.1)',
                                 }}
                               >
@@ -654,14 +654,14 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
                           )}
                         </div>
                         <div className="food-selector-card-bottom">
-                          <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.5)' }}>
+                          <div style={{ fontSize: '12px', color: '#a4b0a8' }}>
                             Base: {f.cantidadBase} {f.unidad} • {f.grupo}
                           </div>
                           <div style={{ textAlign: 'right' }}>
                             <span style={{ fontSize: '13px', fontWeight: 700, color: '#ffffff' }}>
                               {f.caloriasBase} kcal
                             </span>
-                            <div style={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.6)', marginTop: '2px' }}>
+                            <div style={{ fontSize: '12px', color: '#a4b0a8', marginTop: '2px' }}>
                               <span style={{ color: '#3b82f6' }}>P: {f.proteinaBase}g</span> •{' '}
                               <span style={{ color: '#10b981' }}>C: {f.carbohidratosBase}g</span> •{' '}
                               <span style={{ color: '#f59e0b' }}>G: {f.grasaBase}g</span>
@@ -751,7 +751,7 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
                   <div
                     style={{
                       fontSize: '12px',
-                      color: 'rgba(255, 255, 255, 0.55)',
+                      color: '#a4b0a8',
                       maxWidth: '400px',
                       margin: '0 auto 14px',
                       lineHeight: '1.4',
@@ -766,9 +766,9 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
                       setActiveSourceTab('custom');
                     }}
                     style={{
-                      background: 'rgba(0, 212, 255, 0.12)',
-                      border: '1px solid #00d4ff',
-                      color: '#00d4ff',
+                      background: 'rgba(145, 182, 161, 0.12)',
+                      border: '1px solid #91b6a1',
+                      color: '#91b6a1',
                       borderRadius: '6px',
                       padding: '8px 16px',
                       fontSize: '12px',
@@ -805,22 +805,22 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
                         }}
                         className="food-selector-item-card"
                         style={{
-                          background: isSelected ? 'rgba(0, 212, 255, 0.15)' : 'rgba(255, 255, 255, 0.03)',
-                          border: isSelected ? '1px solid #00d4ff' : '1px solid rgba(255, 255, 255, 0.06)',
+                          background: isSelected ? 'rgba(145, 182, 161, 0.15)' : 'rgba(255, 255, 255, 0.03)',
+                          border: isSelected ? '1px solid #91b6a1' : '1px solid rgba(255, 255, 255, 0.06)',
                         }}
                       >
                         <div className="food-selector-card-top">
-                          <div style={{ fontSize: '13px', fontWeight: 600, color: isSelected ? '#00d4ff' : '#ffffff' }}>
+                          <div style={{ fontSize: '13px', fontWeight: 600, color: isSelected ? '#91b6a1' : '#ffffff' }}>
                             {f.nombre}
                           </div>
                           {f.marca && (
                             <span
                               style={{
-                                fontSize: '10px',
+                                fontSize: '12px',
                                 padding: '2px 6px',
                                 borderRadius: '4px',
-                                background: 'rgba(0, 212, 255, 0.15)',
-                                color: '#00d4ff',
+                                background: 'rgba(145, 182, 161, 0.15)',
+                                color: '#91b6a1',
                                 fontWeight: 600,
                                 whiteSpace: 'nowrap',
                               }}
@@ -830,7 +830,7 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
                           )}
                         </div>
                         <div className="food-selector-card-bottom">
-                          <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.5)' }}>
+                          <div style={{ fontSize: '12px', color: '#a4b0a8' }}>
                             Por 100{f.unidad} • {f.marca || 'Comercial'}
                           </div>
                           <div style={{ textAlign: 'right' }}>
@@ -846,7 +846,7 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
                                   background: 'rgba(245, 158, 11, 0.12)',
                                   border: '1px solid #f59e0b',
                                   color: '#f59e0b',
-                                  fontSize: '11px',
+                                  fontSize: '12px',
                                   fontWeight: 600,
                                   borderRadius: '4px',
                                   padding: '2px 8px',
@@ -860,7 +860,7 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
                                 <span style={{ fontSize: '13px', fontWeight: 700, color: '#ffffff' }}>
                                   {f.caloriasBase} kcal
                                 </span>
-                                <div style={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.6)', marginTop: '2px' }}>
+                                <div style={{ fontSize: '12px', color: '#a4b0a8', marginTop: '2px' }}>
                                   <span style={{ color: '#3b82f6' }}>P: {f.proteinaBase}g</span> •{' '}
                                   <span style={{ color: '#10b981' }}>C: {f.carbohidratosBase}g</span> •{' '}
                                   <span style={{ color: '#f59e0b' }}>G: {f.grasaBase}g</span>
@@ -882,11 +882,11 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
             <form onSubmit={handleSaveCustomFood} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div
                 style={{
-                  background: 'rgba(0, 212, 255, 0.08)',
-                  border: '1px solid rgba(0, 212, 255, 0.25)',
+                  background: 'rgba(145, 182, 161, 0.08)',
+                  border: '1px solid rgba(145, 182, 161, 0.25)',
                   borderRadius: '8px',
                   padding: '8px 12px',
-                  fontSize: '11px',
+                  fontSize: '12px',
                   color: 'rgba(255, 255, 255, 0.85)',
                   display: 'flex',
                   alignItems: 'center',
@@ -900,7 +900,7 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
               </div>
 
               <div>
-                <label style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>
+                <label style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>
                   NOMBRE DEL ALIMENTO / RECETA *
                 </label>
                 <input
@@ -924,7 +924,7 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
                 <div>
-                  <label style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>
+                  <label style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>
                     CANTIDAD BASE *
                   </label>
                   <input
@@ -946,7 +946,7 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>
+                  <label style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>
                     UNIDAD DE MEDIDA *
                   </label>
                   <select
@@ -990,7 +990,7 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
 
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
                 <div>
-                  <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.7)', fontWeight: 700 }}>
+                  <label style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)', fontWeight: 700 }}>
                     CALORÍAS
                   </label>
                   <input
@@ -1011,7 +1011,7 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '10px', color: '#3b82f6', fontWeight: 700 }}>
+                  <label style={{ fontSize: '12px', color: '#3b82f6', fontWeight: 700 }}>
                     PROTEÍNA (g)
                   </label>
                   <input
@@ -1033,7 +1033,7 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '10px', color: '#10b981', fontWeight: 700 }}>
+                  <label style={{ fontSize: '12px', color: '#10b981', fontWeight: 700 }}>
                     CARBOS (g)
                   </label>
                   <input
@@ -1055,7 +1055,7 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '10px', color: '#f59e0b', fontWeight: 700 }}>
+                  <label style={{ fontSize: '12px', color: '#f59e0b', fontWeight: 700 }}>
                     GRASA (g)
                   </label>
                   <input
@@ -1085,7 +1085,7 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
                     border: '1px solid #f59e0b',
                     borderRadius: '6px',
                     padding: '8px 12px',
-                    fontSize: '11px',
+                    fontSize: '12px',
                     color: '#f59e0b',
                   }}
                 >
@@ -1097,12 +1097,12 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
                 type="submit"
                 style={{
                   marginTop: '8px',
-                  background: 'var(--theme-primary, #00d4ff)',
+                  background: 'var(--theme-primary, #91b6a1)',
                   border: 'none',
                   borderRadius: '6px',
                   color: '#000000',
                   fontWeight: 800,
-                  fontFamily: "'Orbitron', sans-serif",
+                  fontFamily: "'Inter', sans-serif",
                   padding: '10px',
                   fontSize: '12px',
                   cursor: 'pointer',
@@ -1130,7 +1130,7 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
                 style={{
                   width: '80px',
                   background: 'rgba(0, 0, 0, 0.5)',
-                  border: '1px solid #00d4ff',
+                  border: '1px solid #91b6a1',
                   borderRadius: '6px',
                   color: '#ffffff',
                   padding: '6px 10px',
@@ -1139,13 +1139,13 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
                   textAlign: 'center',
                 }}
               />
-              <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)' }}>
+              <span style={{ fontSize: '12px', color: '#a4b0a8' }}>
                 {selectedFood.unidad}
               </span>
             </div>
 
             {/* Preview de macros calculados para esa porción */}
-            <div style={{ fontSize: '11px', display: 'flex', gap: '10px', alignItems: 'center' }}>
+            <div style={{ fontSize: '12px', display: 'flex', gap: '10px', alignItems: 'center' }}>
               <span style={{ color: '#ffffff', fontWeight: 700 }}>
                 {portionPreview.calorias} kcal
               </span>
@@ -1159,14 +1159,14 @@ export const FoodSelectorModal: React.FC<FoodSelectorModalProps> = ({
               onClick={handleConfirmAdd}
               className="food-selector-bottom-btn"
               style={{
-                background: 'var(--theme-primary, #00d4ff)',
+                background: 'var(--theme-primary, #91b6a1)',
                 border: 'none',
                 borderRadius: '8px',
                 color: '#000000',
                 padding: '8px 18px',
                 fontSize: '12px',
                 fontWeight: 800,
-                fontFamily: "'Orbitron', sans-serif",
+                fontFamily: "'Inter', sans-serif",
                 cursor: 'pointer',
               }}
             >

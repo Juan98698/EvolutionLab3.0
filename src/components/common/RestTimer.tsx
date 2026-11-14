@@ -29,7 +29,7 @@ export const RestTimer: React.FC<RestTimerProps> = ({ descansoMinutos, onFinish 
       gain.gain.value = 0.3;
       osc.start();
       osc.stop(ctx.currentTime + 0.3);
-    } catch (_) { /* Silenciar error si el AudioContext no está disponible */ }
+    } catch { /* Silenciar error si el AudioContext no está disponible */ }
 
     // Vibrar si el dispositivo lo soporta
     if (navigator.vibrate) {
@@ -59,7 +59,7 @@ export const RestTimer: React.FC<RestTimerProps> = ({ descansoMinutos, onFinish 
   const getProgressColor = () => {
     if (timer.secondsLeft <= 5) return '#10b981';  // Verde: ¡casi listo!
     if (timer.secondsLeft <= 10) return '#f0a830'; // Ámbar: quedan pocos segundos
-    return '#00d4ff'; // Cyan: corriendo normalmente
+    return '#91b6a1'; // Cyan: corriendo normalmente
   };
 
   const formatDisplay = (seconds: number): string => {

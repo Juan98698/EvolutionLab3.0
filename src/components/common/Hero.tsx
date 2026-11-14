@@ -16,7 +16,7 @@ export const Hero: React.FC = () => {
         position: 'absolute',
         inset: 0,
         background: 'rgba(0,0,0,0.45)',
-        backdropFilter: 'blur(6px)',
+        backdropFilter: 'none',
       }} />
       <div className="hero-content" style={{ position: 'relative', zIndex: 1 }}>
         <h1 className="hero-title" style={{
@@ -24,7 +24,7 @@ export const Hero: React.FC = () => {
           fontWeight: 900,
           fontSize: '2.5rem',
           marginBottom: '0.5rem',
-          background: 'linear-gradient(135deg, var(--accent-teal) 0%, #7b2ff7 70%)',
+          background: 'linear-gradient(135deg, var(--accent-teal) 0%, #769888 70%)',
           WebkitBackgroundClip: 'text',
           WebkitTextFillColor: 'transparent',
         }}>

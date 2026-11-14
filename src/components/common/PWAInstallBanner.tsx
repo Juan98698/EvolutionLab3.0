@@ -121,10 +121,10 @@ export const PWAInstallBanner: React.FC = () => {
           transform: 'translateX(-50%)',
           width: '90%',
           maxWidth: '500px',
-          background: 'rgba(15, 23, 42, 0.85)',
-          backdropFilter: 'blur(16px)',
-          WebkitBackdropFilter: 'blur(16px)',
-          border: '1px solid rgba(0, 212, 255, 0.25)',
+          background: '#1a211e',
+          backdropFilter: 'none',
+          WebkitBackdropFilter: 'none',
+          border: '1px solid rgba(145, 182, 161, 0.25)',
           borderRadius: '20px',
           padding: '16px 20px',
           display: 'flex',
@@ -132,7 +132,7 @@ export const PWAInstallBanner: React.FC = () => {
           justifyContent: 'space-between',
           gap: '16px',
           zIndex: 9999,
-          boxShadow: '0 10px 40px rgba(0, 212, 255, 0.15)',
+          boxShadow: 'none',
           animation: 'slideUpBanner 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards'
         }}
       >
@@ -144,12 +144,12 @@ export const PWAInstallBanner: React.FC = () => {
               width: '44px',
               height: '44px',
               borderRadius: '12px',
-              background: 'linear-gradient(135deg, #7b2ff7 0%, #00d4ff 100%)',
+              background: 'linear-gradient(135deg, #769888 0%, #91b6a1 100%)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               flexShrink: 0,
-              boxShadow: '0 0 15px rgba(0, 212, 255, 0.3)'
+              boxShadow: 'none'
             }}
           >
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -159,10 +159,10 @@ export const PWAInstallBanner: React.FC = () => {
             </svg>
           </div>
           <div>
-            <h4 style={{ margin: '0 0 2px 0', fontSize: '13px', fontFamily: "'Orbitron', sans-serif", fontWeight: 700, color: 'white', letterSpacing: '0.5px' }}>
+            <h4 style={{ margin: '0 0 2px 0', fontSize: '13px', fontFamily: "'Inter', sans-serif", fontWeight: 700, color: 'white', letterSpacing: '0' }}>
               Evolution Lab
             </h4>
-            <p style={{ margin: 0, fontSize: '11px', color: '#94a3b8', lineHeight: 1.4 }}>
+            <p style={{ margin: 0, fontSize: '12px', color: '#a4b0a8', lineHeight: 1.4 }}>
               Instala la aplicación en tu celular para acceso offline y mayor rapidez.
             </p>
           </div>
@@ -172,17 +172,17 @@ export const PWAInstallBanner: React.FC = () => {
           <button 
             onClick={handleInstallClick}
             style={{
-              background: 'linear-gradient(135deg, #00d4ff 0%, #7b2ff7 100%)',
+              background: 'linear-gradient(135deg, #91b6a1 0%, #769888 100%)',
               border: 'none',
               borderRadius: '40px',
               color: 'white',
-              fontFamily: "'Orbitron', sans-serif",
-              fontSize: '11px',
+              fontFamily: "'Inter', sans-serif",
+              fontSize: '12px',
               fontWeight: 800,
               padding: '8px 16px',
               cursor: 'pointer',
               whiteSpace: 'nowrap',
-              boxShadow: '0 4px 12px rgba(0, 212, 255, 0.25)',
+              boxShadow: 'none',
               transition: 'all 0.2s ease'
             }}
           >
@@ -193,7 +193,7 @@ export const PWAInstallBanner: React.FC = () => {
             style={{
               background: 'transparent',
               border: 'none',
-              color: 'rgba(255, 255, 255, 0.4)',
+              color: '#a4b0a8',
               fontSize: '18px',
               cursor: 'pointer',
               padding: '4px 8px',
@@ -218,8 +218,8 @@ export const PWAInstallBanner: React.FC = () => {
             width: '100vw',
             height: '100vh',
             background: 'rgba(0, 0, 0, 0.65)',
-            backdropFilter: 'blur(8px)',
-            WebkitBackdropFilter: 'blur(8px)',
+            backdropFilter: 'none',
+            WebkitBackdropFilter: 'none',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -238,13 +238,13 @@ export const PWAInstallBanner: React.FC = () => {
             aria-labelledby="ios-install-modal-title"
             tabIndex={-1}
             style={{
-              background: 'rgba(15, 23, 42, 0.95)',
-              border: '1px solid rgba(0, 212, 255, 0.25)',
+              background: '#1a211e',
+              border: '1px solid rgba(145, 182, 161, 0.25)',
               borderRadius: '24px',
               padding: '30px 24px',
               width: '100%',
               maxWidth: '420px',
-              boxShadow: '0 20px 50px rgba(0, 212, 255, 0.15)',
+              boxShadow: 'none',
               textAlign: 'center',
               color: 'white',
               position: 'relative'
@@ -259,7 +259,7 @@ export const PWAInstallBanner: React.FC = () => {
                 right: '16px',
                 background: 'none',
                 border: 'none',
-                color: 'rgba(255, 255, 255, 0.5)',
+                color: '#a4b0a8',
                 fontSize: '20px',
                 cursor: 'pointer'
               }}
@@ -283,10 +283,10 @@ export const PWAInstallBanner: React.FC = () => {
               </svg>
             </div>
 
-            <h3 id="ios-install-modal-title" style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '18px', fontWeight: 800, color: '#00d4ff', marginBottom: '8px', letterSpacing: '0.5px' }}>
+            <h3 id="ios-install-modal-title" style={{ fontFamily: "'Inter', sans-serif", fontSize: '18px', fontWeight: 800, color: '#91b6a1', marginBottom: '8px', letterSpacing: '0' }}>
               Instalar en iPhone / iPad
             </h3>
-            <p style={{ fontSize: '12px', color: '#94a3b8', lineHeight: 1.5, marginBottom: '24px' }}>
+            <p style={{ fontSize: '12px', color: '#a4b0a8', lineHeight: 1.5, marginBottom: '24px' }}>
               Sigue estos simples pasos para añadir **Evolution Lab** a tu pantalla de inicio usando Safari:
             </p>
 
@@ -294,18 +294,18 @@ export const PWAInstallBanner: React.FC = () => {
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', textAlign: 'left', marginBottom: '24px' }}>
               <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
                 <span style={{
-                  background: 'rgba(0, 212, 255, 0.1)',
-                  border: '1px solid rgba(0, 212, 255, 0.3)',
-                  color: '#00d4ff',
+                  background: 'rgba(145, 182, 161, 0.1)',
+                  border: '1px solid rgba(145, 182, 161, 0.3)',
+                  color: '#91b6a1',
                   borderRadius: '50%',
                   width: '24px',
                   height: '24px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: '11px',
+                  fontSize: '12px',
                   fontWeight: 700,
-                  fontFamily: "'Orbitron', sans-serif",
+                  fontFamily: "'Inter', sans-serif",
                   flexShrink: 0
                 }}>1</span>
                 <p style={{ margin: 0, fontSize: '12px', color: '#e2e8f0', lineHeight: 1.4 }}>
@@ -315,18 +315,18 @@ export const PWAInstallBanner: React.FC = () => {
 
               <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
                 <span style={{
-                  background: 'rgba(0, 212, 255, 0.1)',
-                  border: '1px solid rgba(0, 212, 255, 0.3)',
-                  color: '#00d4ff',
+                  background: 'rgba(145, 182, 161, 0.1)',
+                  border: '1px solid rgba(145, 182, 161, 0.3)',
+                  color: '#91b6a1',
                   borderRadius: '50%',
                   width: '24px',
                   height: '24px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: '11px',
+                  fontSize: '12px',
                   fontWeight: 700,
-                  fontFamily: "'Orbitron', sans-serif",
+                  fontFamily: "'Inter', sans-serif",
                   flexShrink: 0
                 }}>2</span>
                 <p style={{ margin: 0, fontSize: '12px', color: '#e2e8f0', lineHeight: 1.4 }}>
@@ -336,18 +336,18 @@ export const PWAInstallBanner: React.FC = () => {
 
               <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-start' }}>
                 <span style={{
-                  background: 'rgba(0, 212, 255, 0.1)',
-                  border: '1px solid rgba(0, 212, 255, 0.3)',
-                  color: '#00d4ff',
+                  background: 'rgba(145, 182, 161, 0.1)',
+                  border: '1px solid rgba(145, 182, 161, 0.3)',
+                  color: '#91b6a1',
                   borderRadius: '50%',
                   width: '24px',
                   height: '24px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: '11px',
+                  fontSize: '12px',
                   fontWeight: 700,
-                  fontFamily: "'Orbitron', sans-serif",
+                  fontFamily: "'Inter', sans-serif",
                   flexShrink: 0
                 }}>3</span>
                 <p style={{ margin: 0, fontSize: '12px', color: '#e2e8f0', lineHeight: 1.4 }}>
@@ -360,16 +360,16 @@ export const PWAInstallBanner: React.FC = () => {
               onClick={() => setShowiOSModal(false)}
               style={{
                 width: '100%',
-                background: 'linear-gradient(135deg, #00d4ff 0%, #7b2ff7 100%)',
+                background: 'linear-gradient(135deg, #91b6a1 0%, #769888 100%)',
                 border: 'none',
                 borderRadius: '40px',
                 color: 'white',
-                fontFamily: "'Orbitron', sans-serif",
+                fontFamily: "'Inter', sans-serif",
                 fontSize: '12px',
                 fontWeight: 800,
                 padding: '12px',
                 cursor: 'pointer',
-                boxShadow: '0 4px 12px rgba(0, 212, 255, 0.25)',
+                boxShadow: 'none',
                 transition: 'all 0.2s'
               }}
             >

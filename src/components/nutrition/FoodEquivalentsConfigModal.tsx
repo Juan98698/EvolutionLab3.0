@@ -257,7 +257,7 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
         right: 0,
         bottom: 0,
         backgroundColor: 'rgba(0, 0, 0, 0.8)',
-        backdropFilter: 'blur(8px)',
+        backdropFilter: 'none',
         zIndex: 10000,
         display: 'flex',
         alignItems: 'center',
@@ -268,15 +268,15 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
       <div
         className="food-equiv-modal-window"
         style={{
-          backgroundColor: '#0d1322',
-          border: '1px solid rgba(0, 212, 255, 0.35)',
+          backgroundColor: '#1a211e',
+          border: '1px solid rgba(145, 182, 161, 0.35)',
           borderRadius: '16px',
           width: '100%',
           maxWidth: '740px',
           maxHeight: '92vh',
           display: 'flex',
           flexDirection: 'column',
-          boxShadow: '0 25px 60px rgba(0, 0, 0, 0.7)',
+          boxShadow: 'none',
           color: '#ffffff',
           fontFamily: "'Inter', sans-serif",
           overflow: 'hidden',
@@ -287,7 +287,7 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
           style={{
             padding: '18px 24px 14px',
             borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-            background: 'linear-gradient(180deg, rgba(0, 212, 255, 0.1) 0%, transparent 100%)',
+            background: 'linear-gradient(180deg, rgba(145, 182, 161, 0.1) 0%, transparent 100%)',
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -295,28 +295,28 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
                 <span
                   style={{
-                    fontSize: '11px',
-                    fontFamily: "'Orbitron', sans-serif",
+                    fontSize: '12px',
+                    fontFamily: "'Inter', sans-serif",
                     fontWeight: 800,
-                    background: '#00d4ff',
+                    background: '#91b6a1',
                     color: '#000',
                     padding: '2px 8px',
                     borderRadius: '4px',
-                    letterSpacing: '0.5px',
+                    letterSpacing: '0',
                   }}
                 >
                   🔄 EQUIVALENTES & SUSTITUCIONES
                 </span>
                 <span
                   style={{
-                    fontSize: '10px',
-                    color: '#00d4ff',
-                    border: '1px solid rgba(0, 212, 255, 0.3)',
-                    background: 'rgba(0, 212, 255, 0.1)',
+                    fontSize: '12px',
+                    color: '#91b6a1',
+                    border: '1px solid rgba(145, 182, 161, 0.3)',
+                    background: 'rgba(145, 182, 161, 0.1)',
                     padding: '2px 8px',
                     borderRadius: '4px',
                     fontWeight: 700,
-                    textTransform: 'uppercase',
+                    textTransform: 'none',
                   }}
                 >
                   Dominante: {dominantMacro}
@@ -332,7 +332,7 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
               style={{
                 background: 'none',
                 border: 'none',
-                color: 'rgba(255, 255, 255, 0.5)',
+                color: '#a4b0a8',
                 fontSize: '22px',
                 cursor: 'pointer',
                 padding: '4px',
@@ -373,7 +373,7 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
               overflowX: 'auto',
             }}
           >
-            <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', fontWeight: 700, whiteSpace: 'nowrap' }}>
+            <span style={{ fontSize: '12px', color: '#a4b0a8', textTransform: 'none', fontWeight: 700, whiteSpace: 'nowrap' }}>
               Alimentos en tu plan:
             </span>
             <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', paddingBottom: '2px' }}>
@@ -399,29 +399,29 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
                       gap: '5px',
                       padding: '4px 10px',
                       borderRadius: '20px',
-                      fontSize: '11px',
+                      fontSize: '12px',
                       fontWeight: isSelected ? 700 : 500,
                       whiteSpace: 'nowrap',
                       cursor: 'pointer',
                       transition: 'all 0.15s ease',
                       border: isSelected
-                        ? '1px solid #00d4ff'
+                        ? '1px solid #91b6a1'
                         : '1px solid rgba(255, 255, 255, 0.12)',
                       background: isSelected
-                        ? 'rgba(0, 212, 255, 0.2)'
+                        ? 'rgba(145, 182, 161, 0.2)'
                         : 'rgba(255, 255, 255, 0.04)',
-                      color: isSelected ? '#00d4ff' : 'rgba(255, 255, 255, 0.8)',
+                      color: isSelected ? '#91b6a1' : 'rgba(255, 255, 255, 0.8)',
                     }}
                   >
                     <span>{getMacroIcon(foodMacro)}</span>
                     <span>{food.nombre}</span>
                     <span
                       style={{
-                        fontSize: '9px',
+                        fontSize: '12px',
                         padding: '1px 5px',
                         borderRadius: '10px',
                         background: activeCount > 0 ? 'rgba(16, 185, 129, 0.25)' : 'rgba(255, 255, 255, 0.08)',
-                        color: activeCount > 0 ? '#10b981' : 'rgba(255, 255, 255, 0.4)',
+                        color: activeCount > 0 ? '#10b981' : '#a4b0a8',
                         fontWeight: 700,
                       }}
                     >
@@ -452,7 +452,7 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
             }}
           >
             <div>
-              <div style={{ fontSize: '13px', fontWeight: 700, color: hasActiveOptions ? '#10b981' : '#94a3b8', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <div style={{ fontSize: '13px', fontWeight: 700, color: hasActiveOptions ? '#10b981' : '#a4b0a8', display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <span>{hasActiveOptions ? '✅' : '⚪'}</span>
                 <span>
                   {hasActiveOptions
@@ -460,7 +460,7 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
                     : 'Deshabilitado en el PDF (no generará ruido en el documento)'}
                 </span>
               </div>
-              <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.5)', marginTop: '2px' }}>
+              <div style={{ fontSize: '12px', color: '#a4b0a8', marginTop: '2px' }}>
                 {hasActiveOptions
                   ? 'Este alimento se imprimirá en la Guía de Intercambios del PDF con las opciones marcadas.'
                   : 'Solo los alimentos donde apruebes reemplazos aparecerán en el PDF generado.'}
@@ -478,7 +478,7 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
                     color: '#f87171',
                     borderRadius: '6px',
                     padding: '6px 12px',
-                    fontSize: '11px',
+                    fontSize: '12px',
                     fontWeight: 600,
                     cursor: 'pointer',
                     display: 'flex',
@@ -494,12 +494,12 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
                   type="button"
                   onClick={handleActivateAll}
                   style={{
-                    background: 'rgba(0, 212, 255, 0.15)',
-                    border: '1px solid rgba(0, 212, 255, 0.4)',
-                    color: '#00d4ff',
+                    background: 'rgba(145, 182, 161, 0.15)',
+                    border: '1px solid rgba(145, 182, 161, 0.4)',
+                    color: '#91b6a1',
                     borderRadius: '6px',
                     padding: '6px 12px',
-                    fontSize: '11px',
+                    fontSize: '12px',
                     fontWeight: 600,
                     cursor: 'pointer',
                     display: 'flex',
@@ -517,11 +517,11 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
           {/* SECCIÓN 1: OPCIONES CONFIGURADAS PARA EL PDF */}
           <div>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '4px' }}>
-              <div style={{ fontSize: '12px', fontWeight: 700, color: 'rgba(255, 255, 255, 0.9)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+              <div style={{ fontSize: '12px', fontWeight: 700, color: 'rgba(255, 255, 255, 0.9)', textTransform: 'none', letterSpacing: '0' }}>
                 📋 Opciones Aprobadas para el PDF ({activeOptionsCount})
               </div>
               {equivalents.length > 0 && (
-                <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.5)' }}>
+                <div style={{ fontSize: '12px', color: '#a4b0a8' }}>
                   {activeOptionsCount === equivalents.length
                     ? `${activeOptionsCount} de ${equivalents.length} activas`
                     : `${activeOptionsCount} de ${equivalents.length} activas (${equivalents.length - activeOptionsCount} deshabilitadas)`}
@@ -534,7 +534,7 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
                 style={{
                   padding: '20px',
                   textAlign: 'center',
-                  color: 'rgba(255, 255, 255, 0.45)',
+                  color: '#a4b0a8',
                   background: 'rgba(255, 255, 255, 0.02)',
                   borderRadius: '8px',
                   fontSize: '12px',
@@ -557,7 +557,7 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
                           ? 'rgba(255, 255, 255, 0.04)'
                           : 'rgba(255, 255, 255, 0.01)',
                         border: opt.activo
-                          ? '1px solid rgba(0, 212, 255, 0.25)'
+                          ? '1px solid rgba(145, 182, 161, 0.25)'
                           : '1px dashed rgba(255, 255, 255, 0.1)',
                         opacity: opt.activo ? 1 : 0.45,
                         transition: 'all 0.2s ease',
@@ -570,7 +570,7 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
                           type="checkbox"
                           checked={opt.activo}
                           onChange={() => onToggleActive(idx)}
-                          style={{ cursor: 'pointer', width: '18px', height: '18px', accentColor: '#00d4ff', flexShrink: 0 }}
+                          style={{ cursor: 'pointer', width: '18px', height: '18px', accentColor: '#91b6a1', flexShrink: 0 }}
                           title="Activar / Desactivar en el PDF"
                         />
 
@@ -581,8 +581,8 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
                           </div>
                           <div
                             style={{
-                              fontSize: '10px',
-                              color: 'rgba(255, 255, 255, 0.4)',
+                              fontSize: '12px',
+                              color: '#a4b0a8',
                               marginTop: '2px',
                             }}
                           >
@@ -624,14 +624,14 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
                               background: 'rgba(0, 0, 0, 0.4)',
                               border: '1px solid rgba(255, 255, 255, 0.2)',
                               borderRadius: '6px',
-                              color: '#00d4ff',
+                              color: '#91b6a1',
                               padding: '4px 6px',
                               fontSize: '12px',
                               textAlign: 'center',
                               fontWeight: 700,
                             }}
                           />
-                          <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)' }}>
+                          <span style={{ fontSize: '12px', color: '#a4b0a8' }}>
                             {opt.unidad}
                           </span>
                         </div>
@@ -641,13 +641,13 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
                           <div style={{ fontSize: '12px', fontWeight: 700, color: '#fff' }}>
                             {opt.calorias} kcal
                           </div>
-                          <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>
+                          <div style={{ fontSize: '12px', color: '#a4b0a8' }}>
                             P: {opt.proteina}g • C: {opt.carbohidratos}g • G: {opt.grasa}g
                           </div>
                           <div style={{ marginTop: '2px' }}>
                             <span
                               style={{
-                                fontSize: '9px',
+                                fontSize: '12px',
                                 fontWeight: 700,
                                 padding: '1px 5px',
                                 borderRadius: '4px',
@@ -712,14 +712,14 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
                     <span>🎯</span>
                     <span>NIVEL 1: EQUIVALENTES CALÓRICOS RECOMENDADOS (±10% kcal)</span>
                   </div>
-                  <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.5)', marginTop: '2px' }}>
+                  <div style={{ fontSize: '12px', color: '#a4b0a8', marginTop: '2px' }}>
                     Igualan el aporte de {dominantMacro} manteniendo intactas las calorías objetivo del día.
                   </div>
                 </div>
               </div>
 
               {suggestions.strictMatches.length === 0 ? (
-                <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.4)', fontStyle: 'italic', padding: '6px 0' }}>
+                <div style={{ fontSize: '12px', color: '#a4b0a8', fontStyle: 'italic', padding: '6px 0' }}>
                   No se encontraron alimentos en el catálogo con diferencia menor al ±10%.
                 </div>
               ) : (
@@ -750,13 +750,13 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
                           <div style={{ fontSize: '12px', fontWeight: 600, color: '#ffffff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             {cand.nombre}
                           </div>
-                          <div style={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.6)', marginTop: '2px' }}>
+                          <div style={{ fontSize: '12px', color: '#a4b0a8', marginTop: '2px' }}>
                             <strong>{cand.cantidad} {cand.unidad}</strong> • {cand.calorias} kcal ({cand.deltaCaloriasPct > 0 ? `+${cand.deltaCaloriasPct}%` : `${cand.deltaCaloriasPct}%`})
                           </div>
                         </div>
 
                         {isInList && isActive ? (
-                          <span style={{ fontSize: '10px', color: '#10b981', fontWeight: 700, padding: '3px 8px', background: 'rgba(16, 185, 129, 0.15)', borderRadius: '4px' }}>
+                          <span style={{ fontSize: '12px', color: '#10b981', fontWeight: 700, padding: '3px 8px', background: 'rgba(16, 185, 129, 0.15)', borderRadius: '4px' }}>
                             ✓ En lista
                           </span>
                         ) : isInList && !isActive ? (
@@ -764,12 +764,12 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
                             type="button"
                             onClick={() => handleAddSuggestedOption(cand)}
                             style={{
-                              background: 'rgba(0, 212, 255, 0.15)',
-                              border: '1px solid rgba(0, 212, 255, 0.5)',
-                              color: '#00d4ff',
+                              background: 'rgba(145, 182, 161, 0.15)',
+                              border: '1px solid rgba(145, 182, 161, 0.5)',
+                              color: '#91b6a1',
                               borderRadius: '5px',
                               padding: '4px 10px',
-                              fontSize: '11px',
+                              fontSize: '12px',
                               fontWeight: 700,
                               cursor: 'pointer',
                               whiteSpace: 'nowrap',
@@ -783,12 +783,12 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
                             type="button"
                             onClick={() => handleAddSuggestedOption(cand)}
                             style={{
-                              background: '#00d4ff',
+                              background: '#91b6a1',
                               border: 'none',
                               color: '#000000',
                               borderRadius: '5px',
                               padding: '4px 10px',
-                              fontSize: '11px',
+                              fontSize: '12px',
                               fontWeight: 700,
                               cursor: 'pointer',
                               whiteSpace: 'nowrap',
@@ -821,7 +821,7 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
                       <span>NIVEL 2: OTRAS FUENTES DE {dominantMacro.toUpperCase()} ({suggestions.macroMatches.length} opciones en {availableCategories.length} categorías)</span>
                     </div>
                   </div>
-                  <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.5)', marginTop: '2px' }}>
+                  <div style={{ fontSize: '12px', color: '#a4b0a8', marginTop: '2px' }}>
                     Alimentos que igualan la porción de {dominantMacro} pero cuyas calorías varían (&gt;10%). Clasificados por categorías para dar variedad según tu criterio profesional.
                   </div>
                 </div>
@@ -853,7 +853,7 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
                           borderRadius: '6px',
                           color: '#fff',
                           padding: '6px 10px',
-                          fontSize: '11px',
+                          fontSize: '12px',
                           boxSizing: 'border-box',
                         }}
                       />
@@ -868,8 +868,8 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
                             transform: 'translateY(-50%)',
                             background: 'none',
                             border: 'none',
-                            color: 'rgba(255, 255, 255, 0.5)',
-                            fontSize: '11px',
+                            color: '#a4b0a8',
+                            fontSize: '12px',
                             cursor: 'pointer',
                           }}
                         >
@@ -891,16 +891,16 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
                         borderRadius: '6px',
                         color: '#fff',
                         padding: '6px 10px',
-                        fontSize: '11px',
+                        fontSize: '12px',
                         fontWeight: 600,
                         cursor: 'pointer',
                       }}
                     >
-                      <option value="all" style={{ background: '#111827', color: '#fff' }}>
+                      <option value="all" style={{ background: '#1a211e', color: '#fff' }}>
                         🌐 Todas las categorías ({suggestions.macroMatches.length})
                       </option>
                       {availableCategories.map(([cat, count]) => (
-                        <option key={cat} value={cat} style={{ background: '#111827', color: '#fff' }}>
+                        <option key={cat} value={cat} style={{ background: '#1a211e', color: '#fff' }}>
                           {getSubgrupoIcon(cat)} {cat} ({count})
                         </option>
                       ))}
@@ -926,7 +926,7 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
                       style={{
                         padding: '4px 10px',
                         borderRadius: '6px',
-                        fontSize: '11px',
+                        fontSize: '12px',
                         fontWeight: 700,
                         cursor: 'pointer',
                         whiteSpace: 'nowrap',
@@ -950,7 +950,7 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
                           style={{
                             padding: '4px 10px',
                             borderRadius: '6px',
-                            fontSize: '11px',
+                            fontSize: '12px',
                             fontWeight: 600,
                             cursor: 'pointer',
                             whiteSpace: 'nowrap',
@@ -964,7 +964,7 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
                         >
                           <span>{getSubgrupoIcon(cat)}</span>
                           <span>{cat}</span>
-                          <span style={{ opacity: 0.6, fontSize: '10px' }}>({count})</span>
+                          <span style={{ opacity: 0.6, fontSize: '12px' }}>({count})</span>
                         </button>
                       );
                     })}
@@ -972,7 +972,7 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
                 </div>
 
                 {filteredMacroMatches.length === 0 ? (
-                  <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.4)', fontStyle: 'italic', padding: '10px 0', textAlign: 'center' }}>
+                  <div style={{ fontSize: '12px', color: '#a4b0a8', fontStyle: 'italic', padding: '10px 0', textAlign: 'center' }}>
                     No se encontraron alimentos en esta categoría con el filtro actual.
                   </div>
                 ) : (
@@ -1007,7 +1007,7 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
                               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '3px' }}>
                                 <span
                                   style={{
-                                    fontSize: '9px',
+                                    fontSize: '12px',
                                     fontWeight: 700,
                                     background: 'rgba(255, 255, 255, 0.08)',
                                     color: 'rgba(255, 255, 255, 0.75)',
@@ -1025,7 +1025,7 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
                               <div style={{ fontSize: '12px', fontWeight: 600, color: '#ffffff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={cand.nombre}>
                                 {cand.nombre}
                               </div>
-                              <div style={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.6)', marginTop: '2px' }}>
+                              <div style={{ fontSize: '12px', color: '#a4b0a8', marginTop: '2px' }}>
                                 <strong>{cand.cantidad} {cand.unidad}</strong> • {cand.calorias} kcal{' '}
                                 <span style={{ color: '#fbbf24', fontWeight: 700 }}>
                                   ({delta > 0 ? `+${delta}%` : `${delta}%`} kcal)
@@ -1034,7 +1034,7 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
                             </div>
 
                             {isInList && isActive ? (
-                              <span style={{ fontSize: '10px', color: '#fbbf24', fontWeight: 700, padding: '3px 8px', background: 'rgba(245, 158, 11, 0.15)', borderRadius: '4px' }}>
+                              <span style={{ fontSize: '12px', color: '#fbbf24', fontWeight: 700, padding: '3px 8px', background: 'rgba(245, 158, 11, 0.15)', borderRadius: '4px' }}>
                                 ✓ En lista
                               </span>
                             ) : isInList && !isActive ? (
@@ -1047,7 +1047,7 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
                                   color: '#fbbf24',
                                   borderRadius: '5px',
                                   padding: '4px 10px',
-                                  fontSize: '11px',
+                                  fontSize: '12px',
                                   fontWeight: 700,
                                   cursor: 'pointer',
                                   whiteSpace: 'nowrap',
@@ -1066,7 +1066,7 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
                                   color: '#fbbf24',
                                   borderRadius: '5px',
                                   padding: '4px 10px',
-                                  fontSize: '11px',
+                                  fontSize: '12px',
                                   fontWeight: 700,
                                   cursor: 'pointer',
                                   whiteSpace: 'nowrap',
@@ -1091,7 +1091,7 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
                             color: '#fbbf24',
                             borderRadius: '6px',
                             padding: '6px 16px',
-                            fontSize: '11px',
+                            fontSize: '12px',
                             fontWeight: 700,
                             cursor: 'pointer',
                           }}
@@ -1117,12 +1117,12 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
           >
             <div
               style={{
-                fontSize: '11px',
+                fontSize: '12px',
                 fontWeight: 700,
                 color: 'rgba(255,255,255,0.8)',
                 marginBottom: '8px',
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px',
+                textTransform: 'none',
+                letterSpacing: '0',
               }}
             >
               + Buscar cualquier otro alimento del catálogo:
@@ -1178,7 +1178,7 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
                       {item.esPersonalizado || item.grupo === 'Mis Alimentos' ? (
                         <span
                           style={{
-                            fontSize: '10px',
+                            fontSize: '12px',
                             background: 'rgba(245, 158, 11, 0.2)',
                             color: '#fbbf24',
                             border: '1px solid rgba(245, 158, 11, 0.4)',
@@ -1192,11 +1192,11 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
                         </span>
                       ) : null}
                       <strong>{item.nombre}</strong>{' '}
-                      <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: '11px' }}>
+                      <span style={{ color: '#a4b0a8', fontSize: '12px' }}>
                         ({item.subgrupo || item.grupo})
                       </span>
                     </span>
-                    <span style={{ color: '#00d4ff', fontWeight: 600, fontSize: '11px' }}>
+                    <span style={{ color: '#91b6a1', fontWeight: 600, fontSize: '12px' }}>
                       + Calcular & Añadir
                     </span>
                   </button>
@@ -1258,14 +1258,14 @@ export const FoodEquivalentsConfigModal: React.FC<FoodEquivalentsConfigModalProp
               type="button"
               onClick={handleSaveClick}
               style={{
-                background: '#00d4ff',
+                background: '#91b6a1',
                 border: 'none',
                 borderRadius: '8px',
                 color: '#000000',
                 padding: '8px 20px',
                 fontSize: '12px',
                 fontWeight: 700,
-                fontFamily: "'Orbitron', sans-serif",
+                fontFamily: "'Inter', sans-serif",
                 cursor: 'pointer',
               }}
             >

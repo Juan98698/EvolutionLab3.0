@@ -1,3 +1,4 @@
+import { EstimateNotice } from '../common/EstimateNotice';
 import React, { useMemo, useState } from 'react';
 import { SugerenciaPreWorkout, Exercise } from '../../types/database.types';
 import { Session, calcularSugerenciasPreWorkout } from '../../lib/overload';
@@ -65,7 +66,7 @@ export const PreWorkoutPrompt: React.FC<PreWorkoutPromptProps> = ({
       className="modal-overlay modal-overlay-enter open"
       style={{
         display: 'flex', justifyContent: 'center', alignItems: 'center',
-        zIndex: 99999, backdropFilter: 'blur(8px)',
+        zIndex: 99999, backdropFilter: 'none',
       }}
     >
       <div
@@ -73,7 +74,7 @@ export const PreWorkoutPrompt: React.FC<PreWorkoutPromptProps> = ({
         style={{
           maxWidth: '520px', width: '90%', maxHeight: '80vh',
           overflowY: 'auto', border: '1px solid rgba(255,255,255,0.08)',
-          boxShadow: '0 25px 60px rgba(0,0,0,0.5)',
+          boxShadow: 'none',
           background: 'rgba(10, 15, 28, 0.95)',
           borderRadius: '18px', padding: '0'
         }}
@@ -88,17 +89,18 @@ export const PreWorkoutPrompt: React.FC<PreWorkoutPromptProps> = ({
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <div style={{
               width: '36px', height: '36px', borderRadius: '10px',
-              background: 'linear-gradient(135deg, var(--theme-primary, #00d4ff), var(--theme-secondary, #0070a0))',
+              background: 'linear-gradient(135deg, var(--theme-primary, #91b6a1), var(--theme-secondary, #0070a0))',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 4px 16px var(--theme-glow, rgba(0,212,255,0.25))'
+              boxShadow: 'none'
             }}>
               <span style={{ fontSize: '18px' }}>🧠</span>
             </div>
             <div>
-              <h3 style={{ margin: 0, fontFamily: "'Orbitron', sans-serif", fontSize: '13px', fontWeight: 800, letterSpacing: '0.5px', color: 'white' }}>
+              <h3 style={{ margin: 0, fontFamily: "'Inter', sans-serif", fontSize: '13px', fontWeight: 800, letterSpacing: '0', color: 'white' }}>
                 SMART COACH
               </h3>
-              <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', marginTop: '1px' }}>
+          <EstimateNotice />
+              <div style={{ fontSize: '12px', color: '#a4b0a8', marginTop: '1px' }}>
                 Sugerencias para tu entrenamiento de hoy
               </div>
             </div>
@@ -107,7 +109,7 @@ export const PreWorkoutPrompt: React.FC<PreWorkoutPromptProps> = ({
             onClick={onClose}
             style={{
               background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)',
-              borderRadius: '8px', color: 'rgba(255,255,255,0.5)', padding: '6px 10px',
+              borderRadius: '8px', color: '#a4b0a8', padding: '6px 10px',
               cursor: 'pointer', fontSize: '14px', transition: 'all 0.2s'
             }}
           >
@@ -121,12 +123,12 @@ export const PreWorkoutPrompt: React.FC<PreWorkoutPromptProps> = ({
             <div key={ejercicio} style={{ marginBottom: '20px' }}>
               {/* Exercise name header */}
               <div style={{
-                fontSize: '11px', fontWeight: 700, fontFamily: "'Orbitron', sans-serif",
-                color: 'var(--theme-primary, #00d4ff)', letterSpacing: '0.5px',
+                fontSize: '12px', fontWeight: 700, fontFamily: "'Inter', sans-serif",
+                color: 'var(--theme-primary, #91b6a1)', letterSpacing: '0',
                 marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '6px',
-                textTransform: 'uppercase'
+                textTransform: 'none'
               }}>
-                <span style={{ width: '4px', height: '16px', borderRadius: '2px', background: 'var(--theme-primary, #00d4ff)' }}></span>
+                <span style={{ width: '4px', height: '16px', borderRadius: '2px', background: 'var(--theme-primary, #91b6a1)' }}></span>
                 {ejercicio}
               </div>
 
@@ -144,7 +146,7 @@ export const PreWorkoutPrompt: React.FC<PreWorkoutPromptProps> = ({
                         border: '1px solid rgba(255,255,255,0.06)',
                         borderRadius: '12px', padding: '14px 16px',
                         display: 'flex', gap: '12px', alignItems: 'flex-start',
-                        boxShadow: `0 4px 12px ${style.glow}`,
+                        boxShadow: 'none',
                         transition: 'transform 0.2s ease',
                         flexDirection: 'column'
                       }}
@@ -155,18 +157,18 @@ export const PreWorkoutPrompt: React.FC<PreWorkoutPromptProps> = ({
                           <div style={{ fontSize: '12px', fontWeight: 700, color: 'white', marginBottom: '4px' }}>
                             {tip.titulo}
                           </div>
-                          <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.65)', lineHeight: '1.5' }}>
+                          <div style={{ fontSize: '12px', color: '#a4b0a8', lineHeight: '1.5' }}>
                             {tip.mensaje}
                           </div>
                           {tip.valor_sugerido > 0 && tip.unidad && (
                             <div style={{
                               marginTop: '8px', display: 'inline-flex', alignItems: 'center', gap: '6px',
                               padding: '4px 10px', borderRadius: '6px', background: 'rgba(255,255,255,0.06)',
-                              fontSize: '11px', fontWeight: 700, fontFamily: "'Orbitron', sans-serif",
+                              fontSize: '12px', fontWeight: 700, fontFamily: "'Inter', sans-serif",
                               color: 'white'
                             }}>
-                              <span style={{ color: 'rgba(255,255,255,0.4)' }}>{tip.valor_actual} {tip.unidad}</span>
-                              <span style={{ color: 'var(--theme-primary, #00d4ff)' }}>→</span>
+                              <span style={{ color: '#a4b0a8' }}>{tip.valor_actual} {tip.unidad}</span>
+                              <span style={{ color: 'var(--theme-primary, #91b6a1)' }}>→</span>
                               <span>{tip.valor_sugerido} {tip.unidad}</span>
                             </div>
                           )}
@@ -180,10 +182,10 @@ export const PreWorkoutPrompt: React.FC<PreWorkoutPromptProps> = ({
                             setExpandedTips(prev => ({ ...prev, [tipKey]: !isExpanded }));
                           }}
                           style={{
-                            background: 'none', border: 'none', color: 'var(--theme-primary, #00d4ff)',
-                            fontSize: '9px', fontWeight: 700, fontFamily: "'Orbitron', sans-serif",
+                            background: 'none', border: 'none', color: 'var(--theme-primary, #91b6a1)',
+                            fontSize: '12px', fontWeight: 700, fontFamily: "'Inter', sans-serif",
                             cursor: 'pointer', padding: '4px 0 0 0', display: 'flex', alignItems: 'center', gap: '4px',
-                            textTransform: 'uppercase', letterSpacing: '0.5px'
+                            textTransform: 'none', letterSpacing: '0'
                           }}
                         >
                           {isExpanded ? 'Ocultar Explicación 🧠 ▲' : 'Ver Por Qué 🧠 ▼'}
@@ -194,11 +196,11 @@ export const PreWorkoutPrompt: React.FC<PreWorkoutPromptProps> = ({
                             background: 'rgba(0, 0, 0, 0.25)',
                             padding: '10px 12px',
                             borderRadius: '8px',
-                            fontSize: '10px',
+                            fontSize: '12px',
                             color: 'rgba(255, 255, 255, 0.75)',
                             lineHeight: '1.4',
                             fontFamily: 'sans-serif',
-                            borderLeft: '2px solid var(--theme-primary, #00d4ff)'
+                            borderLeft: '2px solid var(--theme-primary, #91b6a1)'
                           }}>
                             {getExplanation(tip)}
                           </div>
@@ -219,14 +221,14 @@ export const PreWorkoutPrompt: React.FC<PreWorkoutPromptProps> = ({
           position: 'sticky', bottom: 0, background: 'rgba(10, 15, 28, 0.98)',
           borderRadius: '0 0 18px 18px'
         }}>
-          <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', fontStyle: 'italic' }}>
+          <div style={{ fontSize: '12px', color: '#a4b0a8', fontStyle: 'italic' }}>
             Basado en {sesiones.length} sesiones registradas
           </div>
           <button
             onClick={onClose}
             className="btn btn-primary"
             style={{
-              fontFamily: "'Orbitron', sans-serif", fontSize: '11px', fontWeight: 700,
+              fontFamily: "'Inter', sans-serif", fontSize: '12px', fontWeight: 700,
               padding: '10px 20px', display: 'inline-flex', alignItems: 'center', gap: '6px'
             }}
           >

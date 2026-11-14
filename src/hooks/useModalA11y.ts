@@ -10,6 +10,8 @@ interface UseModalA11yOptions {
 const FOCUSABLE_SELECTOR =
   'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
 
+const modalStack: symbol[] = [];
+
 /**
  * Hook compartido de accesibilidad para modales/diálogos.
  *
@@ -30,9 +32,15 @@ export function useModalA11y<T extends HTMLElement = HTMLDivElement>({
 }: UseModalA11yOptions) {
   const containerRef = useRef<T>(null);
   const previousFocusRef = useRef<HTMLElement | null>(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+  const modalId = useRef(Symbol('dialog'));
 
   useEffect(() => {
     if (!isOpen) return;
+
+    const id = modalId.current;
+    modalStack.push(id);
 
     const container = containerRef.current;
     previousFocusRef.current = document.activeElement as HTMLElement | null;
@@ -41,7 +49,7 @@ export function useModalA11y<T extends HTMLElement = HTMLDivElement>({
     // contenedor mismo si no hay ninguno) para que los lectores de pantalla
     // anuncien el diálogo y el teclado quede "atrapado" desde el inicio.
     const focusFirstElement = () => {
-      if (!container) return;
+      if (!container || modalStack[modalStack.length - 1] !== id) return;
       const focusables = container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR);
       (focusables[0] ?? container).focus();
     };
@@ -49,9 +57,10 @@ export function useModalA11y<T extends HTMLElement = HTMLDivElement>({
     const focusTimeout = window.setTimeout(focusFirstElement, 0);
 
     function handleKeyDown(e: KeyboardEvent) {
+      if (modalStack[modalStack.length - 1] !== id) return;
       if (e.key === 'Escape') {
         e.stopPropagation();
-        onClose();
+        onCloseRef.current();
         return;
       }
 
@@ -79,10 +88,12 @@ export function useModalA11y<T extends HTMLElement = HTMLDivElement>({
     return () => {
       window.clearTimeout(focusTimeout);
       document.removeEventListener('keydown', handleKeyDown, true);
+      const index = modalStack.indexOf(id);
+      if (index !== -1) modalStack.splice(index, 1);
       // Restaurar el foco a donde estaba antes de abrir el modal.
       previousFocusRef.current?.focus?.();
     };
-  }, [isOpen, onClose]);
+  }, [isOpen]);
 
   return containerRef;
 }

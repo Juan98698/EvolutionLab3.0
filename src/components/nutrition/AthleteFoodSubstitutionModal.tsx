@@ -56,7 +56,7 @@ export const AthleteFoodSubstitutionModal: React.FC<AthleteFoodSubstitutionModal
         right: 0,
         bottom: 0,
         backgroundColor: 'rgba(0, 0, 0, 0.75)',
-        backdropFilter: 'blur(6px)',
+        backdropFilter: 'none',
         zIndex: 10000,
         display: 'flex',
         alignItems: 'center',
@@ -66,15 +66,15 @@ export const AthleteFoodSubstitutionModal: React.FC<AthleteFoodSubstitutionModal
     >
       <div
         style={{
-          backgroundColor: '#0d1322',
-          border: '1px solid rgba(0, 212, 255, 0.35)',
+          backgroundColor: '#1a211e',
+          border: '1px solid rgba(145, 182, 161, 0.35)',
           borderRadius: '16px',
           width: '100%',
           maxWidth: '520px',
           maxHeight: '90vh',
           display: 'flex',
           flexDirection: 'column',
-          boxShadow: '0 20px 50px rgba(0, 0, 0, 0.7)',
+          boxShadow: 'none',
           color: '#ffffff',
           fontFamily: "'Inter', sans-serif",
           overflow: 'hidden',
@@ -85,17 +85,17 @@ export const AthleteFoodSubstitutionModal: React.FC<AthleteFoodSubstitutionModal
           style={{
             padding: '18px 20px',
             borderBottom: '1px solid rgba(255, 255, 255, 0.1)',
-            background: 'linear-gradient(180deg, rgba(0, 212, 255, 0.1) 0%, transparent 100%)',
+            background: 'linear-gradient(180deg, rgba(145, 182, 161, 0.1) 0%, transparent 100%)',
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
             <div>
               <span
                 style={{
-                  fontSize: '10px',
-                  fontFamily: "'Orbitron', sans-serif",
+                  fontSize: '12px',
+                  fontFamily: "'Inter', sans-serif",
                   fontWeight: 800,
-                  background: '#00d4ff',
+                  background: '#91b6a1',
                   color: '#000',
                   padding: '2px 8px',
                   borderRadius: '4px',
@@ -115,7 +115,7 @@ export const AthleteFoodSubstitutionModal: React.FC<AthleteFoodSubstitutionModal
               style={{
                 background: 'none',
                 border: 'none',
-                color: 'rgba(255, 255, 255, 0.5)',
+                color: '#a4b0a8',
                 fontSize: '20px',
                 cursor: 'pointer',
                 padding: '4px',
@@ -135,7 +135,7 @@ export const AthleteFoodSubstitutionModal: React.FC<AthleteFoodSubstitutionModal
               border: '1px solid rgba(255, 255, 255, 0.08)',
             }}
           >
-            <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.5)', fontWeight: 600 }}>
+            <div style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 600 }}>
               Prescrito por tu entrenador:
             </div>
             <div style={{ fontSize: '13px', fontWeight: 700, color: '#ffffff', marginTop: '2px' }}>
@@ -143,7 +143,7 @@ export const AthleteFoodSubstitutionModal: React.FC<AthleteFoodSubstitutionModal
             </div>
             <div
               style={{
-                fontSize: '11px',
+                fontSize: '12px',
                 color: 'rgba(255, 255, 255, 0.7)',
                 marginTop: '4px',
                 display: 'flex',
@@ -162,7 +162,7 @@ export const AthleteFoodSubstitutionModal: React.FC<AthleteFoodSubstitutionModal
         <div style={{ padding: '16px 20px', overflowY: 'auto', flex: 1 }}>
           <div
             style={{
-              fontSize: '11px',
+              fontSize: '12px',
               color: 'rgba(255, 255, 255, 0.7)',
               marginBottom: '10px',
               lineHeight: 1.4,
@@ -177,7 +177,7 @@ export const AthleteFoodSubstitutionModal: React.FC<AthleteFoodSubstitutionModal
               style={{
                 padding: '20px',
                 textAlign: 'center',
-                color: 'rgba(255, 255, 255, 0.5)',
+                color: '#a4b0a8',
                 background: 'rgba(255, 255, 255, 0.02)',
                 borderRadius: '8px',
                 fontSize: '12px',
@@ -204,10 +204,10 @@ export const AthleteFoodSubstitutionModal: React.FC<AthleteFoodSubstitutionModal
                       padding: '12px 14px',
                       borderRadius: '10px',
                       background: isSelected
-                        ? 'rgba(0, 212, 255, 0.12)'
+                        ? 'rgba(145, 182, 161, 0.12)'
                         : 'rgba(255, 255, 255, 0.03)',
                       border: isSelected
-                        ? '1px solid #00d4ff'
+                        ? '1px solid #91b6a1'
                         : '1px solid rgba(255, 255, 255, 0.08)',
                       cursor: 'pointer',
                       transition: 'all 0.2s ease',
@@ -219,10 +219,10 @@ export const AthleteFoodSubstitutionModal: React.FC<AthleteFoodSubstitutionModal
                         height: '16px',
                         borderRadius: '50%',
                         border: isSelected
-                          ? '5px solid #00d4ff'
-                          : '2px solid rgba(255, 255, 255, 0.3)',
+                          ? '5px solid #91b6a1'
+                          : '2px solid #a4b0a8',
                         boxSizing: 'border-box',
-                        background: '#0d1322',
+                        background: '#1a211e',
                       }}
                     />
 
@@ -232,8 +232,8 @@ export const AthleteFoodSubstitutionModal: React.FC<AthleteFoodSubstitutionModal
                       </div>
                       <div
                         style={{
-                          fontSize: '11px',
-                          color: 'rgba(255, 255, 255, 0.6)',
+                          fontSize: '12px',
+                          color: '#a4b0a8',
                           marginTop: '2px',
                         }}
                       >
@@ -242,12 +242,12 @@ export const AthleteFoodSubstitutionModal: React.FC<AthleteFoodSubstitutionModal
                     </div>
 
                     <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontSize: '12px', fontWeight: 700, color: '#00d4ff' }}>
+                      <div style={{ fontSize: '12px', fontWeight: 700, color: '#91b6a1' }}>
                         {opt.calorias} kcal
                       </div>
                       <span
                         style={{
-                          fontSize: '9px',
+                          fontSize: '12px',
                           fontWeight: 700,
                           padding: '1px 5px',
                           borderRadius: '4px',
@@ -290,7 +290,7 @@ export const AthleteFoodSubstitutionModal: React.FC<AthleteFoodSubstitutionModal
                 borderRadius: '8px',
                 color: '#ef4444',
                 padding: '8px 12px',
-                fontSize: '11px',
+                fontSize: '12px',
                 fontWeight: 600,
                 cursor: 'pointer',
               }}
@@ -323,14 +323,14 @@ export const AthleteFoodSubstitutionModal: React.FC<AthleteFoodSubstitutionModal
               onClick={handleConfirm}
               disabled={approvedOptions.length === 0}
               style={{
-                background: approvedOptions.length > 0 ? '#00d4ff' : 'rgba(255, 255, 255, 0.2)',
+                background: approvedOptions.length > 0 ? '#91b6a1' : 'rgba(255, 255, 255, 0.2)',
                 border: 'none',
                 borderRadius: '8px',
-                color: approvedOptions.length > 0 ? '#000000' : 'rgba(255, 255, 255, 0.5)',
+                color: approvedOptions.length > 0 ? '#000000' : '#a4b0a8',
                 padding: '8px 16px',
                 fontSize: '12px',
                 fontWeight: 700,
-                fontFamily: "'Orbitron', sans-serif",
+                fontFamily: "'Inter', sans-serif",
                 cursor: approvedOptions.length > 0 ? 'pointer' : 'not-allowed',
               }}
             >

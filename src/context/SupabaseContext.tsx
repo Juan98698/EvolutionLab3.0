@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabaseClient';
+import { activateSessionCache } from '../lib/sessionCache';
+import { bindPlanSnapshot } from '../lib/planCache';
 import { Profile } from '../types/database.types';
 
 interface SupabaseContextType {
@@ -39,6 +41,18 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   // Ref para evitar doble inicialización de la sesión por la carrera entre initSession y onAuthStateChange
   const initDone = useRef(false);
+  const activeUserRef = useRef<string | null>(null);
+
+  const bindAccount = (id: string | null) => {
+    if (activeUserRef.current !== id) {
+      setProfile(null);
+      setNeedsRoleSelection(false);
+      // Unscoped legacy plan data must not cross an account boundary.
+      bindPlanSnapshot(id);
+    }
+    activeUserRef.current = id;
+    void activateSessionCache(id);
+  };
 
   // Transición de opacidad suave de la PWA al inicializar la sesión.
   // Depende también de `user`: signOut() y el evento SIGNED_OUT quitan la clase para
@@ -52,7 +66,7 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [loading, user]);
 
-  const fetchProfile = async (userId: string, currentUser?: User | null): Promise<Profile | null> => {
+  const fetchProfile = async (userId: string, _currentUser?: User | null): Promise<Profile | null> => {
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -62,6 +76,7 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
       if (error) throw error;
 
+      if (activeUserRef.current !== userId) return null;
       if (data) {
         const profileData = data as Profile;
         setProfile(profileData);
@@ -76,45 +91,6 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
         return profileData;
       } else {
-        // Si el usuario acaba de registrarse con Google OAuth y no tiene perfil aún en BD
-        try {
-          const { data: authUserData } = await supabase.auth.getUser();
-          const targetAuthUser = authUserData?.user || currentUser || user;
-          if (targetAuthUser && targetAuthUser.id === userId) {
-            const googleName =
-              targetAuthUser.user_metadata?.full_name ||
-              targetAuthUser.user_metadata?.name ||
-              targetAuthUser.email?.split('@')[0] ||
-              'Atleta';
-            const newProfileData = {
-              id: userId,
-              email: targetAuthUser.email || '',
-              nombre: googleName,
-              rol: 'cliente' as const,
-              vigencia_dias: 30,
-              suscripcion_plan: 'free',
-              suscripcion_estado: 'activo',
-              suscripcion_expira_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-              onboarding_completado: false
-            };
-            const { data: createdProfile } = await supabase
-              .from('profiles')
-              .upsert(newProfileData)
-              .select()
-              .maybeSingle();
-
-            if (createdProfile) {
-              const profileData = createdProfile as Profile;
-              setProfile(profileData);
-              localStorage.setItem('pwa_user_profile', JSON.stringify(profileData));
-              setNeedsRoleSelection(true);
-              return profileData;
-            }
-          }
-        } catch (createErr) {
-          console.error('Error al auto-crear perfil para OAuth:', createErr);
-        }
-
         setProfile(null);
         return null;
       }
@@ -125,12 +101,12 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         const cached = localStorage.getItem('pwa_user_profile');
         if (cached) {
           const cachedProfile = JSON.parse(cached) as Profile;
-          if (cachedProfile.id === userId) {
+          if (cachedProfile.id === userId && activeUserRef.current === userId) {
             setProfile(cachedProfile);
             return cachedProfile;
           }
         }
-      } catch (e) {}
+      } catch {}
       return null;
     }
   };
@@ -205,6 +181,7 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   const signOut = async () => {
     // 1. Limpieza de estado local y almacenamiento instantánea (0ms)
     // Esto previene que la interfaz se congele esperando la red
+    bindAccount(null);
     setUser(null);
     setProfile(null);
     setNeedsRoleSelection(false);
@@ -218,7 +195,7 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
         }
       }
       sessionStorage.clear();
-    } catch (e) {}
+    } catch {}
 
     // 2. Ejecutar la invalidación de token en Supabase de forma asíncrona sin bloquear la UI
     supabase.auth.signOut().catch((err) => {
@@ -248,10 +225,12 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           initDone.current = true;
 
           if (session) {
+            bindAccount(session.user.id);
             setUser(session.user);
             // Cargar el perfil en segundo plano de inmediato.
             fetchProfile(session.user.id, session.user);
           } else {
+            bindAccount(null);
             setUser(null);
             // No borrar profile cacheado aquí; podría ser útil para UX offline
           }
@@ -261,10 +240,12 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
         // Eventos posteriores (SIGNED_IN, SIGNED_OUT, TOKEN_REFRESHED, etc.)
         if (session) {
+          bindAccount(session.user.id);
           setUser(session.user);
           // fetchProfile en segundo plano sin bloquear
           fetchProfile(session.user.id, session.user);
         } else {
+          bindAccount(null);
           setUser(null);
           setProfile(null);
           setNeedsRoleSelection(false);
@@ -273,7 +254,7 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           }
           try {
             localStorage.removeItem('pwa_user_profile');
-          } catch (e) {}
+          } catch {}
         }
         setLoading(false);
       }

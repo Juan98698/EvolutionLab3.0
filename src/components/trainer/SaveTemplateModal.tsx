@@ -114,14 +114,14 @@ export const SaveTemplateModal: React.FC<SaveTemplateModalProps> = ({
   return (
     <div style={{
       position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-      background: 'rgba(5, 8, 16, 0.85)', backdropFilter: 'blur(12px)',
+      background: 'rgba(5, 8, 16, 0.85)', backdropFilter: 'none',
       zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px',
       fontFamily: "'Inter', sans-serif"
     }}>
       <div style={{
         background: '#0a0f1d', border: '1px solid rgba(255, 255, 255, 0.12)',
         borderRadius: '20px', width: '100%', maxWidth: '550px',
-        boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.7)', overflow: 'hidden'
+        boxShadow: 'none', overflow: 'hidden'
       }}>
         {/* Header */}
         <div style={{
@@ -133,7 +133,7 @@ export const SaveTemplateModal: React.FC<SaveTemplateModalProps> = ({
             <h3 style={{ margin: 0, color: '#fff', fontSize: '1.25rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span>💾</span> Guardar como Plantilla Reutilizable
             </h3>
-            <p style={{ margin: '4px 0 0 0', color: '#94a3b8', fontSize: '0.85rem' }}>
+            <p style={{ margin: '4px 0 0 0', color: '#a4b0a8', fontSize: '0.85rem' }}>
               Guarda este plan conservando ejercicios, multimedia y series para otros clientes.
             </p>
           </div>
@@ -163,7 +163,7 @@ export const SaveTemplateModal: React.FC<SaveTemplateModalProps> = ({
                   flex: 1, padding: '10px 14px', borderRadius: '8px', border: 'none',
                   fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
                   background: mode === 'new' ? 'linear-gradient(135deg, #00F2FE 0%, #4FACFE 100%)' : 'transparent',
-                  color: mode === 'new' ? '#04070e' : '#94a3b8'
+                  color: mode === 'new' ? '#04070e' : '#a4b0a8'
                 }}
               >
                 ➕ Crear Nueva Plantilla
@@ -181,7 +181,7 @@ export const SaveTemplateModal: React.FC<SaveTemplateModalProps> = ({
                   flex: 1, padding: '10px 14px', borderRadius: '8px', border: 'none',
                   fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s',
                   background: mode === 'overwrite' ? 'linear-gradient(135deg, #00F2FE 0%, #4FACFE 100%)' : 'transparent',
-                  color: mode === 'overwrite' ? '#04070e' : '#94a3b8'
+                  color: mode === 'overwrite' ? '#04070e' : '#a4b0a8'
                 }}
               >
                 🔄 Sobrescribir Existente
@@ -298,7 +298,7 @@ export const SaveTemplateModal: React.FC<SaveTemplateModalProps> = ({
               disabled={isSaving}
               style={{
                 background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)',
-                color: '#94a3b8', padding: '10px 18px', borderRadius: '10px', fontSize: '0.85rem',
+                color: '#a4b0a8', padding: '10px 18px', borderRadius: '10px', fontSize: '0.85rem',
                 fontWeight: 600, cursor: 'pointer'
               }}
             >

@@ -6,6 +6,7 @@ const PROJECT_REF = process.env['SUPABASE_PROJECT_REF']
 
 test.describe('Evolution Lab 3.0 E2E Workflows', () => {
   test.beforeEach(async ({ page }) => {
+    await page.clock.setFixedTime(new Date('2026-06-30T15:00:00Z'));
     // Pipe page console messages to terminal output for debugging
     page.on('console', msg => {
       console.log(`[BROWSER CONSOLE ${msg.type().toUpperCase()}]: ${msg.text()}`);
@@ -133,7 +134,7 @@ test.describe('Evolution Lab 3.0 E2E Workflows', () => {
     await page.goto('/dashboard', { waitUntil: 'domcontentloaded' });
 
     // Verify athlete header greeting and calendar cards load successfully (using a 30s assertion timeout)
-    const topBar = page.locator('.top-bar');
+    const topBar = page.locator('.studio-athlete-toolbar');
     await expect(topBar).toContainText('Hola, Juan Perez', { timeout: 30000 });
 
     // On mobile, the gamification panel resides inside the "Progreso" tab. Switch to it if the tab bar is visible.

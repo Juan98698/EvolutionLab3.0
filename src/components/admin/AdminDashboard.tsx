@@ -178,7 +178,7 @@ export const AdminDashboard: React.FC = () => {
       if (createRol === 'entrenador' && data?.user?.id) {
         const defaultMarca = {
           nombre_display: createNombre.trim(),
-          color_primario: '#00d4ff',
+          color_primario: '#91b6a1',
           color_secundario: '#0070a0',
           tipografia: 'Inter' as const,
           eslogan: '',
@@ -239,7 +239,7 @@ export const AdminDashboard: React.FC = () => {
       const updatedMarca = editRol === 'entrenador' ? {
         ...(editingUser.marca || {
           nombre_display: editNombre.trim(),
-          color_primario: '#00d4ff',
+          color_primario: '#91b6a1',
           color_secundario: '#0070a0',
           tipografia: 'Inter' as const,
           eslogan: '',
@@ -365,20 +365,20 @@ export const AdminDashboard: React.FC = () => {
   return (
     <div style={{ background: 'transparent', minHeight: '100vh', color: 'white', paddingBottom: '60px', width: '100%', maxWidth: '100vw', overflowX: 'hidden', boxSizing: 'border-box' }}>
       {/* HEADER */}
-      <div className="top-bar" style={{ marginBottom: '10px', padding: '12px 0', width: '100%', boxSizing: 'border-box' }}>
+      <div className="top-bar studio-legacy-nav" style={{ marginBottom: '10px', padding: '12px 0', width: '100%', boxSizing: 'border-box' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', maxWidth: '1200px', margin: '0 auto', padding: isMobile ? '0 12px' : '0 20px', width: '100%', boxSizing: 'border-box' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
-            <div style={{ width: '32px', height: '32px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #ef4444, #dc2626)', boxShadow: '0 0 15px rgba(239, 68, 68, 0.35)', flexShrink: 0 }}>
+            <div style={{ width: '32px', height: '32px', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'linear-gradient(135deg, #ef4444, #dc2626)', boxShadow: 'none', flexShrink: 0 }}>
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
               </svg>
             </div>
             <div style={{ minWidth: 0 }}>
-              <h1 style={{ fontFamily: 'Orbitron, sans-serif', fontSize: '15px', fontWeight: 800, margin: 0, letterSpacing: '1px', display: 'flex', alignItems: 'baseline', gap: '6px', flexWrap: 'wrap' }}>
+              <h1 style={{ fontFamily: 'Inter, sans-serif', fontSize: '15px', fontWeight: 800, margin: 0, letterSpacing: '0', display: 'flex', alignItems: 'baseline', gap: '6px', flexWrap: 'wrap' }}>
                 <span style={{ color: '#ffffff' }}>EVOLUTION</span>{' '}
                 <span style={{ background: 'linear-gradient(90deg, #ef4444, #f97316)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>ADMIN</span>
               </h1>
-              <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <div style={{ fontSize: '12px', color: '#a4b0a8', marginTop: '2px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 Panel de Control — <span style={{ color: '#f87171', fontWeight: 600 }}>{profile?.nombre || 'Admin'}</span>
               </div>
             </div>
@@ -387,7 +387,7 @@ export const AdminDashboard: React.FC = () => {
           <button
             onClick={handleLogout}
             style={{
-              fontSize: '11px', fontFamily: "'Orbitron', sans-serif", fontWeight: 700,
+              fontSize: '12px', fontFamily: "'Inter', sans-serif", fontWeight: 700,
               background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.25)',
               borderRadius: '10px', color: '#fca5a5', padding: '8px 14px', cursor: 'pointer',
               display: 'flex', alignItems: 'center', gap: '6px', transition: 'all 0.2s', flexShrink: 0
@@ -406,12 +406,12 @@ export const AdminDashboard: React.FC = () => {
         borderTop: '1px solid rgba(255, 255, 255, 0.02)',
         padding: '6px 14px',
         textAlign: 'center',
-        fontSize: '9px',
-        fontFamily: "'Orbitron', sans-serif",
+        fontSize: '12px',
+        fontFamily: "'Inter', sans-serif",
         fontWeight: 600,
-        letterSpacing: '1px',
-        color: 'rgba(255, 255, 255, 0.65)',
-        textTransform: 'uppercase',
+        letterSpacing: '0',
+        color: '#a4b0a8',
+        textTransform: 'none',
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
@@ -429,7 +429,7 @@ export const AdminDashboard: React.FC = () => {
             background: 'none',
             border: 'none',
             color: '#ef4444',
-            fontSize: '11px',
+            fontSize: '12px',
             cursor: 'pointer',
             padding: '2px 4px',
             display: 'inline-flex',
@@ -452,8 +452,8 @@ export const AdminDashboard: React.FC = () => {
           width: '100%',
           height: '100%',
           background: 'rgba(0, 0, 0, 0.8)',
-          backdropFilter: 'blur(10px)',
-          WebkitBackdropFilter: 'blur(10px)',
+          backdropFilter: 'none',
+          WebkitBackdropFilter: 'none',
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
@@ -469,16 +469,16 @@ export const AdminDashboard: React.FC = () => {
             aria-labelledby="admin-plan-info-title"
             tabIndex={-1}
             style={{
-            background: 'var(--theme-card-bg, #0f172a)',
+            background: 'var(--theme-card-bg, #1a211e)',
             border: '1px solid var(--theme-border, rgba(255, 255, 255, 0.1))',
             borderRadius: '20px',
             padding: '24px',
             maxWidth: '420px',
             width: '100%',
-            boxShadow: '0 20px 50px rgba(0, 0, 0, 0.5)',
+            boxShadow: 'none',
             position: 'relative',
             color: 'white',
-            fontFamily: "'Orbitron', sans-serif",
+            fontFamily: "'Inter', sans-serif",
             textAlign: 'left'
           }} onClick={(e) => e.stopPropagation()}>
             <button
@@ -489,14 +489,14 @@ export const AdminDashboard: React.FC = () => {
                 right: '15px',
                 background: 'none',
                 border: 'none',
-                color: 'rgba(255,255,255,0.5)',
+                color: '#a4b0a8',
                 fontSize: '18px',
                 cursor: 'pointer'
               }}
             >
               ✕
             </button>
-            <h3 id="admin-plan-info-title" style={{ fontSize: '13px', color: '#ef4444', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '16px', marginTop: 0 }}>
+            <h3 id="admin-plan-info-title" style={{ fontSize: '13px', color: '#ef4444', letterSpacing: '0', textTransform: 'none', marginBottom: '16px', marginTop: 0 }}>
               Detalles del Plan Admin
             </h3>
             <div>
@@ -524,7 +524,7 @@ export const AdminDashboard: React.FC = () => {
           boxSizing: 'border-box'
         }}>
           {[
-            { label: 'Total Usuarios', value: stats.total, color: '#94a3b8', bg: 'rgba(148, 163, 184, 0.08)', border: 'rgba(148, 163, 184, 0.2)', icon: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75' },
+            { label: 'Total Usuarios', value: stats.total, color: '#a4b0a8', bg: 'rgba(148, 163, 184, 0.08)', border: 'rgba(148, 163, 184, 0.2)', icon: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 7a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75' },
             { label: 'Administradores', value: stats.admins, color: '#f87171', bg: ROLE_COLORS.admin.bg, border: ROLE_COLORS.admin.border, icon: 'M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z' },
             { label: 'Entrenadores', value: stats.trainers, color: '#a5b4fc', bg: ROLE_COLORS.entrenador.bg, border: ROLE_COLORS.entrenador.border, icon: 'M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5' },
             { label: 'Clientes', value: stats.clients, color: '#5eead4', bg: ROLE_COLORS.cliente.bg, border: ROLE_COLORS.cliente.border, icon: 'M18 8h1a4 4 0 0 1 0 8h-1M2 8h16v8H2zM6 12h4' },
@@ -536,7 +536,7 @@ export const AdminDashboard: React.FC = () => {
                 </svg>
                 {stat.label}
               </div>
-              <div className="mcard-value" style={{ fontFamily: "'Orbitron', sans-serif", fontSize: isMobile ? '20px' : '26px', fontWeight: 800 }}>{stat.value}</div>
+              <div className="mcard-value" style={{ fontFamily: "'Inter', sans-serif", fontSize: isMobile ? '20px' : '26px', fontWeight: 800 }}>{stat.value}</div>
             </div>
           ))}
         </div>
@@ -570,9 +570,9 @@ export const AdminDashboard: React.FC = () => {
               style={{
                 background: 'linear-gradient(135deg, #ef4444, #dc2626)',
                 border: 'none', borderRadius: '10px', color: 'white',
-                padding: '10px 16px', fontSize: '11px', fontFamily: "'Orbitron', sans-serif",
+                padding: '10px 16px', fontSize: '12px', fontFamily: "'Inter', sans-serif",
                 fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
-                boxShadow: '0 4px 14px rgba(239, 68, 68, 0.25)', width: isMobile ? '100%' : 'auto'
+                boxShadow: 'none', width: isMobile ? '100%' : 'auto'
               }}
             >
               <span style={{ fontSize: '14px' }}>➕</span> Registrar Usuario
@@ -595,11 +595,11 @@ export const AdminDashboard: React.FC = () => {
                 key={f}
                 onClick={() => setFilterRole(f)}
                 style={{
-                  fontSize: '10px', padding: '8px 10px', borderRadius: '8px',
-                  border: 'none', cursor: 'pointer', fontFamily: "'Orbitron', sans-serif",
-                  fontWeight: filterRole === f ? 700 : 500, letterSpacing: '0.4px',
+                  fontSize: '12px', padding: '8px 10px', borderRadius: '8px',
+                  border: 'none', cursor: 'pointer', fontFamily: "'Inter', sans-serif",
+                  fontWeight: filterRole === f ? 700 : 500, letterSpacing: '0',
                   background: filterRole === f ? 'rgba(255,255,255,0.12)' : 'transparent',
-                  color: filterRole === f ? 'white' : 'rgba(255,255,255,0.55)',
+                  color: filterRole === f ? 'white' : '#a4b0a8',
                   transition: 'all 0.2s',
                   flex: isMobile ? '1 1 auto' : 'none',
                   textAlign: 'center',
@@ -614,12 +614,12 @@ export const AdminDashboard: React.FC = () => {
 
         {/* USERS CONTAINER (TABLE OR MOBILE CARDS) */}
         {loading ? (
-          <div style={{ textAlign: 'center', padding: '60px', color: '#f87171', fontFamily: 'Orbitron, sans-serif' }}>
+          <div style={{ textAlign: 'center', padding: '60px', color: '#f87171', fontFamily: 'Inter, sans-serif' }}>
             <span>Cargando usuarios del sistema...</span>
           </div>
         ) : filteredUsers.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '40px', background: 'rgba(15,23,42,0.45)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '16px' }}>
-            <p style={{ color: 'rgba(255,255,255,0.4)' }}>No se encontraron usuarios con los filtros actuales.</p>
+            <p style={{ color: '#a4b0a8' }}>No se encontraron usuarios con los filtros actuales.</p>
           </div>
         ) : isMobile ? (
           /* MOBILE CARDS VIEW */
@@ -631,7 +631,7 @@ export const AdminDashboard: React.FC = () => {
                 <div
                   key={u.id}
                   style={{
-                    background: 'rgba(15, 23, 42, 0.65)',
+                    background: '#1a211e',
                     border: `1px solid ${isSelf ? 'rgba(239, 68, 68, 0.3)' : 'rgba(255,255,255,0.08)'}`,
                     borderRadius: '14px', padding: '14px',
                     display: 'flex', flexDirection: 'column', gap: '12px',
@@ -653,17 +653,17 @@ export const AdminDashboard: React.FC = () => {
                       <div style={{ minWidth: 0, flex: 1 }}>
                         <div style={{ fontSize: '13px', fontWeight: 700, color: 'white', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           {u.nombre || 'Sin Nombre'}
-                          {isSelf && <span style={{ fontSize: '9px', color: '#f87171', marginLeft: '6px', fontWeight: 700 }}>(Tú)</span>}
+                          {isSelf && <span style={{ fontSize: '12px', color: '#f87171', marginLeft: '6px', fontWeight: 700 }}>(Tú)</span>}
                         </div>
-                        <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        <div style={{ fontSize: '12px', color: '#a4b0a8', marginTop: '2px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                           {u.email || 'Sin Email'}
                         </div>
                       </div>
                     </div>
                     <span style={{
                       display: 'inline-flex', alignItems: 'center', gap: '4px',
-                      padding: '3px 8px', borderRadius: '20px', fontSize: '9px',
-                      fontWeight: 700, fontFamily: "'Orbitron', sans-serif",
+                      padding: '3px 8px', borderRadius: '20px', fontSize: '12px',
+                      fontWeight: 700, fontFamily: "'Inter', sans-serif",
                       background: roleStyle.bg, border: `1px solid ${roleStyle.border}`,
                       color: roleStyle.text, flexShrink: 0
                     }}>
@@ -671,22 +671,22 @@ export const AdminDashboard: React.FC = () => {
                     </span>
                   </div>
 
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', background: 'rgba(255,255,255,0.03)', padding: '10px 12px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.05)', fontSize: '11px', width: '100%', boxSizing: 'border-box' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', background: 'rgba(255,255,255,0.03)', padding: '10px 12px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.05)', fontSize: '12px', width: '100%', boxSizing: 'border-box' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ color: 'rgba(255,255,255,0.5)' }}>Vigencia:</span>
-                      <span style={{ fontWeight: 600, color: 'white', fontFamily: "'Orbitron', sans-serif" }}>{u.vigencia_dias !== undefined ? `${u.vigencia_dias} días` : 'No asignada'}</span>
+                      <span style={{ color: '#a4b0a8' }}>Vigencia:</span>
+                      <span style={{ fontWeight: 600, color: 'white', fontFamily: "'Inter', sans-serif" }}>{u.vigencia_dias !== undefined ? `${u.vigencia_dias} días` : 'No asignada'}</span>
                     </div>
                     {u.rol === 'cliente' && (
                       <>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ color: 'rgba(255,255,255,0.5)' }}>Tipo Cliente:</span>
+                          <span style={{ color: '#a4b0a8' }}>Tipo Cliente:</span>
                           <span style={{ fontWeight: 600, color: u.entrenador_id ? '#a5b4fc' : '#2dd4bf' }}>
                             {u.entrenador_id ? 'Asignado (Guiado)' : 'Autónomo (Solo)'}
                           </span>
                         </div>
                         {u.entrenador_id && (
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <span style={{ color: 'rgba(255,255,255,0.5)' }}>Entrenador:</span>
+                            <span style={{ color: '#a4b0a8' }}>Entrenador:</span>
                             <span style={{ fontWeight: 600, color: 'white', maxWidth: '60%', textAlign: 'right', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                               {trainers.find(t => t.id === u.entrenador_id)?.nombre || 'Asignado'}
                             </span>
@@ -696,7 +696,7 @@ export const AdminDashboard: React.FC = () => {
                     )}
                     {(u.rol === 'entrenador' || (u.rol === 'cliente' && !u.entrenador_id)) && (
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.04)', paddingTop: '6px' }}>
-                        <span style={{ color: 'rgba(255,255,255,0.5)' }}>Suscripción:</span>
+                        <span style={{ color: '#a4b0a8' }}>Suscripción:</span>
                         <span style={{ fontWeight: 600, color: u.suscripcion_estado === 'activo' ? '#2de484' : '#fca5a5' }}>
                           {u.suscripcion_plan?.toUpperCase() || 'FREE'} ({u.suscripcion_estado || 'activo'})
                         </span>
@@ -710,8 +710,8 @@ export const AdminDashboard: React.FC = () => {
                       style={{
                         flex: 1, padding: '9px', background: 'rgba(255,255,255,0.04)',
                         border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px',
-                        color: 'white', fontSize: '11px', fontWeight: 600,
-                        fontFamily: "'Orbitron', sans-serif", cursor: 'pointer',
+                        color: 'white', fontSize: '12px', fontWeight: 600,
+                        fontFamily: "'Inter', sans-serif", cursor: 'pointer',
                         display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px'
                       }}
                     >
@@ -744,9 +744,9 @@ export const AdminDashboard: React.FC = () => {
               display: 'grid', gridTemplateColumns: '1.2fr 1.3fr 1.1fr 90px 80px 60px',
               padding: '10px 20px', background: 'rgba(255,255,255,0.02)',
               borderRadius: '10px', gap: '12px',
-              fontSize: '9px', fontWeight: 700, letterSpacing: '1px',
-              fontFamily: "'Orbitron', sans-serif", color: 'rgba(255,255,255,0.35)',
-              textTransform: 'uppercase'
+              fontSize: '12px', fontWeight: 700, letterSpacing: '0',
+              fontFamily: "'Inter', sans-serif", color: '#a4b0a8',
+              textTransform: 'none'
             }}>
               <span>Nombre</span>
               <span>Email</span>
@@ -786,16 +786,16 @@ export const AdminDashboard: React.FC = () => {
                     <div style={{ overflow: 'hidden' }}>
                       <div style={{ fontSize: '13px', fontWeight: 600, color: 'white', textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>
                         {u.nombre || 'Sin Nombre'}
-                        {isSelf && <span style={{ fontSize: '9px', color: '#f87171', marginLeft: '6px', fontWeight: 700 }}>(Tú)</span>}
+                        {isSelf && <span style={{ fontSize: '12px', color: '#f87171', marginLeft: '6px', fontWeight: 700 }}>(Tú)</span>}
                       </div>
-                      <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)', marginTop: '2px' }}>
+                      <div style={{ fontSize: '12px', color: '#a4b0a8', marginTop: '2px' }}>
                         {u.created_at ? new Date(u.created_at).toLocaleDateString('es-CO', { year: 'numeric', month: 'short', day: 'numeric' }) : '—'}
                       </div>
                     </div>
                   </div>
 
                   {/* Email */}
-                  <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <div style={{ fontSize: '12px', color: '#a4b0a8', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {u.email || 'Sin Email'}
                   </div>
 
@@ -804,16 +804,16 @@ export const AdminDashboard: React.FC = () => {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-start' }}>
                       <span style={{
                         display: 'inline-flex', alignItems: 'center', gap: '5px',
-                        padding: '4px 10px', borderRadius: '20px', fontSize: '9px',
-                        fontWeight: 700, fontFamily: "'Orbitron', sans-serif",
+                        padding: '4px 10px', borderRadius: '20px', fontSize: '12px',
+                        fontWeight: 700, fontFamily: "'Inter', sans-serif",
                         background: roleStyle.bg, border: `1px solid ${roleStyle.border}`,
-                        color: roleStyle.text, letterSpacing: '0.5px'
+                        color: roleStyle.text, letterSpacing: '0'
                       }}>
                         <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: roleStyle.text }}></span>
                         {roleStyle.label}
                       </span>
                       {u.rol === 'cliente' && (
-                        <span style={{ fontSize: '9px', color: u.entrenador_id ? '#a5b4fc' : '#2dd4bf', marginLeft: '4px', fontWeight: 500 }}>
+                        <span style={{ fontSize: '12px', color: u.entrenador_id ? '#a5b4fc' : '#2dd4bf', marginLeft: '4px', fontWeight: 500 }}>
                           {u.entrenador_id ? `Coach: ${trainers.find(t => t.id === u.entrenador_id)?.nombre || 'Asignado'}` : 'Autónomo'}
                         </span>
                       )}
@@ -862,8 +862,8 @@ export const AdminDashboard: React.FC = () => {
                       style={{
                         background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)',
                         borderRadius: '8px', color: 'white', padding: '6px 10px',
-                        fontSize: '11px', width: '65px', textAlign: 'center',
-                        fontFamily: "'Orbitron', sans-serif",
+                        fontSize: '12px', width: '65px', textAlign: 'center',
+                        fontFamily: "'Inter', sans-serif",
                         outline: 'none',
                         opacity: updatingId === u.id ? 0.5 : 1,
                       }}
@@ -880,7 +880,7 @@ export const AdminDashboard: React.FC = () => {
                         border: '1px solid rgba(255, 255, 255, 0.1)',
                         borderRadius: '8px', color: 'white',
                         padding: '6px 10px', cursor: 'pointer',
-                        fontSize: '11px', display: 'inline-flex', alignItems: 'center', gap: '4px'
+                        fontSize: '12px', display: 'inline-flex', alignItems: 'center', gap: '4px'
                       }}
                     >
                       ✏️ Editar
@@ -890,7 +890,7 @@ export const AdminDashboard: React.FC = () => {
                   {/* Delete Button */}
                   <div style={{ textAlign: 'center' }}>
                     {isSelf ? (
-                      <span style={{ fontSize: '9px', color: 'rgba(255,255,255,0.15)', fontStyle: 'italic' }}>—</span>
+                      <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.15)', fontStyle: 'italic' }}>—</span>
                     ) : (
                       <button
                         onClick={() => handleDeleteUser(u.id, u.nombre || 'Usuario')}
@@ -939,16 +939,16 @@ export const AdminDashboard: React.FC = () => {
 
       {/* CREATE USER MODAL OVERLAY */}
       {createOpen && (
-        <div className="modal-overlay modal-overlay-enter open" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999, backdropFilter: 'blur(6px)' }}>
-          <div className="modal-box modal-enter" style={{ maxWidth: '500px', width: '90%', background: 'rgba(10, 15, 28, 0.98)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '24px', boxShadow: '0 20px 50px rgba(0,0,0,0.5)' }}>
+        <div className="modal-overlay modal-overlay-enter open" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999, backdropFilter: 'none' }}>
+          <div className="modal-box modal-enter" style={{ maxWidth: '500px', width: '90%', background: 'rgba(10, 15, 28, 0.98)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '24px', boxShadow: 'none' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '12px' }}>
-              <h3 style={{ margin: 0, fontFamily: "'Orbitron', sans-serif", fontSize: '14px', fontWeight: 800, color: 'white', letterSpacing: '0.5px' }}>➕ REGISTRAR NUEVO USUARIO</h3>
-              <button onClick={() => setCreateOpen(false)} style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.4)', fontSize: '20px', cursor: 'pointer' }}>&times;</button>
+              <h3 style={{ margin: 0, fontFamily: "'Inter', sans-serif", fontSize: '14px', fontWeight: 800, color: 'white', letterSpacing: '0' }}>➕ REGISTRAR NUEVO USUARIO</h3>
+              <button onClick={() => setCreateOpen(false)} style={{ background: 'transparent', border: 'none', color: '#a4b0a8', fontSize: '20px', cursor: 'pointer' }}>&times;</button>
             </div>
 
             <form onSubmit={handleCreateUserSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, fontFamily: "'Orbitron', sans-serif" }}>NOMBRE COMPLETO *</label>
+                <label style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700, fontFamily: "'Inter', sans-serif" }}>NOMBRE COMPLETO *</label>
                 <input
                   type="text" required placeholder="Ej. Carlos Mendoza"
                   value={createNombre} onChange={(e) => setCreateNombre(e.target.value)}
@@ -957,7 +957,7 @@ export const AdminDashboard: React.FC = () => {
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, fontFamily: "'Orbitron', sans-serif" }}>EMAIL *</label>
+                <label style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700, fontFamily: "'Inter', sans-serif" }}>EMAIL *</label>
                 <input
                   type="email" required placeholder="Ej. carlos@mail.com"
                   value={createEmail} onChange={(e) => setCreateEmail(e.target.value)}
@@ -966,7 +966,7 @@ export const AdminDashboard: React.FC = () => {
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, fontFamily: "'Orbitron', sans-serif" }}>CONTRASEÑA TEMPORAL *</label>
+                <label style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700, fontFamily: "'Inter', sans-serif" }}>CONTRASEÑA TEMPORAL *</label>
                 <input
                   type="password" required placeholder="Min. 6 caracteres"
                   value={createPassword} onChange={(e) => setCreatePassword(e.target.value)}
@@ -976,22 +976,22 @@ export const AdminDashboard: React.FC = () => {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, fontFamily: "'Orbitron', sans-serif" }}>ROL *</label>
+                  <label style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700, fontFamily: "'Inter', sans-serif" }}>ROL *</label>
                   <select
                     value={createRol} onChange={(e) => setCreateRol(e.target.value as RolOption)}
-                    style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '13px', cursor: 'pointer', fontFamily: "'Orbitron', sans-serif" }}
+                    style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '13px', cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}
                   >
-                    <option value="cliente" style={{ background: '#0f172a' }}>Cliente</option>
-                    <option value="entrenador" style={{ background: '#0f172a' }}>Entrenador</option>
-                    <option value="admin" style={{ background: '#0f172a' }}>Admin</option>
+                    <option value="cliente" style={{ background: '#1a211e' }}>Cliente</option>
+                    <option value="entrenador" style={{ background: '#1a211e' }}>Entrenador</option>
+                    <option value="admin" style={{ background: '#1a211e' }}>Admin</option>
                   </select>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, fontFamily: "'Orbitron', sans-serif" }}>VIGENCIA (DÍAS) *</label>
+                  <label style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700, fontFamily: "'Inter', sans-serif" }}>VIGENCIA (DÍAS) *</label>
                   <input
                     type="number" required min="1" max="9999"
                     value={createVigencia} onChange={(e) => setCreateVigencia(e.target.value)}
-                    style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '13px', fontFamily: "'Orbitron', sans-serif" }}
+                    style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '13px', fontFamily: "'Inter', sans-serif" }}
                   />
                 </div>
               </div>
@@ -999,7 +999,7 @@ export const AdminDashboard: React.FC = () => {
               {createRol === 'entrenador' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, fontFamily: "'Orbitron', sans-serif" }}>NÚMERO DE WHATSAPP / CONTACTO *</label>
+                    <label style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700, fontFamily: "'Inter', sans-serif" }}>NÚMERO DE WHATSAPP / CONTACTO *</label>
                     <input
                       type="text" required placeholder="Ej. +573001234567"
                       value={createWhatsapp} onChange={(e) => setCreateWhatsapp(e.target.value)}
@@ -1008,7 +1008,7 @@ export const AdminDashboard: React.FC = () => {
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, fontFamily: "'Orbitron', sans-serif" }}>USUARIO DE INSTAGRAM (OPCIONAL)</label>
+                    <label style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700, fontFamily: "'Inter', sans-serif" }}>USUARIO DE INSTAGRAM (OPCIONAL)</label>
                     <input
                       type="text" placeholder="Ej. @coach_ejemplo"
                       value={createInstagram} onChange={(e) => setCreateInstagram(e.target.value)}
@@ -1021,7 +1021,7 @@ export const AdminDashboard: React.FC = () => {
               {createRol === 'cliente' && (
                 <>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, fontFamily: "'Orbitron', sans-serif" }}>ENTRENADOR ASIGNADO</label>
+                    <label style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700, fontFamily: "'Inter', sans-serif" }}>ENTRENADOR ASIGNADO</label>
                     <select
                       value={createEntrenadorId} onChange={(e) => setCreateEntrenadorId(e.target.value)}
                       style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '13px', cursor: 'pointer' }}
@@ -1034,7 +1034,7 @@ export const AdminDashboard: React.FC = () => {
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, fontFamily: "'Orbitron', sans-serif" }}>OBJETIVO INICIAL</label>
+                    <label style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700, fontFamily: "'Inter', sans-serif" }}>OBJETIVO INICIAL</label>
                     <input
                       type="text" placeholder="Ej. Definición, Aumento de masa muscular"
                       value={createObjetivo} onChange={(e) => setCreateObjetivo(e.target.value)}
@@ -1049,9 +1049,9 @@ export const AdminDashboard: React.FC = () => {
                 style={{
                   background: 'linear-gradient(135deg, #ef4444, #dc2626)',
                   border: 'none', borderRadius: '10px', color: 'white',
-                  padding: '12px', fontSize: '12px', fontFamily: "'Orbitron', sans-serif",
+                  padding: '12px', fontSize: '12px', fontFamily: "'Inter', sans-serif",
                   fontWeight: 700, cursor: 'pointer', marginTop: '10px',
-                  boxShadow: '0 4px 14px rgba(239, 68, 68, 0.25)'
+                  boxShadow: 'none'
                 }}
               >
                 {creatingUser ? 'REGISTRANDO USUARIO...' : 'REGISTRAR USUARIO'}
@@ -1063,24 +1063,24 @@ export const AdminDashboard: React.FC = () => {
 
       {/* EDIT USER MODAL OVERLAY */}
       {editOpen && editingUser && (
-        <div className="modal-overlay modal-overlay-enter open" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999, backdropFilter: 'blur(6px)' }}>
-          <div className="modal-box modal-enter" style={{ maxWidth: '500px', width: '90%', background: 'rgba(10, 15, 28, 0.98)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '24px', boxShadow: '0 20px 50px rgba(0,0,0,0.5)' }}>
+        <div className="modal-overlay modal-overlay-enter open" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 9999, backdropFilter: 'none' }}>
+          <div className="modal-box modal-enter" style={{ maxWidth: '500px', width: '90%', background: 'rgba(10, 15, 28, 0.98)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '24px', boxShadow: 'none' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '12px' }}>
-              <h3 style={{ margin: 0, fontFamily: "'Orbitron', sans-serif", fontSize: '14px', fontWeight: 800, color: 'white', letterSpacing: '0.5px' }}>✏️ EDITAR USUARIO</h3>
-              <button onClick={() => setEditOpen(false)} style={{ background: 'transparent', border: 'none', color: 'rgba(255,255,255,0.4)', fontSize: '20px', cursor: 'pointer' }}>&times;</button>
+              <h3 style={{ margin: 0, fontFamily: "'Inter', sans-serif", fontSize: '14px', fontWeight: 800, color: 'white', letterSpacing: '0' }}>✏️ EDITAR USUARIO</h3>
+              <button onClick={() => setEditOpen(false)} style={{ background: 'transparent', border: 'none', color: '#a4b0a8', fontSize: '20px', cursor: 'pointer' }}>&times;</button>
             </div>
 
             <form onSubmit={handleEditUserSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, fontFamily: "'Orbitron', sans-serif" }}>EMAIL (LECTURA)</label>
+                <label style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700, fontFamily: "'Inter', sans-serif" }}>EMAIL (LECTURA)</label>
                 <input
                   type="text" disabled value={editingUser.email}
-                  style={{ width: '100%', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', color: 'rgba(255,255,255,0.4)', padding: '10px', fontSize: '13px' }}
+                  style={{ width: '100%', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '8px', color: '#a4b0a8', padding: '10px', fontSize: '13px' }}
                 />
               </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, fontFamily: "'Orbitron', sans-serif" }}>NOMBRE COMPLETO *</label>
+                <label style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700, fontFamily: "'Inter', sans-serif" }}>NOMBRE COMPLETO *</label>
                 <input
                   type="text" required placeholder="Ej. Carlos Mendoza"
                   value={editNombre} onChange={(e) => setEditNombre(e.target.value)}
@@ -1090,11 +1090,11 @@ export const AdminDashboard: React.FC = () => {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, fontFamily: "'Orbitron', sans-serif" }}>ROL *</label>
+                  <label style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700, fontFamily: "'Inter', sans-serif" }}>ROL *</label>
                   <select
                     value={editRol} onChange={(e) => setEditRol(e.target.value as RolOption)}
                     disabled={editingUser.id === profile?.id}
-                    style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '13px', cursor: editingUser.id === profile?.id ? 'default' : 'pointer', fontFamily: "'Orbitron', sans-serif" }}
+                    style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '13px', cursor: editingUser.id === profile?.id ? 'default' : 'pointer', fontFamily: "'Inter', sans-serif" }}
                   >
                     <option value="cliente">Cliente</option>
                     <option value="entrenador">Entrenador</option>
@@ -1102,11 +1102,11 @@ export const AdminDashboard: React.FC = () => {
                   </select>
                 </div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, fontFamily: "'Orbitron', sans-serif" }}>VIGENCIA (DÍAS) *</label>
+                  <label style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700, fontFamily: "'Inter', sans-serif" }}>VIGENCIA (DÍAS) *</label>
                   <input
                     type="number" required min="1" max="9999"
                     value={editVigencia} onChange={(e) => setEditVigencia(e.target.value)}
-                    style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '13px', fontFamily: "'Orbitron', sans-serif" }}
+                    style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '13px', fontFamily: "'Inter', sans-serif" }}
                   />
                 </div>
               </div>
@@ -1114,7 +1114,7 @@ export const AdminDashboard: React.FC = () => {
               {editRol === 'entrenador' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, fontFamily: "'Orbitron', sans-serif" }}>NÚMERO DE WHATSAPP / CONTACTO</label>
+                    <label style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700, fontFamily: "'Inter', sans-serif" }}>NÚMERO DE WHATSAPP / CONTACTO</label>
                     <input
                       type="text" placeholder="Ej. +573001234567"
                       value={editWhatsapp} onChange={(e) => setEditWhatsapp(e.target.value)}
@@ -1123,7 +1123,7 @@ export const AdminDashboard: React.FC = () => {
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, fontFamily: "'Orbitron', sans-serif" }}>USUARIO DE INSTAGRAM (OPCIONAL)</label>
+                    <label style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700, fontFamily: "'Inter', sans-serif" }}>USUARIO DE INSTAGRAM (OPCIONAL)</label>
                     <input
                       type="text" placeholder="Ej. @coach_ejemplo"
                       value={editInstagram} onChange={(e) => setEditInstagram(e.target.value)}
@@ -1136,7 +1136,7 @@ export const AdminDashboard: React.FC = () => {
               {editRol === 'cliente' && (
                 <>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, fontFamily: "'Orbitron', sans-serif" }}>ENTRENADOR ASIGNADO</label>
+                    <label style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700, fontFamily: "'Inter', sans-serif" }}>ENTRENADOR ASIGNADO</label>
                     <select
                       value={editEntrenadorId} onChange={(e) => setEditEntrenadorId(e.target.value)}
                       style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '13px', cursor: 'pointer' }}
@@ -1149,7 +1149,7 @@ export const AdminDashboard: React.FC = () => {
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, fontFamily: "'Orbitron', sans-serif" }}>OBJETIVO</label>
+                    <label style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700, fontFamily: "'Inter', sans-serif" }}>OBJETIVO</label>
                     <input
                       type="text" placeholder="Ej. Fuerza en sentadilla, Hipertrofia de hombros"
                       value={editObjetivo} onChange={(e) => setEditObjetivo(e.target.value)}
@@ -1162,15 +1162,15 @@ export const AdminDashboard: React.FC = () => {
               {/* SECCIÓN DE SUSCRIPCIÓN */}
               {(editRol === 'entrenador' || editRol === 'cliente') && (
                 <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '16px', marginTop: '4px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <h4 style={{ margin: 0, fontSize: '11px', fontFamily: "'Orbitron', sans-serif", fontWeight: 700, color: '#f87171', letterSpacing: '0.5px' }}>SUSCRIPCIÓN Y MEMBRESÍA</h4>
+                  <h4 style={{ margin: 0, fontSize: '12px', fontFamily: "'Inter', sans-serif", fontWeight: 700, color: '#f87171', letterSpacing: '0' }}>SUSCRIPCIÓN Y MEMBRESÍA</h4>
                   
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, fontFamily: "'Orbitron', sans-serif" }}>PLAN DE SUSCRIPCIÓN</label>
+                      <label style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700, fontFamily: "'Inter', sans-serif" }}>PLAN DE SUSCRIPCIÓN</label>
                       <select
                         value={editSuscripcionPlan}
                         onChange={(e) => setEditSuscripcionPlan(e.target.value)}
-                        style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '13px', cursor: 'pointer', fontFamily: "'Orbitron', sans-serif" }}
+                        style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '13px', cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}
                       >
                         {editRol === 'entrenador' ? (
                           <>
@@ -1189,11 +1189,11 @@ export const AdminDashboard: React.FC = () => {
                     </div>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, fontFamily: "'Orbitron', sans-serif" }}>ESTADO</label>
+                      <label style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700, fontFamily: "'Inter', sans-serif" }}>ESTADO</label>
                       <select
                         value={editSuscripcionEstado}
                         onChange={(e) => setEditSuscripcionEstado(e.target.value as any)}
-                        style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '13px', cursor: 'pointer', fontFamily: "'Orbitron', sans-serif" }}
+                        style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '13px', cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}
                       >
                         <option value="activo">Activo / Al Día</option>
                         <option value="expirado">Expirado / Bloqueado</option>
@@ -1203,12 +1203,12 @@ export const AdminDashboard: React.FC = () => {
                   </div>
 
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                    <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, fontFamily: "'Orbitron', sans-serif" }}>FECHA DE EXPIRACIÓN</label>
+                    <label style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700, fontFamily: "'Inter', sans-serif" }}>FECHA DE EXPIRACIÓN</label>
                     <input
                       type="date"
                       value={editSuscripcionExpiraAt}
                       onChange={(e) => setEditSuscripcionExpiraAt(e.target.value)}
-                      style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '13px', fontFamily: "'Orbitron', sans-serif" }}
+                      style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '13px', fontFamily: "'Inter', sans-serif" }}
                     />
                   </div>
                 </div>
@@ -1219,9 +1219,9 @@ export const AdminDashboard: React.FC = () => {
                 style={{
                   background: 'linear-gradient(135deg, #ef4444, #dc2626)',
                   border: 'none', borderRadius: '10px', color: 'white',
-                  padding: '12px', fontSize: '12px', fontFamily: "'Orbitron', sans-serif",
+                  padding: '12px', fontSize: '12px', fontFamily: "'Inter', sans-serif",
                   fontWeight: 700, cursor: 'pointer', marginTop: '10px',
-                  boxShadow: '0 4px 14px rgba(239, 68, 68, 0.25)'
+                  boxShadow: 'none'
                 }}
               >
                 {savingEdit ? 'GUARDANDO CAMBIOS...' : 'GUARDAR CAMBIOS'}

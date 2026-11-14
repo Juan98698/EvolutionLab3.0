@@ -17,7 +17,7 @@ export const NotificationsEmptyState: React.FC<NotificationsEmptyStateProps> = (
       border: '1px solid var(--theme-border)',
       borderRadius: '12px',
       padding: '16px 18px',
-      backdropFilter: 'blur(12px)',
+      backdropFilter: 'none',
     }}
   >
     <div
@@ -32,11 +32,11 @@ export const NotificationsEmptyState: React.FC<NotificationsEmptyStateProps> = (
         <p
           style={{
             margin: 0,
-            fontFamily: "'Orbitron', sans-serif",
+            fontFamily: "'Inter', sans-serif",
             fontWeight: 700,
             fontSize: '13px',
-            color: 'var(--theme-primary, #00d4ff)',
-            letterSpacing: '0.3px',
+            color: 'var(--theme-primary, #91b6a1)',
+            letterSpacing: '0',
           }}
         >
           Motor de progresión
@@ -57,7 +57,7 @@ export const NotificationsEmptyState: React.FC<NotificationsEmptyStateProps> = (
               margin: '6px 0 0',
               fontSize: '12px',
               lineHeight: 1.45,
-              color: 'rgba(255, 255, 255, 0.55)',
+              color: '#a4b0a8',
             }}
           >
             {hint}
@@ -76,7 +76,7 @@ export const NotificationsEmptyState: React.FC<NotificationsEmptyStateProps> = (
               padding: '8px 14px',
               fontSize: '12px',
               fontWeight: 700,
-              fontFamily: "'Orbitron', sans-serif",
+              fontFamily: "'Inter', sans-serif",
               cursor: 'pointer',
             }}
           >

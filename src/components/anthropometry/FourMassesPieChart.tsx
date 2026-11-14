@@ -42,7 +42,7 @@ export const FourMassesPieChart: React.FC<FourMassesPieChartProps> = ({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', background: '#ffffff', borderRadius: '16px', padding: '16px', border: '1px solid #cbd5e1', width: '100%', boxSizing: 'border-box' }}>
-      <h4 style={{ margin: '0 0 12px', fontSize: '12px', fontWeight: 800, color: '#0f172a', fontFamily: 'Orbitron, sans-serif', textAlign: 'center' }}>
+      <h4 style={{ margin: '0 0 12px', fontSize: '12px', fontWeight: 800, color: '#1a211e', fontFamily: 'Inter, sans-serif', textAlign: 'center' }}>
         COMPOSICIÓN CORPORAL (4 MASAS)
       </h4>
 
@@ -80,15 +80,15 @@ export const FourMassesPieChart: React.FC<FourMassesPieChartProps> = ({
           textAlign: 'center',
           pointerEvents: 'none',
         }}>
-          <span style={{ fontSize: '9px', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', display: 'block' }}>TU PESO DE</span>
-          <h3 style={{ margin: 0, fontSize: '17px', fontWeight: 900, color: '#0f172a', fontFamily: 'Orbitron, sans-serif' }}>
+          <span style={{ fontSize: '12px', fontWeight: 700, color: '#64748b', textTransform: 'none', display: 'block' }}>TU PESO DE</span>
+          <h3 style={{ margin: 0, fontSize: '17px', fontWeight: 900, color: '#1a211e', fontFamily: 'Inter, sans-serif' }}>
             {pesoTotal} kg
           </h3>
         </div>
       </div>
 
       {/* Leyenda y Desglose Responsivo */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px 12px', width: '100%', marginTop: '16px', fontSize: '11px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px 12px', width: '100%', marginTop: '16px', fontSize: '12px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#ef4444', flexShrink: 0 }}></span>
           <span style={{ color: '#1e293b' }}><strong>Muscular:</strong> {kgMusculo} kg ({pctMusculo}%)</span>

@@ -8,6 +8,8 @@ import { initErrorTracking } from './lib/errorTracking.ts';
 import { registerPwaServiceWorker } from './lib/pwaRegistration.ts';
 import { reloadOnceForStaleChunk } from './lib/chunkRecovery.ts';
 import './index.css';
+import './styles/studio.css';
+import './styles/studio-responsive.css';
 
 // Auto-recuperación de "Failed to fetch dynamically imported module": pasa
 // cuando el navegador tiene un index.html/bundle viejo en memoria que
@@ -28,8 +30,11 @@ window.addEventListener('vite:preloadError', (event) => {
 });
 
 // Síncronamente inicializar el tema de enfoque para evitar parpadeos visuales (cero-flicker)
-const savedTheme = localStorage.getItem('pwa_login_theme') || 'cyan';
-document.documentElement.setAttribute('data-theme', savedTheme);
+document.documentElement.setAttribute('data-design', 'studio');
+document.documentElement.setAttribute('data-theme', 'studio');
+// The router starts a new page at its heading; native history restoration must
+// not reapply the previous long screen's scroll position after React mounts.
+window.history.scrollRestoration = 'manual';
 
 // Capturar el evento de instalación PWA globalmente de inmediato para evitar perderlo en re-renderizados
 window.addEventListener('beforeinstallprompt', (e) => {

@@ -65,7 +65,7 @@ export const SaveNutritionTemplateModal: React.FC<SaveNutritionTemplateModalProp
         position: 'fixed',
         inset: 0,
         backgroundColor: 'rgba(5, 7, 15, 0.85)',
-        backdropFilter: 'blur(8px)',
+        backdropFilter: 'none',
         zIndex: 10000,
         display: 'flex',
         alignItems: 'center',
@@ -76,13 +76,13 @@ export const SaveNutritionTemplateModal: React.FC<SaveNutritionTemplateModalProp
     >
       <div
         style={{
-          background: '#0d1322',
-          border: '1px solid rgba(0, 212, 255, 0.3)',
+          background: '#1a211e',
+          border: '1px solid rgba(145, 182, 161, 0.3)',
           borderRadius: '14px',
           width: '100%',
           maxWidth: '480px',
           padding: '24px',
-          boxShadow: '0 12px 40px rgba(0, 0, 0, 0.6)',
+          boxShadow: 'none',
           display: 'flex',
           flexDirection: 'column',
           gap: '16px',
@@ -91,10 +91,10 @@ export const SaveNutritionTemplateModal: React.FC<SaveNutritionTemplateModalProp
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <h3 style={{ margin: 0, fontSize: '16px', fontFamily: "'Orbitron', sans-serif", color: '#00d4ff' }}>
+            <h3 style={{ margin: 0, fontSize: '16px', fontFamily: "'Inter', sans-serif", color: '#91b6a1' }}>
               💾 GUARDAR COMO PLANTILLA DE DIETA
             </h3>
-            <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: 'rgba(255, 255, 255, 0.6)' }}>
+            <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#a4b0a8' }}>
               Podrás cargar esta dieta completa en otros atletas y editarla libremente.
             </p>
           </div>
@@ -104,7 +104,7 @@ export const SaveNutritionTemplateModal: React.FC<SaveNutritionTemplateModalProp
             style={{
               background: 'transparent',
               border: 'none',
-              color: 'rgba(255, 255, 255, 0.6)',
+              color: '#a4b0a8',
               fontSize: '20px',
               cursor: 'pointer',
               padding: '4px',
@@ -116,7 +116,7 @@ export const SaveNutritionTemplateModal: React.FC<SaveNutritionTemplateModalProp
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
           <div>
-            <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: 'rgba(255, 255, 255, 0.8)', marginBottom: '6px' }}>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: 'rgba(255, 255, 255, 0.8)', marginBottom: '6px' }}>
               Nombre de la Plantilla *
             </label>
             <input
@@ -140,7 +140,7 @@ export const SaveNutritionTemplateModal: React.FC<SaveNutritionTemplateModalProp
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: 'rgba(255, 255, 255, 0.8)', marginBottom: '6px' }}>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: 'rgba(255, 255, 255, 0.8)', marginBottom: '6px' }}>
               Objetivo Nutricional
             </label>
             <input
@@ -163,7 +163,7 @@ export const SaveNutritionTemplateModal: React.FC<SaveNutritionTemplateModalProp
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: 'rgba(255, 255, 255, 0.8)', marginBottom: '6px' }}>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: 'rgba(255, 255, 255, 0.8)', marginBottom: '6px' }}>
               Descripción o Indicaciones (Opcional)
             </label>
             <textarea
@@ -189,14 +189,14 @@ export const SaveNutritionTemplateModal: React.FC<SaveNutritionTemplateModalProp
           <div
             style={{
               padding: '10px 12px',
-              background: 'rgba(0, 212, 255, 0.05)',
-              border: '1px solid rgba(0, 212, 255, 0.2)',
+              background: 'rgba(145, 182, 161, 0.05)',
+              border: '1px solid rgba(145, 182, 161, 0.2)',
               borderRadius: '8px',
-              fontSize: '11px',
+              fontSize: '12px',
               color: 'rgba(255, 255, 255, 0.7)',
             }}
           >
-            🔥 Calorías de la plantilla: <strong style={{ color: '#00d4ff' }}>{currentPlan.target_calorias} kcal</strong> • P: {currentPlan.target_proteina_g}g | C: {currentPlan.target_carbohidratos_g}g | G: {currentPlan.target_grasa_g}g
+            🔥 Calorías de la plantilla: <strong style={{ color: '#91b6a1' }}>{currentPlan.target_calorias} kcal</strong> • P: {currentPlan.target_proteina_g}g | C: {currentPlan.target_carbohidratos_g}g | G: {currentPlan.target_grasa_g}g
           </div>
 
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '6px' }}>
@@ -220,7 +220,7 @@ export const SaveNutritionTemplateModal: React.FC<SaveNutritionTemplateModalProp
               type="submit"
               disabled={saving}
               style={{
-                background: 'linear-gradient(135deg, #00d4ff 0%, #0099ff 100%)',
+                background: 'linear-gradient(135deg, #91b6a1 0%, #0099ff 100%)',
                 border: 'none',
                 color: '#000000',
                 borderRadius: '8px',
@@ -228,7 +228,7 @@ export const SaveNutritionTemplateModal: React.FC<SaveNutritionTemplateModalProp
                 fontSize: '12px',
                 fontWeight: 800,
                 cursor: saving ? 'wait' : 'pointer',
-                fontFamily: "'Orbitron', sans-serif",
+                fontFamily: "'Inter', sans-serif",
               }}
             >
               {saving ? 'Guardando...' : '💾 GUARDAR PLANTILLA'}

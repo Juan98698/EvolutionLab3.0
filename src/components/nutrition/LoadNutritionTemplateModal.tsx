@@ -59,7 +59,7 @@ export const LoadNutritionTemplateModal: React.FC<LoadNutritionTemplateModalProp
         position: 'fixed',
         inset: 0,
         backgroundColor: 'rgba(5, 7, 15, 0.85)',
-        backdropFilter: 'blur(8px)',
+        backdropFilter: 'none',
         zIndex: 10000,
         display: 'flex',
         alignItems: 'center',
@@ -70,15 +70,15 @@ export const LoadNutritionTemplateModal: React.FC<LoadNutritionTemplateModalProp
     >
       <div
         style={{
-          background: '#0d1322',
-          border: '1px solid rgba(0, 212, 255, 0.3)',
+          background: '#1a211e',
+          border: '1px solid rgba(145, 182, 161, 0.3)',
           borderRadius: '14px',
           width: '100%',
           maxWidth: '720px',
           maxHeight: '90vh',
           display: 'flex',
           flexDirection: 'column',
-          boxShadow: '0 12px 40px rgba(0, 0, 0, 0.6)',
+          boxShadow: 'none',
           color: '#ffffff',
           overflow: 'hidden',
         }}
@@ -86,17 +86,17 @@ export const LoadNutritionTemplateModal: React.FC<LoadNutritionTemplateModalProp
         {/* Header */}
         <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <h3 style={{ margin: 0, fontSize: '15px', fontFamily: "'Orbitron', sans-serif", color: '#00d4ff' }}>
+            <h3 style={{ margin: 0, fontSize: '15px', fontFamily: "'Inter', sans-serif", color: '#91b6a1' }}>
               📂 CARGAR PLANTILLA DE DIETA
             </h3>
-            <p style={{ margin: '4px 0 0 0', fontSize: '11px', color: 'rgba(255, 255, 255, 0.6)' }}>
+            <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#a4b0a8' }}>
               Selecciona una plantilla guardada para aplicarla a este atleta. Podrás editarla completamente.
             </p>
           </div>
           <button
             type="button"
             onClick={onClose}
-            style={{ background: 'transparent', border: 'none', color: 'rgba(255, 255, 255, 0.6)', fontSize: '20px', cursor: 'pointer' }}
+            style={{ background: 'transparent', border: 'none', color: '#a4b0a8', fontSize: '20px', cursor: 'pointer' }}
           >
             ✕
           </button>
@@ -105,14 +105,14 @@ export const LoadNutritionTemplateModal: React.FC<LoadNutritionTemplateModalProp
         {/* Content */}
         <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px' }}>
           {loading ? (
-            <div style={{ textAlign: 'center', padding: '40px', color: 'rgba(255, 255, 255, 0.5)', fontSize: '12px' }}>
+            <div style={{ textAlign: 'center', padding: '40px', color: '#a4b0a8', fontSize: '12px' }}>
               Cargando plantillas de dieta...
             </div>
           ) : templates.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '40px', color: 'rgba(255, 255, 255, 0.5)', fontSize: '13px' }}>
+            <div style={{ textAlign: 'center', padding: '40px', color: '#a4b0a8', fontSize: '13px' }}>
               <div style={{ fontSize: '32px', marginBottom: '8px' }}>📋</div>
               <div>No tienes plantillas de dieta guardadas todavía.</div>
-              <div style={{ fontSize: '11px', marginTop: '6px', color: 'rgba(255, 255, 255, 0.4)' }}>
+              <div style={{ fontSize: '12px', marginTop: '6px', color: '#a4b0a8' }}>
                 Puedes guardar cualquier plan nutricional actual haciendo clic en <strong>"💾 Guardar Plantilla"</strong> en la cabecera.
               </div>
             </div>
@@ -130,8 +130,8 @@ export const LoadNutritionTemplateModal: React.FC<LoadNutritionTemplateModalProp
                     role="button"
                     tabIndex={0}
                     style={{
-                      background: isSelected ? 'rgba(0, 212, 255, 0.08)' : 'rgba(255, 255, 255, 0.02)',
-                      border: isSelected ? '1px solid #00d4ff' : '1px solid rgba(255, 255, 255, 0.08)',
+                      background: isSelected ? 'rgba(145, 182, 161, 0.08)' : 'rgba(255, 255, 255, 0.02)',
+                      border: isSelected ? '1px solid #91b6a1' : '1px solid rgba(255, 255, 255, 0.08)',
                       borderRadius: '10px',
                       padding: '14px 16px',
                       cursor: 'pointer',
@@ -148,15 +148,15 @@ export const LoadNutritionTemplateModal: React.FC<LoadNutritionTemplateModalProp
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '10px', flexWrap: 'wrap' }}>
                       <div>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span style={{ fontSize: '14px', fontWeight: 700, color: isSelected ? '#00d4ff' : '#ffffff' }}>
+                          <span style={{ fontSize: '14px', fontWeight: 700, color: isSelected ? '#91b6a1' : '#ffffff' }}>
                             {tpl.nombre}
                           </span>
                           {tpl.objetivo && (
                             <span
                               style={{
-                                fontSize: '10px',
-                                background: 'rgba(0, 212, 255, 0.15)',
-                                color: '#00d4ff',
+                                fontSize: '12px',
+                                background: 'rgba(145, 182, 161, 0.15)',
+                                color: '#91b6a1',
                                 padding: '2px 6px',
                                 borderRadius: '4px',
                                 fontWeight: 600,
@@ -167,7 +167,7 @@ export const LoadNutritionTemplateModal: React.FC<LoadNutritionTemplateModalProp
                           )}
                         </div>
                         {tpl.descripcion && (
-                          <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.6)', marginTop: '4px' }}>
+                          <div style={{ fontSize: '12px', color: '#a4b0a8', marginTop: '4px' }}>
                             {tpl.descripcion}
                           </div>
                         )}
@@ -186,7 +186,7 @@ export const LoadNutritionTemplateModal: React.FC<LoadNutritionTemplateModalProp
                             color: '#f87171',
                             borderRadius: '6px',
                             padding: '4px 8px',
-                            fontSize: '11px',
+                            fontSize: '12px',
                             cursor: 'pointer',
                           }}
                           title="Eliminar plantilla"
@@ -200,15 +200,15 @@ export const LoadNutritionTemplateModal: React.FC<LoadNutritionTemplateModalProp
                             handleApply(tpl);
                           }}
                           style={{
-                            background: 'linear-gradient(135deg, #00d4ff 0%, #0099ff 100%)',
+                            background: 'linear-gradient(135deg, #91b6a1 0%, #0099ff 100%)',
                             border: 'none',
                             color: '#000',
                             borderRadius: '6px',
                             padding: '6px 14px',
-                            fontSize: '11px',
+                            fontSize: '12px',
                             fontWeight: 800,
                             cursor: 'pointer',
-                            fontFamily: "'Orbitron', sans-serif",
+                            fontFamily: "'Inter', sans-serif",
                           }}
                         >
                           CARGAR PLAN ➔
@@ -224,19 +224,19 @@ export const LoadNutritionTemplateModal: React.FC<LoadNutritionTemplateModalProp
                         display: 'flex',
                         justifyContent: 'space-between',
                         alignItems: 'center',
-                        fontSize: '11px',
+                        fontSize: '12px',
                         color: 'rgba(255, 255, 255, 0.7)',
                         flexWrap: 'wrap',
                         gap: '6px',
                       }}
                     >
                       <div>
-                        🔥 Meta: <strong style={{ color: '#00d4ff' }}>{tpl.target_calorias || 0} kcal</strong> •{' '}
+                        🔥 Meta: <strong style={{ color: '#91b6a1' }}>{tpl.target_calorias || 0} kcal</strong> •{' '}
                         <span style={{ color: '#3b82f6' }}>P: {tpl.target_proteina_g || 0}g</span> |{' '}
                         <span style={{ color: '#10b981' }}>C: {tpl.target_carbohidratos_g || 0}g</span> |{' '}
                         <span style={{ color: '#f59e0b' }}>G: {tpl.target_grasa_g || 0}g</span>
                       </div>
-                      <div style={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.4)' }}>
+                      <div style={{ fontSize: '12px', color: '#a4b0a8' }}>
                         {sampleMeals.length} comidas/día • Estructura semanal completa
                       </div>
                     </div>

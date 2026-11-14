@@ -97,7 +97,7 @@ const RMCalculatorModal: React.FC<RMCalculatorModalProps> = ({
 
         <form onSubmit={handleCalculate1RM} className="modal-1rm-form">
           <div className="modal-1rm-group full-width" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '15px' }}>
-            <label style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.5)', fontFamily: "'Orbitron', sans-serif" }}>UNIDAD DE MEDIDA</label>
+            <label style={{ fontSize: '12px', fontWeight: 700, color: '#a4b0a8', fontFamily: "'Inter', sans-serif" }}>UNIDAD DE MEDIDA</label>
             <div style={{ display: 'flex', gap: '8px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--theme-border)', borderRadius: '10px', padding: '4px', maxWidth: '160px' }}>
               <button
                 type="button"
@@ -107,12 +107,12 @@ const RMCalculatorModal: React.FC<RMCalculatorModalProps> = ({
                   border: 'none',
                   borderRadius: '6px',
                   padding: '6px 12px',
-                  fontSize: '11px',
-                  fontFamily: "'Orbitron', sans-serif",
+                  fontSize: '12px',
+                  fontFamily: "'Inter', sans-serif",
                   fontWeight: 700,
                   cursor: 'pointer',
                   background: calcUnit === 'kg' ? 'var(--theme-btn-gradient)' : 'transparent',
-                  color: calcUnit === 'kg' ? 'white' : 'rgba(255,255,255,0.6)',
+                  color: calcUnit === 'kg' ? 'white' : '#a4b0a8',
                   boxShadow: calcUnit === 'kg' ? '0 0 10px var(--theme-btn-glow)' : 'none',
                   transition: 'all 0.2s'
                 }}
@@ -127,12 +127,12 @@ const RMCalculatorModal: React.FC<RMCalculatorModalProps> = ({
                   border: 'none',
                   borderRadius: '6px',
                   padding: '6px 12px',
-                  fontSize: '11px',
-                  fontFamily: "'Orbitron', sans-serif",
+                  fontSize: '12px',
+                  fontFamily: "'Inter', sans-serif",
                   fontWeight: 700,
                   cursor: 'pointer',
                   background: calcUnit === 'lbs' ? 'var(--theme-btn-gradient)' : 'transparent',
-                  color: calcUnit === 'lbs' ? 'white' : 'rgba(255,255,255,0.6)',
+                  color: calcUnit === 'lbs' ? 'white' : '#a4b0a8',
                   boxShadow: calcUnit === 'lbs' ? '0 0 10px var(--theme-btn-glow)' : 'none',
                   transition: 'all 0.2s'
                 }}
@@ -146,7 +146,7 @@ const RMCalculatorModal: React.FC<RMCalculatorModalProps> = ({
             <label htmlFor="input1RMPeso" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
               <span>PESO LEVANTADO ({calcUnit.toUpperCase()})</span>
               {calcPeso && !isNaN(parseFloat(calcPeso)) && parseFloat(calcPeso) > 0 && (
-                <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', fontFamily: "'Orbitron', sans-serif" }}>
+                <span style={{ fontSize: '12px', color: '#a4b0a8', fontFamily: "'Inter', sans-serif" }}>
                   ≈ {(calcUnit === 'kg' ? parseFloat(calcPeso) * 2.20462 : parseFloat(calcPeso) / 2.20462).toFixed(1)} {calcUnit === 'kg' ? 'lbs' : 'kg'}
                 </span>
               )}
@@ -197,11 +197,11 @@ const RMCalculatorModal: React.FC<RMCalculatorModalProps> = ({
                 <span style={{ fontSize: '2.2rem', fontWeight: 800 }}>{rmResult.toFixed(1)}</span>
                 <span style={{ fontSize: '1.1rem', color: 'var(--theme-primary)', fontWeight: 700 }}>{calcUnit}</span>
               </div>
-              <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.5)', fontFamily: "'Orbitron', sans-serif" }}>
+              <div style={{ fontSize: '0.85rem', color: '#a4b0a8', fontFamily: "'Inter', sans-serif" }}>
                 ≈ {(calcUnit === 'kg' ? rmResult * 2.20462 : rmResult / 2.20462).toFixed(1)} {calcUnit === 'kg' ? 'lbs' : 'kg'}
               </div>
             </div>
-            <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: '8px', textAlign: 'center' }}>Tabla de Porcentajes de Carga</div>
+            <div style={{ fontSize: '0.75rem', color: '#a4b0a8', marginBottom: '8px', textAlign: 'center' }}>Tabla de Porcentajes de Carga</div>
             <div className="modal-1rm-table-container">
               <table className="modal-1rm-table">
                 <thead>
@@ -219,7 +219,7 @@ const RMCalculatorModal: React.FC<RMCalculatorModalProps> = ({
                       <tr key={row.pct}>
                         <td style={{ fontWeight: 600, color: 'var(--theme-primary)' }}>{row.pct}%</td>
                         <td style={{ fontWeight: 700, color: '#7EC94A' }}>{row.carga.toFixed(1)} {calcUnit}</td>
-                        <td style={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px' }}>{equiv.toFixed(1)} {calcUnit === 'kg' ? 'lbs' : 'kg'}</td>
+                        <td style={{ color: '#a4b0a8', fontSize: '12px' }}>{equiv.toFixed(1)} {calcUnit === 'kg' ? 'lbs' : 'kg'}</td>
                         <td>{row.reps} {row.reps === 1 ? 'rep' : 'reps'}</td>
                       </tr>
                     );

@@ -1,8 +1,9 @@
 /// <reference types="vitest" />
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 import { visualizer } from 'rollup-plugin-visualizer';
+import { fileURLToPath } from 'node:url';
 
 // Plugin dev para proxy local de Open Food Facts (/api/food-search)
 function foodSearchDevPlugin() {
@@ -142,6 +143,7 @@ function foodSearchDevPlugin() {
 export default defineConfig({
   resolve: {
     dedupe: ['react', 'react-dom'],
+    alias: process.env.EVOLUTION_E2E === '1' ? [{ find: /(?:\.\.\/)*lib\/supabaseClient$|^\.\/supabaseClient$/, replacement: fileURLToPath(new URL('./e2e/support/supabaseClient.ts', import.meta.url)) }] : [],
   },
   optimizeDeps: {
     include: [
@@ -176,8 +178,8 @@ export default defineConfig({
         name: 'Evolution Lab',
         short_name: 'Evolution Lab',
         description: 'Plataforma inteligente de entrenamiento y sobrecarga progresiva',
-        theme_color: '#0b0f19',
-        background_color: '#0b0f19',
+        theme_color: '#121716',
+        background_color: '#121716',
         display: 'standalone',
         orientation: 'portrait',
         icons: [
@@ -201,14 +203,14 @@ export default defineConfig({
         importScripts: ['sw-push.js'],
         // Solo pre-cachear los bundles generados por Vite (JS, CSS, HTML).
         // Los iconos y fondo se cargan bajo demanda, no necesitan precache.
-        globPatterns: ['**/*.{js,css,html}'],
+        globPatterns: ['**/*.{js,css,html,woff2}'],
         // Excluir del precache los chunks pesados y de uso minoritario: jsPDF +
         // html2canvas (~590KB, solo se usan al exportar un reporte PDF, función
         // premium) y AdminDashboard (~39KB, solo lo usa el admin). Se siguen
         // cacheando bajo demanda vía runtimeCaching más abajo, así que la
         // experiencia offline no cambia — solo dejan de descargarse para TODOS
         // los usuarios apenas instalan la PWA.
-        globIgnores: ['**/jspdf*.js', '**/html2canvas*.js', '**/AdminDashboard*.js', 'stats.html'],
+        globIgnores: ['**/jspdf*.js', '**/html2canvas*.js', '**/AdminDashboard*.js', '**/nutritionPdf*.js', 'stats.html'],
         skipWaiting: true,
         clientsClaim: true,
         cleanupOutdatedCaches: true,
@@ -276,7 +278,7 @@ export default defineConfig({
           {
             // Los chunks excluidos del precache (jsPDF, html2canvas, AdminDashboard)
             // se cachean recién cuando alguien los usa de verdad, no en el install.
-            urlPattern: /\/(jspdf|html2canvas|AdminDashboard)[^/]*\.js$/i,
+            urlPattern: /\/(jspdf|html2canvas|AdminDashboard|nutritionPdf)[^/]*\.js$/i,
             handler: 'CacheFirst',
             options: {
               cacheName: 'on-demand-chunks-cache',
@@ -298,26 +300,17 @@ export default defineConfig({
     setupFiles: ['./src/test-setup.ts']
   },
   build: {
-    rollupOptions: {
+    target: ['es2020', 'safari16'],
+    rolldownOptions: {
       output: {
-        // Basado en el perfilado real con rollup-plugin-visualizer (no en una suposición):
-        // Chart.js NO aparecía en el chunk principal (ya se carga dinámicamente en
-        // AthleteDashboard/Historial). Los contribuyentes reales eran Supabase completo
-        // (~770KB sin comprimir, entre sus 7 subpaquetes) y Sentry (~208KB), ninguno de
-        // los dos separado en un vendor chunk propio hasta ahora.
-        manualChunks: {
-          'vendor-supabase': [
-            '@supabase/supabase-js',
-            '@supabase/auth-js',
-            '@supabase/postgrest-js',
-            '@supabase/storage-js',
-            '@supabase/realtime-js',
-            '@supabase/functions-js'
+        codeSplitting: {
+          groups: [
+            { name: 'vendor-supabase', test: /node_modules[\\/]@supabase[\\/]/ },
+            { name: 'vendor-sentry', test: /node_modules[\\/]@sentry[\\/]/ },
+            { name: 'vendor-react', test: /node_modules[\\/](?:react|react-dom|react-router|react-router-dom|scheduler)[\\/]/ },
           ],
-          'vendor-sentry': ['@sentry/react', '@sentry/browser'],
-          'vendor-react': ['react', 'react-dom', 'react-router-dom', 'react-router']
-        }
-      }
-    }
+        },
+      },
+    },
   }
 });

@@ -1,3 +1,5 @@
+import { PlannerRMCalculator } from './PlannerRMCalculator';
+import { PlanCoverEditor } from './PlanCoverEditor';
 import React, { useState, useEffect, useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
@@ -81,12 +83,6 @@ export const PlanPlanner: React.FC = () => {
   const [showExitConfirm, setShowExitConfirm] = useState<boolean>(false);
   const [showTourSaveReminder, setShowTourSaveReminder] = useState<boolean>(false);
   const [show1RMCalculator, setShow1RMCalculator] = useState<boolean>(false);
-  const [calcWeight, setCalcWeight] = useState<number>(80);
-  const [calcReps, setCalcReps] = useState<number>(8);
-  const [calcRIR, setCalcRIR] = useState<number>(2);
-  const [calcSelectedLift, setCalcSelectedLift] = useState<string>('press de banca');
-  const [calcUnit, setCalcUnit] = useState<'kg' | 'lbs'>('kg');
-  const [calcFormula, setCalcFormula] = useState<'promedio' | 'epley' | 'brzycki'>('promedio');
 
   /**
    * languageMode — controla qué tan técnico es el lenguaje de las alertas inline.
@@ -552,12 +548,12 @@ export const PlanPlanner: React.FC = () => {
         pointLabels: {
           color: 'rgba(255, 255, 255, 0.7)',
           font: {
-            family: "'Orbitron', sans-serif",
+            family: "'Inter', sans-serif",
             size: 10,
           },
         },
         ticks: {
-          color: 'rgba(255, 255, 255, 0.4)',
+          color: '#a4b0a8',
           backdropColor: 'transparent',
           font: {
             size: 9,
@@ -573,13 +569,13 @@ export const PlanPlanner: React.FC = () => {
         display: false,
       },
       tooltip: {
-        backgroundColor: 'rgba(15, 23, 42, 0.95)',
+        backgroundColor: '#1a211e',
         titleColor: '#ff7e2e',
         bodyColor: '#fff',
         borderColor: 'rgba(255, 255, 255, 0.1)',
         borderWidth: 1,
         titleFont: {
-          family: "'Orbitron', sans-serif",
+          family: "'Inter', sans-serif",
           weight: 'bold',
         },
         bodyFont: {
@@ -1656,8 +1652,8 @@ export const PlanPlanner: React.FC = () => {
 
   if (loading) {
     return (
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: '#0b0f19', color: 'var(--theme-primary)', fontFamily: 'Orbitron, sans-serif' }}>
-        <span style={{ fontSize: '18px', fontWeight: 700, letterSpacing: '1.5px' }}>EVOLUTION LAB</span>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', justifyContent: 'center', alignItems: 'center', minHeight: '100vh', background: '#121716', color: 'var(--theme-primary)', fontFamily: 'Inter, sans-serif' }}>
+        <span style={{ fontSize: '18px', fontWeight: 700, letterSpacing: '0' }}>EVOLUTION LAB</span>
         <span style={{ fontSize: '12px', opacity: 0.7 }}>Cargando Planificador de Rutina...</span>
       </div>
     );
@@ -1684,15 +1680,15 @@ export const PlanPlanner: React.FC = () => {
         <div style={{
           position: 'fixed', bottom: '80px', left: '50%', transform: 'translateX(-50%)',
           zIndex: 8000, maxWidth: '380px', width: '90%',
-          background: 'rgba(10,14,23,0.97)', border: '1px solid #c2ff0044',
+          background: 'rgba(18, 23, 22,0.97)', border: '1px solid #91b6a144',
           borderRadius: '14px', padding: '16px 20px',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.6), 0 0 0 1px #c2ff0022',
-          backdropFilter: 'blur(12px)',
+          boxShadow: 'none',
+          backdropFilter: 'none',
           fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
             <div style={{ flex: 1 }}>
-              <div style={{ fontSize: '10px', color: '#c2ff00', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', marginBottom: '6px' }}>
+              <div style={{ fontSize: '12px', color: '#91b6a1', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'none', marginBottom: '6px' }}>
                 Tour rápido — {showTourTip}/3
               </div>
               <p style={{ fontSize: '13px', color: '#e5e7eb', lineHeight: 1.5, margin: 0 }}>
@@ -1713,7 +1709,7 @@ export const PlanPlanner: React.FC = () => {
               }}
               style={{
                 flexShrink: 0, padding: '8px 16px', borderRadius: '8px',
-                background: '#c2ff00', border: 'none', color: '#000',
+                background: '#91b6a1', border: 'none', color: '#000',
                 fontWeight: 700, fontSize: '12px', cursor: 'pointer',
                 whiteSpace: 'nowrap',
               }}
@@ -1726,7 +1722,7 @@ export const PlanPlanner: React.FC = () => {
             {[1, 2, 3].map(i => (
               <div key={i} style={{
                 height: '3px', flex: 1, borderRadius: '2px',
-                background: i <= showTourTip ? '#c2ff00' : 'rgba(255,255,255,0.1)',
+                background: i <= showTourTip ? '#91b6a1' : 'rgba(255,255,255,0.1)',
                 transition: 'background 0.3s',
               }} />
             ))}
@@ -1740,9 +1736,9 @@ export const PlanPlanner: React.FC = () => {
           position: 'sticky',
           top: 0,
           zIndex: 1000,
-          background: 'rgba(11, 15, 25, 0.88)',
-          backdropFilter: 'blur(12px)',
-          WebkitBackdropFilter: 'blur(12px)',
+          background: 'rgba(18, 23, 22, 0.88)',
+          backdropFilter: 'none',
+          WebkitBackdropFilter: 'none',
           borderBottom: '1px solid var(--theme-border)',
           marginBottom: '20px', 
           padding: '12px 0' 
@@ -1799,15 +1795,15 @@ export const PlanPlanner: React.FC = () => {
             <button
                onClick={() => setShowExitConfirm(true)}
                className="btn-back-mobile"
-               style={{ background: 'none', border: 'none', color: 'var(--theme-primary)', fontSize: '12px', cursor: 'pointer', fontFamily: "'Orbitron', sans-serif", padding: '8px 12px', borderRadius: '8px', borderStyle: 'solid', borderWidth: '1px', borderColor: 'var(--theme-border)' }}
+               style={{ background: 'none', border: 'none', color: 'var(--theme-primary)', fontSize: '12px', cursor: 'pointer', fontFamily: "'Inter', sans-serif", padding: '8px 12px', borderRadius: '8px', borderStyle: 'solid', borderWidth: '1px', borderColor: 'var(--theme-border)' }}
             >
               ← Volver
             </button>
             <div>
-              <h1 className="planner-title-main" style={{ fontFamily: 'Orbitron, sans-serif', fontSize: '15px', fontWeight: 800, margin: 0, letterSpacing: '1px' }}>
+              <h1 className="planner-title-main" style={{ fontFamily: 'Inter, sans-serif', fontSize: '15px', fontWeight: 800, margin: 0, letterSpacing: '0' }}>
                 PLANIFICADOR DE RUTINA
               </h1>
-              <div className="planner-client-name" style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', marginTop: '2px' }}>
+              <div className="planner-client-name" style={{ fontSize: '12px', color: '#a4b0a8', marginTop: '2px' }}>
                 Atleta: <span style={{ color: 'var(--theme-primary)', fontWeight: 600 }}>{clientProfile?.nombre}</span>
               </div>
             </div>
@@ -1828,7 +1824,7 @@ export const PlanPlanner: React.FC = () => {
           >
             {saving ? (
               <>
-                <span className="spinner-icon" style={{ width: '14px', height: '14px', borderRadius: '50%', border: '2px solid rgba(255,255,255,0.3)', borderTop: '2px solid var(--theme-primary)' }} />
+                <span className="spinner-icon" style={{ width: '14px', height: '14px', borderRadius: '50%', border: '2px solid #a4b0a8', borderTop: '2px solid var(--theme-primary)' }} />
                 <span>GUARDANDO...</span>
               </>
             ) : (
@@ -1848,14 +1844,14 @@ export const PlanPlanner: React.FC = () => {
           <button 
             onClick={() => setProtocolModalOpen(true)} 
             className="btn" 
-            style={{ background: '#0284c7', border: 'none', color: '#fff', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 'bold', whiteSpace: 'nowrap', boxShadow: '0 4px 12px rgba(2, 132, 199, 0.3)' }}
+            style={{ background: '#0284c7', border: 'none', color: '#fff', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 'bold', whiteSpace: 'nowrap', boxShadow: 'none' }}
           >
             <span style={{ fontSize: '16px' }}>📚</span> Protocolos y Mis Plantillas
           </button>
           <button 
             onClick={() => setSaveTemplateModalOpen(true)} 
             className="btn" 
-            style={{ background: 'linear-gradient(135deg, #00F2FE 0%, #4FACFE 100%)', border: 'none', color: '#04070e', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 'bold', whiteSpace: 'nowrap', boxShadow: '0 4px 12px rgba(0, 242, 254, 0.25)' }}
+            style={{ background: 'linear-gradient(135deg, #00F2FE 0%, #4FACFE 100%)', border: 'none', color: '#04070e', display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 'bold', whiteSpace: 'nowrap', boxShadow: 'none' }}
           >
             <span style={{ fontSize: '16px' }}>💾</span> Guardar como Plantilla
           </button>
@@ -1883,106 +1879,15 @@ export const PlanPlanner: React.FC = () => {
           blockObjective={periodizationConfig?.objetivo || 'hipertrofia'}
         />
 
-        {/* SECCIÓN 1: PORTADA / DETALLES DEL PLAN */}
-        <div style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '16px', padding: '20px', marginBottom: '24px', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', boxShadow: '0 8px 32px 0 var(--theme-glow)' }}>
-          <h3 style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '13px', color: 'var(--theme-primary)', letterSpacing: '0.5px', marginBottom: '16px', marginTop: 0 }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px', verticalAlign: '-1px', display: 'inline-block' }}><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg> DETALLES DE PORTADA DEL PLAN
-          </h3>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
-            <div>
-              <label htmlFor="portada-userName" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>NOMBRE DEL ATLETA</label>
-              <input
-                id="portada-userName"
-                type="text"
-                value={portada.userName}
-                onChange={(e) => handlePortadaChange('userName', e.target.value)}
-                style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '10px' }}
-              />
-            </div>
-            <div>
-              <label htmlFor="portada-userGoal" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>OBJETIVO</label>
-              <input
-                id="portada-userGoal"
-                type="text"
-                value={portada.userGoal}
-                onChange={(e) => handlePortadaChange('userGoal', e.target.value)}
-                style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '10px' }}
-              />
-            </div>
-            <div>
-              <label htmlFor="portada-startDate" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>FECHA INICIO</label>
-              <input
-                id="portada-startDate"
-                type="date"
-                value={portada.startDate}
-                onChange={(e) => handlePortadaChange('startDate', e.target.value)}
-                style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '10px' }}
-              />
-            </div>
-            <div>
-              <label htmlFor="portada-planVigenciaPlan" style={{ display: 'flex', alignItems: 'center', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>VIGENCIA PLAN (Días)<InfoTooltip title="Vigencia del Plan" body="Número de días que el plan estará activo para el atleta. Al vencer, el atleta verá una notificación de renovación. Un valor típico es 28-30 días (4 semanas)." /></label>
-              <input
-                id="portada-planVigenciaPlan"
-                type="number"
-                value={portada.planVigenciaPlan}
-                onChange={(e) => handlePortadaChange('planVigenciaPlan', e.target.value)}
-                style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '10px' }}
-              />
-            </div>
-            <div>
-              <label htmlFor="portada-trainerName" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>NOMBRE ENTRENADOR</label>
-              <input
-                id="portada-trainerName"
-                type="text"
-                value={portada.trainerName}
-                onChange={(e) => handlePortadaChange('trainerName', e.target.value)}
-                style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '10px' }}
-              />
-            </div>
-            <div>
-              <label htmlFor="portada-whatsappLink" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>WHATSAPP ENTRENADOR</label>
-              <input
-                id="portada-whatsappLink"
-                type="text"
-                value={portada.whatsappLink}
-                onChange={(e) => handlePortadaChange('whatsappLink', e.target.value)}
-                placeholder="https://wa.me/..."
-                style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '10px' }}
-              />
-            </div>
-            <div>
-              <label htmlFor="portada-instagramLink" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>INSTAGRAM ENTRENADOR</label>
-              <input
-                id="portada-instagramLink"
-                type="text"
-                value={portada.instagramLink}
-                onChange={(e) => handlePortadaChange('instagramLink', e.target.value)}
-                placeholder="https://instagram.com/..."
-                style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '10px' }}
-              />
-            </div>
-          </div>
-
-          <div style={{ marginTop: '16px' }}>
-            <label htmlFor="portada-globalNote" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '6px' }}>INDICACIONES GENERALES DEL ENTRENADOR</label>
-            <textarea
-              id="portada-globalNote"
-              rows={2}
-              value={portada.globalNote}
-              onChange={(e) => handlePortadaChange('globalNote', e.target.value)}
-              style={{ width: '100%', background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '10px', resize: 'vertical' }}
-            />
-          </div>
-        </div>
+        <PlanCoverEditor portada={portada} onChange={handlePortadaChange} />
 
         {/* SECCIÓN 2: SEMANA DE ENTRENAMIENTO MAP (WEEKDAY CONFIG) */}
-        <div style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '16px', padding: '20px', marginBottom: '24px', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', boxShadow: '0 8px 32px 0 var(--theme-glow)' }}>
-          <h3 style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '13px', color: 'var(--theme-primary)', letterSpacing: '0.5px', marginBottom: '8px', marginTop: 0 }}>
+        <div style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '16px', padding: '20px', marginBottom: '24px', backdropFilter: 'none', WebkitBackdropFilter: 'none', boxShadow: 'none' }}>
+          <h3 style={{ fontFamily: "'Inter', sans-serif", fontSize: '13px', color: 'var(--theme-primary)', letterSpacing: '0', marginBottom: '8px', marginTop: 0 }}>
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px', verticalAlign: '-1px', display: 'inline-block' }}><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> CONFIGURACIÓN DE DÍAS DE LA SEMANA
             <InfoTooltip title="Configuración de Días" body="Asocia los días de la semana con tus días de entrenamiento. Los días que dejes como 'Descanso' no aparecerán como días de entrenamiento para el atleta. Esto permite que el plan se adapte al calendario real del cliente." />
           </h3>
-           <p className="desc-text" style={{ margin: '0 0 16px 0', fontSize: '11px', color: 'rgba(255,255,255,0.5)' }}>
+           <p className="desc-text" style={{ margin: '0 0 16px 0', fontSize: '12px', color: '#a4b0a8' }}>
             Asigna qué día de entrenamiento le corresponde a cada día calendario de la semana.
           </p>
 
@@ -2009,12 +1914,12 @@ export const PlanPlanner: React.FC = () => {
                     htmlFor={`planner-weekday-${idx}`}
                     style={{
                       display: 'block',
-                      fontSize: '11px',
+                      fontSize: '12px',
                       fontWeight: 700,
-                      textTransform: 'uppercase',
-                      letterSpacing: '0.5px',
+                      textTransform: 'none',
+                      letterSpacing: '0',
                       color: '#ff7e2e',
-                      fontFamily: "'Orbitron', sans-serif",
+                      fontFamily: "'Inter', sans-serif",
                       cursor: 'pointer'
                     }}
                   >
@@ -2025,7 +1930,7 @@ export const PlanPlanner: React.FC = () => {
                     value={currentVal}
                     onChange={(e) => handleWeekdayMap(String(idx), parseInt(e.target.value, 10))}
                     style={{
-                      background: 'rgba(15, 23, 42, 0.6)',
+                      background: '#1a211e',
                       border: '1px solid rgba(255, 255, 255, 0.08)',
                       color: 'white',
                       fontSize: '12px',
@@ -2038,9 +1943,9 @@ export const PlanPlanner: React.FC = () => {
                       textAlign: 'center'
                     }}
                   >
-                    <option value={-1} style={{ background: '#0b0f19', color: 'white' }}>Descanso</option>
+                    <option value={-1} style={{ background: '#121716', color: 'white' }}>Descanso</option>
                     {trainingDays.map((day, dIdx) => (
-                      <option key={day.id} value={dIdx} style={{ background: '#0b0f19', color: 'white' }}>
+                      <option key={day.id} value={dIdx} style={{ background: '#121716', color: 'white' }}>
                         {day.name.substring(0, 22)}
                       </option>
                     ))}
@@ -2052,7 +1957,7 @@ export const PlanPlanner: React.FC = () => {
         </div>
 
         {/* SECCIÓN 3: VARIABLES GLOBALES */}
-        <div style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '16px', padding: '20px', marginBottom: '24px', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', boxShadow: '0 8px 32px 0 var(--theme-glow)' }}>
+        <div style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '16px', padding: '20px', marginBottom: '24px', backdropFilter: 'none', WebkitBackdropFilter: 'none', boxShadow: 'none' }}>
           <div
             role="button"
             tabIndex={0}
@@ -2072,12 +1977,12 @@ export const PlanPlanner: React.FC = () => {
               userSelect: 'none'
             }}
           >
-            <h3 style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '13px', color: 'var(--theme-primary)', letterSpacing: '0.5px', margin: 0, display: 'flex', alignItems: 'center' }}>
+            <h3 style={{ fontFamily: "'Inter', sans-serif", fontSize: '13px', color: 'var(--theme-primary)', letterSpacing: '0', margin: 0, display: 'flex', alignItems: 'center' }}>
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px' }}><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               VARIABLES GLOBALES Y SIGNIFICADOS
               <InfoTooltip title="Variables Globales" body="Son los parámetros que definen cada ejercicio del plan (series, repeticiones, tempo, RIR, descanso, etc.). El atleta verá estos valores como indicadores durante su entrenamiento. Puedes personalizar las definiciones para que tu cliente entienda cada concepto." />
             </h3>
-            <span style={{ fontSize: '11px', color: 'var(--theme-primary)', fontWeight: 'bold', fontFamily: "'Orbitron', sans-serif" }}>
+            <span style={{ fontSize: '12px', color: 'var(--theme-primary)', fontWeight: 'bold', fontFamily: "'Inter', sans-serif" }}>
               {variablesOpen ? '▲ OCULTAR' : '▼ CONFIGURAR'}
             </span>
           </div>
@@ -2086,7 +1991,7 @@ export const PlanPlanner: React.FC = () => {
             <div style={{ marginTop: '20px' }}>
               <form onSubmit={handleAddGlobalVar} style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '20px', alignItems: 'flex-end' }}>
                 <div style={{ flex: 1, minWidth: '150px' }}>
-                  <label htmlFor="new-var-label" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, marginBottom: '6px' }}>NOMBRE VARIABLE</label>
+                  <label htmlFor="new-var-label" style={{ display: 'block', fontSize: '12px', color: '#a4b0a8', fontWeight: 600, marginBottom: '6px' }}>NOMBRE VARIABLE</label>
                   <input
                     id="new-var-label"
                     type="text"
@@ -2098,7 +2003,7 @@ export const PlanPlanner: React.FC = () => {
                   />
                 </div>
                 <div style={{ flex: 2, minWidth: '250px' }}>
-                  <label htmlFor="new-var-def" style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, marginBottom: '6px' }}>EXPLICACIÓN TEÓRICA (opcional)</label>
+                  <label htmlFor="new-var-def" style={{ display: 'block', fontSize: '12px', color: '#a4b0a8', fontWeight: 600, marginBottom: '6px' }}>EXPLICACIÓN TEÓRICA (opcional)</label>
                   <input
                     id="new-var-def"
                     type="text"
@@ -2123,7 +2028,7 @@ export const PlanPlanner: React.FC = () => {
                       border: '1px solid rgba(255,255,255,0.05)',
                       padding: '6px 12px',
                       borderRadius: '12px',
-                      fontSize: '11px',
+                      fontSize: '12px',
                       fontWeight: 600
                     }}
                   >
@@ -2141,10 +2046,10 @@ export const PlanPlanner: React.FC = () => {
 
               {/* Definiciones/Significados de las variables */}
               <div style={{ marginTop: '24px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '20px' }}>
-                <h4 style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '11px', color: 'var(--theme-primary)', letterSpacing: '0.5px', marginBottom: '8px', textTransform: 'uppercase', marginTop: 0 }}>
+                <h4 style={{ fontFamily: "'Inter', sans-serif", fontSize: '12px', color: 'var(--theme-primary)', letterSpacing: '0', marginBottom: '8px', textTransform: 'none', marginTop: 0 }}>
                   Significados de las Variables para el Atleta
                 </h4>
-                <p style={{ margin: '0 0 16px 0', fontSize: '11px', color: 'rgba(255,255,255,0.4)', lineHeight: '1.4' }}>
+                <p style={{ margin: '0 0 16px 0', fontSize: '12px', color: '#a4b0a8', lineHeight: '1.4' }}>
                   Edita el significado de cada variable. Tu cliente podrá ver esta explicación al presionar el botón de información ⓘ en su panel de entrenamiento.
                 </p>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
@@ -2155,7 +2060,7 @@ export const PlanPlanner: React.FC = () => {
                       <div key={v.id} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '10px', padding: '12px' }}>
                         <label
                           htmlFor={`var-def-${varId}`}
-                          style={{ display: 'block', fontSize: '10px', fontWeight: 700, color: 'var(--theme-primary)', marginBottom: '8px', fontFamily: "'Orbitron', sans-serif", cursor: 'pointer' }}
+                          style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: 'var(--theme-primary)', marginBottom: '8px', fontFamily: "'Inter', sans-serif", cursor: 'pointer' }}
                         >
                           {v.label}
                         </label>
@@ -2171,7 +2076,7 @@ export const PlanPlanner: React.FC = () => {
                             }));
                           }}
                           placeholder={`Escribe la explicación teórica de ${v.label.toLowerCase()}...`}
-                          style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '6px', color: 'white', padding: '8px', fontSize: '11px', resize: 'vertical', fontFamily: 'inherit' }}
+                          style={{ width: '100%', background: 'rgba(0,0,0,0.2)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '6px', color: 'white', padding: '8px', fontSize: '12px', resize: 'vertical', fontFamily: 'inherit' }}
                         />
                       </div>
                     );
@@ -2206,10 +2111,10 @@ export const PlanPlanner: React.FC = () => {
               className="btn btn-ghost"
               onClick={handleAddDay}
               style={{
-                fontSize: '11px',
+                fontSize: '12px',
                 padding: '8px 16px',
                 height: 'auto',
-                fontFamily: "'Orbitron', sans-serif",
+                fontFamily: "'Inter', sans-serif",
                 fontWeight: 700,
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -2222,7 +2127,7 @@ export const PlanPlanner: React.FC = () => {
 
           {/* DAY TABS BAR (Igual que en el perfil del cliente) */}
           {trainingDays.length > 0 && (
-            <div className="day-tabs-bar" style={{ display: 'flex', flexWrap: 'nowrap', overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', gap: '6px', marginBottom: '20px', padding: '6px 8px', background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '12px', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
+            <div className="day-tabs-bar" style={{ display: 'flex', flexWrap: 'nowrap', overflowX: 'auto', WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none', gap: '6px', marginBottom: '20px', padding: '6px 8px', background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '12px', backdropFilter: 'none', WebkitBackdropFilter: 'none' }}>
               {trainingDays.map((day, idx) => {
                 const dayName = (day.name || `Día ${idx + 1}`).trim();
                 const shortName = dayName.length > 28 ? dayName.substring(0, 25) + '…' : dayName;
@@ -2233,8 +2138,8 @@ export const PlanPlanner: React.FC = () => {
                     className={`day-tab-btn${activeTab === idx ? ' active' : ''}`}
                     onClick={() => setActiveTab(idx)}
                     style={{
-                      fontFamily: "'Orbitron',sans-serif",
-                      fontSize: '10px',
+                      fontFamily: "'Inter',sans-serif",
+                      fontSize: '12px',
                       fontWeight: 600,
                       padding: '8px 16px',
                       borderRadius: '8px',
@@ -2265,7 +2170,7 @@ export const PlanPlanner: React.FC = () => {
                         value={day.name}
                         onChange={(e) => handleDayNameChange(day.id, e.target.value)}
                         style={{
-                          fontFamily: "'Orbitron', sans-serif",
+                          fontFamily: "'Inter', sans-serif",
                           fontSize: '1.2rem',
                           fontWeight: 700,
                           background: 'rgba(255, 255, 255, 0.05)',
@@ -2292,13 +2197,13 @@ export const PlanPlanner: React.FC = () => {
                           background: volumeChartOpen ? 'rgba(255, 126, 46, 0.15)' : 'rgba(255, 255, 255, 0.04)',
                           border: `1px solid ${volumeChartOpen ? 'rgba(255, 126, 46, 0.35)' : 'rgba(255, 255, 255, 0.08)'}`,
                           color: volumeChartOpen ? 'var(--theme-primary)' : 'rgba(255, 255, 255, 0.8)',
-                          fontSize: '11px',
+                          fontSize: '12px',
                           fontWeight: 700,
-                          fontFamily: "'Orbitron', sans-serif",
+                          fontFamily: "'Inter', sans-serif",
                           cursor: 'pointer',
                           transition: 'all 0.2s',
-                          textTransform: 'uppercase',
-                          letterSpacing: '0.5px'
+                          textTransform: 'none',
+                          letterSpacing: '0'
                         }}
                       >
                         📊 {volumeChartOpen ? 'Ocultar Simetría' : 'Ver Simetría'}
@@ -2327,9 +2232,9 @@ export const PlanPlanner: React.FC = () => {
                       borderRadius: '16px',
                       padding: '20px',
                       marginBottom: '20px',
-                      backdropFilter: 'blur(20px)',
-                      WebkitBackdropFilter: 'blur(20px)',
-                      boxShadow: '0 8px 32px 0 rgba(0, 0, 0, 0.2)',
+                      backdropFilter: 'none',
+                      WebkitBackdropFilter: 'none',
+                      boxShadow: 'none',
                       animation: 'fadeIn 0.25s ease'
                     }}>
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 280px), 1fr))', gap: '24px' }}>
@@ -2340,10 +2245,10 @@ export const PlanPlanner: React.FC = () => {
                               <Radar data={radarChartData} options={radarChartOptions as any} />
                             </div>
                           ) : (
-                            <div style={{ textAlign: 'center', padding: '20px', color: 'rgba(255,255,255,0.35)' }}>
+                            <div style={{ textAlign: 'center', padding: '20px', color: '#a4b0a8' }}>
                               <div style={{ fontSize: '28px', marginBottom: '8px' }}>📊</div>
-                              <div style={{ fontSize: '11px', fontFamily: "'Orbitron', sans-serif", fontWeight: 700, color: 'var(--theme-primary)', letterSpacing: '0.5px' }}>SIN VOLUMEN PROGRAMADO</div>
-                              <p style={{ fontSize: '10px', margin: '6px 0 0 0', color: 'rgba(255,255,255,0.25)', lineHeight: '1.4' }}>
+                              <div style={{ fontSize: '12px', fontFamily: "'Inter', sans-serif", fontWeight: 700, color: 'var(--theme-primary)', letterSpacing: '0' }}>SIN VOLUMEN PROGRAMADO</div>
+                              <p style={{ fontSize: '12px', margin: '6px 0 0 0', color: 'rgba(255,255,255,0.25)', lineHeight: '1.4' }}>
                                 Asigna grupos musculares y series de trabajo a tus ejercicios para ver la distribución de volumen en tiempo real.
                               </p>
                             </div>
@@ -2353,10 +2258,10 @@ export const PlanPlanner: React.FC = () => {
                         {/* Resumen Detallado */}
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', justifyContent: 'center' }}>
                           <div>
-                            <h4 style={{ margin: 0, fontSize: '12px', fontFamily: "'Orbitron', sans-serif", color: 'var(--theme-primary)', letterSpacing: '0.5px', fontWeight: 700 }}>
+                            <h4 style={{ margin: 0, fontSize: '12px', fontFamily: "'Inter', sans-serif", color: 'var(--theme-primary)', letterSpacing: '0', fontWeight: 700 }}>
                               DISTRIBUCIÓN DE VOLUMEN POR GRUPO MUSCULAR
                             </h4>
-                            <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', marginTop: '2px' }}>
+                            <div style={{ fontSize: '12px', color: '#a4b0a8', marginTop: '2px' }}>
                               Basado en {totalActiveDayVolume} series de trabajo totales en este día.
                             </div>
                           </div>
@@ -2367,9 +2272,9 @@ export const PlanPlanner: React.FC = () => {
                                 const percentage = (val / volumeSummaryStats.maxVal) * 100;
                                 return (
                                   <div key={gm} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px' }}>
                                       <span style={{ fontWeight: 600, color: 'rgba(255,255,255,0.85)' }}>{gm}</span>
-                                      <span style={{ fontFamily: "'Orbitron', sans-serif", fontWeight: 700, color: '#ff7e2e' }}>{val} series</span>
+                                      <span style={{ fontFamily: "'Inter', sans-serif", fontWeight: 700, color: '#ff7e2e' }}>{val} series</span>
                                     </div>
                                     <div style={{ width: '100%', height: '6px', background: 'rgba(255,255,255,0.06)', borderRadius: '3px', overflow: 'hidden' }}>
                                       <div style={{ width: `${percentage}%`, height: '100%', background: 'linear-gradient(90deg, #ff7e2e, #ff9a52)', borderRadius: '3px' }} />
@@ -2379,14 +2284,14 @@ export const PlanPlanner: React.FC = () => {
                               })}
                             </div>
                           ) : (
-                            <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', margin: 0, lineHeight: '1.4' }}>
+                            <p style={{ fontSize: '12px', color: '#a4b0a8', margin: 0, lineHeight: '1.4' }}>
                               No hay series efectivas asignadas a ningún grupo muscular. Por favor, especifica el grupo muscular y el número de series en las tarjetas de los ejercicios de abajo.
                             </p>
                           )}
 
                           <div style={{ marginTop: '6px', padding: '10px 12px', background: 'rgba(255,126,46,0.05)', border: '1px solid rgba(255,126,46,0.15)', borderRadius: '10px', display: 'flex', gap: '8px', alignItems: 'flex-start' }}>
                             <span style={{ fontSize: '14px', color: '#ff7e2e', lineHeight: 1 }}>💡</span>
-                            <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)', lineHeight: '1.4' }}>
+                            <div style={{ fontSize: '12px', color: '#a4b0a8', lineHeight: '1.4' }}>
                               <strong>Consejo científico:</strong> Un volumen balanceado previene asimetrías de fuerza y postura. Procura emparejar el volumen de empuje vertical/horizontal con tracciones similares para hombros sanos.
                             </div>
                           </div>
@@ -2423,8 +2328,8 @@ export const PlanPlanner: React.FC = () => {
                             {/* CABECERA DEL BLOQUE DE BI-SERIE / CIRCUITO */}
                             {isFirstInBlock && (
                               <div style={{
-                                background: 'linear-gradient(90deg, rgba(0, 212, 255, 0.15), rgba(167, 139, 250, 0.1))',
-                                border: '1px solid rgba(0, 212, 255, 0.4)',
+                                background: 'linear-gradient(90deg, rgba(145, 182, 161, 0.15), rgba(167, 139, 250, 0.1))',
+                                border: '1px solid rgba(145, 182, 161, 0.4)',
                                 borderBottom: 'none',
                                 borderRadius: '14px 14px 0 0',
                                 padding: '10px 14px',
@@ -2439,22 +2344,22 @@ export const PlanPlanner: React.FC = () => {
                                 position: 'relative'
                               }}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                  <span style={{ fontSize: '12px', color: '#67e8f9', fontWeight: 800, fontFamily: "'Orbitron', sans-serif" }}>
+                                  <span style={{ fontSize: '12px', color: '#67e8f9', fontWeight: 800, fontFamily: "'Inter', sans-serif" }}>
                                     ⚡ BLOQUE {tag.charAt(0)} — {blockLabel.toUpperCase()} ({memberCount} ejercicios)
                                   </span>
                                 </div>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                                  <label style={{ fontSize: '11px', color: 'rgba(255,255,255,0.75)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                  <label style={{ fontSize: '12px', color: 'rgba(255,255,255,0.75)', display: 'flex', alignItems: 'center', gap: '6px' }}>
                                     ⏱️ Descanso ronda:
                                     <input
                                       type="number"
                                       value={ex.block_rest ?? 90}
                                       onChange={(e) => handleUpdateBlockSettingsInPlanner(day.id, ex.block_id!, { block_rest: parseInt(e.target.value, 10) || 0 })}
-                                      style={{ width: '55px', padding: '3px 6px', background: 'rgba(0,0,0,0.6)', border: '1px solid rgba(0,212,255,0.4)', borderRadius: '6px', color: '#67e8f9', fontWeight: 700, textAlign: 'center' }}
+                                      style={{ width: '55px', padding: '3px 6px', background: 'rgba(0,0,0,0.6)', border: '1px solid rgba(145, 182, 161,0.4)', borderRadius: '6px', color: '#67e8f9', fontWeight: 700, textAlign: 'center' }}
                                     />
                                     s
                                   </label>
-                                  <label style={{ fontSize: '11px', color: 'rgba(255,255,255,0.75)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                  <label style={{ fontSize: '12px', color: 'rgba(255,255,255,0.75)', display: 'flex', alignItems: 'center', gap: '6px' }}>
                                     ⚡ Transición:
                                     <input
                                       type="number"
@@ -2467,7 +2372,7 @@ export const PlanPlanner: React.FC = () => {
                                   <button
                                     type="button"
                                     onClick={() => handleUngroupBlockInPlanner(day.id, ex.block_id!)}
-                                    style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.35)', color: '#f87171', padding: '4px 10px', borderRadius: '6px', fontSize: '10px', fontWeight: 700, cursor: 'pointer', fontFamily: "'Orbitron', sans-serif" }}
+                                    style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.35)', color: '#f87171', padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: 700, cursor: 'pointer', fontFamily: "'Inter', sans-serif" }}
                                   >
                                     ✕ Desagrupar
                                   </button>
@@ -2480,8 +2385,8 @@ export const PlanPlanner: React.FC = () => {
                               data-exercise-id={ex.id}
                               data-day-id={day.id}
                               style={{
-                                border: isBlocked ? '1px solid rgba(0, 212, 255, 0.35)' : undefined,
-                                boxShadow: isBlocked ? '0 0 15px rgba(0, 212, 255, 0.08)' : undefined,
+                                border: isBlocked ? '1px solid rgba(145, 182, 161, 0.35)' : undefined,
+                                boxShadow: isBlocked ? '0 0 15px rgba(145, 182, 161, 0.08)' : undefined,
                                 borderRadius: isFirstInBlock ? '0 0 14px 14px' : undefined
                               }}
                             >
@@ -2492,12 +2397,12 @@ export const PlanPlanner: React.FC = () => {
                                   <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                                     {tag && (
                                       <span style={{
-                                        fontSize: '11px',
+                                        fontSize: '12px',
                                         fontWeight: 800,
-                                        fontFamily: "'Orbitron', sans-serif",
-                                        color: '#00d4ff',
-                                        background: 'rgba(0, 212, 255, 0.15)',
-                                        border: '1px solid rgba(0, 212, 255, 0.4)',
+                                        fontFamily: "'Inter', sans-serif",
+                                        color: '#91b6a1',
+                                        background: 'rgba(145, 182, 161, 0.15)',
+                                        border: '1px solid rgba(145, 182, 161, 0.4)',
                                         padding: '2px 8px',
                                         borderRadius: '8px',
                                         flexShrink: 0
@@ -2544,7 +2449,7 @@ export const PlanPlanner: React.FC = () => {
                                   background: '#0c0f17',
                                   border: '1px solid rgba(255, 255, 255, 0.12)',
                                   borderRadius: '12px',
-                                  boxShadow: '0 12px 30px rgba(0,0,0,0.6)',
+                                  boxShadow: 'none',
                                   zIndex: 9999,
                                   marginTop: '4px',
                                   padding: '4px',
@@ -2604,7 +2509,7 @@ export const PlanPlanner: React.FC = () => {
                                       {/* Nombre y Grupo Muscular */}
                                       <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', flexGrow: 1, textAlign: 'left' }}>
                                         <span style={{ fontWeight: 'bold' }}>{sug.nombre}</span>
-                                        <span style={{ fontSize: '9px', color: 'var(--theme-primary, #00d4ff)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                        <span style={{ fontSize: '12px', color: 'var(--theme-primary, #91b6a1)', textTransform: 'none', letterSpacing: '0' }}>
                                           {sug.grupo_muscular}
                                         </span>
                                       </div>
@@ -2613,13 +2518,13 @@ export const PlanPlanner: React.FC = () => {
                                 </div>
                               )}
                               {isFunctionalExercise(ex) && (
-                                <span style={{ fontSize: '9px', color: '#60a5fa', background: 'rgba(59, 130, 246, 0.12)', border: '1px solid rgba(59, 130, 246, 0.3)', padding: '2px 8px', borderRadius: '4px', fontFamily: "'Orbitron', sans-serif", textTransform: 'uppercase', letterSpacing: '0.5px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                <span style={{ fontSize: '12px', color: '#60a5fa', background: 'rgba(59, 130, 246, 0.12)', border: '1px solid rgba(59, 130, 246, 0.3)', padding: '2px 8px', borderRadius: '4px', fontFamily: "'Inter', sans-serif", textTransform: 'none', letterSpacing: '0', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                                   ⚡ EJERCICIO FUNCIONAL / WOD
                                 </span>
                               )}
                               {ex.nombre_original && (
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px', flexWrap: 'wrap' }}>
-                                  <span style={{ fontSize: '9px', color: 'var(--theme-primary)', background: 'rgba(249, 115, 22, 0.1)', border: '1px solid rgba(249, 115, 22, 0.3)', padding: '2px 8px', borderRadius: '4px', fontFamily: "'Orbitron', sans-serif", textTransform: 'uppercase', letterSpacing: '0.5px', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                  <span style={{ fontSize: '12px', color: 'var(--theme-primary)', background: 'rgba(249, 115, 22, 0.1)', border: '1px solid rgba(249, 115, 22, 0.3)', padding: '2px 8px', borderRadius: '4px', fontFamily: "'Inter', sans-serif", textTransform: 'none', letterSpacing: '0', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
                                     <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
                                     Vinculado a: {ex.nombre_original}
                                   </span>
@@ -2627,7 +2532,7 @@ export const PlanPlanner: React.FC = () => {
                                     type="button"
                                     onClick={() => handleExerciseChange(day.id, ex.id, 'nombre_original' as any, '')}
                                     title="Desvincular del ejercicio global"
-                                    style={{ background: 'none', border: 'none', color: 'var(--color-danger)', fontSize: '11px', cursor: 'pointer', padding: '0 4px', display: 'flex', alignItems: 'center', fontFamily: "'Orbitron', sans-serif", fontWeight: 'bold' }}
+                                    style={{ background: 'none', border: 'none', color: 'var(--color-danger)', fontSize: '12px', cursor: 'pointer', padding: '0 4px', display: 'flex', alignItems: 'center', fontFamily: "'Inter', sans-serif", fontWeight: 'bold' }}
                                   >
                                     ✕ Desvincular
                                   </button>
@@ -2732,7 +2637,7 @@ export const PlanPlanner: React.FC = () => {
                                     loadSource = lp.source;
                                     loadResult = `${lp.weight} kg`;
                                   }
-                                } catch (_) { /* silencioso */ }
+                                } catch { /* silencioso */ }
                               }
 
                               const inputEl = (
@@ -2776,12 +2681,12 @@ export const PlanPlanner: React.FC = () => {
                               style={{
                                 flex: 1, maxWidth: '180px',
                                 background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-                                borderRadius: '6px', color: 'white', padding: '4px 8px', fontSize: '11px'
+                                borderRadius: '6px', color: 'white', padding: '4px 8px', fontSize: '12px'
                               }}
                             >
-                              <option value="" style={{ background: '#0b0f19' }}>Sin asignar</option>
+                              <option value="" style={{ background: '#121716' }}>Sin asignar</option>
                               {['Pecho', 'Espalda', 'Cuádriceps', 'Isquiosurales', 'Hombros', 'Bíceps', 'Tríceps', 'Core', 'Glúteos', 'Pantorrillas', 'Cardio'].map(g => (
-                                <option key={g} value={g} style={{ background: '#0b0f19' }}>{g}</option>
+                                <option key={g} value={g} style={{ background: '#121716' }}>{g}</option>
                               ))}
                             </select>
                             <InfoTooltip title="Grupo Muscular" body="Asigna el grupo muscular principal de este ejercicio. Se usa para calcular el gráfico de simetría y distribución de volumen del día de entrenamiento." size={14} />
@@ -2794,7 +2699,7 @@ export const PlanPlanner: React.FC = () => {
                                 if (!pattern) {
                                   return (
                                     <div style={{
-                                      fontSize: '11px', fontWeight: 600, color: 'rgba(255,255,255,0.4)',
+                                      fontSize: '12px', fontWeight: 600, color: '#a4b0a8',
                                       background: 'rgba(255,255,255,0.05)', padding: '2px 8px',
                                       borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)',
                                       display: 'flex', alignItems: 'center', gap: '4px'
@@ -2815,7 +2720,7 @@ export const PlanPlanner: React.FC = () => {
                                 else if (status === 'optimal') badgeColor = 'var(--color-success)';
                                 else if (status === 'warning') badgeColor = 'var(--color-warning)';
                                 else if (status === 'building') badgeColor = '#facc15';
-                                else badgeColor = '#94a3b8';
+                                else badgeColor = '#a4b0a8';
 
                                 let indicator = '';
                                 if (customTarget && customTarget > 0) {
@@ -2833,14 +2738,14 @@ export const PlanPlanner: React.FC = () => {
                                   <ReasoningTooltip
                                     trigger={
                                       <div style={{
-                                        fontSize: '11px', fontWeight: 600, color: badgeColor,
+                                        fontSize: '12px', fontWeight: 600, color: badgeColor,
                                         background: 'rgba(255,255,255,0.05)', padding: '2px 8px',
                                         borderRadius: '12px', border: `1px solid ${badgeColor}40`,
                                         display: 'flex', alignItems: 'center', gap: '4px',
                                         cursor: 'pointer'
                                       }}>
                                         <span>Patrón: {threshold.label} ({currentTotal} NL)</span>
-                                        <span style={{ color: 'rgba(255,255,255,0.3)' }}>|</span>
+                                        <span style={{ color: '#a4b0a8' }}>|</span>
                                         <span>{indicator}</span>
                                       </div>
                                     }
@@ -2898,13 +2803,13 @@ export const PlanPlanner: React.FC = () => {
 
                                 return (
                                   <div style={{
-                                    fontSize: '11px', fontWeight: 600, color: badgeColor,
+                                    fontSize: '12px', fontWeight: 600, color: badgeColor,
                                     background: 'rgba(255,255,255,0.05)', padding: '2px 8px',
                                     borderRadius: '12px', border: `1px solid ${badgeColor}40`,
                                     display: 'flex', alignItems: 'center', gap: '4px'
                                   }}>
                                     <span>Llevas: {currentTotal} series</span>
-                                    <span style={{ color: 'rgba(255,255,255,0.3)' }}>|</span>
+                                    <span style={{ color: '#a4b0a8' }}>|</span>
                                     <span>{indicator}</span>
                                   </div>
                                 );
@@ -2935,7 +2840,7 @@ export const PlanPlanner: React.FC = () => {
                                 href={ex.video_url}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                style={{ display: 'inline-flex', alignItems: 'center', padding: '8px 12px', background: 'rgba(59, 130, 246, 0.12)', borderRadius: '40px', color: '#60a5fa', textDecoration: 'none', fontWeight: 600, textAlign: 'center', border: '1px solid rgba(59, 130, 246, 0.35)', transition: 'all 0.3s ease', fontSize: '10px', fontFamily: "'Orbitron',sans-serif", textTransform: 'uppercase', letterSpacing: '0.5px' }}
+                                style={{ display: 'inline-flex', alignItems: 'center', padding: '8px 12px', background: 'rgba(59, 130, 246, 0.12)', borderRadius: '40px', color: '#60a5fa', textDecoration: 'none', fontWeight: 600, textAlign: 'center', border: '1px solid rgba(59, 130, 246, 0.35)', transition: 'all 0.3s ease', fontSize: '12px', fontFamily: "'Inter',sans-serif", textTransform: 'none', letterSpacing: '0' }}
                               >
                                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '5px', verticalAlign: '-1px' }}>
                                   <path d="M23 7l-7 5 7 5V7z"></path>
@@ -3008,9 +2913,9 @@ export const PlanPlanner: React.FC = () => {
                                     padding: '6px 12px', borderRadius: '8px',
                                     background: autoProgExId === ex.id ? 'rgba(249, 115, 22, 0.15)' : 'rgba(255,255,255,0.04)',
                                     border: `1px solid ${autoProgExId === ex.id ? 'rgba(249, 115, 22, 0.4)' : 'rgba(255,255,255,0.08)'}`,
-                                    color: autoProgExId === ex.id ? 'var(--theme-primary)' : 'rgba(255,255,255,0.6)',
-                                    fontSize: '10px', fontWeight: 700, fontFamily: "'Orbitron', sans-serif",
-                                    cursor: 'pointer', transition: 'all 0.2s', textTransform: 'uppercase', letterSpacing: '0.3px'
+                                    color: autoProgExId === ex.id ? 'var(--theme-primary)' : '#a4b0a8',
+                                    fontSize: '12px', fontWeight: 700, fontFamily: "'Inter', sans-serif",
+                                    cursor: 'pointer', transition: 'all 0.2s', textTransform: 'none', letterSpacing: '0'
                                   }}
                                 >
                                   ⚙️ Progresión
@@ -3021,13 +2926,13 @@ export const PlanPlanner: React.FC = () => {
                                   <div style={{
                                     position: 'absolute', bottom: '100%', left: 0, marginBottom: '6px',
                                     background: 'linear-gradient(165deg, rgba(20,20,24,0.98), rgba(12,12,16,0.99))',
-                                    backdropFilter: 'blur(30px)', WebkitBackdropFilter: 'blur(30px)',
+                                    backdropFilter: 'none', WebkitBackdropFilter: 'none',
                                     border: '1px solid rgba(255,255,255,0.12)', borderRadius: '12px',
                                     padding: '8px', minWidth: '220px', zIndex: 100,
-                                    boxShadow: '0 12px 40px rgba(0,0,0,0.6)',
+                                    boxShadow: 'none',
                                     animation: 'fadeIn 0.15s ease'
                                   }}>
-                                    <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.4)', fontWeight: 700, fontFamily: "'Orbitron', sans-serif", padding: '4px 8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>PLANTILLAS DE PROGRESIÓN</div>
+                                    <div style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700, fontFamily: "'Inter', sans-serif", padding: '4px 8px', textTransform: 'none', letterSpacing: '0' }}>PLANTILLAS DE PROGRESIÓN</div>
                                     {[
                                       { id: 'linear', label: '📈 Progresión Lineal', sub: 'Fuerza / Hipertrofia · 4 sem' },
                                       { id: 'double', label: '🔁 Progresión Doble', sub: 'Volumen → Carga · 4 sem' },
@@ -3049,7 +2954,7 @@ export const PlanPlanner: React.FC = () => {
                                         onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
                                       >
                                         <div style={{ fontWeight: 600 }}>{t.label}</div>
-                                        <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.4)', marginTop: '2px' }}>{t.sub}</div>
+                                        <div style={{ fontSize: '12px', color: '#a4b0a8', marginTop: '2px' }}>{t.sub}</div>
                                       </button>
                                     ))}
                                   </div>
@@ -3067,8 +2972,8 @@ export const PlanPlanner: React.FC = () => {
                                     background: 'var(--color-danger-light)',
                                     border: '1px solid rgba(239, 68, 68, 0.35)',
                                     color: 'var(--color-danger)',
-                                    fontSize: '10px', fontWeight: 700, fontFamily: "'Orbitron', sans-serif",
-                                    cursor: 'pointer', transition: 'all 0.2s', textTransform: 'uppercase', letterSpacing: '0.3px'
+                                    fontSize: '12px', fontWeight: 700, fontFamily: "'Inter', sans-serif",
+                                    cursor: 'pointer', transition: 'all 0.2s', textTransform: 'none', letterSpacing: '0'
                                   }}
                                 >
                                   ↩️ Revertir
@@ -3082,11 +2987,11 @@ export const PlanPlanner: React.FC = () => {
                                   style={{
                                     display: 'inline-flex', alignItems: 'center', gap: '5px',
                                     padding: '6px 12px', borderRadius: '8px',
-                                    background: isBlocked ? 'rgba(0, 212, 255, 0.15)' : 'rgba(255,255,255,0.04)',
-                                    border: `1px solid ${isBlocked ? 'rgba(0, 212, 255, 0.4)' : 'rgba(255,255,255,0.08)'}`,
-                                    color: isBlocked ? '#67e8f9' : 'rgba(255,255,255,0.6)',
-                                    fontSize: '10px', fontWeight: 700, fontFamily: "'Orbitron', sans-serif",
-                                    cursor: 'pointer', transition: 'all 0.2s', textTransform: 'uppercase', letterSpacing: '0.3px'
+                                    background: isBlocked ? 'rgba(145, 182, 161, 0.15)' : 'rgba(255,255,255,0.04)',
+                                    border: `1px solid ${isBlocked ? 'rgba(145, 182, 161, 0.4)' : 'rgba(255,255,255,0.08)'}`,
+                                    color: isBlocked ? '#67e8f9' : '#a4b0a8',
+                                    fontSize: '12px', fontWeight: 700, fontFamily: "'Inter', sans-serif",
+                                    cursor: 'pointer', transition: 'all 0.2s', textTransform: 'none', letterSpacing: '0'
                                   }}
                                   title="Agrupar en Súper Serie o Circuito"
                                 >
@@ -3097,12 +3002,12 @@ export const PlanPlanner: React.FC = () => {
                                   <div style={{
                                     position: 'absolute', bottom: '100%', right: 0, marginBottom: '6px',
                                     background: 'linear-gradient(165deg, rgba(20,20,24,0.98), rgba(12,12,16,0.99))',
-                                    backdropFilter: 'blur(30px)', WebkitBackdropFilter: 'blur(30px)',
+                                    backdropFilter: 'none', WebkitBackdropFilter: 'none',
                                     border: '1px solid rgba(255,255,255,0.12)', borderRadius: '12px',
                                     padding: '8px', minWidth: '280px', maxWidth: '340px', maxHeight: '300px', overflowY: 'auto', zIndex: 100,
-                                    boxShadow: '0 12px 40px rgba(0,0,0,0.6)'
+                                    boxShadow: 'none'
                                   }}>
-                                    <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.4)', fontWeight: 700, fontFamily: "'Orbitron', sans-serif", padding: '4px 8px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                                    <div style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700, fontFamily: "'Inter', sans-serif", padding: '4px 8px', textTransform: 'none', letterSpacing: '0' }}>
                                       VINCULAR EN SÚPER SERIE CON OTRO EJERCICIO
                                     </div>
                                     {day.exercises.filter(other => other.id !== ex.id).map(other => {
@@ -3121,7 +3026,7 @@ export const PlanPlanner: React.FC = () => {
                                             padding: '8px 10px', borderRadius: '8px',
                                             background: 'transparent', border: 'none',
                                             color: 'rgba(255,255,255,0.85)', cursor: 'pointer',
-                                            fontSize: '11px', transition: 'background 0.15s'
+                                            fontSize: '12px', transition: 'background 0.15s'
                                           }}
                                           onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
                                           onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
@@ -3131,12 +3036,12 @@ export const PlanPlanner: React.FC = () => {
                                               {other.nombre || 'Ejercicio sin nombre'}
                                             </span>
                                             {isOtherBlocked && (
-                                              <span style={{ fontSize: '9px', color: '#00d4ff', background: 'rgba(0,212,255,0.15)', padding: '1px 6px', borderRadius: '4px', fontWeight: 700 }}>
+                                              <span style={{ fontSize: '12px', color: '#91b6a1', background: 'rgba(145, 182, 161,0.15)', padding: '1px 6px', borderRadius: '4px', fontWeight: 700 }}>
                                                 ⚡ {otherTag}
                                               </span>
                                             )}
                                           </div>
-                                          <div style={{ fontSize: '9.5px', color: 'rgba(255,255,255,0.45)', marginTop: '2px' }}>
+                                          <div style={{ fontSize: '9.5px', color: '#a4b0a8', marginTop: '2px' }}>
                                             {other.grupo_muscular ? `${other.grupo_muscular} · ` : ''}
                                             {isOtherBlocked ? 'Se fusionará este bloque' : 'Se moverá junto a este ejercicio'}
                                           </div>
@@ -3147,7 +3052,7 @@ export const PlanPlanner: React.FC = () => {
                                       <button
                                         type="button"
                                         onClick={() => handleUngroupBlockInPlanner(day.id, ex.block_id!)}
-                                        style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 10px', borderRadius: '8px', background: 'rgba(239,68,68,0.1)', border: 'none', color: '#f87171', cursor: 'pointer', fontSize: '11px', marginTop: '6px', borderTop: '1px solid rgba(255,255,255,0.06)' }}
+                                        style={{ display: 'block', width: '100%', textAlign: 'left', padding: '8px 10px', borderRadius: '8px', background: 'rgba(239,68,68,0.1)', border: 'none', color: '#f87171', cursor: 'pointer', fontSize: '12px', marginTop: '6px', borderTop: '1px solid rgba(255,255,255,0.06)' }}
                                       >
                                         ✕ Desvincular de este bloque
                                       </button>
@@ -3185,7 +3090,7 @@ export const PlanPlanner: React.FC = () => {
             })()
           ) : (
             <div style={{ textAlign: 'center', padding: '40px', background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '16px' }}>
-              <p style={{ color: 'rgba(255,255,255,0.4)' }}>Aún no hay días de entrenamiento creados. Agrega uno para empezar a estructurar la rutina.</p>
+              <p style={{ color: '#a4b0a8' }}>Aún no hay días de entrenamiento creados. Agrega uno para empezar a estructurar la rutina.</p>
             </div>
           )}
 
@@ -3313,19 +3218,19 @@ export const PlanPlanner: React.FC = () => {
       {showExitConfirm && (
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(5, 8, 16, 0.85)', backdropFilter: 'blur(10px)',
+          background: 'rgba(5, 8, 16, 0.85)', backdropFilter: 'none',
           zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px',
           fontFamily: "'Inter', sans-serif"
         }}>
           <div style={{
-            background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
+            background: 'linear-gradient(135deg, #1e293b 0%, #1a211e 100%)',
             border: '1px solid rgba(255, 255, 255, 0.08)',
-            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.8), 0 0 40px rgba(14, 165, 233, 0.15)',
+            boxShadow: 'none',
             borderRadius: '20px', maxWidth: '440px', width: '100%', padding: '24px',
             color: 'white', textAlign: 'center'
           }}>
             <div style={{ fontSize: '40px', marginBottom: '12px' }}>☁️</div>
-            <h3 style={{ fontSize: '18px', fontWeight: 800, margin: '0 0 10px 0', color: '#c2ff00' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: 800, margin: '0 0 10px 0', color: '#91b6a1' }}>
               ¿Guardaste tus cambios en la nube?
             </h3>
             <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)', lineHeight: 1.5, margin: '0 0 20px 0' }}>
@@ -3342,7 +3247,7 @@ export const PlanPlanner: React.FC = () => {
                   width: '100%', background: 'linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%)',
                   color: 'white', border: 'none', borderRadius: '8px', padding: '12px',
                   fontSize: '13px', fontWeight: 800, cursor: 'pointer',
-                  boxShadow: '0 4px 15px rgba(14, 165, 233, 0.3)'
+                  boxShadow: 'none'
                 }}
               >
                 ✓ Guardar cambios y Salir
@@ -3364,7 +3269,7 @@ export const PlanPlanner: React.FC = () => {
                 onClick={() => setShowExitConfirm(false)}
                 style={{
                   width: '100%', background: 'rgba(255,255,255,0.05)',
-                  color: 'rgba(255,255,255,0.6)', border: 'none', borderRadius: '8px', padding: '12px',
+                  color: '#a4b0a8', border: 'none', borderRadius: '8px', padding: '12px',
                   fontSize: '13px', fontWeight: 600, cursor: 'pointer'
                 }}
               >
@@ -3379,19 +3284,19 @@ export const PlanPlanner: React.FC = () => {
       {showTourSaveReminder && (
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(5, 8, 16, 0.85)', backdropFilter: 'blur(10px)',
+          background: 'rgba(5, 8, 16, 0.85)', backdropFilter: 'none',
           zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px',
           fontFamily: "'Inter', sans-serif"
         }}>
           <div style={{
-            background: 'linear-gradient(135deg, #0f172a 0%, #090d16 100%)',
-            border: '1px solid rgba(194, 255, 0, 0.2)',
-            boxShadow: '0 20px 40px rgba(0, 0, 0, 0.8), 0 0 40px rgba(194, 255, 0, 0.1)',
+            background: 'linear-gradient(135deg, #1a211e 0%, #090d16 100%)',
+            border: '1px solid rgba(145, 182, 161, 0.2)',
+            boxShadow: 'none',
             borderRadius: '20px', maxWidth: '440px', width: '100%', padding: '24px',
             color: 'white', textAlign: 'center'
           }}>
             <div style={{ fontSize: '40px', marginBottom: '12px' }}>🎉</div>
-            <h3 style={{ fontSize: '18px', fontWeight: 800, margin: '0 0 10px 0', color: '#c2ff00' }}>
+            <h3 style={{ fontSize: '18px', fontWeight: 800, margin: '0 0 10px 0', color: '#91b6a1' }}>
               ¡Tour Completado con Éxito!
             </h3>
             <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)', lineHeight: 1.5, margin: '0 0 20px 0' }}>
@@ -3400,10 +3305,10 @@ export const PlanPlanner: React.FC = () => {
             <button
               onClick={() => setShowTourSaveReminder(false)}
               style={{
-                width: '100%', background: '#c2ff00',
+                width: '100%', background: '#91b6a1',
                 color: '#000', border: 'none', borderRadius: '8px', padding: '12px',
                 fontSize: '13px', fontWeight: 800, cursor: 'pointer',
-                boxShadow: '0 4px 15px rgba(194, 255, 0, 0.3)'
+                boxShadow: 'none'
               }}
             >
               Comenzar a Planificar 🏋️
@@ -3413,318 +3318,13 @@ export const PlanPlanner: React.FC = () => {
       )}
 
       {/* 🧮 Interactive 1RM Calculator Modal */}
-      {show1RMCalculator && (
-        <div style={{
-          position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-          background: 'rgba(5, 8, 16, 0.88)', backdropFilter: 'blur(12px)',
-          zIndex: 99999, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px',
-          fontFamily: "'Inter', sans-serif"
-        }}>
-          <div style={{
-            background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
-            border: '1px solid rgba(255, 255, 255, 0.08)',
-            boxShadow: '0 24px 48px rgba(0, 0, 0, 0.8), 0 0 50px rgba(194, 255, 0, 0.15)',
-            borderRadius: '24px', maxWidth: '480px', width: '100%', padding: '28px',
-            color: 'white', position: 'relative'
-          }}>
-            <button
-              onClick={() => setShow1RMCalculator(false)}
-              style={{
-                position: 'absolute', top: '16px', right: '16px',
-                background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)',
-                fontSize: '18px', cursor: 'pointer', outline: 'none'
-              }}
-            >
-              ✕
-            </button>
+      {show1RMCalculator && <PlannerRMCalculator trainingDays={trainingDays} marks={periodizationConfig?.marcas_1rm || {}} onClose={() => setShow1RMCalculator(false)} showToast={showToast} onApply={(lift, kg, formula) => {
+        const marks = { ...(periodizationConfig?.marcas_1rm || {}), [lift]: kg };
+        setPeriodizationConfig(prev => prev ? { ...prev, marcas_1rm: marks, formula_preferida: formula } : prev);
+        setTrainingDays(days => recalculatePlanWeights(days, marks));
+        showToast(`1RM estimado de ${kg} kg aplicado a ${lift}.`, 'success');
+      }} />}
 
-            <div style={{ textAlign: 'center', marginBottom: '20px' }}>
-              <div style={{ fontSize: '36px', marginBottom: '8px' }}>🧮</div>
-              <h3 style={{ fontSize: '18px', fontWeight: 800, margin: 0, color: '#c2ff00', fontFamily: "'Orbitron', sans-serif" }}>
-                Calculadora Científica 1RM
-              </h3>
-              <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', margin: '4px 0 0 0' }}>
-                Estima tu Fuerza Máxima (1RM) a partir de una serie real y aplícala de inmediato a tu plan.
-              </p>
-            </div>
-
-            {/* Unit Switcher & Formula Selector */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 2fr', gap: '14px', marginBottom: '18px', textAlign: 'left' }}>
-              <div>
-                <label style={{ fontSize: 'var(--text-label-size)', fontWeight: 'var(--text-label-weight)', color: 'var(--text-label-color)', fontFamily: 'var(--text-label-family)', letterSpacing: 'var(--text-label-spacing)', textTransform: 'var(--text-label-transform)', display: 'block', marginBottom: '8px' }}>
-                  UNIDAD
-                </label>
-                <div style={{ display: 'flex', gap: '4px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', padding: '3px' }}>
-                  <button
-                    type="button"
-                    onClick={() => setCalcUnit('kg')}
-                    style={{
-                      flex: 1, border: 'none', borderRadius: '6px', padding: '5px 8px', fontSize: '9px',
-                      fontFamily: "'Orbitron', sans-serif", fontWeight: 700, cursor: 'pointer',
-                      background: calcUnit === 'kg' ? 'linear-gradient(135deg, #c2ff00 0%, #a3e635 100%)' : 'transparent',
-                      color: calcUnit === 'kg' ? '#000' : 'rgba(255,255,255,0.6)', transition: 'all 0.15s'
-                    }}
-                  >
-                    KG
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setCalcUnit('lbs')}
-                    style={{
-                      flex: 1, border: 'none', borderRadius: '6px', padding: '5px 8px', fontSize: '9px',
-                      fontFamily: "'Orbitron', sans-serif", fontWeight: 700, cursor: 'pointer',
-                      background: calcUnit === 'lbs' ? 'linear-gradient(135deg, #c2ff00 0%, #a3e635 100%)' : 'transparent',
-                      color: calcUnit === 'lbs' ? '#000' : 'rgba(255,255,255,0.6)', transition: 'all 0.15s'
-                    }}
-                  >
-                    LBS
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <label style={{ fontSize: 'var(--text-label-size)', fontWeight: 'var(--text-label-weight)', color: 'var(--text-label-color)', fontFamily: 'var(--text-label-family)', letterSpacing: 'var(--text-label-spacing)', textTransform: 'var(--text-label-transform)', display: 'block', marginBottom: '8px' }}>
-                  FÓRMULA DE ESTIMACIÓN
-                </label>
-                <select
-                  value={calcFormula}
-                  onChange={(e) => setCalcFormula(e.target.value as any)}
-                  style={{
-                    width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)',
-                    borderRadius: '8px', color: 'white', padding: '8px 10px', fontSize: '11px', height: '32px', boxSizing: 'border-box'
-                  }}
-                >
-                  <option value="promedio">Promedio Automático (Recomendado)</option>
-                  <option value="epley">Epley (1985)</option>
-                  <option value="brzycki">Brzycki (1993)</option>
-                </select>
-              </div>
-            </div>
-
-            {/* Inputs */}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', marginBottom: '18px' }}>
-              <div>
-                <label style={{ display: 'block', fontSize: '9px', fontWeight: 700, color: 'rgba(255,255,255,0.5)', marginBottom: '6px', textTransform: 'uppercase' }}>
-                  Peso ({calcUnit})
-                </label>
-                <input
-                  type="number"
-                  value={calcWeight || ''}
-                  onChange={(e) => setCalcWeight(parseFloat(e.target.value) || 0)}
-                  style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '12px', boxSizing: 'border-box' }}
-                  placeholder={calcUnit === 'kg' ? '80' : '175'}
-                />
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: '9px', fontWeight: 700, color: 'rgba(255,255,255,0.5)', marginBottom: '6px', textTransform: 'uppercase' }}>Reps hechas</label>
-                <input
-                  type="number"
-                  value={calcReps || ''}
-                  onChange={(e) => setCalcReps(parseInt(e.target.value, 10) || 0)}
-                  style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '12px', boxSizing: 'border-box' }}
-                  placeholder="8"
-                />
-              </div>
-              <div>
-                <label style={{ display: 'block', fontSize: '9px', fontWeight: 700, color: 'rgba(255,255,255,0.5)', marginBottom: '6px', textTransform: 'uppercase' }}>RIR de la serie</label>
-                <input
-                  type="number"
-                  value={calcRIR ?? ''}
-                  onChange={(e) => setCalcRIR(parseInt(e.target.value, 10) ?? 0)}
-                  style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '12px', boxSizing: 'border-box' }}
-                  placeholder="2"
-                />
-              </div>
-            </div>
-
-            {/* Calculations Breakdown */}
-            {(() => {
-              const effective = calcReps + (calcRIR || 0);
-              const epleyVal = calcWeight * (1 + effective / 30);
-              const denom = 1.0278 - 0.0278 * effective;
-              const brzyckiVal = denom > 0.01 ? (calcWeight / denom) : calcWeight;
-              const avgVal = (epleyVal + brzyckiVal) / 2;
-
-              // Determinar qué valor y etiqueta mostrar según la fórmula seleccionada
-              let selectedVal = avgVal;
-              let formulaLabel = '1RM Promedio Estimado';
-              if (calcFormula === 'epley') {
-                selectedVal = epleyVal;
-                formulaLabel = '1RM Epley Estimado';
-              } else if (calcFormula === 'brzycki') {
-                selectedVal = brzyckiVal;
-                formulaLabel = '1RM Brzycki Estimado';
-              }
-
-              const roundedVal = Math.round(selectedVal * 10) / 10;
-              const secondaryUnit = calcUnit === 'kg' ? 'lbs' : 'kg';
-              const secondaryVal = calcUnit === 'kg' ? roundedVal * 2.20462 : roundedVal / 2.20462;
-
-              // Collect exercises for applying
-              const baseLifts = ['sentadilla', 'press de banca', 'peso muerto'];
-              const planExerciseNames = trainingDays
-                .flatMap(d => d.exercises)
-                .map(ex => ex.nombre.trim().toLowerCase())
-                .filter(n => n.length > 0);
-              const existingMarcaKeys = Object.keys(periodizationConfig?.marcas_1rm || {});
-              const allLifts = [...new Set([...baseLifts, ...planExerciseNames, ...existingMarcaKeys])];
-
-              return (
-                <div>
-                  <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '12px', padding: '14px', marginBottom: '18px', fontSize: '11px', lineHeight: '1.4' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                      <span style={{ color: 'rgba(255,255,255,0.5)', fontWeight: calcFormula === 'epley' ? 700 : 400 }}>
-                        Fórmula Epley (1985): {calcFormula === 'epley' && '🎯'}
-                      </span>
-                      <strong style={{ color: calcFormula === 'epley' ? '#c2ff00' : '#fff' }}>
-                        {(Math.round(epleyVal * 10) / 10).toFixed(1)} {calcUnit}
-                      </strong>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                      <span style={{ color: 'rgba(255,255,255,0.5)', fontWeight: calcFormula === 'brzycki' ? 700 : 400 }}>
-                        Fórmula Brzycki (1993): {calcFormula === 'brzycki' && '🎯'}
-                      </span>
-                      <strong style={{ color: calcFormula === 'brzycki' ? '#c2ff00' : '#fff' }}>
-                        {(Math.round(brzyckiVal * 10) / 10).toFixed(1)} {calcUnit}
-                      </strong>
-                    </div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '8px', marginTop: '8px', fontSize: '13px', alignItems: 'baseline' }}>
-                      <span style={{ color: '#a5b4fc', fontWeight: 600 }}>{formulaLabel}:</span>
-                      <div style={{ textAlign: 'right' }}>
-                        <strong style={{ color: '#c2ff00', fontSize: '16px' }}>{roundedVal.toFixed(1)} {calcUnit}</strong>
-                        <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', fontFamily: "'Orbitron', sans-serif", marginTop: '2px' }}>
-                          ≈ {secondaryVal.toFixed(1)} {secondaryUnit}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Tabla de Equivalencias de Cargas */}
-                  <div style={{ marginTop: '16px', marginBottom: '20px' }}>
-                    <div style={{ fontSize: '9px', fontWeight: 800, color: '#a5b4fc', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.08em', textAlign: 'left', fontFamily: "'Orbitron', sans-serif" }}>
-                      📋 TABLA DE PORCENTAJES DE CARGA (Basada en {calcFormula.toUpperCase()})
-                    </div>
-                    <div style={{
-                      maxHeight: '170px',
-                      overflowY: 'auto',
-                      background: 'rgba(0,0,0,0.25)',
-                      border: '1px solid rgba(255,255,255,0.06)',
-                      borderRadius: '12px',
-                    }}>
-                      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', textAlign: 'left', fontFamily: "'Inter', sans-serif" }}>
-                        <thead>
-                          <tr style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', color: 'rgba(255,255,255,0.4)', fontSize: '8.5px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                            <th style={{ padding: '8px 10px' }}>%</th>
-                            <th style={{ padding: '8px 10px' }}>Carga ({calcUnit})</th>
-                            <th style={{ padding: '8px 10px' }}>Equivalencia</th>
-                            <th style={{ padding: '8px 10px', textAlign: 'right' }}>Reps Sugeridas</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {[
-                            { pct: 100, reps: '1 rep' },
-                            { pct: 95,  reps: '2 reps' },
-                            { pct: 90,  reps: '4 reps' },
-                            { pct: 85,  reps: '6 reps' },
-                            { pct: 80,  reps: '8 reps' },
-                            { pct: 75,  reps: '10 reps' },
-                            { pct: 70,  reps: '12 reps' },
-                            { pct: 65,  reps: '15 reps' },
-                          ].map((row) => {
-                            const mainVal = Math.round((roundedVal * (row.pct / 100)) * 10) / 10;
-                            const eqVal = calcUnit === 'kg' ? mainVal * 2.20462 : mainVal / 2.20462;
-                            const isSelected = row.pct === 85;
-                            return (
-                              <tr
-                                key={row.pct}
-                                style={{
-                                  borderBottom: '1px solid rgba(255,255,255,0.04)',
-                                  background: isSelected ? 'rgba(0, 212, 255, 0.05)' : 'transparent',
-                                  color: isSelected ? '#00d4ff' : 'rgba(255,255,255,0.85)',
-                                  fontWeight: isSelected ? 700 : 400
-                                }}
-                              >
-                                <th style={{ padding: '8px 10px', color: isSelected ? '#00d4ff' : 'rgba(0, 212, 255, 0.6)', fontWeight: 'bold' }}>{row.pct}%</th>
-                                <td style={{ padding: '8px 10px', color: '#c2ff00', fontWeight: 'bold' }}>{mainVal.toFixed(1)} {calcUnit}</td>
-                                <td style={{ padding: '8px 10px', color: 'rgba(255,255,255,0.45)' }}>{eqVal.toFixed(1)} {secondaryUnit}</td>
-                                <td style={{ padding: '8px 10px', textAlign: 'right', color: '#fff' }}>{row.reps}</td>
-                              </tr>
-                            );
-                          })}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-
-                  {/* Dropdown to Apply to Exercise */}
-                  <div style={{ marginBottom: '20px' }}>
-                    <label style={{ display: 'block', fontSize: '9px', fontWeight: 700, color: 'rgba(255,255,255,0.5)', marginBottom: '6px', textTransform: 'uppercase' }}>
-                      Aplicar esta marca al Ejercicio:
-                    </label>
-                    <select
-                      value={calcSelectedLift}
-                      onChange={(e) => setCalcSelectedLift(e.target.value)}
-                      style={{ width: '100%', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '12px', height: '38px', boxSizing: 'border-box' }}
-                    >
-                      <option value="">-- Seleccionar Ejercicio --</option>
-                      {allLifts.map(lift => (
-                        <option key={lift} value={lift} style={{ background: '#0b0f19' }}>
-                          {lift.toUpperCase()}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <button
-                    onClick={() => {
-                      if (!calcSelectedLift) {
-                        showToast('Selecciona un ejercicio para aplicar el 1RM.', 'error');
-                        return;
-                      }
-                      if (roundedVal <= 0) {
-                        showToast('Ingresa valores de peso y reps válidos.', 'error');
-                        return;
-                      }
-
-                      // SIEMPRE inyectar en KG al planificador (para mantener consistencia interna del robot)
-                      const finalKgValue = calcUnit === 'kg' ? roundedVal : Math.round((roundedVal / 2.20462) * 10) / 10;
-
-                      const updatedMarcas = {
-                        ...(periodizationConfig?.marcas_1rm || {}),
-                        [calcSelectedLift]: finalKgValue
-                      };
-
-                      // Mapear calcFormula de la calculadora al tipo que espera el config
-                      const formulaParaConfig = calcFormula === 'promedio' ? 'epley_brzycki_avg' : calcFormula;
-
-                      setPeriodizationConfig(prev => {
-                        if (!prev) return prev;
-                        return {
-                          ...prev,
-                          marcas_1rm: updatedMarcas,
-                          formula_preferida: formulaParaConfig
-                        };
-                      });
-
-                      setTrainingDays(prevDays => recalculatePlanWeights(prevDays, updatedMarcas));
-                      showToast(`✅ 1RM de ${finalKgValue} kg aplicado a ${calcSelectedLift.toUpperCase()} con éxito. Fórmulas y pesos del robot recalculados.`, 'success');
-                      setShow1RMCalculator(false);
-                    }}
-                    style={{
-                      width: '100%', background: 'linear-gradient(135deg, #c2ff00 0%, #a3e635 100%)',
-                      color: '#000', border: 'none', borderRadius: '10px', padding: '12px',
-                      fontSize: '13px', fontWeight: 800, cursor: 'pointer',
-                      boxShadow: '0 4px 15px rgba(194, 255, 0, 0.3)'
-                    }}
-                  >
-                    ✓ Aplicar Marca de 1RM al Plan
-                  </button>
-                </div>
-              );
-            })()}
-          </div>
-        </div>
-      )}
     </div>
   );
 };

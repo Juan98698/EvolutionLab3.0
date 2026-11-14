@@ -1,0 +1,11 @@
+{
+  "build": "Estudio, Vite 8, production preview",
+  "profile": "Pixel 5 viewport, CPU x4, 1.6 Mbps download, 150 ms latency",
+  "lcpMs": 2596,
+  "cls": 0,
+  "domReadyMs": 1901.5,
+  "resourceTransferBytes": 249271,
+  "viewportWidth": 393,
+  "contentWidth": 393,
+  "scope": "Login laboratory sample; not field data or an authenticated-session benchmark"
+}

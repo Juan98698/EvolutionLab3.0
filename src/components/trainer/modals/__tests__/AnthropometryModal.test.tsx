@@ -39,11 +39,11 @@ vi.mock('html2canvas', () => ({
 }));
 
 vi.mock('jspdf', () => ({
-  jsPDF: vi.fn().mockImplementation(() => ({
+  jsPDF: vi.fn().mockImplementation(function () { return ({
     internal: { pageSize: { getWidth: () => 210 } },
     addImage: vi.fn(),
     save: vi.fn(),
-  })),
+  }); }),
 }));
 
 const mockAthlete: Profile = {

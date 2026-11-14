@@ -40,7 +40,7 @@ export const WorkoutCard: React.FC<WorkoutCardProps> = ({
           {!isTrainerMode ? (
             <span
               className="static-day-name"
-              style={{ fontSize: '1.2rem', fontWeight: 700, fontFamily: "'Orbitron', sans-serif" }}
+              style={{ fontSize: '1.2rem', fontWeight: 700, fontFamily: "'Inter', sans-serif" }}
             >
               {day.name}
             </span>
@@ -51,7 +51,7 @@ export const WorkoutCard: React.FC<WorkoutCardProps> = ({
               value={day.name}
               onChange={(e) => onChangeDayName?.(day.id, e.target.value)}
               style={{
-                fontFamily: "'Orbitron', sans-serif",
+                fontFamily: "'Inter', sans-serif",
                 fontSize: '1.2rem',
                 fontWeight: 700,
                 background: 'rgba(255, 255, 255, 0.05)',
@@ -78,11 +78,11 @@ export const WorkoutCard: React.FC<WorkoutCardProps> = ({
               borderRadius: '8px',
               color: '#ef4444',
               padding: '6px 12px',
-              fontSize: '11px',
+              fontSize: '12px',
               fontWeight: 600,
               cursor: 'pointer',
               transition: 'all 0.2s',
-              fontFamily: "'Orbitron', sans-serif"
+              fontFamily: "'Inter', sans-serif"
             }}
           >
             <svg
@@ -129,7 +129,7 @@ export const WorkoutCard: React.FC<WorkoutCardProps> = ({
               border: '1px dashed rgba(255,255,255,0.2)',
               borderRadius: '6px',
               color: '#aaa',
-              fontFamily: "'Orbitron', sans-serif",
+              fontFamily: "'Inter', sans-serif",
             }}
           >
             ejercicio {day.exercises.length + idx + 1}
@@ -149,11 +149,11 @@ export const WorkoutCard: React.FC<WorkoutCardProps> = ({
               borderRadius: '8px',
               color: '#10b981',
               padding: '6px 12px',
-              fontSize: '11px',
+              fontSize: '12px',
               fontWeight: 600,
               cursor: 'pointer',
               transition: 'all 0.2s',
-              fontFamily: "'Orbitron', sans-serif"
+              fontFamily: "'Inter', sans-serif"
             }}
           >
             ➕ Añadir ejercicio

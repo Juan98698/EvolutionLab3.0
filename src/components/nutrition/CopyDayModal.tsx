@@ -53,7 +53,7 @@ export const CopyDayModal: React.FC<CopyDayModalProps> = ({
         right: 0,
         bottom: 0,
         backgroundColor: 'rgba(0, 0, 0, 0.75)',
-        backdropFilter: 'blur(4px)',
+        backdropFilter: 'none',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -64,15 +64,15 @@ export const CopyDayModal: React.FC<CopyDayModalProps> = ({
     >
       <div
         style={{
-          background: '#0d1322',
-          border: '1px solid rgba(0, 212, 255, 0.3)',
+          background: '#1a211e',
+          border: '1px solid rgba(145, 182, 161, 0.3)',
           borderRadius: '12px',
           width: '100%',
           maxWidth: '440px',
           maxHeight: '90dvh',
           overflowY: 'auto',
           padding: '20px 18px',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.6)',
+          boxShadow: 'none',
           color: '#ffffff',
           fontFamily: "'Inter', sans-serif",
         }}
@@ -82,9 +82,9 @@ export const CopyDayModal: React.FC<CopyDayModalProps> = ({
             style={{
               margin: 0,
               fontSize: '16px',
-              fontFamily: "'Orbitron', sans-serif",
-              color: '#00d4ff',
-              letterSpacing: '1px',
+              fontFamily: "'Inter', sans-serif",
+              color: '#91b6a1',
+              letterSpacing: '0',
             }}
           >
             📋 COPIAR DÍA
@@ -94,7 +94,7 @@ export const CopyDayModal: React.FC<CopyDayModalProps> = ({
             style={{
               background: 'transparent',
               border: 'none',
-              color: 'rgba(255, 255, 255, 0.6)',
+              color: '#a4b0a8',
               fontSize: '20px',
               cursor: 'pointer',
               lineHeight: 1,
@@ -113,12 +113,12 @@ export const CopyDayModal: React.FC<CopyDayModalProps> = ({
             type="button"
             onClick={selectAll}
             style={{
-              background: 'rgba(0, 212, 255, 0.1)',
-              border: '1px solid rgba(0, 212, 255, 0.3)',
-              color: '#00d4ff',
+              background: 'rgba(145, 182, 161, 0.1)',
+              border: '1px solid rgba(145, 182, 161, 0.3)',
+              color: '#91b6a1',
               borderRadius: '6px',
               padding: '6px 12px',
-              fontSize: '11px',
+              fontSize: '12px',
               cursor: 'pointer',
               fontWeight: 600,
             }}
@@ -134,7 +134,7 @@ export const CopyDayModal: React.FC<CopyDayModalProps> = ({
               color: 'rgba(255, 255, 255, 0.7)',
               borderRadius: '6px',
               padding: '6px 12px',
-              fontSize: '11px',
+              fontSize: '12px',
               cursor: 'pointer',
             }}
           >
@@ -152,8 +152,8 @@ export const CopyDayModal: React.FC<CopyDayModalProps> = ({
                   display: 'flex',
                   alignItems: 'center',
                   gap: '12px',
-                  background: isChecked ? 'rgba(0, 212, 255, 0.08)' : 'rgba(255, 255, 255, 0.02)',
-                  border: isChecked ? '1px solid rgba(0, 212, 255, 0.4)' : '1px solid rgba(255, 255, 255, 0.06)',
+                  background: isChecked ? 'rgba(145, 182, 161, 0.08)' : 'rgba(255, 255, 255, 0.02)',
+                  border: isChecked ? '1px solid rgba(145, 182, 161, 0.4)' : '1px solid rgba(255, 255, 255, 0.06)',
                   borderRadius: '8px',
                   padding: '10px 14px',
                   cursor: 'pointer',
@@ -164,7 +164,7 @@ export const CopyDayModal: React.FC<CopyDayModalProps> = ({
                   type="checkbox"
                   checked={isChecked}
                   onChange={() => toggleDay(d.key)}
-                  style={{ accentColor: '#00d4ff', width: '16px', height: '16px' }}
+                  style={{ accentColor: '#91b6a1', width: '16px', height: '16px' }}
                 />
                 <span style={{ fontSize: '13px', fontWeight: isChecked ? 600 : 400 }}>
                   {d.label}
@@ -195,11 +195,11 @@ export const CopyDayModal: React.FC<CopyDayModalProps> = ({
             onClick={handleCopy}
             disabled={selectedDays.length === 0}
             style={{
-              background: selectedDays.length > 0 ? 'var(--theme-primary, #00d4ff)' : 'rgba(255, 255, 255, 0.1)',
+              background: selectedDays.length > 0 ? 'var(--theme-primary, #91b6a1)' : 'rgba(255, 255, 255, 0.1)',
               border: 'none',
               color: '#000000',
               fontWeight: 800,
-              fontFamily: "'Orbitron', sans-serif",
+              fontFamily: "'Inter', sans-serif",
               borderRadius: '8px',
               padding: '8px 18px',
               fontSize: '12px',

@@ -87,7 +87,7 @@ export const InitialPeriodizationEvaluation: React.FC<InitialPeriodizationEvalua
     });
   };
 
-  const themeColor = `var(--theme-primary, #00d4ff)`;
+  const themeColor = `var(--theme-primary, #91b6a1)`;
 
   const handleFinish = () => {
     const marcas_1rm: Record<string, number> = {};
@@ -125,14 +125,14 @@ export const InitialPeriodizationEvaluation: React.FC<InitialPeriodizationEvalua
   return (
     <div style={{
       background: 'rgba(10, 15, 30, 0.95)',
-      border: `1px solid rgba(0, 212, 255, 0.15)`,
+      border: `1px solid rgba(145, 182, 161, 0.15)`,
       borderRadius: '20px',
       padding: '30px 24px',
       maxWidth: '520px',
       width: '100%',
       margin: '40px auto',
-      boxShadow: '0 20px 50px rgba(0, 0, 0, 0.5)',
-      backdropFilter: 'blur(20px)',
+      boxShadow: 'none',
+      backdropFilter: 'none',
       color: 'white',
       fontFamily: 'sans-serif'
     }}>
@@ -147,11 +147,11 @@ export const InitialPeriodizationEvaluation: React.FC<InitialPeriodizationEvalua
       }}>
         <div>
           <span style={{
-            fontSize: '9px',
-            fontFamily: "'Orbitron', sans-serif",
+            fontSize: '12px',
+            fontFamily: "'Inter', sans-serif",
             color: themeColor,
-            letterSpacing: '2px',
-            textTransform: 'uppercase'
+            letterSpacing: '0',
+            textTransform: 'none'
           }}>
             Fase de Diagnóstico
           </span>
@@ -159,15 +159,15 @@ export const InitialPeriodizationEvaluation: React.FC<InitialPeriodizationEvalua
             margin: '4px 0 0 0',
             fontSize: '18px',
             fontWeight: 800,
-            fontFamily: "'Orbitron', sans-serif",
-            letterSpacing: '1px'
+            fontFamily: "'Inter', sans-serif",
+            letterSpacing: '0'
           }}>
             EVALUACIÓN INICIAL
           </h2>
         </div>
         <div style={{
-          fontFamily: "'Orbitron', sans-serif",
-          fontSize: '11px',
+          fontFamily: "'Inter', sans-serif",
+          fontSize: '12px',
           background: 'rgba(255, 255, 255, 0.03)',
           border: '1px solid rgba(255, 255, 255, 0.1)',
           padding: '6px 12px',
@@ -180,13 +180,13 @@ export const InitialPeriodizationEvaluation: React.FC<InitialPeriodizationEvalua
       {/* STEP 1: Datos Fisiológicos */}
       {step === 1 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <p style={{ fontSize: '13px', color: 'rgba(255, 255, 255, 0.65)', lineHeight: '1.6', margin: 0 }}>
+          <p style={{ fontSize: '13px', color: '#a4b0a8', lineHeight: '1.6', margin: 0 }}>
             Para programar tu volumen inicial y gestionar la fatiga acumulada, necesitamos conocer tu objetivo, tu edad y cómo evalúas tu descanso general.
           </p>
 
           {/* BUG-03 fix: Selector de Objetivo de Entrenamiento */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <label style={{ fontSize: '11px', fontWeight: 700, color: themeColor, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <label style={{ fontSize: '12px', fontWeight: 700, color: themeColor, textTransform: 'none', letterSpacing: '0' }}>
               ¿Cuál es tu objetivo principal?
             </label>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
@@ -206,12 +206,12 @@ export const InitialPeriodizationEvaluation: React.FC<InitialPeriodizationEvalua
                     padding: '12px 6px',
                     borderRadius: '10px',
                     cursor: 'pointer',
-                    fontSize: '10px',
+                    fontSize: '12px',
                     fontWeight: 800,
-                    textTransform: 'uppercase',
-                    fontFamily: "'Orbitron', sans-serif",
+                    textTransform: 'none',
+                    fontFamily: "'Inter', sans-serif",
                     transition: 'all 0.2s ease',
-                    boxShadow: objetivo === opt.key ? `0 0 10px rgba(0, 212, 255, 0.3)` : 'none',
+                    boxShadow: objetivo === opt.key ? `0 0 10px rgba(145, 182, 161, 0.3)` : 'none',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
@@ -219,14 +219,14 @@ export const InitialPeriodizationEvaluation: React.FC<InitialPeriodizationEvalua
                   }}
                 >
                   <span>{opt.label}</span>
-                  <span style={{ fontSize: '8px', fontWeight: 400, opacity: 0.7, fontFamily: 'sans-serif', textTransform: 'none' }}>{opt.desc}</span>
+                  <span style={{ fontSize: '12px', fontWeight: 400, opacity: 0.7, fontFamily: 'sans-serif', textTransform: 'none' }}>{opt.desc}</span>
                 </button>
               ))}
             </div>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <label style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255, 255, 255, 0.5)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <label style={{ fontSize: '12px', fontWeight: 700, color: '#a4b0a8', textTransform: 'none', letterSpacing: '0' }}>
               ¿Qué edad tienes?
             </label>
             <input
@@ -247,7 +247,7 @@ export const InitialPeriodizationEvaluation: React.FC<InitialPeriodizationEvalua
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-            <label style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255, 255, 255, 0.5)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <label style={{ fontSize: '12px', fontWeight: 700, color: '#a4b0a8', textTransform: 'none', letterSpacing: '0' }}>
               Capacidad de recuperación general
             </label>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '10px' }}>
@@ -263,19 +263,19 @@ export const InitialPeriodizationEvaluation: React.FC<InitialPeriodizationEvalua
                     padding: '12px 6px',
                     borderRadius: '10px',
                     cursor: 'pointer',
-                    fontSize: '11px',
+                    fontSize: '12px',
                     fontWeight: 800,
-                    textTransform: 'uppercase',
-                    fontFamily: "'Orbitron', sans-serif",
+                    textTransform: 'none',
+                    fontFamily: "'Inter', sans-serif",
                     transition: 'all 0.2s ease',
-                    boxShadow: recuperacion === r ? `0 0 10px rgba(0, 212, 255, 0.3)` : 'none'
+                    boxShadow: recuperacion === r ? `0 0 10px rgba(145, 182, 161, 0.3)` : 'none'
                   }}
                 >
                   {r}
                 </button>
               ))}
             </div>
-            <span style={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.4)', lineHeight: '1.4' }}>
+            <span style={{ fontSize: '12px', color: '#a4b0a8', lineHeight: '1.4' }}>
               * Selecciona 'alta' si duermes 8+ horas y tienes bajo estrés diario. Selecciona 'baja' si tienes problemas de sueño o trabajo muy demandante.
             </span>
           </div>
@@ -297,7 +297,7 @@ export const InitialPeriodizationEvaluation: React.FC<InitialPeriodizationEvalua
                   onSave(currentConfig as any);
                   onCancel(); 
                 }}
-                style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: '13px', textDecoration: 'underline' }}
+                style={{ background: 'none', border: 'none', color: '#a4b0a8', cursor: 'pointer', fontSize: '13px', textDecoration: 'underline' }}
               >
                 Responder luego
               </button>
@@ -309,11 +309,11 @@ export const InitialPeriodizationEvaluation: React.FC<InitialPeriodizationEvalua
                 color: '#000',
                 fontWeight: 800,
                 fontSize: '12px',
-                fontFamily: "'Orbitron', sans-serif",
+                fontFamily: "'Inter', sans-serif",
                 padding: '12px 24px',
                 borderRadius: '10px',
                 cursor: 'pointer',
-                letterSpacing: '1px'
+                letterSpacing: '0'
               }}
             >
               Siguiente Paso
@@ -325,13 +325,13 @@ export const InitialPeriodizationEvaluation: React.FC<InitialPeriodizationEvalua
       {/* STEP 2: Puntos Débiles Mecánicos */}
       {step === 2 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <p style={{ fontSize: '13px', color: 'rgba(255, 255, 255, 0.65)', lineHeight: '1.6', margin: 0 }}>
+          <p style={{ fontSize: '13px', color: '#a4b0a8', lineHeight: '1.6', margin: 0 }}>
             Identifica en qué parte del recorrido sueles fallar cuando estás cerca de tu límite. Esto programará accesorios específicos para reforzar tus debilidades mecánicas.
           </p>
 
           {/* Sentadilla */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <label style={{ fontSize: '11px', fontWeight: 700, color: themeColor, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <label style={{ fontSize: '12px', fontWeight: 700, color: themeColor, textTransform: 'none', letterSpacing: '0' }}>
               Sentadilla: ¿Dónde fallas?
             </label>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
@@ -345,13 +345,13 @@ export const InitialPeriodizationEvaluation: React.FC<InitialPeriodizationEvalua
                   type="button"
                   onClick={() => setSentadillaWeak(opt.key)}
                   style={{
-                    background: sentadillaWeak === opt.key ? 'rgba(0, 212, 255, 0.12)' : 'rgba(255, 255, 255, 0.02)',
+                    background: sentadillaWeak === opt.key ? 'rgba(145, 182, 161, 0.12)' : 'rgba(255, 255, 255, 0.02)',
                     border: '1px solid ' + (sentadillaWeak === opt.key ? themeColor : 'rgba(255, 255, 255, 0.08)'),
                     color: 'white',
                     padding: '10px 4px',
                     borderRadius: '8px',
                     cursor: 'pointer',
-                    fontSize: '11px',
+                    fontSize: '12px',
                     fontWeight: 600,
                     transition: 'all 0.2s ease'
                   }}
@@ -364,7 +364,7 @@ export const InitialPeriodizationEvaluation: React.FC<InitialPeriodizationEvalua
 
           {/* Press de Banca */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <label style={{ fontSize: '11px', fontWeight: 700, color: themeColor, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <label style={{ fontSize: '12px', fontWeight: 700, color: themeColor, textTransform: 'none', letterSpacing: '0' }}>
               Press de Banca: ¿Dónde fallas?
             </label>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
@@ -378,13 +378,13 @@ export const InitialPeriodizationEvaluation: React.FC<InitialPeriodizationEvalua
                   type="button"
                   onClick={() => setBancaWeak(opt.key)}
                   style={{
-                    background: bancaWeak === opt.key ? 'rgba(0, 212, 255, 0.12)' : 'rgba(255, 255, 255, 0.02)',
+                    background: bancaWeak === opt.key ? 'rgba(145, 182, 161, 0.12)' : 'rgba(255, 255, 255, 0.02)',
                     border: '1px solid ' + (bancaWeak === opt.key ? themeColor : 'rgba(255, 255, 255, 0.08)'),
                     color: 'white',
                     padding: '10px 4px',
                     borderRadius: '8px',
                     cursor: 'pointer',
-                    fontSize: '11px',
+                    fontSize: '12px',
                     fontWeight: 600,
                     transition: 'all 0.2s ease'
                   }}
@@ -397,7 +397,7 @@ export const InitialPeriodizationEvaluation: React.FC<InitialPeriodizationEvalua
 
           {/* Peso Muerto */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            <label style={{ fontSize: '11px', fontWeight: 700, color: themeColor, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <label style={{ fontSize: '12px', fontWeight: 700, color: themeColor, textTransform: 'none', letterSpacing: '0' }}>
               Peso Muerto: ¿Dónde fallas?
             </label>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '8px' }}>
@@ -411,13 +411,13 @@ export const InitialPeriodizationEvaluation: React.FC<InitialPeriodizationEvalua
                   type="button"
                   onClick={() => setPesoMuertoWeak(opt.key)}
                   style={{
-                    background: pesoMuertoWeak === opt.key ? 'rgba(0, 212, 255, 0.12)' : 'rgba(255, 255, 255, 0.02)',
+                    background: pesoMuertoWeak === opt.key ? 'rgba(145, 182, 161, 0.12)' : 'rgba(255, 255, 255, 0.02)',
                     border: '1px solid ' + (pesoMuertoWeak === opt.key ? themeColor : 'rgba(255, 255, 255, 0.08)'),
                     color: 'white',
                     padding: '10px 4px',
                     borderRadius: '8px',
                     cursor: 'pointer',
-                    fontSize: '11px',
+                    fontSize: '12px',
                     fontWeight: 600,
                     transition: 'all 0.2s ease'
                   }}
@@ -431,7 +431,7 @@ export const InitialPeriodizationEvaluation: React.FC<InitialPeriodizationEvalua
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '20px' }}>
             <button
               onClick={() => setStep(1)}
-              style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: '13px' }}
+              style={{ background: 'none', border: 'none', color: '#a4b0a8', cursor: 'pointer', fontSize: '13px' }}
             >
               Atrás
             </button>
@@ -443,11 +443,11 @@ export const InitialPeriodizationEvaluation: React.FC<InitialPeriodizationEvalua
                 color: '#000',
                 fontWeight: 800,
                 fontSize: '12px',
-                fontFamily: "'Orbitron', sans-serif",
+                fontFamily: "'Inter', sans-serif",
                 padding: '12px 24px',
                 borderRadius: '10px',
                 cursor: 'pointer',
-                letterSpacing: '1px'
+                letterSpacing: '0'
               }}
             >
               Siguiente Paso
@@ -459,13 +459,13 @@ export const InitialPeriodizationEvaluation: React.FC<InitialPeriodizationEvalua
       {/* STEP 3: Test de 1RM */}
       {step === 3 && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <p style={{ fontSize: '13px', color: 'rgba(255, 255, 255, 0.65)', lineHeight: '1.6', margin: 0 }}>
+          <p style={{ fontSize: '13px', color: '#a4b0a8', lineHeight: '1.6', margin: 0 }}>
             Ingresa tu mejor levantamiento reciente en los tres grandes movimientos. Calcularemos tu 1RM estimado en tiempo real para calibrar tus cargas del bloque.
           </p>
 
           {/* Sentadilla Levantamiento */}
           <div style={{ background: 'rgba(255, 255, 255, 0.01)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '12px', padding: '14px' }}>
-            <div style={{ fontSize: '11px', fontWeight: 800, fontFamily: "'Orbitron', sans-serif", color: themeColor, marginBottom: '10px', letterSpacing: '0.5px' }}>
+            <div style={{ fontSize: '12px', fontWeight: 800, fontFamily: "'Inter', sans-serif", color: themeColor, marginBottom: '10px', letterSpacing: '0' }}>
               SENTADILLA
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(90px, 1fr))', gap: '8px', alignItems: 'center' }}>
@@ -496,7 +496,7 @@ export const InitialPeriodizationEvaluation: React.FC<InitialPeriodizationEvalua
               </select>
             </div>
             {sq1RM > 0 && (
-              <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '8px', fontFamily: "'Orbitron', sans-serif" }}>
+              <div style={{ fontSize: '12px', color: '#a4b0a8', marginTop: '8px', fontFamily: "'Inter', sans-serif" }}>
                 1RM estimado: <strong style={{ color: 'white' }}>{sq1RM} kg</strong>
               </div>
             )}
@@ -504,7 +504,7 @@ export const InitialPeriodizationEvaluation: React.FC<InitialPeriodizationEvalua
 
           {/* Press de Banca Levantamiento */}
           <div style={{ background: 'rgba(255, 255, 255, 0.01)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '12px', padding: '14px' }}>
-            <div style={{ fontSize: '11px', fontWeight: 800, fontFamily: "'Orbitron', sans-serif", color: themeColor, marginBottom: '10px', letterSpacing: '0.5px' }}>
+            <div style={{ fontSize: '12px', fontWeight: 800, fontFamily: "'Inter', sans-serif", color: themeColor, marginBottom: '10px', letterSpacing: '0' }}>
               PRESS DE BANCA
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(90px, 1fr))', gap: '8px', alignItems: 'center' }}>
@@ -535,7 +535,7 @@ export const InitialPeriodizationEvaluation: React.FC<InitialPeriodizationEvalua
               </select>
             </div>
             {bp1RM > 0 && (
-              <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '8px', fontFamily: "'Orbitron', sans-serif" }}>
+              <div style={{ fontSize: '12px', color: '#a4b0a8', marginTop: '8px', fontFamily: "'Inter', sans-serif" }}>
                 1RM estimado: <strong style={{ color: 'white' }}>{bp1RM} kg</strong>
               </div>
             )}
@@ -543,7 +543,7 @@ export const InitialPeriodizationEvaluation: React.FC<InitialPeriodizationEvalua
 
           {/* Peso Muerto Levantamiento */}
           <div style={{ background: 'rgba(255, 255, 255, 0.01)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '12px', padding: '14px' }}>
-            <div style={{ fontSize: '11px', fontWeight: 800, fontFamily: "'Orbitron', sans-serif", color: themeColor, marginBottom: '10px', letterSpacing: '0.5px' }}>
+            <div style={{ fontSize: '12px', fontWeight: 800, fontFamily: "'Inter', sans-serif", color: themeColor, marginBottom: '10px', letterSpacing: '0' }}>
               PESO MUERTO
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(90px, 1fr))', gap: '8px', alignItems: 'center' }}>
@@ -574,7 +574,7 @@ export const InitialPeriodizationEvaluation: React.FC<InitialPeriodizationEvalua
               </select>
             </div>
             {dl1RM > 0 && (
-              <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '8px', fontFamily: "'Orbitron', sans-serif" }}>
+              <div style={{ fontSize: '12px', color: '#a4b0a8', marginTop: '8px', fontFamily: "'Inter', sans-serif" }}>
                 1RM estimado: <strong style={{ color: 'white' }}>{dl1RM} kg</strong>
               </div>
             )}
@@ -583,7 +583,7 @@ export const InitialPeriodizationEvaluation: React.FC<InitialPeriodizationEvalua
           {/* Ejercicios del Plan / Adicionales */}
           {extraLifts.length > 0 && (
             <div style={{ marginTop: '10px' }}>
-              <div style={{ fontSize: '12px', fontWeight: 800, fontFamily: "'Orbitron', sans-serif", color: 'rgba(255,255,255,0.7)', marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '1px' }}>
+              <div style={{ fontSize: '12px', fontWeight: 800, fontFamily: "'Inter', sans-serif", color: 'rgba(255,255,255,0.7)', marginBottom: '12px', textTransform: 'none', letterSpacing: '0' }}>
                 Otros Ejercicios del Plan
               </div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', maxHeight: '280px', overflowY: 'auto', paddingRight: '4px' }}>
@@ -630,11 +630,11 @@ export const InitialPeriodizationEvaluation: React.FC<InitialPeriodizationEvalua
                             background: 'transparent',
                             border: 'none',
                             borderBottom: '1px solid rgba(255,255,255,0.1)',
-                            fontSize: '11px',
+                            fontSize: '12px',
                             fontWeight: 800,
-                            fontFamily: "'Orbitron', sans-serif",
+                            fontFamily: "'Inter', sans-serif",
                             color: themeColor,
-                            letterSpacing: '0.5px',
+                            letterSpacing: '0',
                             width: '100%',
                             padding: '4px 0',
                             outline: 'none'
@@ -678,7 +678,7 @@ export const InitialPeriodizationEvaluation: React.FC<InitialPeriodizationEvalua
                         </select>
                       </div>
                       {calculated > 0 && (
-                        <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '8px', fontFamily: "'Orbitron', sans-serif" }}>
+                        <div style={{ fontSize: '12px', color: '#a4b0a8', marginTop: '8px', fontFamily: "'Inter', sans-serif" }}>
                           1RM estimado: <strong style={{ color: 'white' }}>{calculated} kg</strong>
                         </div>
                       )}
@@ -698,9 +698,9 @@ export const InitialPeriodizationEvaluation: React.FC<InitialPeriodizationEvalua
               borderRadius: '10px',
               color: 'white',
               padding: '12px',
-              fontSize: '11px',
+              fontSize: '12px',
               fontWeight: 800,
-              fontFamily: "'Orbitron', sans-serif",
+              fontFamily: "'Inter', sans-serif",
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
@@ -724,30 +724,30 @@ export const InitialPeriodizationEvaluation: React.FC<InitialPeriodizationEvalua
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px' }}>
             <button
               onClick={() => setStep(2)}
-              style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: '13px' }}
+              style={{ background: 'none', border: 'none', color: '#a4b0a8', cursor: 'pointer', fontSize: '13px' }}
             >
               Atrás
             </button>
             {/* BUG-10 fix: Show validation message when no 1RM data entered */}
             {!hasAny1RM() ? (
-              <span style={{ fontSize: '10px', color: 'rgba(255, 120, 120, 0.8)', fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.5px' }}>
+              <span style={{ fontSize: '12px', color: 'rgba(255, 120, 120, 0.8)', fontFamily: "'Inter', sans-serif", letterSpacing: '0' }}>
                 Ingresa al menos un levantamiento
               </span>
             ) : (
               <button
                 onClick={handleFinish}
                 style={{
-                  background: 'linear-gradient(135deg, var(--theme-primary, #00d4ff), var(--theme-secondary, #0070a0))',
+                  background: 'linear-gradient(135deg, var(--theme-primary, #91b6a1), var(--theme-secondary, #0070a0))',
                   border: 'none',
                   color: '#fff',
                   fontWeight: 800,
                   fontSize: '12px',
-                  fontFamily: "'Orbitron', sans-serif",
+                  fontFamily: "'Inter', sans-serif",
                   padding: '12px 28px',
                   borderRadius: '10px',
                   cursor: 'pointer',
-                  letterSpacing: '1px',
-                  boxShadow: '0 4px 15px rgba(0, 212, 255, 0.25)'
+                  letterSpacing: '0',
+                  boxShadow: 'none'
                 }}
               >
                 Finalizar Diagnóstico

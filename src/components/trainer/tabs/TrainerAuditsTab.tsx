@@ -72,7 +72,7 @@ const TrainerAuditsTab: React.FC<TrainerAuditsTabProps> = ({
   return (
     <div className="stagger-item" style={{ animationDelay: '0.1s' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '10px' }}>
-        <h2 style={{ fontFamily: 'Orbitron, sans-serif', fontSize: '18px', fontWeight: 800, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <h2 style={{ fontFamily: 'Inter, sans-serif', fontSize: '18px', fontWeight: 800, margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
           <span style={{ color: 'var(--theme-primary)' }}>📊</span> HISTORIAL DE ACTIVIDAD Y AUDITORÍA
         </h2>
         <button
@@ -84,8 +84,8 @@ const TrainerAuditsTab: React.FC<TrainerAuditsTabProps> = ({
             borderRadius: '8px',
             color: 'white',
             padding: '6px 12px',
-            fontSize: '11px',
-            fontFamily: "'Orbitron', sans-serif",
+            fontSize: '12px',
+            fontFamily: "'Inter', sans-serif",
             fontWeight: 600,
             cursor: 'pointer',
             display: 'flex',
@@ -104,16 +104,16 @@ const TrainerAuditsTab: React.FC<TrainerAuditsTabProps> = ({
           <button
             onClick={() => setAuditViewMode('cronologica')}
             style={{
-              fontSize: '10px',
+              fontSize: '12px',
               padding: '6px 12px',
               borderRadius: '8px',
               border: 'none',
               cursor: 'pointer',
-              fontFamily: "'Orbitron', sans-serif",
+              fontFamily: "'Inter', sans-serif",
               fontWeight: 600,
               transition: 'all 0.2s',
               background: auditViewMode === 'cronologica' ? 'var(--theme-btn-gradient)' : 'transparent',
-              color: auditViewMode === 'cronologica' ? 'white' : 'rgba(255,255,255,0.5)',
+              color: auditViewMode === 'cronologica' ? 'white' : '#a4b0a8',
               boxShadow: auditViewMode === 'cronologica' ? '0 0 10px var(--theme-btn-glow)' : 'none',
             }}
           >
@@ -122,16 +122,16 @@ const TrainerAuditsTab: React.FC<TrainerAuditsTabProps> = ({
           <button
             onClick={() => setAuditViewMode('ejercicio')}
             style={{
-              fontSize: '10px',
+              fontSize: '12px',
               padding: '6px 12px',
               borderRadius: '8px',
               border: 'none',
               cursor: 'pointer',
-              fontFamily: "'Orbitron', sans-serif",
+              fontFamily: "'Inter', sans-serif",
               fontWeight: 600,
               transition: 'all 0.2s',
               background: auditViewMode === 'ejercicio' ? 'var(--theme-btn-gradient)' : 'transparent',
-              color: auditViewMode === 'ejercicio' ? 'white' : 'rgba(255,255,255,0.5)',
+              color: auditViewMode === 'ejercicio' ? 'white' : '#a4b0a8',
               boxShadow: auditViewMode === 'ejercicio' ? '0 0 10px var(--theme-btn-glow)' : 'none',
             }}
           >
@@ -141,12 +141,12 @@ const TrainerAuditsTab: React.FC<TrainerAuditsTabProps> = ({
       </div>
 
       {loadingAuditoria ? (
-        <div style={{ textAlign: 'center', padding: '60px', color: 'var(--theme-primary)', fontFamily: 'Orbitron, sans-serif' }}>
+        <div style={{ textAlign: 'center', padding: '60px', color: 'var(--theme-primary)', fontFamily: 'Inter, sans-serif' }}>
           <span>Analizando registros y procesando sobrecarga progresiva...</span>
         </div>
       ) : actividades.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '40px', background: 'var(--theme-card-bg)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '1px solid var(--theme-border)', borderRadius: '16px' }}>
-          <p style={{ color: 'rgba(255,255,255,0.4)' }}>No hay sesiones registradas por tus atletas en los últimos días.</p>
+        <div style={{ textAlign: 'center', padding: '40px', background: 'var(--theme-card-bg)', backdropFilter: 'none', WebkitBackdropFilter: 'none', border: '1px solid var(--theme-border)', borderRadius: '16px' }}>
+          <p style={{ color: '#a4b0a8' }}>No hay sesiones registradas por tus atletas en los últimos días.</p>
         </div>
       ) : auditViewMode === 'cronologica' ? (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -163,8 +163,8 @@ const TrainerAuditsTab: React.FC<TrainerAuditsTabProps> = ({
                 key={sesion.id}
                 style={{
                   background: 'var(--theme-card-bg)',
-                  backdropFilter: 'blur(20px)',
-                  WebkitBackdropFilter: 'blur(20px)',
+                  backdropFilter: 'none',
+                  WebkitBackdropFilter: 'none',
                   border: '1px solid var(--theme-border)',
                   borderRadius: '16px',
                   padding: '20px',
@@ -172,7 +172,7 @@ const TrainerAuditsTab: React.FC<TrainerAuditsTabProps> = ({
                   flexDirection: 'column',
                   gap: '12px',
                   transition: 'all 0.3s ease',
-                  boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+                  boxShadow: 'none'
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '10px' }}>
@@ -186,10 +186,10 @@ const TrainerAuditsTab: React.FC<TrainerAuditsTabProps> = ({
                           color: '#eab308',
                           borderRadius: '6px',
                           padding: '2px 8px',
-                          fontSize: '10px',
+                          fontSize: '12px',
                           fontWeight: 700,
-                          fontFamily: "'Orbitron', sans-serif",
-                          letterSpacing: '0.5px',
+                          fontFamily: "'Inter', sans-serif",
+                          letterSpacing: '0',
                           display: 'inline-flex',
                           alignItems: 'center',
                           gap: '4px'
@@ -198,7 +198,7 @@ const TrainerAuditsTab: React.FC<TrainerAuditsTabProps> = ({
                         </span>
                       )}
                     </h3>
-                    <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', display: 'inline-block', marginTop: '2px' }}>
+                    <span style={{ fontSize: '12px', color: '#a4b0a8', display: 'inline-block', marginTop: '2px' }}>
                       📅 Registro: {formattedDate}
                     </span>
                   </div>
@@ -212,8 +212,8 @@ const TrainerAuditsTab: React.FC<TrainerAuditsTabProps> = ({
                         borderRadius: '8px',
                         color: 'white',
                         padding: '6px 12px',
-                        fontSize: '11px',
-                        fontFamily: "'Orbitron', sans-serif",
+                        fontSize: '12px',
+                        fontFamily: "'Inter', sans-serif",
                         cursor: 'pointer',
                         display: 'flex',
                         alignItems: 'center',
@@ -228,7 +228,7 @@ const TrainerAuditsTab: React.FC<TrainerAuditsTabProps> = ({
 
                 {alertasAtleta.length > 0 && (
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', background: 'rgba(255,255,255,0.01)', padding: '10px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.03)' }}>
-                    <div style={{ width: '100%', fontSize: '9px', color: 'rgba(255,255,255,0.35)', fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: '4px' }}>
+                    <div style={{ width: '100%', fontSize: '12px', color: '#a4b0a8', fontFamily: "'Inter', sans-serif", letterSpacing: '0', textTransform: 'none', marginBottom: '4px' }}>
                       Alertas de Progreso Activas (Motor de Progresión)
                     </div>
                     {alertasAtleta.map((alerta, idx) => {
@@ -244,7 +244,7 @@ const TrainerAuditsTab: React.FC<TrainerAuditsTabProps> = ({
                             border: `1px solid ${styles.border}`,
                             borderRadius: '6px',
                             padding: '4px 8px',
-                            fontSize: '10px',
+                            fontSize: '12px',
                             fontWeight: 600,
                             color: styles.text
                           }}
@@ -258,7 +258,7 @@ const TrainerAuditsTab: React.FC<TrainerAuditsTabProps> = ({
                 )}
 
                 {sesion.notas_generales && (
-                  <div style={{ fontSize: '12px', fontStyle: 'italic', color: 'rgba(255,255,255,0.6)', background: 'rgba(255,255,255,0.02)', padding: '10px 14px', borderRadius: '10px', borderLeft: '3px solid var(--theme-primary)' }}>
+                  <div style={{ fontSize: '12px', fontStyle: 'italic', color: '#a4b0a8', background: 'rgba(255,255,255,0.02)', padding: '10px 14px', borderRadius: '10px', borderLeft: '3px solid var(--theme-primary)' }}>
                     📝 "{sesion.notas_generales}"
                   </div>
                 )}
@@ -273,12 +273,12 @@ const TrainerAuditsTab: React.FC<TrainerAuditsTabProps> = ({
                     flexDirection: 'column',
                     gap: '6px'
                   }}>
-                    <div style={{ fontSize: '11px', fontWeight: 700, color: '#eab308', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <div style={{ fontSize: '12px', fontWeight: 700, color: '#eab308', display: 'flex', alignItems: 'center', gap: '6px' }}>
                       ⚡ <span>Sesión ejecutada con Súper Serie (Agrupaciones ad-hoc)</span>
                     </div>
                     {Array.isArray(sesion.express_blocks) && sesion.express_blocks.length > 0 ? (
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '2px' }}>
-                        <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                        <span style={{ fontSize: '12px', color: '#a4b0a8', textTransform: 'none', letterSpacing: '0' }}>
                           Agrupaciones realizadas por el atleta:
                         </span>
                         <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
@@ -290,7 +290,7 @@ const TrainerAuditsTab: React.FC<TrainerAuditsTabProps> = ({
                                 border: '1px solid rgba(234, 179, 8, 0.25)',
                                 borderRadius: '6px',
                                 padding: '4px 8px',
-                                fontSize: '11px',
+                                fontSize: '12px',
                                 color: 'rgba(255,255,255,0.85)'
                               }}
                             >
@@ -301,7 +301,7 @@ const TrainerAuditsTab: React.FC<TrainerAuditsTabProps> = ({
                         </div>
                       </div>
                     ) : (
-                      <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)', fontStyle: 'italic' }}>
+                      <div style={{ fontSize: '12px', color: '#a4b0a8', fontStyle: 'italic' }}>
                         No se registraron detalles de bloques específicos.
                       </div>
                     )}
@@ -319,7 +319,7 @@ const TrainerAuditsTab: React.FC<TrainerAuditsTabProps> = ({
                     borderRadius: '12px',
                     border: '1px solid rgba(255,255,255,0.04)'
                   }}>
-                    <div style={{ fontSize: '10px', fontFamily: "'Orbitron', sans-serif", color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '4px' }}>
+                    <div style={{ fontSize: '12px', fontFamily: "'Inter', sans-serif", color: '#a4b0a8', textTransform: 'none', letterSpacing: '0', marginBottom: '4px' }}>
                       Ejercicios Completados
                     </div>
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: '10px' }}>
@@ -340,34 +340,34 @@ const TrainerAuditsTab: React.FC<TrainerAuditsTabProps> = ({
                             <div style={{ fontWeight: 700, color: 'white', marginBottom: '6px' }}>
                               🏋️ {ej.nombre_ejercicio}
                             </div>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', color: 'rgba(255,255,255,0.6)', fontSize: '11px' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', color: '#a4b0a8', fontSize: '12px' }}>
                               <div>
-                                <span style={{ color: 'rgba(255,255,255,0.4)' }}>Series / Reps:</span>{' '}
+                                <span style={{ color: '#a4b0a8' }}>Series / Reps:</span>{' '}
                                 <span style={{ fontWeight: 600, color: 'white' }}>
                                   {Array.isArray(ej.series_reps) ? ej.series_reps.join(' - ') : ej.series_reps || '-'}
                                 </span>
                               </div>
                               <div>
-                                <span style={{ color: 'rgba(255,255,255,0.4)' }}>Carga:</span>{' '}
+                                <span style={{ color: '#a4b0a8' }}>Carga:</span>{' '}
                                 <span style={{ fontWeight: 600, color: '#34d399' }}>{ej.peso} kg</span>
                               </div>
                               <div style={{ display: 'flex', gap: '10px' }}>
                                 <div>
-                                  <span style={{ color: 'rgba(255,255,255,0.4)' }}>Vol:</span>{' '}
+                                  <span style={{ color: '#a4b0a8' }}>Vol:</span>{' '}
                                   <span style={{ fontWeight: 600, color: '#10b981' }}>{itemVolumen} kg</span>
                                 </div>
                                 <div>
-                                  <span style={{ color: 'rgba(255,255,255,0.4)' }}>1RM Est:</span>{' '}
+                                  <span style={{ color: '#a4b0a8' }}>1RM Est:</span>{' '}
                                   <span style={{ fontWeight: 600, color: '#fbbf24' }}>{Math.round(itemRM)} kg</span>
                                 </div>
                               </div>
                               <div>
-                                <span style={{ color: 'rgba(255,255,255,0.4)' }}>RIR:</span>{' '}
+                                <span style={{ color: '#a4b0a8' }}>RIR:</span>{' '}
                                 <span style={{ fontWeight: 600, color: '#fbbf24' }}>{ej.rpe_rir}</span>
                               </div>
                               {ej.descanso && (
                                 <div>
-                                  <span style={{ color: 'rgba(255,255,255,0.4)' }}>Descanso:</span>{' '}
+                                  <span style={{ color: '#a4b0a8' }}>Descanso:</span>{' '}
                                   <span>{ej.descanso} seg</span>
                                 </div>
                               )}
@@ -395,7 +395,7 @@ const TrainerAuditsTab: React.FC<TrainerAuditsTabProps> = ({
             alignItems: 'center'
           }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', minWidth: '180px', flex: 1 }}>
-              <label style={{ fontSize: '9px', fontWeight: 700, color: 'rgba(255,255,255,0.4)', fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.5px' }}>FILTRAR POR ATLETA</label>
+              <label style={{ fontSize: '12px', fontWeight: 700, color: '#a4b0a8', fontFamily: "'Inter', sans-serif", letterSpacing: '0' }}>FILTRAR POR ATLETA</label>
               <select
                 value={selectedAnalysisClient}
                 onChange={(e) => {
@@ -409,7 +409,7 @@ const TrainerAuditsTab: React.FC<TrainerAuditsTabProps> = ({
                   padding: '10px',
                   color: 'white',
                   fontSize: '12px',
-                  fontFamily: "'Orbitron', sans-serif",
+                  fontFamily: "'Inter', sans-serif",
                   outline: 'none',
                 }}
               >
@@ -421,7 +421,7 @@ const TrainerAuditsTab: React.FC<TrainerAuditsTabProps> = ({
             </div>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', minWidth: '180px', flex: 1 }}>
-              <label style={{ fontSize: '9px', fontWeight: 700, color: 'rgba(255,255,255,0.4)', fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.5px' }}>FILTRAR POR EJERCICIO</label>
+              <label style={{ fontSize: '12px', fontWeight: 700, color: '#a4b0a8', fontFamily: "'Inter', sans-serif", letterSpacing: '0' }}>FILTRAR POR EJERCICIO</label>
               <select
                 value={selectedAnalysisExercise}
                 onChange={(e) => setSelectedAnalysisExercise(e.target.value)}
@@ -432,7 +432,7 @@ const TrainerAuditsTab: React.FC<TrainerAuditsTabProps> = ({
                   padding: '10px',
                   color: 'white',
                   fontSize: '12px',
-                  fontFamily: "'Orbitron', sans-serif",
+                  fontFamily: "'Inter', sans-serif",
                   outline: 'none',
                 }}
               >
@@ -444,7 +444,7 @@ const TrainerAuditsTab: React.FC<TrainerAuditsTabProps> = ({
             </div>
           </div>
 
-          <div className="table-wrap" style={{ background: 'var(--theme-card-bg)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)', border: '1px solid var(--theme-border)', borderRadius: '16px', overflow: 'hidden' }}>
+          <div className="table-wrap" style={{ background: 'var(--theme-card-bg)', backdropFilter: 'none', WebkitBackdropFilter: 'none', border: '1px solid var(--theme-border)', borderRadius: '16px', overflow: 'hidden' }}>
             <div className="table-scroll" style={{ overflowX: 'auto' }}>
               <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12px', textAlign: 'left' }}>
                 <thead>
@@ -467,7 +467,7 @@ const TrainerAuditsTab: React.FC<TrainerAuditsTabProps> = ({
                 <tbody>
                   {filasFiltradasProgresion.length === 0 ? (
                     <tr>
-                      <td colSpan={selectedAnalysisClient === 'all' ? 13 : 12} style={{ textAlign: 'center', padding: '40px', color: 'rgba(255,255,255,0.4)' }}>
+                      <td colSpan={selectedAnalysisClient === 'all' ? 13 : 12} style={{ textAlign: 'center', padding: '40px', color: '#a4b0a8' }}>
                         No se encontraron registros de ejercicios con los filtros seleccionados.
                       </td>
                     </tr>
@@ -482,7 +482,7 @@ const TrainerAuditsTab: React.FC<TrainerAuditsTabProps> = ({
                           )}
                           <td style={{ padding: '12px 16px', fontWeight: 600, whiteSpace: 'nowrap' }}>{f.ejercicio}</td>
                           <td style={{ padding: '12px 16px' }}>
-                            <span className={`badge badge-${f.grupo.toLowerCase()}`} style={{ padding: '3px 8px', borderRadius: '6px', fontSize: '10px', fontWeight: 700, textTransform: 'uppercase' }}>
+                            <span className={`badge badge-${f.grupo.toLowerCase()}`} style={{ padding: '3px 8px', borderRadius: '6px', fontSize: '12px', fontWeight: 700, textTransform: 'none' }}>
                               {f.grupo}
                             </span>
                           </td>
@@ -495,17 +495,17 @@ const TrainerAuditsTab: React.FC<TrainerAuditsTabProps> = ({
                           <td style={{ padding: '12px 16px', textAlign: 'right', fontWeight: 600, color: 'var(--theme-primary)' }}>{f.rm.toFixed(1)}</td>
                           <td style={{ padding: '12px 16px', textAlign: 'center' }}>
                             {f.deltaType === 'up' && (
-                              <span style={{ color: '#10b981', fontWeight: 700, background: 'rgba(16, 185, 129, 0.1)', padding: '2px 6px', borderRadius: '4px', fontFamily: "'Orbitron', sans-serif", fontSize: '10px' }}>
+                              <span style={{ color: '#10b981', fontWeight: 700, background: 'rgba(16, 185, 129, 0.1)', padding: '2px 6px', borderRadius: '4px', fontFamily: "'Inter', sans-serif", fontSize: '12px' }}>
                                 {f.deltaHtml}
                               </span>
                             )}
                             {f.deltaType === 'dn' && (
-                              <span style={{ color: '#ef4444', fontWeight: 700, background: 'rgba(239, 68, 68, 0.1)', padding: '2px 6px', borderRadius: '4px', fontFamily: "'Orbitron', sans-serif", fontSize: '10px' }}>
+                              <span style={{ color: '#ef4444', fontWeight: 700, background: 'rgba(239, 68, 68, 0.1)', padding: '2px 6px', borderRadius: '4px', fontFamily: "'Inter', sans-serif", fontSize: '12px' }}>
                                 {f.deltaHtml}
                               </span>
                             )}
                             {f.deltaType === 'eq' && (
-                              <span style={{ color: 'rgba(255,255,255,0.4)', fontWeight: 700, background: 'rgba(255,255,255,0.05)', padding: '2px 6px', borderRadius: '4px', fontFamily: "'Orbitron', sans-serif", fontSize: '10px' }}>
+                              <span style={{ color: '#a4b0a8', fontWeight: 700, background: 'rgba(255,255,255,0.05)', padding: '2px 6px', borderRadius: '4px', fontFamily: "'Inter', sans-serif", fontSize: '12px' }}>
                                 {f.deltaHtml}
                               </span>
                             )}

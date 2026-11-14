@@ -95,7 +95,7 @@ const ConfirmDialogView: React.FC<ConfirmDialogViewProps> = ({
   message, title, confirmText, cancelText, danger, onConfirm, onCancel
 }) => {
   const dialogRef = useModalA11y<HTMLDivElement>({ isOpen: true, onClose: onCancel });
-  const accentColor = danger ? '#ef4444' : 'var(--theme-primary, #00d4ff)';
+  const accentColor = danger ? 'var(--studio-danger)' : 'var(--studio-accent)';
 
   return (
     <div
@@ -107,7 +107,7 @@ const ConfirmDialogView: React.FC<ConfirmDialogViewProps> = ({
         top: 0, left: 0, right: 0, bottom: 0,
         width: '100%', height: '100%',
         display: 'flex', justifyContent: 'center', alignItems: 'center',
-        background: 'rgba(0,0,0,0.75)', backdropFilter: 'blur(8px)', WebkitBackdropFilter: 'blur(8px)',
+        background: 'rgba(6,12,8,0.76)',
         zIndex: 1000000, padding: '20px', boxSizing: 'border-box'
       }}
     >
@@ -121,12 +121,12 @@ const ConfirmDialogView: React.FC<ConfirmDialogViewProps> = ({
         onClick={(e) => e.stopPropagation()}
         onKeyDown={(e) => e.stopPropagation()}
         style={{
-          background: 'rgba(10, 15, 30, 0.97)',
-          border: `1px solid ${danger ? 'rgba(239, 68, 68, 0.25)' : 'rgba(0, 212, 255, 0.15)'}`,
+          background: 'var(--studio-surface)',
+          border: '1px solid var(--studio-border)',
           borderRadius: '18px',
           maxWidth: '420px',
           width: '100%',
-          boxShadow: '0 24px 60px rgba(0, 0, 0, 0.6)',
+          boxShadow: 'none',
           color: 'white',
           overflow: 'hidden'
         }}
@@ -138,7 +138,7 @@ const ConfirmDialogView: React.FC<ConfirmDialogViewProps> = ({
               margin: '0 0 10px 0',
               fontSize: '15px',
               fontWeight: 800,
-              fontFamily: "'Orbitron', sans-serif",
+              fontFamily: 'var(--studio-font)',
               letterSpacing: '0.5px',
               color: accentColor
             }}
@@ -185,21 +185,19 @@ const ConfirmDialogView: React.FC<ConfirmDialogViewProps> = ({
             onClick={onConfirm}
             style={{
               background: danger 
-                ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)' 
-                : 'var(--theme-btn-gradient, linear-gradient(135deg, #00d4ff 0%, #0070a0 100%))',
+                ? 'var(--studio-danger)'
+                : 'var(--studio-accent)',
               border: 'none',
               borderRadius: '10px',
-              color: '#ffffff',
+              color: 'var(--studio-bg)',
               padding: '10px 20px',
               fontSize: '12px',
               fontWeight: 800,
-              fontFamily: "'Orbitron', sans-serif",
+              fontFamily: 'var(--studio-font)',
               letterSpacing: '0.5px',
               cursor: 'pointer',
               transition: 'all 0.25s ease',
-              boxShadow: danger 
-                ? '0 4px 15px rgba(239, 68, 68, 0.4)' 
-                : '0 4px 15px var(--theme-btn-glow, rgba(0, 212, 255, 0.35))'
+              boxShadow: 'none'
             }}
             onMouseEnter={(e) => e.currentTarget.style.filter = 'brightness(1.15)'}
             onMouseLeave={(e) => e.currentTarget.style.filter = 'none'}

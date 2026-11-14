@@ -270,7 +270,7 @@ export const GamificacionPanel: React.FC<GamificacionPanelProps> = ({ sesiones, 
         angle: 60,
         spread: 55,
         origin: { x: 0, y: 0.65 },
-        colors: ['#00d4ff', '#fbbf24', '#a5b4fc', '#34d399'],
+        colors: ['#91b6a1', '#fbbf24', '#a5b4fc', '#34d399'],
       });
       setTimeout(() => {
         confetti({
@@ -278,7 +278,7 @@ export const GamificacionPanel: React.FC<GamificacionPanelProps> = ({ sesiones, 
           angle: 120,
           spread: 55,
           origin: { x: 1, y: 0.65 },
-          colors: ['#00d4ff', '#fbbf24', '#a5b4fc', '#34d399'],
+          colors: ['#91b6a1', '#fbbf24', '#a5b4fc', '#34d399'],
         });
       }, 150);
     } else if (prevLevel === null || currentLevel < prevLevel) {
@@ -336,35 +336,35 @@ export const GamificacionPanel: React.FC<GamificacionPanelProps> = ({ sesiones, 
       
       {/* LEVEL AND SCORE BOX */}
       <div style={{
-        background: 'linear-gradient(135deg, rgba(0, 212, 255, 0.08), rgba(123, 47, 247, 0.08))',
-        border: '1px solid rgba(0, 212, 255, 0.2)',
+        background: 'linear-gradient(135deg, rgba(145, 182, 161, 0.08), rgba(118, 152, 136, 0.08))',
+        border: '1px solid rgba(145, 182, 161, 0.2)',
         borderRadius: '16px', padding: '16px',
-        boxShadow: '0 8px 32px 0 rgba(0, 212, 255, 0.05)',
+        boxShadow: 'none',
         display: 'flex', flexDirection: 'column', gap: '10px'
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, letterSpacing: '1px', fontFamily: "'Orbitron', sans-serif" }}>
+            <span style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700, letterSpacing: '0', fontFamily: "'Inter', sans-serif" }}>
               NIVEL ATLETA
             </span>
-            <div style={{ fontSize: '28px', fontWeight: 800, color: 'white', fontFamily: "'Orbitron', sans-serif", display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
+            <div style={{ fontSize: '28px', fontWeight: 800, color: 'white', fontFamily: "'Inter', sans-serif", display: 'flex', alignItems: 'center', gap: '8px', marginTop: '2px' }}>
               <span>LVL {currentLevel}</span>
-              <span style={{ fontSize: '16px', color: 'var(--theme-primary, #00d4ff)', fontWeight: 600 }}>⚡</span>
+              <span style={{ fontSize: '16px', color: 'var(--theme-primary, #91b6a1)', fontWeight: 600 }}>⚡</span>
             </div>
           </div>
           <div style={{ textAlign: 'right' }}>
-            <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, letterSpacing: '1px', fontFamily: "'Orbitron', sans-serif" }}>
+            <span style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700, letterSpacing: '0', fontFamily: "'Inter', sans-serif" }}>
               PUNTOS TOTALES
             </span>
-            <div style={{ fontSize: '22px', fontWeight: 800, color: '#a5b4fc', fontFamily: "'Orbitron', sans-serif", marginTop: '2px' }}>
-              {totalPoints} <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', fontWeight: 500 }}>PTS</span>
+            <div style={{ fontSize: '22px', fontWeight: 800, color: '#a5b4fc', fontFamily: "'Inter', sans-serif", marginTop: '2px' }}>
+              {totalPoints} <span style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 500 }}>PTS</span>
             </div>
           </div>
         </div>
 
         {/* Experience Bar */}
         <div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '9px', color: 'rgba(255,255,255,0.45)', marginBottom: '4px', fontFamily: "'Orbitron', sans-serif" }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#a4b0a8', marginBottom: '4px', fontFamily: "'Inter', sans-serif" }}>
             <span>PROGRESO NIVEL</span>
             <span>{levelProgress.pointsGained} / {levelProgress.pointsNeeded} XP ({Math.round(levelProgress.pct)}%)</span>
           </div>
@@ -372,10 +372,10 @@ export const GamificacionPanel: React.FC<GamificacionPanelProps> = ({ sesiones, 
             <div style={{
               height: '100%',
               width: `${levelProgress.pct}%`,
-              background: 'linear-gradient(90deg, var(--theme-primary, #00d4ff), var(--theme-secondary, #7b2ff7))',
+              background: 'linear-gradient(90deg, var(--theme-primary, #91b6a1), var(--theme-secondary, #769888))',
               borderRadius: '4px',
               transition: 'width 0.6s ease',
-              boxShadow: '0 0 10px rgba(0, 212, 255, 0.3)'
+              boxShadow: 'none'
             }} />
           </div>
         </div>
@@ -387,14 +387,14 @@ export const GamificacionPanel: React.FC<GamificacionPanelProps> = ({ sesiones, 
           background: 'linear-gradient(135deg, rgba(249, 115, 22, 0.15), rgba(253, 186, 116, 0.15))',
           border: '1px solid rgba(249, 115, 22, 0.3)',
           borderRadius: '16px', padding: '14px 18px', display: 'flex', alignItems: 'center', gap: '14px',
-          boxShadow: '0 8px 24px rgba(249, 115, 22, 0.08)'
+          boxShadow: 'none'
         }}>
           <span style={{ fontSize: '28px', filter: 'drop-shadow(0 0 8px rgba(249,115,22,0.4))' }}>🔥</span>
           <div style={{ textAlign: 'left' }}>
-            <div style={{ fontSize: '13px', fontWeight: 800, color: '#ffedd5', fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.5px' }}>
+            <div style={{ fontSize: '13px', fontWeight: 800, color: '#ffedd5', fontFamily: "'Inter', sans-serif", letterSpacing: '0' }}>
               ¡LLEVAS {rachaSemanas.actual} {rachaSemanas.actual === 1 ? 'SEMANA CONSECUTIVA' : 'SEMANAS CONSECUTIVAS'} ENTRENANDO!
             </div>
-            <div style={{ fontSize: '10px', color: 'rgba(253, 186, 116, 0.75)', marginTop: '2px', fontWeight: 500 }}>
+            <div style={{ fontSize: '12px', color: 'rgba(253, 186, 116, 0.75)', marginTop: '2px', fontWeight: 500 }}>
               Consistencia de acero. ¡Mantente fuerte y no rompas el hábito!
             </div>
           </div>
@@ -407,10 +407,10 @@ export const GamificacionPanel: React.FC<GamificacionPanelProps> = ({ sesiones, 
         }}>
           <span style={{ fontSize: '28px', filter: 'grayscale(1)', opacity: 0.6 }}>❄️</span>
           <div style={{ textAlign: 'left' }}>
-            <div style={{ fontSize: '13px', fontWeight: 800, color: 'rgba(255,255,255,0.45)', fontFamily: "'Orbitron', sans-serif" }}>
+            <div style={{ fontSize: '13px', fontWeight: 800, color: '#a4b0a8', fontFamily: "'Inter', sans-serif" }}>
               SIN RACHA ACTIVA ESTA SEMANA
             </div>
-            <div style={{ fontSize: '10px', color: 'rgba(255, 255, 255, 0.3)', marginTop: '2px' }}>
+            <div style={{ fontSize: '12px', color: '#a4b0a8', marginTop: '2px' }}>
               Completa al menos un entrenamiento esta semana para iniciar tu racha de constancia.
             </div>
           </div>
@@ -426,10 +426,10 @@ export const GamificacionPanel: React.FC<GamificacionPanelProps> = ({ sesiones, 
         marginTop: '12px', marginBottom: '12px'
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, letterSpacing: '1px', fontFamily: "'Orbitron', sans-serif" }}>
+          <span style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700, letterSpacing: '0', fontFamily: "'Inter', sans-serif" }}>
             CONSISTENCIA SEMANAL
           </span>
-          <span style={{ fontSize: '9px', color: 'var(--theme-primary, #00d4ff)', fontWeight: 700, fontFamily: "'Orbitron', sans-serif" }}>
+          <span style={{ fontSize: '12px', color: 'var(--theme-primary, #91b6a1)', fontWeight: 700, fontFamily: "'Inter', sans-serif" }}>
             ESTA SEMANA
           </span>
         </div>
@@ -448,19 +448,19 @@ export const GamificacionPanel: React.FC<GamificacionPanelProps> = ({ sesiones, 
               <div key={idx} style={{
                 display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', flex: 1
               }}>
-                <span style={{ fontSize: '9px', color: isToday ? 'var(--theme-primary, #00d4ff)' : 'rgba(255,255,255,0.4)', fontWeight: isToday ? '700' : 'normal' }}>
+                <span style={{ fontSize: '12px', color: isToday ? 'var(--theme-primary, #91b6a1)' : '#a4b0a8', fontWeight: isToday ? '700' : 'normal' }}>
                   {dia}
                 </span>
                 <div style={{
                   width: '26px', height: '26px', borderRadius: '50%',
                   background: hasSession 
                     ? 'rgba(249, 115, 22, 0.15)' 
-                    : (isToday ? 'rgba(0, 212, 255, 0.05)' : 'rgba(255, 255, 255, 0.02)'),
+                    : (isToday ? 'rgba(145, 182, 161, 0.05)' : 'rgba(255, 255, 255, 0.02)'),
                   border: `1px solid ${hasSession 
                     ? '#fbbf24' 
-                    : (isToday ? 'var(--theme-primary, #00d4ff)' : 'rgba(255, 255, 255, 0.06)')}`,
+                    : (isToday ? 'var(--theme-primary, #91b6a1)' : 'rgba(255, 255, 255, 0.06)')}`,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: '11px',
+                  fontSize: '12px',
                   boxShadow: hasSession ? '0 0 10px rgba(249, 115, 22, 0.25)' : 'none',
                   transition: 'all 0.3s'
                 }}>
@@ -480,10 +480,10 @@ export const GamificacionPanel: React.FC<GamificacionPanelProps> = ({ sesiones, 
           borderRadius: '12px', padding: '14px', textAlign: 'center',
         }}>
           <div style={{ fontSize: '22px', marginBottom: '4px' }}>{racha.actual > 0 ? '🔥' : '❄️'}</div>
-          <div style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '20px', fontWeight: 800, color: racha.actual > 0 ? '#fbbf24' : 'rgba(255,255,255,0.3)' }}>
+          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '20px', fontWeight: 800, color: racha.actual > 0 ? '#fbbf24' : '#a4b0a8' }}>
             {racha.actual}
           </div>
-          <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.4)', fontWeight: 600, letterSpacing: '0.5px', marginTop: '2px' }}>
+          <div style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 600, letterSpacing: '0', marginTop: '2px' }}>
             RACHA ACTIVA
           </div>
         </div>
@@ -493,10 +493,10 @@ export const GamificacionPanel: React.FC<GamificacionPanelProps> = ({ sesiones, 
           borderRadius: '12px', padding: '14px', textAlign: 'center',
         }}>
           <div style={{ fontSize: '22px', marginBottom: '4px' }}>📊</div>
-          <div style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '20px', fontWeight: 800, color: '#a5b4fc' }}>
+          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '20px', fontWeight: 800, color: '#a5b4fc' }}>
             {totalSesiones}
           </div>
-          <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.4)', fontWeight: 600, letterSpacing: '0.5px', marginTop: '2px' }}>
+          <div style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 600, letterSpacing: '0', marginTop: '2px' }}>
             SESIONES
           </div>
         </div>
@@ -506,10 +506,10 @@ export const GamificacionPanel: React.FC<GamificacionPanelProps> = ({ sesiones, 
           borderRadius: '12px', padding: '14px', textAlign: 'center',
         }}>
           <div style={{ fontSize: '22px', marginBottom: '4px' }}>🏆</div>
-          <div style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '20px', fontWeight: 800, color: '#34d399' }}>
+          <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '20px', fontWeight: 800, color: '#34d399' }}>
             {racha.maxima}
           </div>
-          <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.4)', fontWeight: 600, letterSpacing: '0.5px', marginTop: '2px' }}>
+          <div style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 600, letterSpacing: '0', marginTop: '2px' }}>
             MEJOR RACHA
           </div>
         </div>
@@ -522,38 +522,38 @@ export const GamificacionPanel: React.FC<GamificacionPanelProps> = ({ sesiones, 
         borderRadius: '16px', padding: '16px',
         display: 'flex', flexDirection: 'column', gap: '12px'
       }}>
-        <div style={{ fontSize: '10px', color: 'var(--theme-primary, #00d4ff)', fontWeight: 700, letterSpacing: '1px', fontFamily: "'Orbitron', sans-serif", textTransform: 'uppercase' }}>
+        <div style={{ fontSize: '12px', color: 'var(--theme-primary, #91b6a1)', fontWeight: 700, letterSpacing: '0', fontFamily: "'Inter', sans-serif", textTransform: 'none' }}>
           Tú vs Tú — Progreso Semanal 📈
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
           <div style={{ background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '10px', padding: '10px' }}>
-            <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.4)', fontWeight: 600 }}>VOLUMEN SEMANAL</div>
-            <div style={{ fontSize: '14px', fontWeight: 800, color: 'white', marginTop: '2px', fontFamily: "'Orbitron', sans-serif" }}>
+            <div style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 600 }}>VOLUMEN SEMANAL</div>
+            <div style={{ fontSize: '14px', fontWeight: 800, color: 'white', marginTop: '2px', fontFamily: "'Inter', sans-serif" }}>
               {weeklyComparison.vol.current.toLocaleString()} kg
             </div>
-            <div style={{ fontSize: '9px', color: weeklyComparison.vol.pct >= 0 ? '#34d399' : '#f87171', display: 'flex', alignItems: 'center', gap: '2px', marginTop: '4px', fontWeight: 'bold' }}>
+            <div style={{ fontSize: '12px', color: weeklyComparison.vol.pct >= 0 ? '#34d399' : '#f87171', display: 'flex', alignItems: 'center', gap: '2px', marginTop: '4px', fontWeight: 'bold' }}>
               {weeklyComparison.vol.pct >= 0 ? `▲ +${weeklyComparison.vol.pct.toFixed(1)}%` : `▼ ${weeklyComparison.vol.pct.toFixed(1)}%`}
-              <span style={{ color: 'rgba(255,255,255,0.35)', fontWeight: 'normal' }}> vs sem anterior ({weeklyComparison.vol.last.toLocaleString()} kg)</span>
+              <span style={{ color: '#a4b0a8', fontWeight: 'normal' }}> vs sem anterior ({weeklyComparison.vol.last.toLocaleString()} kg)</span>
             </div>
           </div>
           <div style={{ background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '10px', padding: '10px' }}>
-            <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.4)', fontWeight: 600 }}>ENTRENAMIENTOS</div>
-            <div style={{ fontSize: '14px', fontWeight: 800, color: 'white', marginTop: '2px', fontFamily: "'Orbitron', sans-serif" }}>
+            <div style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 600 }}>ENTRENAMIENTOS</div>
+            <div style={{ fontSize: '14px', fontWeight: 800, color: 'white', marginTop: '2px', fontFamily: "'Inter', sans-serif" }}>
               {weeklyComparison.count.current} sesiones
             </div>
-            <div style={{ fontSize: '9px', color: weeklyComparison.count.diff >= 0 ? '#34d399' : '#f87171', display: 'flex', alignItems: 'center', gap: '2px', marginTop: '4px', fontWeight: 'bold' }}>
+            <div style={{ fontSize: '12px', color: weeklyComparison.count.diff >= 0 ? '#34d399' : '#f87171', display: 'flex', alignItems: 'center', gap: '2px', marginTop: '4px', fontWeight: 'bold' }}>
               {weeklyComparison.count.diff >= 0 ? `▲ +${weeklyComparison.count.diff}` : `▼ ${weeklyComparison.count.diff}`}
-              <span style={{ color: 'rgba(255,255,255,0.35)', fontWeight: 'normal' }}> vs sem anterior ({weeklyComparison.count.last})</span>
+              <span style={{ color: '#a4b0a8', fontWeight: 'normal' }}> vs sem anterior ({weeklyComparison.count.last})</span>
             </div>
           </div>
         </div>
         <div style={{
-          background: 'rgba(0, 212, 255, 0.02)',
-          border: '1px solid rgba(0, 212, 255, 0.1)',
+          background: 'rgba(145, 182, 161, 0.02)',
+          border: '1px solid rgba(145, 182, 161, 0.1)',
           borderRadius: '8px', padding: '8px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center'
         }}>
-          <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>PRs Rotos esta semana:</span>
-          <span style={{ fontSize: '12px', fontWeight: 800, color: 'var(--theme-primary, #00d4ff)', fontFamily: "'Orbitron', sans-serif" }}>🚀 {weeklyComparison.prs.current} nuevos PRs</span>
+          <span style={{ fontSize: '12px', color: '#a4b0a8' }}>PRs Rotos esta semana:</span>
+          <span style={{ fontSize: '12px', fontWeight: 800, color: 'var(--theme-primary, #91b6a1)', fontFamily: "'Inter', sans-serif" }}>🚀 {weeklyComparison.prs.current} nuevos PRs</span>
         </div>
       </div>
 
@@ -564,10 +564,10 @@ export const GamificacionPanel: React.FC<GamificacionPanelProps> = ({ sesiones, 
           borderRadius: '12px', padding: '14px',
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-            <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 600 }}>
+            <span style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 600 }}>
               Próximo hito: {nextMilestone.target} sesiones
             </span>
-            <span style={{ fontSize: '10px', color: 'var(--theme-primary, #00d4ff)', fontWeight: 700, fontFamily: "'Orbitron', sans-serif" }}>
+            <span style={{ fontSize: '12px', color: 'var(--theme-primary, #91b6a1)', fontWeight: 700, fontFamily: "'Inter', sans-serif" }}>
               {Math.round(nextMilestone.progress)}%
             </span>
           </div>
@@ -576,12 +576,12 @@ export const GamificacionPanel: React.FC<GamificacionPanelProps> = ({ sesiones, 
           }}>
             <div style={{
               height: '100%', borderRadius: '3px', width: `${Math.min(nextMilestone.progress, 100)}%`,
-              background: 'linear-gradient(90deg, var(--theme-primary, #00d4ff), var(--theme-secondary, #7b2ff7))',
+              background: 'linear-gradient(90deg, var(--theme-primary, #91b6a1), var(--theme-secondary, #769888))',
               transition: 'width 0.6s cubic-bezier(0.22, 1, 0.36, 1)',
-              boxShadow: '0 0 8px rgba(0, 212, 255, 0.3)',
+              boxShadow: 'none',
             }} />
           </div>
-          <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.3)', marginTop: '6px', textAlign: 'center' }}>
+          <div style={{ fontSize: '12px', color: '#a4b0a8', marginTop: '6px', textAlign: 'center' }}>
             {totalSesiones} / {nextMilestone.target} sesiones completadas
           </div>
         </div>
@@ -590,7 +590,7 @@ export const GamificacionPanel: React.FC<GamificacionPanelProps> = ({ sesiones, 
       {/* EARNED BADGES */}
       {earnedBadges.length > 0 && (
         <div>
-          <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.4)', fontWeight: 700, letterSpacing: '1px', fontFamily: "'Orbitron', sans-serif", marginBottom: '10px', textTransform: 'uppercase' }}>
+          <div style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700, letterSpacing: '0', fontFamily: "'Inter', sans-serif", marginBottom: '10px', textTransform: 'none' }}>
             Logros desbloqueados ({earnedBadges.length}/{badgesList.length})
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '8px' }}>
@@ -604,8 +604,8 @@ export const GamificacionPanel: React.FC<GamificacionPanelProps> = ({ sesiones, 
                 }}
               >
                 <div style={{ fontSize: '26px', marginBottom: '6px' }}>{badge.icono}</div>
-                <div style={{ fontSize: '10px', fontWeight: 700, color: '#34d399', marginBottom: '2px' }}>{badge.titulo}</div>
-                <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.4)' }}>{badge.desc}</div>
+                <div style={{ fontSize: '12px', fontWeight: 700, color: '#34d399', marginBottom: '2px' }}>{badge.titulo}</div>
+                <div style={{ fontSize: '12px', color: '#a4b0a8' }}>{badge.desc}</div>
               </div>
             ))}
           </div>
@@ -615,7 +615,7 @@ export const GamificacionPanel: React.FC<GamificacionPanelProps> = ({ sesiones, 
       {/* LOCKED BADGES */}
       {lockedBadges.length > 0 && (
         <div>
-          <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.3)', fontWeight: 700, letterSpacing: '1px', fontFamily: "'Orbitron', sans-serif", marginBottom: '10px', textTransform: 'uppercase' }}>
+          <div style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700, letterSpacing: '0', fontFamily: "'Inter', sans-serif", marginBottom: '10px', textTransform: 'none' }}>
             Por desbloquear
           </div>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '8px' }}>
@@ -628,8 +628,8 @@ export const GamificacionPanel: React.FC<GamificacionPanelProps> = ({ sesiones, 
                 }}
               >
                 <div style={{ fontSize: '26px', marginBottom: '6px', filter: 'grayscale(1)' }}>{badge.icono}</div>
-                <div style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(255,255,255,0.3)', marginBottom: '2px' }}>{badge.titulo}</div>
-                <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.2)' }}>{badge.desc}</div>
+                <div style={{ fontSize: '12px', fontWeight: 700, color: '#a4b0a8', marginBottom: '2px' }}>{badge.titulo}</div>
+                <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.2)' }}>{badge.desc}</div>
               </div>
             ))}
           </div>
@@ -641,7 +641,7 @@ export const GamificacionPanel: React.FC<GamificacionPanelProps> = ({ sesiones, 
         // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
         <div style={{
           position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
-          background: 'rgba(5, 7, 12, 0.94)', backdropFilter: 'blur(14px)',
+          background: 'rgba(5, 7, 12, 0.94)', backdropFilter: 'none',
           display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center',
           zIndex: 1000000, padding: '20px'
         }} onClick={() => setCelebratingLevelUp(null)}>
@@ -653,10 +653,10 @@ export const GamificacionPanel: React.FC<GamificacionPanelProps> = ({ sesiones, 
             aria-labelledby="levelup-celebration-title"
             tabIndex={-1}
             style={{
-              background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.97), rgba(10, 15, 28, 0.97))',
+              background: 'linear-gradient(135deg, #1a211e, rgba(10, 15, 28, 0.97))',
               border: '1px solid rgba(251, 191, 36, 0.45)',
               borderRadius: '24px', padding: '40px 24px', maxWidth: '400px', width: '100%',
-              textAlign: 'center', boxShadow: '0 20px 60px rgba(251, 191, 36, 0.2)',
+              textAlign: 'center', boxShadow: 'none',
               display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px',
               position: 'relative'
             }}
@@ -666,7 +666,7 @@ export const GamificacionPanel: React.FC<GamificacionPanelProps> = ({ sesiones, 
               onClick={() => setCelebratingLevelUp(null)}
               style={{
                 position: 'absolute', top: '15px', right: '15px',
-                background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)',
+                background: 'none', border: 'none', color: '#a4b0a8',
                 fontSize: '18px', cursor: 'pointer'
               }}
             >
@@ -679,22 +679,22 @@ export const GamificacionPanel: React.FC<GamificacionPanelProps> = ({ sesiones, 
               border: '2px solid rgba(251, 191, 36, 0.6)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: '48px',
-              boxShadow: '0 0 30px rgba(251, 191, 36, 0.3), 0 0 60px rgba(251, 191, 36, 0.1)',
+              boxShadow: 'none',
               animation: 'pulse 1.5s infinite'
             }}>
               ⚡
             </div>
             <div>
-              <span style={{ fontSize: '10px', color: '#fbbf24', fontWeight: 800, letterSpacing: '2px', fontFamily: "'Orbitron', sans-serif" }}>
+              <span style={{ fontSize: '12px', color: '#fbbf24', fontWeight: 800, letterSpacing: '0', fontFamily: "'Inter', sans-serif" }}>
                 ¡SUBISTE DE NIVEL!
               </span>
               <h2
                 id="levelup-celebration-title"
-                style={{ fontSize: '26px', fontWeight: 800, color: 'white', fontFamily: "'Orbitron', sans-serif", margin: '8px 0 6px' }}
+                style={{ fontSize: '26px', fontWeight: 800, color: 'white', fontFamily: "'Inter', sans-serif", margin: '8px 0 6px' }}
               >
                 LVL {celebratingLevelUp.newLevel} ALCANZADO
               </h2>
-              <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.6)', margin: 0 }}>
+              <p style={{ fontSize: '13px', color: '#a4b0a8', margin: 0 }}>
                 Has subido del nivel {celebratingLevelUp.prevLevel} al nivel {celebratingLevelUp.newLevel}.<br />
                 ¡Sigue entrenando, campeón!
               </p>
@@ -702,8 +702,8 @@ export const GamificacionPanel: React.FC<GamificacionPanelProps> = ({ sesiones, 
             <div style={{
               background: 'rgba(251, 191, 36, 0.07)',
               border: '1px solid rgba(251, 191, 36, 0.2)',
-              borderRadius: '12px', padding: '12px 20px', fontSize: '11px',
-              color: '#fbbf24', fontWeight: 700, fontFamily: "'Orbitron', sans-serif"
+              borderRadius: '12px', padding: '12px 20px', fontSize: '12px',
+              color: '#fbbf24', fontWeight: 700, fontFamily: "'Inter', sans-serif"
             }}>
               ⚡ NIVEL {celebratingLevelUp.newLevel} DESBLOQUEADO
             </div>
@@ -712,8 +712,8 @@ export const GamificacionPanel: React.FC<GamificacionPanelProps> = ({ sesiones, 
               style={{
                 background: 'linear-gradient(135deg, #fbbf24, #d97706)',
                 border: 'none', color: '#0a0f1c', padding: '12px 28px', borderRadius: '12px',
-                fontSize: '11px', fontWeight: 800, fontFamily: "'Orbitron', sans-serif",
-                cursor: 'pointer', boxShadow: '0 4px 20px rgba(251, 191, 36, 0.4)', width: '100%'
+                fontSize: '12px', fontWeight: 800, fontFamily: "'Inter', sans-serif",
+                cursor: 'pointer', boxShadow: 'none', width: '100%'
               }}
             >
               ¡A SEGUIR SUBIENDO!
@@ -727,7 +727,7 @@ export const GamificacionPanel: React.FC<GamificacionPanelProps> = ({ sesiones, 
         // eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions -- backdrop de modal: cierra al hacer click afuera (conveniencia de mouse); el diálogo de abajo ya tiene cierre con Escape y foco atrapado vía useModalA11y
         <div style={{
           position: 'fixed', top: 0, left: 0, width: '100%', height: '100%',
-          background: 'rgba(5, 7, 12, 0.92)', backdropFilter: 'blur(12px)',
+          background: 'rgba(5, 7, 12, 0.92)', backdropFilter: 'none',
           display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center',
           zIndex: 999999, padding: '20px'
         }} onClick={() => setCelebratingBadge(null)}>
@@ -739,10 +739,10 @@ export const GamificacionPanel: React.FC<GamificacionPanelProps> = ({ sesiones, 
             aria-labelledby="badge-celebration-title"
             tabIndex={-1}
             style={{
-            background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.95), rgba(10, 15, 28, 0.95))',
-            border: '1px solid rgba(0, 212, 255, 0.3)',
+            background: 'linear-gradient(135deg, #1a211e, rgba(10, 15, 28, 0.95))',
+            border: '1px solid rgba(145, 182, 161, 0.3)',
             borderRadius: '24px', padding: '40px 24px', maxWidth: '400px', width: '100%',
-            textAlign: 'center', boxShadow: '0 20px 60px rgba(0, 212, 255, 0.15)',
+            textAlign: 'center', boxShadow: 'none',
             display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px',
             position: 'relative'
           }} onClick={(e) => e.stopPropagation()}>
@@ -750,7 +750,7 @@ export const GamificacionPanel: React.FC<GamificacionPanelProps> = ({ sesiones, 
               onClick={() => setCelebratingBadge(null)}
               style={{
                 position: 'absolute', top: '15px', right: '15px',
-                background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)',
+                background: 'none', border: 'none', color: '#a4b0a8',
                 fontSize: '18px', cursor: 'pointer'
               }}
             >
@@ -758,19 +758,19 @@ export const GamificacionPanel: React.FC<GamificacionPanelProps> = ({ sesiones, 
             </button>
             <div style={{
               width: '80px', height: '80px', borderRadius: '50%',
-              background: 'rgba(0, 212, 255, 0.1)',
-              border: '1px solid rgba(0, 212, 255, 0.3)',
+              background: 'rgba(145, 182, 161, 0.1)',
+              border: '1px solid rgba(145, 182, 161, 0.3)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: '44px', boxShadow: '0 0 25px rgba(0, 212, 255, 0.2)',
+              fontSize: '44px', boxShadow: 'none',
               animation: 'pulse 2s infinite'
             }}>
               {celebratingBadge.icono}
             </div>
             <div>
-              <span style={{ fontSize: '10px', color: 'var(--theme-primary, #00d4ff)', fontWeight: 800, letterSpacing: '2px', fontFamily: "'Orbitron', sans-serif" }}>
+              <span style={{ fontSize: '12px', color: 'var(--theme-primary, #91b6a1)', fontWeight: 800, letterSpacing: '0', fontFamily: "'Inter', sans-serif" }}>
                 ¡LOGRO DESBLOQUEADO!
               </span>
-              <h2 id="badge-celebration-title" style={{ fontSize: '24px', fontWeight: 800, color: 'white', fontFamily: "'Orbitron', sans-serif", margin: '6px 0 10px' }}>
+              <h2 id="badge-celebration-title" style={{ fontSize: '24px', fontWeight: 800, color: 'white', fontFamily: "'Inter', sans-serif", margin: '6px 0 10px' }}>
                 {celebratingBadge.titulo}
               </h2>
               <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.7)', lineHeight: '1.6', margin: 0 }}>
@@ -780,18 +780,18 @@ export const GamificacionPanel: React.FC<GamificacionPanelProps> = ({ sesiones, 
             <div style={{
               background: 'rgba(255, 255, 255, 0.03)',
               border: '1px solid rgba(255, 255, 255, 0.08)',
-              borderRadius: '12px', padding: '12px 20px', fontSize: '11px',
-              color: '#34d399', fontWeight: 700, fontFamily: "'Orbitron', sans-serif"
+              borderRadius: '12px', padding: '12px 20px', fontSize: '12px',
+              color: '#34d399', fontWeight: 700, fontFamily: "'Inter', sans-serif"
             }}>
               ⭐ +200 PTS DE EXPERIENCIA
             </div>
             <button
               onClick={() => setCelebratingBadge(null)}
               style={{
-                background: 'var(--theme-btn-gradient, linear-gradient(135deg, #00d4ff, #0070a0))',
+                background: 'var(--theme-btn-gradient, linear-gradient(135deg, #91b6a1, #0070a0))',
                 border: 'none', color: 'white', padding: '12px 28px', borderRadius: '12px',
-                fontSize: '11px', fontWeight: 700, fontFamily: "'Orbitron', sans-serif",
-                cursor: 'pointer', boxShadow: '0 4px 15px rgba(0, 212, 255, 0.3)', width: '100%'
+                fontSize: '12px', fontWeight: 700, fontFamily: "'Inter', sans-serif",
+                cursor: 'pointer', boxShadow: 'none', width: '100%'
               }}
             >
               ¡ENTENDIDO, A SEGUIR ASÍ!

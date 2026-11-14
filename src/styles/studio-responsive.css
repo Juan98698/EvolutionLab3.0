@@ -1,0 +1,55 @@
+/* Shared constraints for legacy workspaces. Explicitly named layouts retain
+   their semantics instead of relying on viewport clipping to hide overflow. */
+.studio-main :is(input,select,textarea) { max-width:100%; min-width:0; }
+.studio-main :is(.container,.main-content,.planner-container,.planner-workspace,.dashboard-grid,.form-row,.modal-box) { min-width:0; max-width:100%; }
+.studio-athlete-toolbar { display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap; margin-bottom:20px; }
+.studio-athlete-toolbar p { color:var(--studio-muted); }
+.studio-athlete-toolbar strong { color:var(--studio-text); font-weight:500; }
+.studio-athlete-toolbar>div { display:flex; gap:8px; flex-wrap:wrap; }
+.studio-shell .active-session-root { min-height:70dvh; }
+.studio-shell .session-preview-root { min-height:65dvh; }
+.studio-shell :is(.active-session-footer,.active-session-bottom-bar) { max-width:100%; }
+.studio-main .philosophy-section { border-color:var(--studio-border); }
+.studio-main :is(.planner-header,.planner-top-bar,.nutrition-header,.modal-header) { gap:12px; flex-wrap:wrap; }
+.studio-main :is(.table-wrapper,.table-container,.history-table-wrap) { overflow-x:auto; max-width:100%; }
+.studio-main :is(.top-bar,.nav-container,.nav-group,.nav-group-tabs) { max-width:100%; min-width:0; }
+.studio-main .top-bar { position:static!important; }
+.nutrition-modal-window { min-width:0; background:var(--studio-surface); border-color:var(--studio-border); }
+.nutrition-header-container,.nutrition-footer-bar { background:var(--studio-surface)!important; }
+.nutrition-modal-content-area { min-width:0; }
+.studio-setup-dialog { max-height:calc(100dvh - 40px); overflow-y:auto!important; }
+.studio-planner-rm { max-height:calc(100dvh - 40px); overflow-y:auto; }
+.studio-plan-section { border:1px solid var(--studio-border); border-radius:12px; padding:24px; margin-bottom:24px; background:var(--studio-surface); }
+.studio-plan-section h2 { font-size:19px; font-weight:500; margin-bottom:6px; }
+.studio-plan-section>p { color:var(--studio-muted); font-size:13px; margin-bottom:24px; }
+.studio-form-fields { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr)); gap:18px; }
+.studio-plan-section label { display:flex; align-items:center; color:var(--studio-muted); font-size:12px; margin-bottom:8px; }
+.studio-plan-section :is(input,textarea) { width:100%; min-height:44px; border:1px solid var(--studio-border); border-radius:7px; background:var(--studio-bg); color:var(--studio-text); padding:10px 12px; }
+.studio-plan-note { margin-top:22px; }
+.studio-estimate-notice { padding:12px 0; color:var(--studio-muted); font-size:12px; line-height:1.65; }
+@media(max-width:900px) {
+  .studio-main :is(.planner-body,.planner-layout,.planner-workspace,.nutrition-layout) { grid-template-columns:minmax(0,1fr); }
+  .studio-main .active-session-footer { left:0; right:0; width:100%; }
+}
+@media(max-width:650px) {
+  .studio-setup-dialog { padding:24px!important; }
+  .studio-plan-section { padding:18px; }
+  html[data-design="studio"] .studio-main [role="dialog"] :is(button,input:not([type="checkbox"]):not([type="radio"]),select) { min-height:44px; }
+  html[data-design="studio"] .nutrition-header-actions { gap:8px!important; scrollbar-width:thin!important; padding-bottom:6px; }
+  html[data-design="studio"] .nutrition-header-action-btn { flex:0 0 auto!important; min-height:44px; padding:10px 12px!important; font-size:12px!important; }
+  html[data-design="studio"] .nutrition-macro-grid { grid-template-columns:minmax(0,1fr)!important; }
+  html[data-design="studio"] .nutrition-macro-calorias-col { grid-column:auto!important; }
+  html[data-design="studio"] .nutrition-footer-bar { flex-direction:column!important; align-items:stretch!important; gap:8px!important; }
+  html[data-design="studio"] .nutrition-footer-actions { display:grid!important; grid-template-columns:repeat(2,minmax(0,1fr)); width:100%; }
+  html[data-design="studio"] .nutrition-footer-btn-save { grid-column:1/-1; grid-row:1; }
+  html[data-design="studio"] .nutrition-footer-actions button { min-height:44px; font-size:12px!important; white-space:normal!important; padding:10px 8px!important; }
+  html[data-design="studio"] :is(.nutrition-copy-day-btn,.nutrition-day-tab-btn) { min-height:44px; }
+  .studio-main :is(.stats-grid,.metrics-grid,.exercise-grid) { grid-template-columns:minmax(0,1fr); }
+  .studio-main .form-row { flex-wrap:wrap; }
+  .studio-main :is(.nav-container,.nav-group,.nav-group-tabs) { flex-wrap:wrap; overflow:visible; }
+  .studio-main .top-bar>div { padding-inline:0!important; }
+  .studio-athlete-toolbar>div { width:100%; }
+  .studio-main :is(.form-section,.modal-box) { padding:18px; }
+  .studio-main :is(.active-session-image-frame,.session-preview-day-card) { max-width:100%; }
+  .studio-main :is(.modal-overlay,.modal-overlay-enter) { padding:12px; }
+}

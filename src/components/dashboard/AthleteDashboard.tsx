@@ -1,3 +1,6 @@
+import { useAthletePlan } from '../../hooks/useAthletePlan';
+import { PendingCoachInvitations } from './PendingCoachInvitations';
+import { persistPlanSnapshot } from '../../lib/planCache';
 import React, { useState, useEffect, useMemo } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import NotificationCard from './NotificationCard';
@@ -7,7 +10,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import confetti from 'canvas-confetti';
 import { useSupabase } from '../../context/SupabaseContext';
 
-import { PlanData, TrainingDay, GlobalVariable, Rule, LocalSesion, FilosofiaPilar } from '../../types/database.types';
+import { TrainingDay, GlobalVariable, Rule, LocalSesion, FilosofiaPilar } from '../../types/database.types';
 
 import AthleteNavbar from '../common/AthleteNavbar';
 import WorkoutBanner from './WorkoutBanner';
@@ -47,13 +50,6 @@ export const AthleteDashboard: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, profile, isSoloClient, refreshProfile } = useSupabase();
-
-  // Sincronización del tema actual seleccionado por el atleta
-  const [currentTheme, setCurrentTheme] = useState<string>(() => {
-    const saved = localStorage.getItem('pwa_login_theme');
-    return saved || 'cyan';
-  });
-
 
   const [showPushPrompt, setShowPushPrompt] = useState<boolean>(false);
   const [showOnboarding, setShowOnboarding] = useState<boolean>(false);
@@ -104,17 +100,6 @@ export const AthleteDashboard: React.FC = () => {
 
 
 
-  useEffect(() => {
-    const handleThemeChange = (e: Event) => {
-      const detail = (e as CustomEvent).detail;
-      setCurrentTheme(detail);
-    };
-    window.addEventListener('pwa-theme-changed', handleThemeChange);
-    return () => window.removeEventListener('pwa-theme-changed', handleThemeChange);
-  }, []);
-
-
-
   // Buscar si la URL tiene ?tab=add
   const isAddTab = useMemo(() => {
     const params = new URLSearchParams(location.search);
@@ -144,54 +129,9 @@ export const AthleteDashboard: React.FC = () => {
     return trimmed;
   };
 
-  // Estados del plan (inicialización síncrona desde caché para evitar parpadeos y spinner de pantalla completa)
-  const [plan, setPlan] = useState<PlanData | null>(() => {
-    try {
-      const cached = localStorage.getItem('pwa_client_plan');
-      if (cached) {
-        const parsed = JSON.parse(cached) as PlanData;
-        const paddedDays = (parsed.trainingDays || []).map(day => {
-          const exercises = day.exercises || [];
-          const normalizedExercises = exercises.map(ex => ({
-            ...ex,
-            id: ex.id || 'ex_' + Math.random().toString(36).substring(2, 9),
-            nombre: ex.nombre || '',
-            variables: ex.variables || {},
-            video_url: ex.video_url || '',
-            image_url: ex.image_url || '',
-            gif_url: ex.gif_url || '',
-            block_id: ex.block_id,
-            block_rest: ex.block_rest,
-            transition_rest: ex.transition_rest,
-          }));
-          const currentExCount = normalizedExercises.length;
-          if (currentExCount < 3) {
-            const needed = 3 - currentExCount;
-            for (let i = 0; i < needed; i++) {
-              normalizedExercises.push({
-                id: 'ex_' + Math.random().toString(36).substring(2, 9),
-                nombre: '',
-                variables: {},
-                video_url: '',
-                image_url: '',
-                gif_url: '',
-                block_id: undefined,
-                block_rest: undefined,
-                transition_rest: undefined
-              });
-            }
-          }
-          return { ...day, exercises: normalizedExercises };
-        });
-        return { ...parsed, trainingDays: paddedDays };
-      }
-    } catch (e) {
-      console.error('Error al inicializar plan desde caché:', e);
-    }
-    return null;
+  const { plan, setPlan, loadingPlan } = useAthletePlan(user?.id, isSoloClient, {
+    showToast: (message, type) => showToast(message, type), refreshProfile, onUpdates: () => setShowUpdateModal(true),
   });
-
-
 
   const [trainerProfile, setTrainerProfile] = useState<{
     nombre: string;
@@ -227,7 +167,7 @@ export const AthleteDashboard: React.FC = () => {
   }, [trainerProfile?.marca?.whatsapp, plan?.portada?.whatsappLink]);
   const igHref = useMemo(() => formatSocialLink(plan?.portada?.instagramLink, 'instagram'), [plan?.portada?.instagramLink]);
 
-  const [localSesiones, setLocalSesiones] = useState<LocalSesion[]>(() => readSessionsFromCache());
+  const [localSesiones, setLocalSesiones] = useState<LocalSesion[]>(() => readSessionsFromCache(user?.id));
   const [activeTab, setActiveTab] = useState<number>(0);
 
   // ── Mobile bottom tab navigation (only affects < 768px layout) ──
@@ -247,7 +187,7 @@ export const AthleteDashboard: React.FC = () => {
   // Extraemos la semana actual configurada y el historial de microciclos
   const currentWeekNum = plan?.periodizationConfig?.semana_actual || 1;
   const [activeWeekNum, setActiveWeekNum] = useState<number>(currentWeekNum);
-  const [loadingPlan, setLoadingPlan] = useState<boolean>(true);
+
   
   // Actualizar la semana activa si el plan se recarga (ej. guardado remoto)
   useEffect(() => {
@@ -325,240 +265,6 @@ export const AthleteDashboard: React.FC = () => {
     }, 3000);
   };
 
-  // Cargar plan de Supabase o localCache fallback
-  useEffect(() => {
-    if (!user) return;
-    const padPlanData = (p: PlanData | null): PlanData | null => {
-      if (!p) return null;
-
-      const defaultVars = [
-        { id: "series de aproximacion", label: "SERIES DE APROXIMACION", type: "number", defaultValue: "2" },
-        { id: "series de trabajo", label: "SERIES DE TRABAJO", type: "text", defaultValue: "3" },
-        { id: "repeticiones", label: "REPETICIONES", type: "text", defaultValue: "10-12" },
-        { id: "tempo", label: "TEMPO", type: "text", defaultValue: "2:1:1" },
-        { id: "rir", label: "RIR", type: "number", defaultValue: "2" },
-        { id: "descanso", label: "DESCANSO(MIN)", type: "number", defaultValue: "2" },
-        { id: "peso", label: "PESO(KG)", type: "text", defaultValue: "10" }
-      ];
-
-      const keyMapping: Record<string, string> = {
-        'gv_series': 'series de trabajo',
-        'series de trabajo': 'series de trabajo',
-        'gv_reps': 'repeticiones',
-        'repeticiones': 'repeticiones',
-        'gv_rir': 'rir',
-        'rir': 'rir',
-        'gv_descanso': 'descanso',
-        'descanso': 'descanso',
-        'gv_peso': 'peso',
-        'peso': 'peso',
-        'gv_tempo': 'tempo',
-        'tempo': 'tempo',
-        'gv_aproximacion': 'series de aproximacion',
-        'series de aproximacion': 'series de aproximacion'
-      };
-
-      const oldIds = ['gv_series', 'gv_reps', 'gv_rir', 'gv_descanso', 'gv_peso'];
-      const newIds = defaultVars.map(v => v.id);
-
-      const currentVars = p.globalVariables || [];
-      const normalizedVars: GlobalVariable[] = [];
-
-      defaultVars.forEach(dv => {
-        const existing = currentVars.find(v => v.id === dv.id || keyMapping[v.id] === dv.id);
-        if (existing) {
-          normalizedVars.push({
-            id: dv.id,
-            label: dv.label,
-            type: dv.type,
-            defaultValue: existing.defaultValue || dv.defaultValue
-          });
-        } else {
-          normalizedVars.push(dv);
-        }
-      });
-
-      currentVars.forEach(v => {
-        const isDefault = newIds.includes(v.id) || oldIds.includes(v.id);
-        if (!isDefault) {
-          normalizedVars.push(v);
-        }
-      });
-
-      p.globalVariables = normalizedVars;
-
-      if (!p.trainingDays) return p;
-
-      const paddedDays = p.trainingDays.map(day => {
-        const normalizedExercises = (day.exercises || []).map((ex: any) => {
-          const newVars: Record<string, string> = {};
-          Object.entries(ex.variables || {}).forEach(([oldKey, val]) => {
-            const cleanKey = oldKey.toLowerCase().trim();
-            const newKey = keyMapping[cleanKey] || cleanKey;
-            newVars[newKey] = String(val ?? '');
-          });
-
-          normalizedVars.forEach(nv => {
-            if (newVars[nv.id] === undefined || newVars[nv.id] === '') {
-              newVars[nv.id] = nv.defaultValue;
-            }
-          });
-
-          return {
-            ...ex,
-            id: ex.id || 'temp_' + Math.random().toString(36).substring(2, 11),
-            nombre: ex.nombre !== undefined ? ex.nombre : (ex.name !== undefined ? ex.name : ''),
-            nombre_original: ex.nombre_original || '',
-            variables: newVars,
-            video_url: ex.video_url !== undefined ? ex.video_url : (ex.videoUrl !== undefined ? ex.videoUrl : ''),
-            image_url: ex.image_url !== undefined ? ex.image_url : (ex.imageData !== undefined ? ex.imageData : ''),
-            gif_url: ex.gif_url !== undefined ? ex.gif_url : (ex.gifData !== undefined ? ex.gifData : ''),
-            description: ex.description || '',
-            grupo_muscular: ex.grupo_muscular || '',
-            progression_notes: ex.progression_notes || '',
-            progression_type: ex.progression_type,
-            progression_params: ex.progression_params,
-            block_id: ex.block_id,
-            block_rest: ex.block_rest,
-            transition_rest: ex.transition_rest,
-          };
-        });
-
-        const currentExCount = normalizedExercises.length;
-        if (currentExCount < 3) {
-          const needed = 3 - currentExCount;
-          for (let i = 0; i < needed; i++) {
-            normalizedExercises.push({
-              id: 'temp_' + Math.random().toString(36).substring(2, 11),
-              nombre: '',
-              nombre_original: '',
-              variables: {},
-              video_url: '',
-              image_url: '',
-              gif_url: '',
-              description: '',
-              grupo_muscular: '',
-              progression_notes: '',
-              progression_type: undefined,
-              progression_params: undefined,
-              block_id: undefined,
-              block_rest: undefined,
-              transition_rest: undefined
-            });
-          }
-        }
-        return {
-          ...day,
-          exercises: normalizedExercises
-        };
-      });
-
-      return {
-        ...p,
-        trainingDays: paddedDays
-      };
-    };
-
-    const fetchPlan = async () => {
-      if (!user) return;
-      setLoadingPlan(true);
-
-      let success = false;
-
-      try {
-        const { data: plansList, error } = await supabase
-          .from('planes')
-          .select('*')
-          .eq('cliente_id', user.id)
-          .eq('activo', true)
-          .order('created_at', { ascending: false })
-          .limit(1);
-
-        if (error) throw error;
-
-        const data = plansList && plansList.length > 0 ? plansList[0] : null;
-
-        if (data && data.datos_plan && Object.keys(data.datos_plan).length > 0) {
-          let padded = padPlanData(data.datos_plan as PlanData);
-          if (padded?.periodizationConfig?.enabled && padded?.periodizationConfig?.marcas_1rm && Object.keys(padded.periodizationConfig.marcas_1rm).length > 0) {
-            padded = {
-              ...padded,
-              trainingDays: recalculatePlanWeights(
-                padded.trainingDays || [],
-                padded.periodizationConfig.marcas_1rm,
-                padded.periodizationConfig.formula_preferida,
-                padded.periodizationConfig.redondeo_peso
-              )
-            };
-          }
-          setPlan(padded);
-          localStorage.setItem('pwa_client_plan', JSON.stringify(padded));
-          success = true;
-          
-          if (padded?.periodizationConfig?.has_new_updates) {
-             setShowUpdateModal(true);
-             const updatedPlan = { ...padded, periodizationConfig: { ...padded.periodizationConfig, has_new_updates: false } };
-             supabase.from('planes').update({ datos_plan: updatedPlan }).eq('id', data.id).then();
-             setPlan(updatedPlan);
-             localStorage.setItem('pwa_client_plan', JSON.stringify(updatedPlan));
-          }
-        }
-      } catch (err) {
-        console.warn('No se pudo descargar el plan de la nube, usando caché local:', err);
-      }
-
-      if (!success) {
-        // Fallback a Caché Local
-        try {
-          const cached = localStorage.getItem('pwa_client_plan');
-          if (cached) {
-            const parsed = JSON.parse(cached) as PlanData;
-            let padded = padPlanData(parsed);
-            if (padded?.periodizationConfig?.enabled && padded?.periodizationConfig?.marcas_1rm && Object.keys(padded.periodizationConfig.marcas_1rm).length > 0) {
-              padded = {
-                ...padded,
-                trainingDays: recalculatePlanWeights(
-                  padded.trainingDays || [],
-                  padded.periodizationConfig.marcas_1rm,
-                  padded.periodizationConfig.formula_preferida,
-                  padded.periodizationConfig.redondeo_peso
-                )
-              };
-            }
-            setPlan(padded);
-            showToast('Cargado en modo offline 🔌', 'info');
-          } else {
-            if (!isSoloClient) {
-              showToast('No tienes un plan activo asignado.', 'error');
-            }
-            // Si es solo client sin plan, el CTA Quick Start se muestra en el render
-          }
-        } catch (e) {
-          console.error('Error al cargar plan de caché:', e);
-        }
-      }
-
-      setLoadingPlan(false);
-    };
-
-    fetchPlan();
-
-    const channelName = 'plan-updates:' + user.id;
-    const channel = supabase.channel(channelName);
-    channel
-      .on('broadcast', { event: 'plan-updated' }, () => {
-        showToast('✨ ¡Tu entrenador ha modificado tu rutina en tiempo real! ⚡', 'info');
-        fetchPlan();
-        refreshProfile();
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
-
   // Fetch trainer profile for branding/philosophy
   useEffect(() => {
     const fetchTrainerProfile = async () => {
@@ -598,10 +304,7 @@ export const AthleteDashboard: React.FC = () => {
       const fetchTrainers = async () => {
         setLoadingTrainers(true);
         try {
-          const { data, error } = await supabase
-            .from('profiles')
-            .select('id, nombre, logo_url, marca, filosofia')
-            .eq('rol', 'entrenador');
+          const { data, error } = await supabase.rpc('trainer_directory');
           if (error) throw error;
           setTrainers(data || []);
         } catch (err) {
@@ -623,7 +326,7 @@ export const AthleteDashboard: React.FC = () => {
     const refresh = async (fromNetwork = true) => {
       const data = fromNetwork
         ? await loadAthleteSessions(user.id)
-        : readSessionsFromCache();
+        : readSessionsFromCache(user?.id);
       if (!cancelled) setLocalSesiones(data);
     };
 
@@ -796,8 +499,8 @@ export const AthleteDashboard: React.FC = () => {
       const dayCelebKey = `${todayStr}_day_${activeDay.id}`;
       if (!hasCelebratedToday[dayCelebKey]) {
         const style = getComputedStyle(document.documentElement);
-        const pri = style.getPropertyValue('--theme-primary').trim() || '#00d4ff';
-        const sec = style.getPropertyValue('--theme-secondary').trim() || '#7b2ff7';
+        const pri = style.getPropertyValue('--theme-primary').trim() || '#91b6a1';
+        const sec = style.getPropertyValue('--theme-secondary').trim() || '#769888';
         confetti({
           particleCount: 150,
           spread: 80,
@@ -906,7 +609,7 @@ export const AthleteDashboard: React.FC = () => {
             if (response.ok) {
               await cache.put(url, response);
             }
-          } catch (err) {
+          } catch {
             console.warn('⚡ PWA: El recurso no soporta pre-carga CORS offline:', url);
           }
         }
@@ -935,13 +638,13 @@ export const AthleteDashboard: React.FC = () => {
         <div className="container stagger-3" style={{ padding: '0 20px', maxWidth: '600px', margin: '40px auto 0 auto' }}>
           <div style={{
             background: 'var(--theme-card-bg)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
+            backdropFilter: 'none',
+            WebkitBackdropFilter: 'none',
             border: '1px solid var(--theme-border)',
             borderRadius: '24px',
             padding: '40px 30px',
             textAlign: 'center',
-            boxShadow: '0 20px 50px var(--theme-glow)'
+            boxShadow: 'none'
           }}>
             {/* Locked Icon */}
             <div className="pulse-lock" style={{
@@ -954,7 +657,7 @@ export const AthleteDashboard: React.FC = () => {
               alignItems: 'center',
               justifyContent: 'center',
               margin: '0 auto 24px auto',
-              boxShadow: '0 0 20px rgba(239, 68, 68, 0.2)',
+              boxShadow: 'none',
             }}>
               <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--color-danger)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
@@ -964,12 +667,12 @@ export const AthleteDashboard: React.FC = () => {
 
             {/* Title */}
             <h2 style={{
-              fontFamily: "'Orbitron', sans-serif",
+              fontFamily: "'Inter', sans-serif",
               fontSize: '22px',
               fontWeight: 800,
               color: '#fca5a5',
-              letterSpacing: '1.5px',
-              textTransform: 'uppercase',
+              letterSpacing: '0',
+              textTransform: 'none',
               margin: '0 0 16px 0'
             }}>
               Acceso Restringido
@@ -978,7 +681,7 @@ export const AthleteDashboard: React.FC = () => {
             {/* Description */}
             <p style={{
               fontSize: '14px',
-              color: '#94a3b8',
+              color: '#a4b0a8',
               lineHeight: 1.6,
               margin: '0 0 28px 0'
             }}>
@@ -999,15 +702,15 @@ export const AthleteDashboard: React.FC = () => {
               fontSize: '12px'
             }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255, 255, 255, 0.04)', paddingBottom: '8px', marginBottom: '8px' }}>
-                <span style={{ color: 'rgba(255, 255, 255, 0.5)' }}>Atleta:</span>
+                <span style={{ color: '#a4b0a8' }}>Atleta:</span>
                 <span style={{ fontWeight: 600 }}>{profile?.nombre || plan?.portada?.userName || '-'}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid rgba(255, 255, 255, 0.04)', paddingBottom: '8px', marginBottom: '8px' }}>
-                <span style={{ color: 'rgba(255, 255, 255, 0.5)' }}>Fecha de Inicio:</span>
+                <span style={{ color: '#a4b0a8' }}>Fecha de Inicio:</span>
                 <span style={{ fontWeight: 600 }}>{inicioStr}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'rgba(255, 255, 255, 0.5)' }}>Vigencia del Plan:</span>
+                <span style={{ color: '#a4b0a8' }}>Vigencia del Plan:</span>
                 <span style={{ fontWeight: 600, color: 'var(--color-danger)' }}>{vigencia} días (Expirado)</span>
               </div>
             </div>
@@ -1027,8 +730,8 @@ export const AthleteDashboard: React.FC = () => {
                   borderRadius: '30px',
                   fontSize: '13px',
                   fontWeight: 700,
-                  fontFamily: "'Orbitron', sans-serif",
-                  boxShadow: '0 4px 15px rgba(37, 211, 102, 0.25)',
+                  fontFamily: "'Inter', sans-serif",
+                  boxShadow: 'none',
                   transition: 'all 0.3s ease'
                 }}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
@@ -1050,8 +753,8 @@ export const AthleteDashboard: React.FC = () => {
                   borderRadius: '30px',
                   fontSize: '13px',
                   fontWeight: 700,
-                  fontFamily: "'Orbitron', sans-serif",
-                  boxShadow: '0 4px 15px rgba(220, 39, 67, 0.25)',
+                  fontFamily: "'Inter', sans-serif",
+                  boxShadow: 'none',
                   transition: 'all 0.3s ease'
                 }}>
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="white">
@@ -1076,13 +779,13 @@ export const AthleteDashboard: React.FC = () => {
         <div className="container stagger-3" style={{ padding: '0 20px', maxWidth: '600px', margin: '40px auto 0 auto' }}>
           <div style={{
             background: 'var(--theme-card-bg)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
+            backdropFilter: 'none',
+            WebkitBackdropFilter: 'none',
             border: '1px solid var(--theme-border)',
             borderRadius: '24px',
             padding: '40px 30px',
             textAlign: 'center',
-            boxShadow: '0 20px 50px var(--theme-glow)'
+            boxShadow: 'none'
           }}>
             {/* Locked Icon */}
             <div className="pulse-lock" style={{
@@ -1095,7 +798,7 @@ export const AthleteDashboard: React.FC = () => {
               alignItems: 'center',
               justifyContent: 'center',
               margin: '0 auto 24px auto',
-              boxShadow: '0 0 20px rgba(239, 68, 68, 0.2)',
+              boxShadow: 'none',
             }}>
               <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="var(--color-danger)" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
@@ -1105,12 +808,12 @@ export const AthleteDashboard: React.FC = () => {
 
             {/* Title */}
             <h2 style={{
-              fontFamily: "'Orbitron', sans-serif",
+              fontFamily: "'Inter', sans-serif",
               fontSize: '18px',
               fontWeight: 800,
               color: '#fca5a5',
-              letterSpacing: '1.5px',
-              textTransform: 'uppercase',
+              letterSpacing: '0',
+              textTransform: 'none',
               margin: '0 0 16px 0'
             }}>
               SERVICIO TEMPORALMENTE INACTIVO
@@ -1119,7 +822,7 @@ export const AthleteDashboard: React.FC = () => {
             {/* Description */}
             <p style={{
               fontSize: '14px',
-              color: '#94a3b8',
+              color: '#a4b0a8',
               lineHeight: 1.6,
               margin: '0 0 28px 0'
             }}>
@@ -1142,8 +845,8 @@ export const AthleteDashboard: React.FC = () => {
                   borderRadius: '30px',
                   fontSize: '13px',
                   fontWeight: 700,
-                  fontFamily: "'Orbitron', sans-serif",
-                  boxShadow: '0 4px 15px rgba(37, 211, 102, 0.25)',
+                  fontFamily: "'Inter', sans-serif",
+                  boxShadow: 'none',
                   transition: 'all 0.3s ease'
                 }}>
                   Avisar a mi Entrenador
@@ -1176,8 +879,8 @@ export const AthleteDashboard: React.FC = () => {
               marginTop: '10px'
             }}>
               <div>
-                <h4 style={{ margin: '0 0 4px 0', fontSize: '13px', color: '#ffb703', fontFamily: "'Orbitron', sans-serif" }}>Evaluación Pendiente</h4>
-                <p style={{ margin: 0, fontSize: '11px', color: 'rgba(255,255,255,0.7)' }}>Aún no has completado tu diagnóstico inicial de fuerza.</p>
+                <h4 style={{ margin: '0 0 4px 0', fontSize: '13px', color: '#ffb703', fontFamily: "'Inter', sans-serif" }}>Evaluación Pendiente</h4>
+                <p style={{ margin: 0, fontSize: '12px', color: 'rgba(255,255,255,0.7)' }}>Aún no has completado tu diagnóstico inicial de fuerza.</p>
               </div>
               <button 
                 onClick={() => setHideEvaluation(false)}
@@ -1187,9 +890,9 @@ export const AthleteDashboard: React.FC = () => {
                   border: 'none',
                   padding: '8px 16px',
                   borderRadius: '8px',
-                  fontSize: '11px',
+                  fontSize: '12px',
                   fontWeight: 800,
-                  fontFamily: "'Orbitron', sans-serif",
+                  fontFamily: "'Inter', sans-serif",
                   cursor: 'pointer'
                 }}
               >
@@ -1231,27 +934,8 @@ export const AthleteDashboard: React.FC = () => {
 
   return (
     <div style={{ background: 'transparent', minHeight: '100vh', color: 'white', paddingBottom: '60px' }}>
-      {currentTheme === 'cyan' && trainerProfile?.marca && (
-        <style>{`
-          :root {
-            --theme-primary: ${trainerProfile.marca.color_primario} !important;
-            --theme-secondary: ${trainerProfile.marca.color_secundario} !important;
-            --theme-glow: ${trainerProfile.marca.color_primario}24 !important;
-            --theme-border: ${trainerProfile.marca.color_primario}33 !important;
-            --theme-text-gradient: linear-gradient(135deg, ${trainerProfile.marca.color_primario} 30%, ${trainerProfile.marca.color_secundario} 100%) !important;
-            --theme-btn-gradient: linear-gradient(135deg, ${trainerProfile.marca.color_primario} 0%, ${trainerProfile.marca.color_secundario} 100%) !important;
-            --theme-btn-glow: ${trainerProfile.marca.color_primario}40 !important;
-            --theme-input-focus: ${trainerProfile.marca.color_primario} !important;
-            --theme-input-focus-glow: ${trainerProfile.marca.color_primario}2e !important;
-            --theme-badge-bg: ${trainerProfile.marca.color_primario}33 !important;
-            --font-primary: '${trainerProfile.marca.tipografia}', 'Orbitron', sans-serif !important;
-          }
-          .brand-name, .section-title, .mcard-value, .tab, .btn, .philosophy-title {
-            font-family: '${trainerProfile.marca.tipografia}', 'Orbitron', sans-serif !important;
-          }
-        `}</style>
-      )}
-      <AthleteNavbar />
+      <PendingCoachInvitations key={user?.id} />
+      <AthleteNavbar onOpenCalculator={() => setIs1RMModalOpen(true)} />
 
       <div className="container stagger-3" style={{ padding: '0 20px', maxWidth: '1200px', margin: '0 auto' }}>
         {/* On mobile the bottom tab bar (≈68px + safe-area) is compensated via .container.stagger-3 CSS padding-bottom */}
@@ -1298,10 +982,10 @@ export const AthleteDashboard: React.FC = () => {
           
           {/* Central Title */}
           <div style={{ textAlign: 'center', marginBottom: '30px' }}>
-            <h1 className="theme-text-gradient" style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '1.9rem', fontWeight: 800, borderBottom: '4px solid var(--theme-primary)', display: 'inline-block', paddingBottom: '8px', letterSpacing: '1px' }}>
+            <h1 className="theme-text-gradient" style={{ fontFamily: "'Inter', sans-serif", fontSize: '1.9rem', fontWeight: 800, borderBottom: '4px solid var(--theme-primary)', display: 'inline-block', paddingBottom: '8px', letterSpacing: '0' }}>
               PLAN DE ENTRENAMIENTO PERSONALIZADO
             </h1>
-            <p style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '0.95rem', color: 'var(--text2)', marginTop: '12px', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <p style={{ fontFamily: "'Inter', sans-serif", fontSize: '0.95rem', color: 'var(--text2)', marginTop: '12px', fontWeight: 600, textTransform: 'none', letterSpacing: '0' }}>
               Estrategia inteligente, ejecución impecable
             </p>
           </div>
@@ -1329,7 +1013,7 @@ export const AthleteDashboard: React.FC = () => {
                 color: 'inherit'
               }}
             >
-              <span className="philosophy-toggle-title" style={{ fontWeight: 700, fontSize: '13px', fontFamily: "'Orbitron', sans-serif", color: 'var(--theme-primary)', letterSpacing: '0.5px', textTransform: 'uppercase', display: 'flex', alignItems: 'center' }}>
+              <span className="philosophy-toggle-title" style={{ fontWeight: 700, fontSize: '13px', fontFamily: "'Inter', sans-serif", color: 'var(--theme-primary)', letterSpacing: '0', textTransform: 'none', display: 'flex', alignItems: 'center' }}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '6px' }}>
                   <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
                 </svg>
@@ -1416,31 +1100,31 @@ export const AthleteDashboard: React.FC = () => {
           {/* Cover Info Grid & Global Notes */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', marginBottom: '25px' }}>
             {/* Athlete metadata */}
-            <div className="perfil-atleta-panel" style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
-              <h4 style={{ margin: 0, fontSize: '13px', fontFamily: "'Orbitron', sans-serif", color: 'var(--theme-primary)', letterSpacing: '0.5px' }}>DATOS DEL ATLETA</h4>
+            <div className="perfil-atleta-panel" style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', gap: '14px', backdropFilter: 'none', WebkitBackdropFilter: 'none' }}>
+              <h4 style={{ margin: 0, fontSize: '13px', fontFamily: "'Inter', sans-serif", color: 'var(--theme-primary)', letterSpacing: '0' }}>DATOS DEL ATLETA</h4>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '12px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--theme-border)', paddingBottom: '6px' }}>
-                  <span style={{ color: 'rgba(255,255,255,0.5)' }}>Nombre</span>
+                  <span style={{ color: '#a4b0a8' }}>Nombre</span>
                   <span style={{ fontWeight: 600 }}>{portada.userName || profile?.nombre || '-'}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--theme-border)', paddingBottom: '6px' }}>
-                  <span style={{ color: 'rgba(255,255,255,0.5)' }}>Objetivo</span>
+                  <span style={{ color: '#a4b0a8' }}>Objetivo</span>
                   <span style={{ fontWeight: 600, color: 'var(--theme-secondary)' }}>{portada.userGoal || profile?.objetivo || '-'}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px solid var(--theme-border)', paddingBottom: '6px' }}>
-                  <span style={{ color: 'rgba(255,255,255,0.5)' }}>Fecha inicio</span>
+                  <span style={{ color: '#a4b0a8' }}>Fecha inicio</span>
                   <span style={{ fontWeight: 600 }}>{portada.startDate || profile?.fecha_inicio || '-'}</span>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <span style={{ color: 'rgba(255,255,255,0.5)' }}>Vigencia</span>
+                  <span style={{ color: '#a4b0a8' }}>Vigencia</span>
                   <span style={{ fontWeight: 600 }}>{portada.planVigenciaPlan || profile?.vigencia_dias || '28'} días</span>
                 </div>
               </div>
             </div>
 
             {/* Planificación Activa */}
-            <div style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '14px', boxShadow: '0 8px 32px 0 var(--theme-glow)', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
-              <div style={{ color: 'var(--theme-primary)', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontFamily: "'Orbitron', sans-serif", fontWeight: 700, letterSpacing: '0.5px', textTransform: 'uppercase' }}>
+            <div style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '14px', boxShadow: 'none', backdropFilter: 'none', WebkitBackdropFilter: 'none' }}>
+              <div style={{ color: 'var(--theme-primary)', display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', fontFamily: "'Inter', sans-serif", fontWeight: 700, letterSpacing: '0', textTransform: 'none' }}>
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
                   <line x1="18" y1="20" x2="18" y2="10" />
                   <line x1="12" y1="20" x2="12" y2="4" />
@@ -1448,16 +1132,16 @@ export const AthleteDashboard: React.FC = () => {
                 </svg>
                 Planificación Activa
               </div>
-              <div style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '28px', fontWeight: 800, color: 'white', letterSpacing: '0.5px' }}>
+              <div style={{ fontFamily: "'Inter', sans-serif", fontSize: '28px', fontWeight: 800, color: 'white', letterSpacing: '0' }}>
                 {Object.values(weekdayMapping).filter(v => Number(v) !== -1).length || trainingDays.length || 7} Días / Sem
               </div>
             </div>
 
             {/* Global notes & Trainer socials */}
-            <div style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', boxShadow: '0 8px 32px 0 var(--theme-glow)', borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '14px', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
+            <div style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', boxShadow: 'none', borderRadius: '16px', padding: '20px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', gap: '14px', backdropFilter: 'none', WebkitBackdropFilter: 'none' }}>
               <div>
-                <h4 style={{ margin: '0 0 8px 0', fontSize: '13px', fontFamily: "'Orbitron', sans-serif", color: 'var(--theme-secondary)', letterSpacing: '0.5px' }}>INDICACIONES GENERALES</h4>
-                <p className="desc-text" style={{ margin: 0, fontSize: '12px', lineHeight: 1.5, color: '#94a3b8', fontStyle: 'italic' }}>
+                <h4 style={{ margin: '0 0 8px 0', fontSize: '13px', fontFamily: "'Inter', sans-serif", color: 'var(--theme-secondary)', letterSpacing: '0' }}>INDICACIONES GENERALES</h4>
+                <p className="desc-text" style={{ margin: 0, fontSize: '12px', lineHeight: 1.5, color: '#a4b0a8', fontStyle: 'italic' }}>
                   "{portada.globalNote || 'Entrena duro, controla tus ejecuciones y descansa lo necesario para lograr el máximo estímulo progresivo.'}"
                 </p>
               </div>
@@ -1465,7 +1149,7 @@ export const AthleteDashboard: React.FC = () => {
               {/* Redes Entrenador */}
               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                 {wsHref && (
-                  <a href={wsHref} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(37, 211, 102, 0.12)', border: '1px solid rgba(37, 211, 102, 0.35)', color: '#4ade80', textDecoration: 'none', padding: '6px 12px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, fontFamily: "'Orbitron', sans-serif" }}>
+                  <a href={wsHref} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(37, 211, 102, 0.12)', border: '1px solid rgba(37, 211, 102, 0.35)', color: '#4ade80', textDecoration: 'none', padding: '6px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 600, fontFamily: "'Inter', sans-serif" }}>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '2px' }}>
                       <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
                     </svg>
@@ -1473,7 +1157,7 @@ export const AthleteDashboard: React.FC = () => {
                   </a>
                 )}
                 {igHref && (
-                  <a href={igHref} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(251, 113, 133, 0.12)', border: '1px solid rgba(251, 113, 133, 0.35)', color: '#fda4af', textDecoration: 'none', padding: '6px 12px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, fontFamily: "'Orbitron', sans-serif" }}>
+                  <a href={igHref} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(251, 113, 133, 0.12)', border: '1px solid rgba(251, 113, 133, 0.35)', color: '#fda4af', textDecoration: 'none', padding: '6px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 600, fontFamily: "'Inter', sans-serif" }}>
                     <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '2px' }}>
                       <rect x="2" y="2" width="20" height="20" rx="5" ry="5" />
                       <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z" />
@@ -1484,7 +1168,7 @@ export const AthleteDashboard: React.FC = () => {
                 )}
                 <button
                   onClick={() => setIs1RMModalOpen(true)}
-                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'var(--theme-badge-bg)', border: '1px solid var(--theme-border)', color: 'var(--theme-primary)', padding: '6px 12px', borderRadius: '20px', fontSize: '11px', fontWeight: 600, fontFamily: "'Orbitron', sans-serif", cursor: 'pointer' }}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'var(--theme-badge-bg)', border: '1px solid var(--theme-border)', color: 'var(--theme-primary)', padding: '6px 12px', borderRadius: '20px', fontSize: '12px', fontWeight: 600, fontFamily: "'Inter', sans-serif", cursor: 'pointer' }}
                 >
                   <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '2px' }}>
                     <rect x="4" y="2" width="16" height="20" rx="2" ry="2" />
@@ -1509,7 +1193,7 @@ export const AthleteDashboard: React.FC = () => {
         {/* Banner de invitación a activar notificaciones Push */}
         {showPushPrompt && !planExpiration.expired && (
           <div style={{
-            background: 'linear-gradient(135deg, rgba(0, 212, 255, 0.1), rgba(123, 47, 247, 0.08))',
+            background: 'linear-gradient(135deg, rgba(145, 182, 161, 0.1), rgba(118, 152, 136, 0.08))',
             border: '1px solid var(--theme-border)',
             borderRadius: '14px',
             padding: '16px 20px',
@@ -1519,15 +1203,15 @@ export const AthleteDashboard: React.FC = () => {
             justifyContent: 'space-between',
             gap: '16px',
             flexWrap: 'wrap',
-            boxShadow: '0 4px 16px var(--theme-glow)',
-            backdropFilter: 'blur(10px)',
-            WebkitBackdropFilter: 'blur(10px)'
+            boxShadow: 'none',
+            backdropFilter: 'none',
+            WebkitBackdropFilter: 'none'
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: '1 1 300px' }}>
               <span style={{ fontSize: '24px' }}>🔔</span>
               <div style={{ textAlign: 'left' }}>
-                <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--theme-primary)', fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.5px' }}>ACTIVAR NOTIFICACIONES PUSH</div>
-                <div className="desc-text" style={{ fontSize: '11px', color: 'rgba(255,255,255,0.7)', marginTop: '4px', lineHeight: '1.4' }}>Recibe recordatorios para mantener tu racha de entrenamiento y entérate al instante cuando tu entrenador actualice tu plan.</div>
+                <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--theme-primary)', fontFamily: "'Inter', sans-serif", letterSpacing: '0' }}>ACTIVAR NOTIFICACIONES PUSH</div>
+                <div className="desc-text" style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)', marginTop: '4px', lineHeight: '1.4' }}>Recibe recordatorios para mantener tu racha de entrenamiento y entérate al instante cuando tu entrenador actualice tu plan.</div>
               </div>
             </div>
             <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
@@ -1565,11 +1249,11 @@ export const AthleteDashboard: React.FC = () => {
                   border: 'none',
                   borderRadius: '30px',
                   padding: '8px 18px',
-                  fontSize: '11px',
+                  fontSize: '12px',
                   fontWeight: 700,
-                  fontFamily: "'Orbitron', sans-serif",
+                  fontFamily: "'Inter', sans-serif",
                   cursor: 'pointer',
-                  boxShadow: '0 2px 10px var(--theme-btn-glow)',
+                  boxShadow: 'none',
                   transition: 'all 0.2s'
                 }}
               >
@@ -1584,13 +1268,13 @@ export const AthleteDashboard: React.FC = () => {
                 }}
                 style={{
                   background: 'rgba(255,255,255,0.05)',
-                  color: 'rgba(255,255,255,0.6)',
+                  color: '#a4b0a8',
                   border: '1px solid rgba(255,255,255,0.1)',
                   borderRadius: '30px',
                   padding: '8px 16px',
-                  fontSize: '11px',
+                  fontSize: '12px',
                   fontWeight: 700,
-                  fontFamily: "'Orbitron', sans-serif",
+                  fontFamily: "'Inter', sans-serif",
                   cursor: 'pointer',
                   transition: 'all 0.2s'
                 }}
@@ -1626,29 +1310,29 @@ export const AthleteDashboard: React.FC = () => {
           <div style={{ marginTop: '12px', marginBottom: '4px' }}>
             <button
               id="start-session-btn"
+              className="studio-session-cta"
               onClick={() => navigate('/session/preview')}
               style={{
                 width: '100%', padding: '18px 20px', borderRadius: '18px', cursor: 'pointer',
-                background: 'linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)',
+                background: 'var(--studio-accent)',
                 border: 'none',
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                 transition: 'all 0.25s ease',
-                boxShadow: '0 8px 30px rgba(124,58,237,0.35)',
+                boxShadow: 'none',
                 WebkitTapHighlightColor: 'transparent',
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <span style={{ fontSize: '22px' }}>🏋️</span>
                 <div style={{ textAlign: 'left' }}>
-                  <div style={{ fontSize: '13px', fontWeight: 800, color: '#ffffff', fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.3px' }}>
-                    ENTRENAR AHORA
+                  <div style={{ fontSize: '16px', fontWeight: 600, color: 'var(--studio-bg)', fontFamily: "'Inter', sans-serif", letterSpacing: '0' }}>
+                    Entrenar ahora
                   </div>
-                  <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.65)', marginTop: '2px', fontWeight: 500 }}>
+                  <div style={{ fontSize: '12px', color: 'var(--studio-bg)', marginTop: '4px', fontWeight: 400 }}>
                     Registro rápido · peso, reps y RIR en segundos
                   </div>
                 </div>
               </div>
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--studio-bg)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="9 18 15 12 9 6"/>
               </svg>
             </button>
@@ -1668,21 +1352,20 @@ export const AthleteDashboard: React.FC = () => {
               }}
               style={{
                 width: '100%', padding: '14px 20px', borderRadius: '14px', cursor: 'pointer',
-                background: 'linear-gradient(135deg, rgba(99, 102, 241, 0.12), rgba(168, 85, 247, 0.08))',
-                border: '1px solid rgba(99, 102, 241, 0.25)',
+                background: 'var(--studio-surface)',
+                border: '1px solid var(--studio-border)',
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                 transition: 'all 0.3s ease',
-                boxShadow: '0 4px 16px rgba(99, 102, 241, 0.1)'
+                boxShadow: 'none'
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <span style={{ fontSize: '20px' }}>🧠</span>
                 <div style={{ textAlign: 'left' }}>
-                  <div style={{ fontSize: '12px', fontWeight: 700, color: '#a5b4fc', fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.5px' }}>SMART COACH</div>
-                  <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', marginTop: '2px' }}>Ver sugerencias inteligentes para tu entrenamiento de hoy</div>
+                  <div style={{ fontSize: '14px', fontWeight: 500, color: 'var(--studio-text)', fontFamily: "'Inter', sans-serif", letterSpacing: '0' }}>Sugerencias de entrenamiento</div>
+                  <div style={{ fontSize: '12px', color: '#a4b0a8', marginTop: '2px' }}>Ver sugerencias inteligentes para tu entrenamiento de hoy</div>
                 </div>
               </div>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--studio-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
             </button>
           </div>
         )}
@@ -1698,9 +1381,9 @@ export const AthleteDashboard: React.FC = () => {
               let textColor = 'rgba(255,255,255,0.7)';
               let border = '1px solid var(--theme-border)';
               if (activeWeekNum === weekNum) {
-                bgColor = 'rgba(14, 165, 233, 0.15)';
-                textColor = '#0ea5e9';
-                border = '1px solid #0ea5e9';
+                bgColor = 'var(--studio-raised)';
+                textColor = 'var(--studio-text)';
+                border = '1px solid var(--studio-accent)';
               }
               return (
                 <button
@@ -1728,7 +1411,7 @@ export const AthleteDashboard: React.FC = () => {
 
         {/* DAY TABS BAR — inside HOY tab */}
         {trainingDays.length > 1 && (
-          <div className="day-tabs-bar" style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '20px', padding: '4px', background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '12px', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
+          <div className="day-tabs-bar" style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '20px', padding: '4px', background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '12px', backdropFilter: 'none', WebkitBackdropFilter: 'none' }}>
             {trainingDays.map((day, idx) => {
               const dayName = (day.name || `Día ${idx + 1}`).trim();
               const shortName = dayName.length > 28 ? dayName.substring(0, 25) + '…' : dayName;
@@ -1738,8 +1421,8 @@ export const AthleteDashboard: React.FC = () => {
                   className={`day-tab-btn${activeTab === idx ? ' active' : ''}`}
                   onClick={() => setActiveTab(idx)}
                   style={{
-                    fontFamily: "'Orbitron',sans-serif",
-                    fontSize: '10px', fontWeight: 600,
+                    fontFamily: "'Inter',sans-serif",
+                    fontSize: '12px', fontWeight: 600,
                     padding: '8px 16px', borderRadius: '8px',
                     border: 'none', transition: 'all 0.2s', cursor: 'pointer'
                   }}
@@ -1766,19 +1449,19 @@ export const AthleteDashboard: React.FC = () => {
               />
             </ErrorBoundary>
           ) : loadingPlan ? (
-            <div style={{ textAlign: 'center', padding: '40px', background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', boxShadow: '0 8px 32px 0 var(--theme-glow)', borderRadius: '16px' }}>
+            <div style={{ textAlign: 'center', padding: '40px', background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', boxShadow: 'none', borderRadius: '16px' }}>
               <p style={{ color: 'var(--text2)' }}>Cargando ejercicios de tu plan...</p>
             </div>
           ) : (
             <div style={{
               background: 'var(--theme-card-bg)',
-              backdropFilter: 'blur(20px)',
-              WebkitBackdropFilter: 'blur(20px)',
+              backdropFilter: 'none',
+              WebkitBackdropFilter: 'none',
               border: '1px solid var(--theme-border)',
               borderRadius: '24px',
               padding: '40px 30px',
               textAlign: 'center',
-              boxShadow: '0 20px 50px var(--theme-glow)',
+              boxShadow: 'none',
               margin: '20px 0 60px 0'
             }}>
               <div style={{
@@ -1787,19 +1470,19 @@ export const AthleteDashboard: React.FC = () => {
                 border: '1px solid var(--theme-border)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 margin: '0 auto 20px auto',
-                boxShadow: '0 0 20px var(--theme-glow)'
+                boxShadow: 'none'
               }}>
                 <span style={{ fontSize: '28px' }}>📋</span>
               </div>
               <h2 style={{
-                fontFamily: "'Orbitron', sans-serif",
+                fontFamily: "'Inter', sans-serif",
                 fontSize: '18px', fontWeight: 800,
-                color: 'var(--theme-primary)', letterSpacing: '1.5px',
-                textTransform: 'uppercase', margin: '0 0 12px 0'
+                color: 'var(--theme-primary)', letterSpacing: '0',
+                textTransform: 'none', margin: '0 0 12px 0'
               }}>
                 {isSoloClient ? 'Aún sin plan de entrenamiento' : 'Aún sin plan asignado'}
               </h2>
-              <p className="desc-text" style={{ fontSize: '13px', color: '#94a3b8', lineHeight: 1.6, margin: '0 0 24px 0' }}>
+              <p className="desc-text" style={{ fontSize: '13px', color: '#a4b0a8', lineHeight: 1.6, margin: '0 0 24px 0' }}>
                 {isSoloClient
                   ? 'Aún no has creado tu plan personalizado. Diseña tu rutina desde la pestaña Plan o haz clic en "Crear / Editar mi Plan" para comenzar a entrenar.'
                   : 'Tu entrenador aún no ha publicado o activado tu plan de entrenamiento personalizado. Contacta con él para comenzar.'}
@@ -1810,19 +1493,19 @@ export const AthleteDashboard: React.FC = () => {
                     type="button"
                     onClick={() => navigate('/solo/planner')}
                     style={{
-                      background: 'var(--theme-btn-gradient, linear-gradient(135deg, #00d4ff 0%, #0070a0 100%))',
+                      background: 'var(--theme-btn-gradient, linear-gradient(135deg, #91b6a1 0%, #0070a0 100%))',
                       color: 'white',
                       border: 'none',
                       padding: '12px 28px',
                       borderRadius: '30px',
                       fontSize: '12px',
                       fontWeight: 800,
-                      fontFamily: "'Orbitron', sans-serif",
+                      fontFamily: "'Inter', sans-serif",
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '8px',
                       cursor: 'pointer',
-                      boxShadow: '0 4px 15px var(--theme-btn-glow, rgba(0, 212, 255, 0.25))',
+                      boxShadow: 'none',
                       transition: 'all 0.3s ease'
                     }}
                   >
@@ -1843,11 +1526,11 @@ export const AthleteDashboard: React.FC = () => {
                       borderRadius: '30px',
                       fontSize: '12px',
                       fontWeight: 700,
-                      fontFamily: "'Orbitron', sans-serif",
+                      fontFamily: "'Inter', sans-serif",
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '8px',
-                      boxShadow: '0 4px 15px rgba(37, 211, 102, 0.25)',
+                      boxShadow: 'none',
                       transition: 'all 0.3s ease'
                     }}
                   >
@@ -1893,13 +1576,13 @@ export const AthleteDashboard: React.FC = () => {
           <div style={{ marginTop: '20px' }}>
             <div style={{
               background: 'var(--theme-card-bg)',
-              backdropFilter: 'blur(20px)',
-              WebkitBackdropFilter: 'blur(20px)',
+              backdropFilter: 'none',
+              WebkitBackdropFilter: 'none',
               border: '1px solid var(--theme-border)',
               borderRadius: '24px',
               padding: '40px 30px',
               textAlign: 'center',
-              boxShadow: '0 20px 50px var(--theme-glow)'
+              boxShadow: 'none'
             }}>
               <div style={{
                 width: '64px', height: '64px', borderRadius: '50%',
@@ -1907,19 +1590,19 @@ export const AthleteDashboard: React.FC = () => {
                 border: '1px solid var(--theme-border)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
                 margin: '0 auto 20px auto',
-                boxShadow: '0 0 20px var(--theme-glow)',
+                boxShadow: 'none',
               }}>
                 <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--theme-primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M12 5v14M5 12h14" />
                 </svg>
               </div>
               <h2 style={{
-                fontFamily: "'Orbitron', sans-serif",
+                fontFamily: "'Inter', sans-serif",
                 fontSize: '18px', fontWeight: 800,
-                color: 'var(--theme-primary)', letterSpacing: '1.5px',
-                textTransform: 'uppercase', margin: '0 0 12px 0'
+                color: 'var(--theme-primary)', letterSpacing: '0',
+                textTransform: 'none', margin: '0 0 12px 0'
               }}>Quick Start</h2>
-              <p className="desc-text" style={{ fontSize: '13px', color: '#94a3b8', lineHeight: 1.6, margin: '0 0 24px 0' }}>
+              <p className="desc-text" style={{ fontSize: '13px', color: '#a4b0a8', lineHeight: 1.6, margin: '0 0 24px 0' }}>
                 Aún no tienes un plan de entrenamiento. Crea tu propia rutina personalizada y empieza a entrenar con el motor de sobrecarga progresiva.
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'center' }}>
@@ -1930,9 +1613,9 @@ export const AthleteDashboard: React.FC = () => {
                     color: 'white', border: 'none',
                     padding: '14px 32px', borderRadius: '30px',
                     fontSize: '13px', fontWeight: 700,
-                    fontFamily: "'Orbitron', sans-serif",
-                    cursor: 'pointer', letterSpacing: '1px',
-                    boxShadow: '0 4px 20px var(--theme-btn-glow)',
+                    fontFamily: "'Inter', sans-serif",
+                    cursor: 'pointer', letterSpacing: '0',
+                    boxShadow: 'none',
                     transition: 'all 0.3s ease',
                     display: 'inline-flex', alignItems: 'center', gap: '8px'
                   }}
@@ -1950,9 +1633,9 @@ export const AthleteDashboard: React.FC = () => {
                     color: 'white',
                     padding: '10px 24px',
                     borderRadius: '30px',
-                    fontSize: '11px',
+                    fontSize: '12px',
                     fontWeight: 700,
-                    fontFamily: "'Orbitron', sans-serif",
+                    fontFamily: "'Inter', sans-serif",
                     cursor: 'pointer',
                     transition: 'all 0.3s ease',
                     display: 'inline-flex',
@@ -1984,15 +1667,15 @@ export const AthleteDashboard: React.FC = () => {
                 border: '1px solid var(--theme-border)',
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                 transition: 'all 0.3s ease',
-                boxShadow: '0 4px 16px var(--theme-glow)',
+                boxShadow: 'none',
                 boxSizing: 'border-box'
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <span style={{ fontSize: '20px' }}>✏️</span>
                 <div style={{ textAlign: 'left' }}>
-                  <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--theme-primary)', fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.5px' }}>EDITAR MI PLAN</div>
-                  <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', marginTop: '2px' }}>Modifica tus ejercicios, días y variables del plan</div>
+                  <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--theme-primary)', fontFamily: "'Inter', sans-serif", letterSpacing: '0' }}>EDITAR MI PLAN</div>
+                  <div style={{ fontSize: '12px', color: '#a4b0a8', marginTop: '2px' }}>Modifica tus ejercicios, días y variables del plan</div>
                 </div>
               </div>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--theme-primary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
@@ -2006,15 +1689,15 @@ export const AthleteDashboard: React.FC = () => {
                 border: '1px solid var(--theme-border)',
                 display: 'flex', alignItems: 'center', justifyContent: 'space-between',
                 transition: 'all 0.3s ease',
-                boxShadow: '0 4px 16px var(--theme-glow)',
+                boxShadow: 'none',
                 boxSizing: 'border-box'
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                 <span style={{ fontSize: '20px' }}>⚙️</span>
                 <div style={{ textAlign: 'left' }}>
-                  <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--theme-primary)', fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.5px' }}>MOTOR DE PROGRESIÓN</div>
-                  <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', marginTop: '2px' }}>Configura las reglas de tu sobrecarga personal</div>
+                  <div style={{ fontSize: '12px', fontWeight: 700, color: 'var(--theme-primary)', fontFamily: "'Inter', sans-serif", letterSpacing: '0' }}>MOTOR DE PROGRESIÓN</div>
+                  <div style={{ fontSize: '12px', color: '#a4b0a8', marginTop: '2px' }}>Configura las reglas de tu sobrecarga personal</div>
                 </div>
               </div>
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--theme-primary)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
@@ -2030,9 +1713,9 @@ export const AthleteDashboard: React.FC = () => {
               border: '1px solid var(--theme-border)',
               borderRadius: '20px',
               padding: '16px 20px',
-              backdropFilter: 'blur(20px)',
-              WebkitBackdropFilter: 'blur(20px)',
-              boxShadow: '0 4px 20px rgba(0,0,0,0.15)'
+              backdropFilter: 'none',
+              WebkitBackdropFilter: 'none',
+              boxShadow: 'none'
             }}>
               <button
                 onClick={() => setShowTrainersDir(!showTrainersDir)}
@@ -2051,17 +1734,17 @@ export const AthleteDashboard: React.FC = () => {
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                   <span style={{ fontSize: '20px' }}>🤝</span>
                   <div style={{ textAlign: 'left' }}>
-                    <div style={{ fontSize: '12px', fontWeight: 800, color: 'var(--theme-primary)', fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.5px' }}>CONTRATAR UN ENTRENADOR</div>
-                    <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', marginTop: '2px' }}>¿Prefieres asesoría personalizada? Contacta un coach por WhatsApp</div>
+                    <div style={{ fontSize: '12px', fontWeight: 800, color: 'var(--theme-primary)', fontFamily: "'Inter', sans-serif", letterSpacing: '0' }}>CONTRATAR UN ENTRENADOR</div>
+                    <div style={{ fontSize: '12px', color: '#a4b0a8', marginTop: '2px' }}>¿Prefieres asesoría personalizada? Contacta un coach por WhatsApp</div>
                   </div>
                 </div>
-                <span style={{ transform: showTrainersDir ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', color: 'rgba(255,255,255,0.5)' }}>▼</span>
+                <span style={{ transform: showTrainersDir ? 'rotate(180deg)' : 'rotate(0deg)', transition: 'transform 0.2s', color: '#a4b0a8' }}>▼</span>
               </button>
 
               {showTrainersDir && (
                 <div style={{ marginTop: '20px', display: 'flex', flexDirection: 'column', gap: '16px', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '16px' }}>
                   {loadingTrainers ? (
-                    <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px', textAlign: 'center' }}>Cargando entrenadores...</div>
+                    <div style={{ color: '#a4b0a8', fontSize: '12px', textAlign: 'center' }}>Cargando entrenadores...</div>
                   ) : (() => {
                     const filtered = trainers.filter((t) => {
                       const brand = t.marca || {};
@@ -2077,7 +1760,7 @@ export const AthleteDashboard: React.FC = () => {
                       <>
                         {/* Buscador */}
                         <div style={{ position: 'relative' }}>
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.4)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#a4b0a8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }}>
                             <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
                           </svg>
                           <input
@@ -2093,13 +1776,13 @@ export const AthleteDashboard: React.FC = () => {
                             }}
                           />
                           {trainerSearch && (
-                            <button onClick={() => { setTrainerSearch(''); setTrainerPage(0); }} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'rgba(255,255,255,0.4)', cursor: 'pointer', fontSize: '14px', padding: 0 }}>✕</button>
+                            <button onClick={() => { setTrainerSearch(''); setTrainerPage(0); }} style={{ position: 'absolute', right: '12px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: '#a4b0a8', cursor: 'pointer', fontSize: '14px', padding: 0 }}>✕</button>
                           )}
                         </div>
 
                         {/* Resultado del filtro */}
                         {filtered.length === 0 ? (
-                          <div style={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px', textAlign: 'center', padding: '10px 0' }}>No se encontraron entrenadores con ese nombre o usuario.</div>
+                          <div style={{ color: '#a4b0a8', fontSize: '12px', textAlign: 'center', padding: '10px 0' }}>No se encontraron entrenadores con ese nombre o usuario.</div>
                         ) : (
                           paginated.map((t) => {
                             const brand = t.marca || {};
@@ -2125,14 +1808,14 @@ export const AthleteDashboard: React.FC = () => {
                                   {t.logo_url ? (
                                     <img src={t.logo_url} alt={coachName} style={{ width: '48px', height: '48px', borderRadius: '50%', objectFit: 'cover', border: '1.5px solid var(--theme-border)' }} />
                                   ) : (
-                                    <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'rgba(0, 212, 255, 0.1)', border: '1.5px solid rgba(0, 212, 255, 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 800, color: 'var(--theme-primary)', fontFamily: "'Orbitron', sans-serif" }}>
+                                    <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: 'rgba(145, 182, 161, 0.1)', border: '1.5px solid rgba(145, 182, 161, 0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 800, color: 'var(--theme-primary)', fontFamily: "'Inter', sans-serif" }}>
                                       {initials}
                                     </div>
                                   )}
                                   <div>
-                                    <div style={{ fontSize: '13px', fontWeight: 700, color: 'white', fontFamily: "'Orbitron', sans-serif" }}>{coachName}</div>
-                                    {slogan && <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.6)', marginTop: '2px', fontFamily: 'Inter, sans-serif' }}>{slogan}</div>}
-                                    {instagramUser && <div style={{ fontSize: '10px', color: '#ff3366', marginTop: '2px', fontFamily: 'Inter, sans-serif', opacity: 0.8 }}>{instagramUser.startsWith('http') ? '@' + instagramUser.split('/').filter(Boolean).pop() : instagramUser}</div>}
+                                    <div style={{ fontSize: '13px', fontWeight: 700, color: 'white', fontFamily: "'Inter', sans-serif" }}>{coachName}</div>
+                                    {slogan && <div style={{ fontSize: '12px', color: '#a4b0a8', marginTop: '2px', fontFamily: 'Inter, sans-serif' }}>{slogan}</div>}
+                                    {instagramUser && <div style={{ fontSize: '12px', color: '#ff3366', marginTop: '2px', fontFamily: 'Inter, sans-serif', opacity: 0.8 }}>{instagramUser.startsWith('http') ? '@' + instagramUser.split('/').filter(Boolean).pop() : instagramUser}</div>}
                                   </div>
                                 </div>
 
@@ -2143,7 +1826,7 @@ export const AthleteDashboard: React.FC = () => {
                                       target="_blank"
                                       rel="noopener noreferrer"
                                       className="btn-whatsapp btn-shine"
-                                      style={{ padding: '8px 16px', borderRadius: '20px', fontSize: '11px', fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                                      style={{ padding: '8px 16px', borderRadius: '20px', fontSize: '12px', fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                                     >
                                       <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                                         <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
@@ -2157,7 +1840,7 @@ export const AthleteDashboard: React.FC = () => {
                                       target="_blank"
                                       rel="noopener noreferrer"
                                       className="btn-instagram btn-shine"
-                                      style={{ padding: '8px 16px', borderRadius: '20px', fontSize: '11px', fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                                      style={{ padding: '8px 16px', borderRadius: '20px', fontSize: '12px', fontWeight: 700, textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                                     >
                                       <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
                                         <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z"/>
@@ -2177,15 +1860,15 @@ export const AthleteDashboard: React.FC = () => {
                             <button
                               onClick={() => setTrainerPage((p) => Math.max(0, p - 1))}
                               disabled={trainerPage === 0}
-                              style={{ background: 'none', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: trainerPage === 0 ? 'rgba(255,255,255,0.2)' : 'white', padding: '6px 12px', cursor: trainerPage === 0 ? 'not-allowed' : 'pointer', fontSize: '12px', fontFamily: "'Orbitron', sans-serif", transition: 'all 0.2s' }}
+                              style={{ background: 'none', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: trainerPage === 0 ? 'rgba(255,255,255,0.2)' : 'white', padding: '6px 12px', cursor: trainerPage === 0 ? 'not-allowed' : 'pointer', fontSize: '12px', fontFamily: "'Inter', sans-serif", transition: 'all 0.2s' }}
                             >← ANT</button>
-                            <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', fontFamily: 'Inter, sans-serif', minWidth: '80px', textAlign: 'center' }}>
+                            <span style={{ fontSize: '12px', color: '#a4b0a8', fontFamily: 'Inter, sans-serif', minWidth: '80px', textAlign: 'center' }}>
                               {trainerPage + 1} / {totalPages} &nbsp;·&nbsp; {filtered.length} entrenadores
                             </span>
                             <button
                               onClick={() => setTrainerPage((p) => Math.min(totalPages - 1, p + 1))}
                               disabled={trainerPage >= totalPages - 1}
-                              style={{ background: 'none', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: trainerPage >= totalPages - 1 ? 'rgba(255,255,255,0.2)' : 'white', padding: '6px 12px', cursor: trainerPage >= totalPages - 1 ? 'not-allowed' : 'pointer', fontSize: '12px', fontFamily: "'Orbitron', sans-serif", transition: 'all 0.2s' }}
+                              style={{ background: 'none', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: trainerPage >= totalPages - 1 ? 'rgba(255,255,255,0.2)' : 'white', padding: '6px 12px', cursor: trainerPage >= totalPages - 1 ? 'not-allowed' : 'pointer', fontSize: '12px', fontFamily: "'Inter', sans-serif", transition: 'all 0.2s' }}
                             >SIG →</button>
                           </div>
                         )}
@@ -2246,13 +1929,13 @@ export const AthleteDashboard: React.FC = () => {
           <div style={{ marginTop: '20px', marginBottom: '4px' }}>
             <div style={{
               background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)',
-              boxShadow: '0 8px 32px 0 var(--theme-glow)',
+              boxShadow: 'none',
               borderRadius: '16px', padding: '20px', overflow: 'hidden'
             }}>
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '10px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                   <span style={{ fontSize: '18px' }}>🎮</span>
-                  <h3 style={{ margin: 0, fontFamily: "'Orbitron', sans-serif", fontSize: '12px', fontWeight: 800, color: 'var(--theme-primary)', letterSpacing: '0.5px' }}>
+                  <h3 style={{ margin: 0, fontFamily: "'Inter', sans-serif", fontSize: '12px', fontWeight: 800, color: 'var(--theme-primary)', letterSpacing: '0' }}>
                     TU PROGRESO
                   </h3>
                 </div>
@@ -2262,15 +1945,15 @@ export const AthleteDashboard: React.FC = () => {
                     background: 'var(--theme-badge-bg)',
                     border: '1px solid var(--theme-border)',
                     color: 'var(--theme-primary)',
-                    fontFamily: "'Orbitron', sans-serif",
-                    fontSize: '10px',
+                    fontFamily: "'Inter', sans-serif",
+                    fontSize: '12px',
                     fontWeight: 700,
-                    letterSpacing: '0.5px',
+                    letterSpacing: '0',
                     padding: '6px 12px',
                     borderRadius: '20px',
                     cursor: 'pointer',
                     transition: 'all 0.2s',
-                    boxShadow: '0 2px 8px var(--theme-glow)'
+                    boxShadow: 'none'
                   }}
                 >
                   COMPARTIR 📸
@@ -2293,7 +1976,7 @@ export const AthleteDashboard: React.FC = () => {
               background: 'var(--theme-badge-bg)',
               border: '1px solid var(--theme-border)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              boxShadow: '0 0 32px var(--theme-glow)',
+              boxShadow: 'none',
               animation: 'pulse-glow 2.5s ease-in-out infinite'
             }}>
               <svg width="40" height="40" viewBox="0 0 24 24" fill="none"
@@ -2309,15 +1992,15 @@ export const AthleteDashboard: React.FC = () => {
             <div>
               <h3 style={{
                 margin: '0 0 10px 0',
-                fontFamily: "'Orbitron', sans-serif",
+                fontFamily: "'Inter', sans-serif",
                 fontSize: '15px', fontWeight: 800,
-                color: 'white', letterSpacing: '0.5px'
+                color: 'white', letterSpacing: '0'
               }}>
                 AÚN SIN PROGRESO REGISTRADO
               </h3>
               <p style={{
                 margin: 0, fontSize: '13px',
-                color: 'rgba(255,255,255,0.55)',
+                color: '#a4b0a8',
                 lineHeight: 1.6,
                 fontFamily: 'Inter, sans-serif',
                 maxWidth: '280px'
@@ -2340,8 +2023,8 @@ export const AthleteDashboard: React.FC = () => {
                   borderRadius: '12px', padding: '12px 16px'
                 }}>
                   <span style={{
-                    fontFamily: "'Orbitron', sans-serif",
-                    fontSize: '10px', fontWeight: 800,
+                    fontFamily: "'Inter', sans-serif",
+                    fontSize: '12px', fontWeight: 800,
                     color: 'var(--theme-primary)', minWidth: '22px'
                   }}>{step}</span>
                   <span style={{ fontSize: '16px' }}>{icon}</span>
@@ -2365,9 +2048,9 @@ export const AthleteDashboard: React.FC = () => {
                   color: 'white', border: 'none',
                   padding: '14px 32px', borderRadius: '30px',
                   fontSize: '12px', fontWeight: 700,
-                  fontFamily: "'Orbitron', sans-serif",
-                  cursor: 'pointer', letterSpacing: '1px',
-                  boxShadow: '0 4px 20px var(--theme-btn-glow)',
+                  fontFamily: "'Inter', sans-serif",
+                  cursor: 'pointer', letterSpacing: '0',
+                  boxShadow: 'none',
                   transition: 'all 0.3s ease',
                   display: 'inline-flex', alignItems: 'center', gap: '8px',
                   WebkitTapHighlightColor: 'transparent'
@@ -2384,40 +2067,7 @@ export const AthleteDashboard: React.FC = () => {
         </div>{/* /mobile-tab-panel progreso */}
 
 
-        {/* Floating Action Button (FAB) for 1RM calculator */}
-        <button
-          id="fab1RMBtn"
-          onClick={() => setIs1RMModalOpen(true)}
-          style={{
-            position: 'fixed',
-            bottom: '24px',
-            right: '24px',
-            background: 'var(--theme-btn-gradient)',
-            border: 'none',
-            borderRadius: '50%',
-            width: '48px',
-            height: '48px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'white',
-            cursor: 'pointer',
-            boxShadow: '0 4px 20px var(--theme-btn-glow)',
-            zIndex: 1000,
-            transition: 'all 0.2s'
-          }}
-          title="Calculadora 1RM"
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="4" y="2" width="16" height="20" rx="2" ry="2" />
-            <line x1="9" y1="22" x2="9" y2="16" />
-            <line x1="15" y1="22" x2="15" y2="16" />
-            <line x1="9" y1="16" x2="15" y2="16" />
-            <line x1="9" y1="12" x2="15" y2="12" />
-            <line x1="9" y1="8" x2="15" y2="8" />
-            <line x1="12" y1="8" x2="12" y2="12" />
-          </svg>
-        </button>
+
 
       </div>
 
@@ -2468,12 +2118,12 @@ export const AthleteDashboard: React.FC = () => {
                       border: 'none',
                       borderRadius: '6px',
                       padding: '6px 12px',
-                      fontSize: '11px',
-                      fontFamily: "'Orbitron', sans-serif",
+                      fontSize: '12px',
+                      fontFamily: "'Inter', sans-serif",
                       fontWeight: 700,
                       cursor: 'pointer',
                       background: calcUnit === 'kg' ? 'var(--theme-btn-gradient)' : 'transparent',
-                      color: calcUnit === 'kg' ? 'white' : 'rgba(255,255,255,0.6)',
+                      color: calcUnit === 'kg' ? 'white' : '#a4b0a8',
                       boxShadow: calcUnit === 'kg' ? '0 0 10px var(--theme-btn-glow)' : 'none',
                       transition: 'all 0.2s'
                     }}
@@ -2488,12 +2138,12 @@ export const AthleteDashboard: React.FC = () => {
                       border: 'none',
                       borderRadius: '6px',
                       padding: '6px 12px',
-                      fontSize: '11px',
-                      fontFamily: "'Orbitron', sans-serif",
+                      fontSize: '12px',
+                      fontFamily: "'Inter', sans-serif",
                       fontWeight: 700,
                       cursor: 'pointer',
                       background: calcUnit === 'lbs' ? 'var(--theme-btn-gradient)' : 'transparent',
-                      color: calcUnit === 'lbs' ? 'white' : 'rgba(255,255,255,0.6)',
+                      color: calcUnit === 'lbs' ? 'white' : '#a4b0a8',
                       boxShadow: calcUnit === 'lbs' ? '0 0 10px var(--theme-btn-glow)' : 'none',
                       transition: 'all 0.2s'
                     }}
@@ -2507,7 +2157,7 @@ export const AthleteDashboard: React.FC = () => {
                 <label htmlFor="input1RMPeso" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
                   <span>PESO LEVANTADO ({calcUnit.toUpperCase()})</span>
                   {calcPeso && !isNaN(parseFloat(calcPeso)) && parseFloat(calcPeso) > 0 && (
-                    <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', fontFamily: "'Orbitron', sans-serif" }}>
+                    <span style={{ fontSize: '12px', color: '#a4b0a8', fontFamily: "'Inter', sans-serif" }}>
                       ≈ {(calcUnit === 'kg' ? parseFloat(calcPeso) * 2.20462 : parseFloat(calcPeso) / 2.20462).toFixed(1)} {calcUnit === 'kg' ? 'lbs' : 'kg'}
                     </span>
                   )}
@@ -2558,11 +2208,11 @@ export const AthleteDashboard: React.FC = () => {
                     <span style={{ fontSize: '2.2rem', fontWeight: 800 }}>{rmResult.toFixed(1)}</span>
                     <span style={{ fontSize: '1.1rem', color: 'var(--theme-primary)', fontWeight: 700 }}>{calcUnit}</span>
                   </div>
-                  <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.5)', fontFamily: "'Orbitron', sans-serif" }}>
+                  <div style={{ fontSize: '0.85rem', color: '#a4b0a8', fontFamily: "'Inter', sans-serif" }}>
                     ≈ {(calcUnit === 'kg' ? rmResult * 2.20462 : rmResult / 2.20462).toFixed(1)} {calcUnit === 'kg' ? 'lbs' : 'kg'}
                   </div>
                 </div>
-                <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: '8px', textAlign: 'center' }}>Tabla de Porcentajes de Carga</div>
+                <div style={{ fontSize: '0.75rem', color: '#a4b0a8', marginBottom: '8px', textAlign: 'center' }}>Tabla de Porcentajes de Carga</div>
                 <div className="modal-1rm-table-container">
                   <table className="modal-1rm-table">
                     <thead>
@@ -2580,7 +2230,7 @@ export const AthleteDashboard: React.FC = () => {
                           <tr key={row.pct}>
                             <td style={{ fontWeight: 600, color: 'var(--theme-primary)' }}>{row.pct}%</td>
                             <td style={{ fontWeight: 700, color: '#7EC94A' }}>{row.carga.toFixed(1)} {calcUnit}</td>
-                            <td style={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px' }}>{equiv.toFixed(1)} {calcUnit === 'kg' ? 'lbs' : 'kg'}</td>
+                            <td style={{ color: '#a4b0a8', fontSize: '12px' }}>{equiv.toFixed(1)} {calcUnit === 'kg' ? 'lbs' : 'kg'}</td>
                             <td>{row.reps} {row.reps === 1 ? 'rep' : 'reps'}</td>
                           </tr>
                         );
@@ -2596,7 +2246,7 @@ export const AthleteDashboard: React.FC = () => {
 
       {/* Brand footer */}
       <div style={{ textAlign: 'center', marginTop: '40px', paddingBottom: '30px', opacity: 0.5 }}>
-        <p style={{ fontSize: '11px', color: '#94a3b8', fontFamily: "'Orbitron', sans-serif", letterSpacing: '1px' }}>
+        <p style={{ fontSize: '12px', color: '#a4b0a8', fontFamily: "'Inter', sans-serif", letterSpacing: '0' }}>
           Exclusivo para ti por Evolution Lab | Planificación inteligente, ejecución impecable
         </p>
       </div>
@@ -2604,16 +2254,16 @@ export const AthleteDashboard: React.FC = () => {
       {/* EXECUTION GUIDE MODAL OVERLAY */}
       {guideModal.open && (
         <div className={`modal-overlay modal-overlay-enter ${guideModal.open ? 'open' : ''}`} style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', background: 'rgba(0,0,0,0.6)', zIndex: 99999 }}>
-          <div className="modal-box modal-enter" style={{ maxWidth: '500px', width: '90%', border: '1px solid rgba(0, 212, 255, 0.15)', boxShadow: '0 20px 50px rgba(0, 212, 255, 0.05)' }}>
+          <div className="modal-box modal-enter" style={{ maxWidth: '500px', width: '90%', border: '1px solid rgba(145, 182, 161, 0.15)', boxShadow: 'none' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '12px', marginBottom: '15px' }}>
-              <h3 style={{ margin: 0, fontFamily: "'Orbitron', sans-serif", color: 'var(--theme-primary)', fontSize: '1rem', letterSpacing: '0.5px', display: 'flex', alignItems: 'center' }}>
+              <h3 style={{ margin: 0, fontFamily: "'Inter', sans-serif", color: 'var(--theme-primary)', fontSize: '1rem', letterSpacing: '0', display: 'flex', alignItems: 'center' }}>
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: '8px' }}>
                   <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
                   <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
                 </svg>
                 Guía de Ejecución
               </h3>
-              <button onClick={() => setGuideModal({ open: false, title: '', content: '' })} style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '20px', cursor: 'pointer' }}>&times;</button>
+              <button onClick={() => setGuideModal({ open: false, title: '', content: '' })} style={{ background: 'none', border: 'none', color: '#a4b0a8', fontSize: '20px', cursor: 'pointer' }}>&times;</button>
             </div>
             <h4 style={{ margin: '0 0 10px 0', fontSize: '14px', fontWeight: 700, color: 'white' }}>{guideModal.title}</h4>
             <div style={{ whiteSpace: 'pre-wrap', textAlign: 'left', maxHeight: '350px', overflowY: 'auto', padding: '12px', borderRadius: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)', color: '#e2e8f0', fontSize: '0.95rem', lineHeight: '1.6', fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif" }}>
@@ -2627,10 +2277,10 @@ export const AthleteDashboard: React.FC = () => {
                   background: 'var(--theme-badge-bg)',
                   border: '1px solid var(--theme-border)',
                   color: 'var(--theme-primary)',
-                  fontFamily: "'Orbitron', sans-serif",
+                  fontFamily: "'Inter', sans-serif",
                   fontWeight: 700,
                   letterSpacing: '0.08em',
-                  textTransform: 'uppercase',
+                  textTransform: 'none',
                   fontSize: '0.85rem',
                   padding: '10px 20px',
                   borderRadius: '40px',
@@ -2696,7 +2346,7 @@ export const AthleteDashboard: React.FC = () => {
           justifyContent: 'center',
           alignItems: 'flex-start',
           background: 'rgba(0,0,0,0.85)',
-          backdropFilter: 'blur(10px)',
+          backdropFilter: 'none',
           zIndex: 999999,
           padding: '20px 10px 100px 10px',
           boxSizing: 'border-box',
@@ -2730,7 +2380,7 @@ export const AthleteDashboard: React.FC = () => {
 
                 // Update local state and cache
                 setPlan(updatedPlan);
-                localStorage.setItem('pwa_client_plan', JSON.stringify(updatedPlan));
+                persistPlanSnapshot(updatedPlan, user!.id);
                 showToast('¡Diagnóstico inicial guardado y calibrado con éxito! 💪', 'success');
               } catch (err: any) {
                 console.error('Error saving periodization diagnostic:', err);
@@ -2754,7 +2404,7 @@ export const AthleteDashboard: React.FC = () => {
           justifyContent: 'center',
           alignItems: 'center',
           background: 'rgba(0,0,0,0.85)',
-          backdropFilter: 'blur(10px)',
+          backdropFilter: 'none',
           zIndex: 999999,
           padding: '20px',
           boxSizing: 'border-box'
@@ -2767,10 +2417,10 @@ export const AthleteDashboard: React.FC = () => {
             maxWidth: '400px',
             width: '100%',
             textAlign: 'center',
-            boxShadow: '0 0 30px rgba(var(--theme-primary-rgb), 0.3)'
+            boxShadow: 'none'
           }}>
             <div style={{ fontSize: '40px', marginBottom: '16px' }}>🤖</div>
-            <h3 style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '18px', color: 'white', marginBottom: '12px' }}>
+            <h3 style={{ fontFamily: "'Inter', sans-serif", fontSize: '18px', color: 'white', marginBottom: '12px' }}>
               ¡Tu Plan se ha Actualizado!
             </h3>
             <p style={{ fontSize: '14px', color: 'rgba(255,255,255,0.7)', lineHeight: '1.5', marginBottom: '24px' }}>

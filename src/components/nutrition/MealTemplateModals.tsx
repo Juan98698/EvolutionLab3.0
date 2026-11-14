@@ -69,7 +69,7 @@ export const SaveMealTemplateModal: React.FC<SaveMealTemplateModalProps> = ({
         position: 'fixed',
         inset: 0,
         backgroundColor: 'rgba(5, 7, 15, 0.85)',
-        backdropFilter: 'blur(8px)',
+        backdropFilter: 'none',
         zIndex: 10000,
         display: 'flex',
         alignItems: 'center',
@@ -80,13 +80,13 @@ export const SaveMealTemplateModal: React.FC<SaveMealTemplateModalProps> = ({
     >
       <div
         style={{
-          background: '#0d1322',
-          border: '1px solid rgba(0, 212, 255, 0.3)',
+          background: '#1a211e',
+          border: '1px solid rgba(145, 182, 161, 0.3)',
           borderRadius: '14px',
           width: '100%',
           maxWidth: '440px',
           padding: '20px',
-          boxShadow: '0 12px 40px rgba(0, 0, 0, 0.6)',
+          boxShadow: 'none',
           display: 'flex',
           flexDirection: 'column',
           gap: '14px',
@@ -94,17 +94,17 @@ export const SaveMealTemplateModal: React.FC<SaveMealTemplateModalProps> = ({
         }}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h3 style={{ margin: 0, fontSize: '15px', fontFamily: "'Orbitron', sans-serif", color: '#00d4ff' }}>
+          <h3 style={{ margin: 0, fontSize: '15px', fontFamily: "'Inter', sans-serif", color: '#91b6a1' }}>
             💾 GUARDAR COMIDA COMO RECETA
           </h3>
-          <button type="button" onClick={onClose} style={{ background: 'transparent', border: 'none', color: 'rgba(255, 255, 255, 0.6)', fontSize: '20px', cursor: 'pointer' }}>
+          <button type="button" onClick={onClose} style={{ background: 'transparent', border: 'none', color: '#a4b0a8', fontSize: '20px', cursor: 'pointer' }}>
             ✕
           </button>
         </div>
 
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <div>
-            <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: 'rgba(255, 255, 255, 0.8)', marginBottom: '4px' }}>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: 'rgba(255, 255, 255, 0.8)', marginBottom: '4px' }}>
               Nombre de la Receta *
             </label>
             <input
@@ -128,7 +128,7 @@ export const SaveMealTemplateModal: React.FC<SaveMealTemplateModalProps> = ({
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, color: 'rgba(255, 255, 255, 0.8)', marginBottom: '4px' }}>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: 'rgba(255, 255, 255, 0.8)', marginBottom: '4px' }}>
               Categoría
             </label>
             <select
@@ -140,7 +140,7 @@ export const SaveMealTemplateModal: React.FC<SaveMealTemplateModalProps> = ({
                 background: '#121829',
                 border: '1px solid rgba(255, 255, 255, 0.15)',
                 borderRadius: '8px',
-                color: '#00d4ff',
+                color: '#91b6a1',
                 padding: '10px 12px',
                 fontSize: '12px',
                 outline: 'none',
@@ -162,19 +162,19 @@ export const SaveMealTemplateModal: React.FC<SaveMealTemplateModalProps> = ({
               padding: '10px',
               background: 'rgba(255, 255, 255, 0.03)',
               borderRadius: '8px',
-              fontSize: '11px',
+              fontSize: '12px',
               color: 'rgba(255, 255, 255, 0.7)',
             }}
           >
             <div>Alimentos incluidos ({meal.foods.length}):</div>
-            <ul style={{ margin: '6px 0 8px 0', paddingLeft: '18px', fontSize: '11px', color: '#fff' }}>
+            <ul style={{ margin: '6px 0 8px 0', paddingLeft: '18px', fontSize: '12px', color: '#fff' }}>
               {meal.foods.map((f) => (
                 <li key={f.id}>
                   {f.nombre}: <strong>{f.cantidad} {f.unidad}</strong> ({f.calorias} kcal)
                 </li>
               ))}
             </ul>
-            <div style={{ color: '#00d4ff', fontWeight: 700 }}>
+            <div style={{ color: '#91b6a1', fontWeight: 700 }}>
               Total: {totalKcal} kcal • P: {totalP.toFixed(1)}g | C: {totalC.toFixed(1)}g | G: {totalG.toFixed(1)}g
             </div>
           </div>
@@ -200,7 +200,7 @@ export const SaveMealTemplateModal: React.FC<SaveMealTemplateModalProps> = ({
               type="submit"
               disabled={saving}
               style={{
-                background: 'linear-gradient(135deg, #00d4ff 0%, #0099ff 100%)',
+                background: 'linear-gradient(135deg, #91b6a1 0%, #0099ff 100%)',
                 border: 'none',
                 color: '#000000',
                 borderRadius: '8px',
@@ -208,7 +208,7 @@ export const SaveMealTemplateModal: React.FC<SaveMealTemplateModalProps> = ({
                 fontSize: '12px',
                 fontWeight: 800,
                 cursor: saving ? 'wait' : 'pointer',
-                fontFamily: "'Orbitron', sans-serif",
+                fontFamily: "'Inter', sans-serif",
               }}
             >
               {saving ? 'Guardando...' : '💾 GUARDAR RECETA'}
@@ -273,7 +273,7 @@ export const LoadMealTemplateModal: React.FC<LoadMealTemplateModalProps> = ({
         position: 'fixed',
         inset: 0,
         backgroundColor: 'rgba(5, 7, 15, 0.85)',
-        backdropFilter: 'blur(8px)',
+        backdropFilter: 'none',
         zIndex: 10000,
         display: 'flex',
         alignItems: 'center',
@@ -284,29 +284,29 @@ export const LoadMealTemplateModal: React.FC<LoadMealTemplateModalProps> = ({
     >
       <div
         style={{
-          background: '#0d1322',
-          border: '1px solid rgba(0, 212, 255, 0.3)',
+          background: '#1a211e',
+          border: '1px solid rgba(145, 182, 161, 0.3)',
           borderRadius: '14px',
           width: '100%',
           maxWidth: '560px',
           maxHeight: '85vh',
           display: 'flex',
           flexDirection: 'column',
-          boxShadow: '0 12px 40px rgba(0, 0, 0, 0.6)',
+          boxShadow: 'none',
           color: '#ffffff',
           overflow: 'hidden',
         }}
       >
         <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(255, 255, 255, 0.1)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <h3 style={{ margin: 0, fontSize: '15px', fontFamily: "'Orbitron', sans-serif", color: '#00d4ff' }}>
+            <h3 style={{ margin: 0, fontSize: '15px', fontFamily: "'Inter', sans-serif", color: '#91b6a1' }}>
               📋 INSERTAR RECETA GUARDADA
             </h3>
-            <p style={{ margin: '4px 0 0 0', fontSize: '11px', color: 'rgba(255, 255, 255, 0.6)' }}>
+            <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#a4b0a8' }}>
               Inserta combinaciones preparadas de alimentos en esta comida con un solo clic.
             </p>
           </div>
-          <button type="button" onClick={onClose} style={{ background: 'transparent', border: 'none', color: 'rgba(255, 255, 255, 0.6)', fontSize: '20px', cursor: 'pointer' }}>
+          <button type="button" onClick={onClose} style={{ background: 'transparent', border: 'none', color: '#a4b0a8', fontSize: '20px', cursor: 'pointer' }}>
             ✕
           </button>
         </div>
@@ -319,12 +319,12 @@ export const LoadMealTemplateModal: React.FC<LoadMealTemplateModalProps> = ({
               type="button"
               onClick={() => setFilterCat(cat)}
               style={{
-                background: filterCat === cat ? 'rgba(0, 212, 255, 0.2)' : 'rgba(255, 255, 255, 0.05)',
-                border: filterCat === cat ? '1px solid #00d4ff' : '1px solid rgba(255, 255, 255, 0.1)',
-                color: filterCat === cat ? '#00d4ff' : 'rgba(255, 255, 255, 0.7)',
+                background: filterCat === cat ? 'rgba(145, 182, 161, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                border: filterCat === cat ? '1px solid #91b6a1' : '1px solid rgba(255, 255, 255, 0.1)',
+                color: filterCat === cat ? '#91b6a1' : 'rgba(255, 255, 255, 0.7)',
                 borderRadius: '6px',
                 padding: '4px 10px',
-                fontSize: '11px',
+                fontSize: '12px',
                 cursor: 'pointer',
                 whiteSpace: 'nowrap',
               }}
@@ -336,11 +336,11 @@ export const LoadMealTemplateModal: React.FC<LoadMealTemplateModalProps> = ({
 
         <div style={{ flex: 1, overflowY: 'auto', padding: '16px 20px' }}>
           {loading ? (
-            <div style={{ textAlign: 'center', padding: '30px', fontSize: '12px', color: 'rgba(255, 255, 255, 0.5)' }}>
+            <div style={{ textAlign: 'center', padding: '30px', fontSize: '12px', color: '#a4b0a8' }}>
               Cargando recetas...
             </div>
           ) : filtered.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '30px', fontSize: '12px', color: 'rgba(255, 255, 255, 0.5)' }}>
+            <div style={{ textAlign: 'center', padding: '30px', fontSize: '12px', color: '#a4b0a8' }}>
               No hay recetas guardadas en esta categoría.
             </div>
           ) : (
@@ -368,12 +368,12 @@ export const LoadMealTemplateModal: React.FC<LoadMealTemplateModalProps> = ({
                             {tpl.nombre}
                           </span>
                           {tpl.categoria && (
-                            <span style={{ fontSize: '9px', padding: '1px 6px', borderRadius: '4px', background: 'rgba(0, 212, 255, 0.15)', color: '#00d4ff' }}>
+                            <span style={{ fontSize: '12px', padding: '1px 6px', borderRadius: '4px', background: 'rgba(145, 182, 161, 0.15)', color: '#91b6a1' }}>
                               {tpl.categoria}
                             </span>
                           )}
                         </div>
-                        <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.6)', marginTop: '4px' }}>
+                        <div style={{ fontSize: '12px', color: '#a4b0a8', marginTop: '4px' }}>
                           {(tpl.foods || []).map((f) => `${f.nombre} (${f.cantidad}${f.unidad})`).join(', ')}
                         </div>
                       </div>
@@ -388,7 +388,7 @@ export const LoadMealTemplateModal: React.FC<LoadMealTemplateModalProps> = ({
                             color: '#f87171',
                             borderRadius: '6px',
                             padding: '3px 6px',
-                            fontSize: '11px',
+                            fontSize: '12px',
                             cursor: 'pointer',
                           }}
                           title="Eliminar receta"
@@ -399,7 +399,7 @@ export const LoadMealTemplateModal: React.FC<LoadMealTemplateModalProps> = ({
                     </div>
 
                     <div style={{ marginTop: '8px', paddingTop: '8px', borderTop: '1px dashed rgba(255, 255, 255, 0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
-                      <div style={{ fontSize: '11px', color: '#00d4ff', fontWeight: 600 }}>
+                      <div style={{ fontSize: '12px', color: '#91b6a1', fontWeight: 600 }}>
                         {totalKcal} kcal • P: {totalP.toFixed(1)}g | C: {totalC.toFixed(1)}g | G: {totalG.toFixed(1)}g
                       </div>
                       <div style={{ display: 'flex', gap: '6px' }}>
@@ -415,7 +415,7 @@ export const LoadMealTemplateModal: React.FC<LoadMealTemplateModalProps> = ({
                             color: '#ffffff',
                             borderRadius: '6px',
                             padding: '4px 8px',
-                            fontSize: '10px',
+                            fontSize: '12px',
                             fontWeight: 700,
                             cursor: 'pointer',
                           }}
@@ -430,15 +430,15 @@ export const LoadMealTemplateModal: React.FC<LoadMealTemplateModalProps> = ({
                             onClose();
                           }}
                           style={{
-                            background: 'linear-gradient(135deg, #00d4ff 0%, #0099ff 100%)',
+                            background: 'linear-gradient(135deg, #91b6a1 0%, #0099ff 100%)',
                             border: 'none',
                             color: '#000',
                             borderRadius: '6px',
                             padding: '4px 10px',
-                            fontSize: '10px',
+                            fontSize: '12px',
                             fontWeight: 800,
                             cursor: 'pointer',
-                            fontFamily: "'Orbitron', sans-serif",
+                            fontFamily: "'Inter', sans-serif",
                           }}
                           title="Reemplaza los alimentos de la comida por los de esta receta"
                         >
@@ -463,7 +463,7 @@ export const LoadMealTemplateModal: React.FC<LoadMealTemplateModalProps> = ({
               color: '#ffffff',
               borderRadius: '8px',
               padding: '6px 14px',
-              fontSize: '11px',
+              fontSize: '12px',
               fontWeight: 600,
               cursor: 'pointer',
             }}

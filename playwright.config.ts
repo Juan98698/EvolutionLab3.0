@@ -2,6 +2,7 @@ import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './e2e',
+  testIgnore: '**/performance.spec.ts',
   timeout: 45000,
   expect: {
     timeout: 5000
@@ -12,7 +13,7 @@ export default defineConfig({
   workers: process.env.CI ? 1 : undefined,
   reporter: 'list',
   use: {
-    baseURL: 'http://localhost:5173',
+    baseURL: 'http://127.0.0.1:5185',
     trace: 'on-first-retry',
     viewport: { width: 1280, height: 720 },
   },
@@ -21,6 +22,7 @@ export default defineConfig({
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
+      snapshotPathTemplate: '{testDir}/{testFilePath}-snapshots/{arg}-{projectName}{ext}',
     },
     {
       // Safari de escritorio — cubre el motor WebKit en macOS.
@@ -50,9 +52,9 @@ export default defineConfig({
     },
   ],
   webServer: {
-    command: 'npm run dev',
-    url: 'http://localhost:5173',
-    reuseExistingServer: true,
+    command: 'npm run dev:e2e',
+    url: 'http://127.0.0.1:5185',
+    reuseExistingServer: !process.env.CI && process.env.EVOLUTION_E2E_REUSE_SERVER === '1',
     timeout: 15000,
   },
 });

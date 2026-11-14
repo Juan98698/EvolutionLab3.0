@@ -17,7 +17,7 @@ const mockOutput = vi.fn().mockReturnValue(new Blob(['mock-pdf'], { type: 'appli
 
 vi.mock('jspdf', () => {
   return {
-    default: vi.fn().mockImplementation(() => ({
+    default: vi.fn().mockImplementation(function () { return {
       internal: {
         pageSize: {
           getWidth: () => 210,
@@ -28,7 +28,7 @@ vi.mock('jspdf', () => {
       addPage: mockAddPage,
       save: mockSave,
       output: mockOutput,
-    })),
+    }; }),
   };
 });
 

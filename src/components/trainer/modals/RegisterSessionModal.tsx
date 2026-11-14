@@ -246,27 +246,27 @@ const RegisterSessionModal: React.FC<RegisterSessionModalProps> = ({
       <div
         ref={dialogRef}
         className="modal-box modal-enter"
-        style={{ maxWidth: '650px', width: '90%', maxHeight: '85vh', overflowY: 'auto', border: '1px solid var(--theme-border)', boxShadow: '0 20px 50px var(--theme-glow)' }}
+        style={{ maxWidth: '650px', width: '90%', maxHeight: '85vh', overflowY: 'auto', border: '1px solid var(--theme-border)', boxShadow: 'none' }}
         role="dialog"
         aria-modal="true"
         aria-labelledby="register-session-title"
         tabIndex={-1}
       >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '12px', marginBottom: '15px' }}>
-          <h3 id="register-session-title" style={{ margin: 0, fontFamily: "'Orbitron', sans-serif", color: 'var(--theme-primary)', fontSize: '1.05rem', letterSpacing: '0.5px' }}>
+          <h3 id="register-session-title" style={{ margin: 0, fontFamily: "'Inter', sans-serif", color: 'var(--theme-primary)', fontSize: '1.05rem', letterSpacing: '0' }}>
             ⏱️ REGISTRAR ENTRENAMIENTO
           </h3>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '20px', cursor: 'pointer' }}>&times;</button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#a4b0a8', fontSize: '20px', cursor: 'pointer' }}>&times;</button>
         </div>
         
-        <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)', marginBottom: '15px' }}>
+        <div style={{ fontSize: '12px', color: '#a4b0a8', marginBottom: '15px' }}>
           Atleta: <span style={{ color: 'white', fontWeight: 700 }}>{selectedAthleteForSession.nombre}</span> ({selectedAthleteForSession.modalidad === 'presencial' ? 'Presencial 🏋️' : 'Remoto 🌐'})
         </div>
 
         <form onSubmit={handleSaveSession} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
             <div style={{ flex: 1, minWidth: '150px' }}>
-              <label style={{ display: 'block', fontSize: '9px', fontWeight: 700, color: 'rgba(255,255,255,0.4)', fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.5px', marginBottom: '6px' }}>FECHA DEL ENTRENAMIENTO</label>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#a4b0a8', fontFamily: "'Inter', sans-serif", letterSpacing: '0', marginBottom: '6px' }}>FECHA DEL ENTRENAMIENTO</label>
               <input
                 type="date"
                 required
@@ -277,7 +277,7 @@ const RegisterSessionModal: React.FC<RegisterSessionModalProps> = ({
             </div>
 
             <div style={{ flex: 1, minWidth: '200px' }}>
-              <label style={{ display: 'block', fontSize: '9px', fontWeight: 700, color: 'rgba(255,255,255,0.4)', fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.5px', marginBottom: '6px' }}>PLAN/DÍA DE ENTRENAMIENTO</label>
+              <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#a4b0a8', fontFamily: "'Inter', sans-serif", letterSpacing: '0', marginBottom: '6px' }}>PLAN/DÍA DE ENTRENAMIENTO</label>
               <select
                 value={selectedPlanDayIndex}
                 onChange={(e) => handlePlanDayChange(e.target.value)}
@@ -298,12 +298,12 @@ const RegisterSessionModal: React.FC<RegisterSessionModalProps> = ({
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginTop: '10px' }}>
-            <div style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(255,255,255,0.4)', fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.5px', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '6px' }}>
+            <div style={{ fontSize: '12px', fontWeight: 700, color: '#a4b0a8', fontFamily: "'Inter', sans-serif", letterSpacing: '0', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '6px' }}>
               EJERCICIOS COMPLETADOS ({sessionExercises.length})
             </div>
 
             {sessionExercises.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '24px', background: 'rgba(255,255,255,0.01)', border: '1px dashed rgba(255,255,255,0.1)', borderRadius: '10px', color: 'rgba(255,255,255,0.4)', fontSize: '12px' }}>
+              <div style={{ textAlign: 'center', padding: '24px', background: 'rgba(255,255,255,0.01)', border: '1px dashed rgba(255,255,255,0.1)', borderRadius: '10px', color: '#a4b0a8', fontSize: '12px' }}>
                 No hay ejercicios en la lista. Agrega ejercicios usando el buscador de abajo.
               </div>
             ) : (
@@ -312,12 +312,12 @@ const RegisterSessionModal: React.FC<RegisterSessionModalProps> = ({
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <span style={{ fontWeight: 700, color: 'white', fontSize: '13px' }}>🏋️ {ex.nombre}</span>
-                      <span className={`badge badge-${ex.grupo.toLowerCase()}`} style={{ padding: '2px 6px', borderRadius: '4px', fontSize: '8px', fontWeight: 700, textTransform: 'uppercase' }}>{ex.grupo}</span>
+                      <span className={`badge badge-${ex.grupo.toLowerCase()}`} style={{ padding: '2px 6px', borderRadius: '4px', fontSize: '12px', fontWeight: 700, textTransform: 'none' }}>{ex.grupo}</span>
                     </div>
                     <button
                       type="button"
                       onClick={() => setSessionExercises(prev => prev.filter((_, idx) => idx !== exIdx))}
-                      style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '11px', cursor: 'pointer', fontFamily: "'Orbitron', sans-serif", fontWeight: 700 }}
+                      style={{ background: 'none', border: 'none', color: '#ef4444', fontSize: '12px', cursor: 'pointer', fontFamily: "'Inter', sans-serif", fontWeight: 700 }}
                     >
                       ✕ Eliminar Ejercicio
                     </button>
@@ -326,7 +326,7 @@ const RegisterSessionModal: React.FC<RegisterSessionModalProps> = ({
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '10px' }}>
                     {ex.series.map((s: any, sIdx: number) => (
                       <div key={sIdx} style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                        <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', minWidth: '50px', fontFamily: "'Orbitron', sans-serif" }}>Serie {sIdx + 1}:</span>
+                        <span style={{ fontSize: '12px', color: '#a4b0a8', minWidth: '50px', fontFamily: "'Inter', sans-serif" }}>Serie {sIdx + 1}:</span>
                         
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                           <input
@@ -343,9 +343,9 @@ const RegisterSessionModal: React.FC<RegisterSessionModalProps> = ({
                                 return next;
                               });
                             }}
-                            style={{ width: '70px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px 8px', fontSize: '11px', textAlign: 'center' }}
+                            style={{ width: '70px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px 8px', fontSize: '12px', textAlign: 'center' }}
                           />
-                          <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>kg</span>
+                          <span style={{ fontSize: '12px', color: '#a4b0a8' }}>kg</span>
                         </div>
 
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -362,13 +362,13 @@ const RegisterSessionModal: React.FC<RegisterSessionModalProps> = ({
                                 return next;
                               });
                             }}
-                            style={{ width: '60px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px 8px', fontSize: '11px', textAlign: 'center' }}
+                            style={{ width: '60px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px 8px', fontSize: '12px', textAlign: 'center' }}
                           />
-                          <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>reps</span>
+                          <span style={{ fontSize: '12px', color: '#a4b0a8' }}>reps</span>
                         </div>
 
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', fontFamily: "'Orbitron', sans-serif" }}>RIR:</span>
+                          <span style={{ fontSize: '12px', color: '#a4b0a8', fontFamily: "'Inter', sans-serif" }}>RIR:</span>
                           <select
                             value={s.rpe}
                             onChange={(e) => {
@@ -379,7 +379,7 @@ const RegisterSessionModal: React.FC<RegisterSessionModalProps> = ({
                                 return next;
                               });
                             }}
-                            style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px', fontSize: '11px', outline: 'none' }}
+                            style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px', fontSize: '12px', outline: 'none' }}
                           >
                             {['0', '0.5', '1', '1.5', '2', '2.5', '3', '3.5', '4'].map(r => (
                               <option key={r} value={r}>{r}</option>
@@ -401,7 +401,7 @@ const RegisterSessionModal: React.FC<RegisterSessionModalProps> = ({
                             return next;
                           });
                         }}
-                        style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '6px', color: '#a5b4fc', padding: '4px 8px', fontSize: '10px', cursor: 'pointer', fontFamily: "'Orbitron', sans-serif", fontWeight: 700 }}
+                        style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '6px', color: '#a5b4fc', padding: '4px 8px', fontSize: '12px', cursor: 'pointer', fontFamily: "'Inter', sans-serif", fontWeight: 700 }}
                       >
                         ➕ Añadir Serie
                       </button>
@@ -415,13 +415,13 @@ const RegisterSessionModal: React.FC<RegisterSessionModalProps> = ({
                               return next;
                             });
                           }}
-                          style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '6px', color: '#fda4af', padding: '4px 8px', fontSize: '10px', cursor: 'pointer', fontFamily: "'Orbitron', sans-serif", fontWeight: 700 }}
+                          style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '6px', color: '#fda4af', padding: '4px 8px', fontSize: '12px', cursor: 'pointer', fontFamily: "'Inter', sans-serif", fontWeight: 700 }}
                         >
                           ➖ Quitar Serie
                         </button>
                       )}
                     </div>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: 'rgba(255,255,255,0.5)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#a4b0a8' }}>
                       <span>Descanso:</span>
                       <input
                         type="number"
@@ -434,7 +434,7 @@ const RegisterSessionModal: React.FC<RegisterSessionModalProps> = ({
                             return next;
                           });
                         }}
-                        style={{ width: '50px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px', color: 'white', padding: '4px 6px', fontSize: '11px', textAlign: 'center' }}
+                        style={{ width: '50px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '4px', color: 'white', padding: '4px 6px', fontSize: '12px', textAlign: 'center' }}
                       />
                       <span>seg</span>
                     </div>
@@ -445,7 +445,7 @@ const RegisterSessionModal: React.FC<RegisterSessionModalProps> = ({
           </div>
 
           <div style={{ background: 'rgba(255,255,255,0.01)', border: '1px solid rgba(255,255,255,0.04)', borderRadius: '12px', padding: '14px', position: 'relative' }}>
-            <label style={{ display: 'block', fontSize: '9px', fontWeight: 700, color: 'rgba(255,255,255,0.4)', fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.5px', marginBottom: '6px' }}>BUSCAR O AGREGAR EJERCICIO EXTRA</label>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#a4b0a8', fontFamily: "'Inter', sans-serif", letterSpacing: '0', marginBottom: '6px' }}>BUSCAR O AGREGAR EJERCICIO EXTRA</label>
             <div style={{ display: 'flex', gap: '8px' }}>
               <input
                 type="text"
@@ -475,11 +475,11 @@ const RegisterSessionModal: React.FC<RegisterSessionModalProps> = ({
                     color: 'white',
                     borderRadius: '8px',
                     padding: '10px 14px',
-                    fontSize: '11px',
+                    fontSize: '12px',
                     fontWeight: 700,
-                    fontFamily: "'Orbitron', sans-serif",
+                    fontFamily: "'Inter', sans-serif",
                     cursor: 'pointer',
-                    boxShadow: '0 0 10px var(--theme-btn-glow)'
+                    boxShadow: 'none'
                   }}
                 >
                   Añadir
@@ -488,7 +488,7 @@ const RegisterSessionModal: React.FC<RegisterSessionModalProps> = ({
             </div>
 
             {exerciseSuggestions.length > 0 && (
-              <div style={{ position: 'absolute', top: '100%', left: '14px', right: '14px', background: '#090f1d', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', zIndex: 100, maxHeight: '180px', overflowY: 'auto', marginTop: '4px', boxShadow: '0 10px 25px rgba(0,0,0,0.5)' }}>
+              <div style={{ position: 'absolute', top: '100%', left: '14px', right: '14px', background: '#090f1d', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', zIndex: 100, maxHeight: '180px', overflowY: 'auto', marginTop: '4px', boxShadow: 'none' }}>
                 {exerciseSuggestions.map((item, idx) => (
                   <button
                     key={idx}
@@ -506,7 +506,7 @@ const RegisterSessionModal: React.FC<RegisterSessionModalProps> = ({
           </div>
 
           <div>
-            <label style={{ display: 'block', fontSize: '9px', fontWeight: 700, color: 'rgba(255,255,255,0.4)', fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.5px', marginBottom: '6px' }}>NOTAS DE LA SESIÓN</label>
+            <label style={{ display: 'block', fontSize: '12px', fontWeight: 700, color: '#a4b0a8', fontFamily: "'Inter', sans-serif", letterSpacing: '0', marginBottom: '6px' }}>NOTAS DE LA SESIÓN</label>
             <textarea
               placeholder="Escribe comentarios, sensaciones del cliente, fatiga percibida, etc..."
               value={sessionNotes}
@@ -520,7 +520,7 @@ const RegisterSessionModal: React.FC<RegisterSessionModalProps> = ({
             <button
               type="button"
               onClick={onClose}
-              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', padding: '10px 20px', borderRadius: '8px', fontSize: '11px', fontFamily: "'Orbitron', sans-serif", fontWeight: 700, cursor: 'pointer' }}
+              style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', color: 'white', padding: '10px 20px', borderRadius: '8px', fontSize: '12px', fontFamily: "'Inter', sans-serif", fontWeight: 700, cursor: 'pointer' }}
             >
               Cancelar
             </button>
@@ -533,11 +533,11 @@ const RegisterSessionModal: React.FC<RegisterSessionModalProps> = ({
                 color: 'white',
                 padding: '10px 24px',
                 borderRadius: '8px',
-                fontSize: '11px',
-                fontFamily: "'Orbitron', sans-serif",
+                fontSize: '12px',
+                fontFamily: "'Inter', sans-serif",
                 fontWeight: 700,
                 cursor: isSavingSession ? 'not-allowed' : 'pointer',
-                boxShadow: '0 0 15px var(--theme-btn-glow)',
+                boxShadow: 'none',
                 opacity: isSavingSession ? 0.7 : 1
               }}
             >

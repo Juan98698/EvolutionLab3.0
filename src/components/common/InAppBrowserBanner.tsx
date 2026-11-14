@@ -55,13 +55,13 @@ export const InAppBrowserBanner: React.FC = () => {
         left: 0,
         right: 0,
         zIndex: 99999,
-        background: 'linear-gradient(180deg, rgba(11, 15, 25, 0.98) 0%, rgba(15, 23, 42, 0.96) 100%)',
-        borderBottom: '2px solid #00d4ff',
-        boxShadow: '0 8px 32px rgba(0, 0, 0, 0.6), 0 0 20px rgba(0, 212, 255, 0.2)',
+        background: 'linear-gradient(180deg, rgba(18, 23, 22, 0.98) 0%, #1a211e 100%)',
+        borderBottom: '2px solid #91b6a1',
+        boxShadow: 'none',
         color: 'white',
         padding: '12px 16px',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
+        backdropFilter: 'none',
+        WebkitBackdropFilter: 'none',
         fontFamily: "'Inter', sans-serif",
       }}
     >
@@ -80,12 +80,12 @@ export const InAppBrowserBanner: React.FC = () => {
             <span style={{ fontSize: '18px' }}>⚠️</span>
             <span
               style={{
-                fontFamily: "'Orbitron', sans-serif",
-                fontSize: '11px',
+                fontFamily: "'Inter', sans-serif",
+                fontSize: '12px',
                 fontWeight: 800,
-                letterSpacing: '0.5px',
-                color: '#00d4ff',
-                textTransform: 'uppercase',
+                letterSpacing: '0',
+                color: '#91b6a1',
+                textTransform: 'none',
               }}
             >
               Navegador de {appTitle}
@@ -99,7 +99,7 @@ export const InAppBrowserBanner: React.FC = () => {
             style={{
               background: 'transparent',
               border: 'none',
-              color: 'rgba(255, 255, 255, 0.6)',
+              color: '#a4b0a8',
               fontSize: '18px',
               lineHeight: 1,
               cursor: 'pointer',
@@ -111,8 +111,8 @@ export const InAppBrowserBanner: React.FC = () => {
         </div>
 
         {/* Mensaje descriptivo */}
-        <div style={{ fontSize: '11px', lineHeight: 1.45, color: '#e2e8f0' }}>
-          Para <strong style={{ color: '#00d4ff' }}>iniciar con Google</strong>, no perder tus datos al salir e <strong style={{ color: '#00d4ff' }}>instalar la app</strong>, ábrela en tu navegador real:
+        <div style={{ fontSize: '12px', lineHeight: 1.45, color: '#e2e8f0' }}>
+          Para <strong style={{ color: '#91b6a1' }}>iniciar con Google</strong>, no perder tus datos al salir e <strong style={{ color: '#91b6a1' }}>instalar la app</strong>, ábrela en tu navegador real:
         </div>
 
         {/* Acciones según el sistema operativo */}
@@ -125,16 +125,16 @@ export const InAppBrowserBanner: React.FC = () => {
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '8px',
-                background: 'linear-gradient(135deg, #00d4ff 0%, #0070a0 100%)',
+                background: 'linear-gradient(135deg, #91b6a1 0%, #0070a0 100%)',
                 color: '#040d1a',
-                fontFamily: "'Orbitron', sans-serif",
-                fontSize: '11px',
+                fontFamily: "'Inter', sans-serif",
+                fontSize: '12px',
                 fontWeight: 800,
-                letterSpacing: '0.5px',
+                letterSpacing: '0',
                 padding: '10px 14px',
                 borderRadius: '8px',
                 textDecoration: 'none',
-                boxShadow: '0 2px 10px rgba(0, 212, 255, 0.3)',
+                boxShadow: 'none',
               }}
             >
               <span>🚀</span> ABRIR EN GOOGLE CHROME
@@ -148,7 +148,7 @@ export const InAppBrowserBanner: React.FC = () => {
                 color: copied ? '#10b981' : '#cbd5e1',
                 padding: '6px 12px',
                 borderRadius: '6px',
-                fontSize: '10px',
+                fontSize: '12px',
                 fontWeight: 600,
                 cursor: 'pointer',
               }}
@@ -161,16 +161,16 @@ export const InAppBrowserBanner: React.FC = () => {
             {/* Instrucciones para iOS */}
             <div
               style={{
-                background: 'rgba(0, 212, 255, 0.06)',
-                border: '1px solid rgba(0, 212, 255, 0.2)',
+                background: 'rgba(145, 182, 161, 0.06)',
+                border: '1px solid rgba(145, 182, 161, 0.2)',
                 borderRadius: '8px',
                 padding: '8px 12px',
-                fontSize: '11px',
+                fontSize: '12px',
                 lineHeight: 1.4,
                 color: '#f1f5f9',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 700, color: '#00d4ff', marginBottom: '4px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 700, color: '#91b6a1', marginBottom: '4px' }}>
                 <span>1.</span> Toca los tres puntos <strong style={{ fontSize: '13px' }}>( ••• )</strong> arriba a la derecha ↗
               </div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -186,13 +186,13 @@ export const InAppBrowserBanner: React.FC = () => {
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '8px',
-                background: copied ? 'rgba(16, 185, 129, 0.2)' : 'rgba(0, 212, 255, 0.12)',
-                border: copied ? '1px solid #10b981' : '1px solid #00d4ff',
-                color: copied ? '#10b981' : '#00d4ff',
-                fontFamily: "'Orbitron', sans-serif",
-                fontSize: '10px',
+                background: copied ? 'rgba(16, 185, 129, 0.2)' : 'rgba(145, 182, 161, 0.12)',
+                border: copied ? '1px solid #10b981' : '1px solid #91b6a1',
+                color: copied ? '#10b981' : '#91b6a1',
+                fontFamily: "'Inter', sans-serif",
+                fontSize: '12px',
                 fontWeight: 700,
-                letterSpacing: '0.5px',
+                letterSpacing: '0',
                 padding: '8px 14px',
                 borderRadius: '8px',
                 cursor: 'pointer',

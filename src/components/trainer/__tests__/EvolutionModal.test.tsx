@@ -27,12 +27,12 @@ vi.mock('../../../lib/supabaseClient', () => ({
  */
 const mockSave = vi.fn();
 vi.mock('jspdf', () => ({
-  default: vi.fn().mockImplementation(() => ({
+  default: vi.fn().mockImplementation(function () { return {
     internal: { pageSize: { getWidth: () => 210, getHeight: () => 297 } },
     addImage: vi.fn(),
     addPage:  vi.fn(),
     save:     mockSave,
-  })),
+  }; }),
 }));
 
 /**

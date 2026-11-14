@@ -155,19 +155,19 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
         {/* Nombre del ejercicio */}
         <div className="exercise-name" style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
           {isFunctionalExercise(exercise) && (
-            <span style={{ fontSize: '9px', color: '#60a5fa', background: 'rgba(59, 130, 246, 0.12)', border: '1px solid rgba(59, 130, 246, 0.3)', padding: '2px 8px', borderRadius: '4px', fontFamily: "'Orbitron', sans-serif", textTransform: 'uppercase', letterSpacing: '0.5px', width: 'fit-content' }}>
+            <span style={{ fontSize: '12px', color: '#60a5fa', background: 'rgba(59, 130, 246, 0.12)', border: '1px solid rgba(59, 130, 246, 0.3)', padding: '2px 8px', borderRadius: '4px', fontFamily: "'Inter', sans-serif", textTransform: 'none', letterSpacing: '0', width: 'fit-content' }}>
               ⚡ EJERCICIO FUNCIONAL / WOD
             </span>
           )}
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
             {blockTag && (
               <span style={{
-                fontSize: '11px',
+                fontSize: '12px',
                 fontWeight: 800,
-                fontFamily: "'Orbitron', sans-serif",
-                color: '#00d4ff',
-                background: 'rgba(0, 212, 255, 0.15)',
-                border: '1px solid rgba(0, 212, 255, 0.4)',
+                fontFamily: "'Inter', sans-serif",
+                color: '#91b6a1',
+                background: 'rgba(145, 182, 161, 0.15)',
+                border: '1px solid rgba(145, 182, 161, 0.4)',
                 padding: '2px 8px',
                 borderRadius: '8px',
                 flexShrink: 0
@@ -183,7 +183,7 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
             </span>
           </div>
           {exercise.nombre_original && exercise.nombre_original.trim().toLowerCase() !== displayName.trim().toLowerCase() && (
-            <span style={{ fontSize: '9px', color: 'rgba(255, 255, 255, 0.4)', fontFamily: "'Orbitron', sans-serif", textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <span style={{ fontSize: '12px', color: '#a4b0a8', fontFamily: "'Inter', sans-serif", textTransform: 'none', letterSpacing: '0' }}>
               Base: {exercise.nombre_original}
             </span>
           )}
@@ -303,7 +303,7 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
                   reasoningHumanExplanation = `Para tu objetivo de ${reps} repeticiones dejando ${targetRIR} en reserva (RIR ${targetRIR}), la app calibró automáticamente tu carga al ${(lp.pct1RM * 100).toFixed(0)}% de tu fuerza máxima estimada (${lp.oneRM} kg), lo que equivale a ${lp.weight} kg en los discos.`;
                   reasoningSessionGoal = `Realiza tus series con estos ${lp.weight} kg manteniendo una técnica controlada. Si hoy completas las ${reps} reps con RIR ${targetRIR}, la app calibrará automáticamente tu próximo aumento para la siguiente semana.`;
                 }
-              } catch (_) { /* noop */ }
+              } catch { /* noop */ }
 
               if (!reasoningHumanExplanation) {
                 reasoningTitle = 'Sobrecarga Progresiva de Carga';
@@ -409,8 +409,8 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                background: isAuto ? 'rgba(0, 212, 255, 0.08)' : 'rgba(255,255,255,0.05)',
-                border: isAuto ? '1px solid rgba(0, 212, 255, 0.35)' : '1px solid rgba(255,255,255,0.08)',
+                background: isAuto ? 'rgba(145, 182, 161, 0.08)' : 'rgba(255,255,255,0.05)',
+                border: isAuto ? '1px solid rgba(145, 182, 161, 0.35)' : '1px solid rgba(255,255,255,0.08)',
                 padding: '4px 10px',
                 borderRadius: '12px',
                 fontSize: '12px',
@@ -425,7 +425,7 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
               />
               <span
                 className="var-badge-label"
-                style={{ fontWeight: 600, color: isAuto ? '#67e8f9' : 'rgba(255,255,255,0.6)', marginRight: '3px' }}
+                style={{ fontWeight: 600, color: isAuto ? '#67e8f9' : '#a4b0a8', marginRight: '3px' }}
               >
                 {escapeHtml(displayBadgeLabel)}:
               </span>
@@ -456,12 +456,12 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
                         gap: '4px',
                         cursor: 'pointer',
                         fontWeight: 700,
-                        color: '#c2ff00',
+                        color: '#91b6a1',
                         font: 'inherit'
                       }}
                       title="Toca para ver el motivo del ajuste y tu objetivo"
                     >
-                      <span style={{ fontSize: '13px', filter: 'drop-shadow(0 0 5px rgba(194, 255, 0, 0.6))' }}>🤖</span>
+                      <span style={{ fontSize: '13px', filter: 'drop-shadow(0 0 5px rgba(145, 182, 161, 0.6))' }}>🤖</span>
                       <span>{escapeHtml(badgeText)}</span>
                     </button>
                   }
@@ -479,7 +479,7 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
                     padding: 0,
                     font: 'inherit',
                     cursor: 'pointer',
-                    fontSize: '10px',
+                    fontSize: '12px',
                     color: '#f97316',
                     marginLeft: '4px',
                     fontWeight: 'bold'
@@ -509,7 +509,7 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
             color: 'white',
             fontSize: '12.5px',
             lineHeight: '1.5',
-            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.02)'
+            boxShadow: 'none'
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
@@ -519,12 +519,12 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
               </svg>
             </span>
             <span style={{
-              fontSize: '10px',
+              fontSize: '12px',
               fontWeight: 800,
               color: '#ff7e2e',
-              fontFamily: "'Orbitron', sans-serif",
-              letterSpacing: '1px',
-              textTransform: 'uppercase'
+              fontFamily: "'Inter', sans-serif",
+              letterSpacing: '0',
+              textTransform: 'none'
             }}>
               Progreso y Pauta del Entrenador
             </span>
@@ -559,10 +559,10 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
                   fontWeight: 600,
                   border: '1px solid rgba(59, 130, 246, 0.35)',
                   transition: 'all 0.3s ease',
-                  fontSize: '10px',
-                  fontFamily: "'Orbitron', sans-serif",
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px'
+                  fontSize: '12px',
+                  fontFamily: "'Inter', sans-serif",
+                  textTransform: 'none',
+                  letterSpacing: '0'
                 }}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -583,13 +583,13 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
                   padding: '8px 14px',
                   background: 'rgba(255, 255, 255, 0.05)',
                   borderRadius: '40px',
-                  color: 'rgba(255, 255, 255, 0.3)',
+                  color: '#a4b0a8',
                   border: '1px solid rgba(255, 255, 255, 0.1)',
                   fontWeight: 600,
-                  fontSize: '10px',
-                  fontFamily: "'Orbitron', sans-serif",
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
+                  fontSize: '12px',
+                  fontFamily: "'Inter', sans-serif",
+                  textTransform: 'none',
+                  letterSpacing: '0',
                   cursor: 'not-allowed'
                 }}
               >
@@ -613,17 +613,17 @@ export const ExerciseCard: React.FC<ExerciseCardProps> = ({
                 alignItems: 'center',
                 justifyContent: 'center',
                 padding: '8px 14px',
-                background: 'rgba(123, 47, 247, 0.12)',
+                background: 'rgba(118, 152, 136, 0.12)',
                 borderRadius: '40px',
                 color: '#a78bfa',
-                border: '1px solid rgba(123, 47, 247, 0.35)',
+                border: '1px solid rgba(118, 152, 136, 0.35)',
                 fontWeight: 600,
                 cursor: 'pointer',
-                fontSize: '10px',
+                fontSize: '12px',
                 transition: 'all 0.3s ease',
-                fontFamily: "'Orbitron', sans-serif",
-                textTransform: 'uppercase',
-                letterSpacing: '0.5px'
+                fontFamily: "'Inter', sans-serif",
+                textTransform: 'none',
+                letterSpacing: '0'
               }}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"

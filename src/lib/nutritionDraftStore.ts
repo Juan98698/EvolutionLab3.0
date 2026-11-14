@@ -109,7 +109,7 @@ export function saveNutritionDraft(
     idbSet(`nutrition_draft_${atletaId}`, draft).catch((e) => {
       console.warn('[NutritionDraftStore] Error al respaldar borrador en idb:', e);
     });
-  } catch (err) {
+  } catch {
     // noop
   }
 }

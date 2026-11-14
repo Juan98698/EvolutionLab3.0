@@ -66,8 +66,8 @@ export const RoleSelectionModal: React.FC<RoleSelectionModalProps> = ({ onComple
         inset: 0,
         zIndex: 9999,
         background: 'rgba(5, 8, 16, 0.88)',
-        backdropFilter: 'blur(12px)',
-        WebkitBackdropFilter: 'blur(12px)',
+        backdropFilter: 'none',
+        WebkitBackdropFilter: 'none',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -79,11 +79,11 @@ export const RoleSelectionModal: React.FC<RoleSelectionModalProps> = ({ onComple
         style={{
           width: '100%',
           maxWidth: '540px',
-          background: 'linear-gradient(180deg, rgba(15, 23, 42, 0.95) 0%, rgba(10, 15, 29, 0.98) 100%)',
-          border: '1px solid rgba(0, 212, 255, 0.3)',
+          background: 'linear-gradient(180deg, #1a211e 0%, rgba(10, 15, 29, 0.98) 100%)',
+          border: '1px solid rgba(145, 182, 161, 0.3)',
           borderRadius: '24px',
           padding: '32px 24px',
-          boxShadow: '0 20px 60px rgba(0, 212, 255, 0.15), 0 0 40px rgba(0, 0, 0, 0.8)',
+          boxShadow: 'none',
           display: 'flex',
           flexDirection: 'column',
           gap: '24px',
@@ -101,13 +101,13 @@ export const RoleSelectionModal: React.FC<RoleSelectionModalProps> = ({ onComple
               alignSelf: 'center',
               padding: '6px 14px',
               borderRadius: '20px',
-              background: 'rgba(0, 212, 255, 0.1)',
-              border: '1px solid rgba(0, 212, 255, 0.25)',
-              fontSize: '11px',
-              fontFamily: "'Orbitron', sans-serif",
-              letterSpacing: '1.5px',
-              color: '#00d4ff',
-              textTransform: 'uppercase'
+              background: 'rgba(145, 182, 161, 0.1)',
+              border: '1px solid rgba(145, 182, 161, 0.25)',
+              fontSize: '12px',
+              fontFamily: "'Inter', sans-serif",
+              letterSpacing: '0',
+              color: '#91b6a1',
+              textTransform: 'none'
             }}
           >
             Paso 1: Configura tu Perfil
@@ -116,11 +116,11 @@ export const RoleSelectionModal: React.FC<RoleSelectionModalProps> = ({ onComple
           <h2
             id="role-selection-title"
             style={{
-              fontFamily: "'Orbitron', sans-serif",
+              fontFamily: "'Inter', sans-serif",
               fontSize: '22px',
               fontWeight: 800,
-              letterSpacing: '0.5px',
-              background: 'linear-gradient(135deg, #ffffff 30%, #00d4ff 100%)',
+              letterSpacing: '0',
+              background: 'linear-gradient(135deg, #ffffff 30%, #91b6a1 100%)',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               margin: 0
@@ -129,7 +129,7 @@ export const RoleSelectionModal: React.FC<RoleSelectionModalProps> = ({ onComple
             ¡Hola, {googleName}!
           </h2>
 
-          <p style={{ fontSize: '13px', color: '#94a3b8', margin: 0, lineHeight: 1.5 }}>
+          <p style={{ fontSize: '13px', color: '#a4b0a8', margin: 0, lineHeight: 1.5 }}>
             ¿Cómo deseas utilizar <strong style={{ color: 'white' }}>Evolution Lab</strong>?
           </p>
         </div>
@@ -166,15 +166,15 @@ export const RoleSelectionModal: React.FC<RoleSelectionModalProps> = ({ onComple
               borderRadius: '16px',
               background:
                 selectedRole === 'cliente'
-                  ? 'linear-gradient(135deg, rgba(0, 212, 255, 0.16) 0%, rgba(123, 47, 247, 0.12) 100%)'
+                  ? 'linear-gradient(135deg, rgba(145, 182, 161, 0.16) 0%, rgba(118, 152, 136, 0.12) 100%)'
                   : 'rgba(255, 255, 255, 0.03)',
               border:
                 selectedRole === 'cliente'
-                  ? '2px solid #00d4ff'
+                  ? '2px solid #91b6a1'
                   : '1px solid rgba(255, 255, 255, 0.08)',
               boxShadow:
                 selectedRole === 'cliente'
-                  ? '0 0 20px rgba(0, 212, 255, 0.25)'
+                  ? '0 0 20px rgba(145, 182, 161, 0.25)'
                   : 'none',
               cursor: 'pointer',
               textAlign: 'left',
@@ -187,7 +187,7 @@ export const RoleSelectionModal: React.FC<RoleSelectionModalProps> = ({ onComple
                 width: '48px',
                 height: '48px',
                 borderRadius: '12px',
-                background: selectedRole === 'cliente' ? 'rgba(0, 212, 255, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                background: selectedRole === 'cliente' ? 'rgba(145, 182, 161, 0.2)' : 'rgba(255, 255, 255, 0.05)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -200,10 +200,10 @@ export const RoleSelectionModal: React.FC<RoleSelectionModalProps> = ({ onComple
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <span
                   style={{
-                    fontFamily: "'Orbitron', sans-serif",
+                    fontFamily: "'Inter', sans-serif",
                     fontSize: '14px',
                     fontWeight: 700,
-                    color: selectedRole === 'cliente' ? '#00d4ff' : 'white'
+                    color: selectedRole === 'cliente' ? '#91b6a1' : 'white'
                   }}
                 >
                   Soy Atleta Autónomo
@@ -213,13 +213,13 @@ export const RoleSelectionModal: React.FC<RoleSelectionModalProps> = ({ onComple
                     width: '18px',
                     height: '18px',
                     borderRadius: '50%',
-                    border: selectedRole === 'cliente' ? '5px solid #00d4ff' : '2px solid rgba(255,255,255,0.3)',
+                    border: selectedRole === 'cliente' ? '5px solid #91b6a1' : '2px solid #a4b0a8',
                     background: selectedRole === 'cliente' ? 'white' : 'transparent',
                     display: 'inline-block'
                   }}
                 />
               </div>
-              <p style={{ fontSize: '12px', color: '#94a3b8', margin: 0, lineHeight: 1.4 }}>
+              <p style={{ fontSize: '12px', color: '#a4b0a8', margin: 0, lineHeight: 1.4 }}>
                 Entreno por mi cuenta. Quiero registrar mis series, recibir sugerencias de peso inteligentes y gestionar mi sobrecarga progresiva.
               </p>
             </div>
@@ -238,15 +238,15 @@ export const RoleSelectionModal: React.FC<RoleSelectionModalProps> = ({ onComple
               borderRadius: '16px',
               background:
                 selectedRole === 'entrenador'
-                  ? 'linear-gradient(135deg, rgba(123, 47, 247, 0.16) 0%, rgba(0, 212, 255, 0.12) 100%)'
+                  ? 'linear-gradient(135deg, rgba(118, 152, 136, 0.16) 0%, rgba(145, 182, 161, 0.12) 100%)'
                   : 'rgba(255, 255, 255, 0.03)',
               border:
                 selectedRole === 'entrenador'
-                  ? '2px solid #7b2ff7'
+                  ? '2px solid #769888'
                   : '1px solid rgba(255, 255, 255, 0.08)',
               boxShadow:
                 selectedRole === 'entrenador'
-                  ? '0 0 20px rgba(123, 47, 247, 0.25)'
+                  ? '0 0 20px rgba(118, 152, 136, 0.25)'
                   : 'none',
               cursor: 'pointer',
               textAlign: 'left',
@@ -259,7 +259,7 @@ export const RoleSelectionModal: React.FC<RoleSelectionModalProps> = ({ onComple
                 width: '48px',
                 height: '48px',
                 borderRadius: '12px',
-                background: selectedRole === 'entrenador' ? 'rgba(123, 47, 247, 0.2)' : 'rgba(255, 255, 255, 0.05)',
+                background: selectedRole === 'entrenador' ? 'rgba(118, 152, 136, 0.2)' : 'rgba(255, 255, 255, 0.05)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -272,7 +272,7 @@ export const RoleSelectionModal: React.FC<RoleSelectionModalProps> = ({ onComple
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <span
                   style={{
-                    fontFamily: "'Orbitron', sans-serif",
+                    fontFamily: "'Inter', sans-serif",
                     fontSize: '14px',
                     fontWeight: 700,
                     color: selectedRole === 'entrenador' ? '#a78bfa' : 'white'
@@ -285,13 +285,13 @@ export const RoleSelectionModal: React.FC<RoleSelectionModalProps> = ({ onComple
                     width: '18px',
                     height: '18px',
                     borderRadius: '50%',
-                    border: selectedRole === 'entrenador' ? '5px solid #7b2ff7' : '2px solid rgba(255,255,255,0.3)',
+                    border: selectedRole === 'entrenador' ? '5px solid #769888' : '2px solid #a4b0a8',
                     background: selectedRole === 'entrenador' ? 'white' : 'transparent',
                     display: 'inline-block'
                   }}
                 />
               </div>
-              <p style={{ fontSize: '12px', color: '#94a3b8', margin: 0, lineHeight: 1.4 }}>
+              <p style={{ fontSize: '12px', color: '#a4b0a8', margin: 0, lineHeight: 1.4 }}>
                 Diseño planificaciones para mis clientes, personalizo mi marca deportiva y superviso el progreso y fatiga de mis atletas.
               </p>
             </div>
@@ -307,16 +307,16 @@ export const RoleSelectionModal: React.FC<RoleSelectionModalProps> = ({ onComple
               gap: '12px',
               padding: '16px',
               borderRadius: '14px',
-              background: 'rgba(123, 47, 247, 0.06)',
-              border: '1px solid rgba(123, 47, 247, 0.2)'
+              background: 'rgba(118, 152, 136, 0.06)',
+              border: '1px solid rgba(118, 152, 136, 0.2)'
             }}
           >
-            <span style={{ fontSize: '12px', fontWeight: 600, color: '#c4b5fd', letterSpacing: '0.5px' }}>
+            <span style={{ fontSize: '12px', fontWeight: 600, color: '#c4b5fd', letterSpacing: '0' }}>
               Datos de tu Marca Deportiva (Opcionales):
             </span>
 
             <div>
-              <label style={{ display: 'block', fontSize: '11px', color: '#94a3b8', marginBottom: '4px' }}>
+              <label style={{ display: 'block', fontSize: '12px', color: '#a4b0a8', marginBottom: '4px' }}>
                 Nombre comercial o de entrenador
               </label>
               <input
@@ -340,7 +340,7 @@ export const RoleSelectionModal: React.FC<RoleSelectionModalProps> = ({ onComple
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '11px', color: '#94a3b8', marginBottom: '4px' }}>
+                <label style={{ display: 'block', fontSize: '12px', color: '#a4b0a8', marginBottom: '4px' }}>
                   WhatsApp
                 </label>
                 <input
@@ -363,7 +363,7 @@ export const RoleSelectionModal: React.FC<RoleSelectionModalProps> = ({ onComple
               </div>
 
               <div>
-                <label style={{ display: 'block', fontSize: '11px', color: '#94a3b8', marginBottom: '4px' }}>
+                <label style={{ display: 'block', fontSize: '12px', color: '#a4b0a8', marginBottom: '4px' }}>
                   Instagram
                 </label>
                 <input
@@ -400,18 +400,18 @@ export const RoleSelectionModal: React.FC<RoleSelectionModalProps> = ({ onComple
             borderRadius: '12px',
             background: selectedRole
               ? selectedRole === 'entrenador'
-                ? 'linear-gradient(135deg, #7b2ff7 0%, #00d4ff 100%)'
-                : 'linear-gradient(135deg, #00d4ff 0%, #0070a0 100%)'
+                ? 'linear-gradient(135deg, #769888 0%, #91b6a1 100%)'
+                : 'linear-gradient(135deg, #91b6a1 0%, #0070a0 100%)'
               : 'rgba(255, 255, 255, 0.08)',
             border: 'none',
-            color: selectedRole ? 'white' : 'rgba(255, 255, 255, 0.3)',
-            fontFamily: "'Orbitron', sans-serif",
+            color: selectedRole ? 'white' : '#a4b0a8',
+            fontFamily: "'Inter', sans-serif",
             fontSize: '13px',
             fontWeight: 700,
-            letterSpacing: '1px',
-            textTransform: 'uppercase',
+            letterSpacing: '0',
+            textTransform: 'none',
             cursor: selectedRole && !loading ? 'pointer' : 'not-allowed',
-            boxShadow: selectedRole && !loading ? '0 0 25px rgba(0, 212, 255, 0.35)' : 'none',
+            boxShadow: selectedRole && !loading ? '0 0 25px rgba(145, 182, 161, 0.35)' : 'none',
             transition: 'all 0.25s ease',
             display: 'flex',
             alignItems: 'center',
@@ -425,7 +425,7 @@ export const RoleSelectionModal: React.FC<RoleSelectionModalProps> = ({ onComple
                 style={{
                   width: '16px',
                   height: '16px',
-                  border: '2px solid rgba(255, 255, 255, 0.3)',
+                  border: '2px solid #a4b0a8',
                   borderTopColor: 'white',
                   borderRadius: '50%',
                   animation: 'spinner 0.8s linear infinite'

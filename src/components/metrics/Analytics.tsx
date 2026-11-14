@@ -53,9 +53,9 @@ export const Analytics: React.FC = () => {
 
   const themeColors = useMemo(() => {
     const style = getComputedStyle(document.documentElement);
-    const primary = style.getPropertyValue('--theme-primary').trim() || '#00d4ff';
-    const secondary = style.getPropertyValue('--theme-secondary').trim() || '#7b2ff7';
-    const primaryGlow = style.getPropertyValue('--theme-glow').trim() || 'rgba(0, 212, 255, 0.15)';
+    const primary = style.getPropertyValue('--theme-primary').trim() || '#91b6a1';
+    const secondary = style.getPropertyValue('--theme-secondary').trim() || '#769888';
+    const primaryGlow = style.getPropertyValue('--theme-glow').trim() || 'rgba(145, 182, 161, 0.15)';
     
     return {
       primary,
@@ -97,7 +97,7 @@ export const Analytics: React.FC = () => {
       }
     } catch (err) {
       console.warn('No se pudo descargar el historial de la nube para gráficos, usando caché:', err);
-      setSesiones(readSessionsFromCache());
+      setSesiones(readSessionsFromCache(user?.id));
       showToast('Cargado en modo offline 🔌', 'info');
     }
 
@@ -198,8 +198,8 @@ export const Analytics: React.FC = () => {
     const data = Object.values(weeklyMuscleGroupSeries);
 
     const colors = [
-      '#00d4ff', // Cyan
-      '#7b2ff7', // Purple
+      '#91b6a1', // Cyan
+      '#769888', // Purple
       '#ff0055', // Red/Pink
       '#eab308', // Gold/Yellow
       '#10b981', // Green
@@ -216,7 +216,7 @@ export const Analytics: React.FC = () => {
           label: 'Series completadas',
           data,
           backgroundColor: colors.slice(0, labels.length),
-          borderColor: 'rgba(15, 23, 42, 0.85)',
+          borderColor: '#1a211e',
           borderWidth: 2,
         }
       ]
@@ -232,10 +232,10 @@ export const Analytics: React.FC = () => {
           display: true,
           position: 'right' as const,
           labels: {
-            color: '#94a3b8',
+            color: '#a4b0a8',
             font: {
               size: 10,
-              family: "'Orbitron', sans-serif"
+              family: "'Inter', sans-serif"
             },
             boxWidth: 12
           }
@@ -298,7 +298,7 @@ export const Analytics: React.FC = () => {
 
   const frequencyChartOptions = useMemo(() => {
     const gridColor = 'rgba(255, 255, 255, 0.06)';
-    const labelColor = '#94a3b8';
+    const labelColor = '#a4b0a8';
 
     return {
       responsive: true,
@@ -384,7 +384,7 @@ export const Analytics: React.FC = () => {
   // Configuración de Opciones del Gráfico
   const chartOptions = useMemo(() => {
     const gridColor = 'rgba(255, 255, 255, 0.06)';
-    const labelColor = '#94a3b8';
+    const labelColor = '#a4b0a8';
 
     return {
       responsive: true,
@@ -469,7 +469,7 @@ export const Analytics: React.FC = () => {
         
         {/* Header and Filter */}
         <div className="top-bar" style={{ marginTop: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '1.5rem', background: 'none', border: 'none', padding: 0 }}>
-          <div id="chartTitle" style={{ margin: 0, flex: 1, fontSize: '15px', color: 'white', fontFamily: "'Orbitron',sans-serif", letterSpacing: '0.05em', textTransform: 'uppercase' }}>
+          <div id="chartTitle" style={{ margin: 0, flex: 1, fontSize: '15px', color: 'white', fontFamily: "'Inter',sans-serif", letterSpacing: '0.05em', textTransform: 'none' }}>
             Progresión {selectedEx ? `— ${selectedEx}` : ''}
           </div>
           
@@ -509,12 +509,12 @@ export const Analytics: React.FC = () => {
               <div className="spinner" style={{ display: 'block', width: '30px', height: '30px' }} />
             </div>
           ) : !selectedEx ? (
-            <div id="chartEmptyState" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '260px', textAlign: 'center', color: 'rgba(255,255,255,0.4)', gap: '16px', padding: '20px' }}>
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ filter: 'drop-shadow(0 0 8px rgba(0, 212, 255, 0.3))' }}>
+            <div id="chartEmptyState" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '260px', textAlign: 'center', color: '#a4b0a8', gap: '16px', padding: '20px' }}>
+              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="var(--cyan)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ filter: 'drop-shadow(0 0 8px rgba(145, 182, 161, 0.3))' }}>
                 <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
                 <polyline points="17 6 23 6 23 12" />
               </svg>
-              <span className="desc-text" style={{ fontSize: '14px', maxWidth: '320px', fontWeight: 500, lineHeight: 1.4, color: 'rgba(255,255,255,0.6)' }}>
+              <span className="desc-text" style={{ fontSize: '14px', maxWidth: '320px', fontWeight: 500, lineHeight: 1.4, color: '#a4b0a8' }}>
                 Registra sesiones en tu historial para ver tu progresión de sobrecarga progresiva.
               </span>
             </div>
@@ -538,7 +538,7 @@ export const Analytics: React.FC = () => {
         }}>
           {/* Tarjeta 1: Distribución de Volumen Semanal (Doughnut) */}
           <div className="chart-card" style={{ background: 'rgba(15, 23, 42, 0.45)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '16px', padding: '24px', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ fontSize: '13px', color: 'white', fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '16px' }}>
+            <div style={{ fontSize: '13px', color: 'white', fontFamily: "'Inter', sans-serif", letterSpacing: '0.05em', textTransform: 'none', marginBottom: '16px' }}>
               Distribución de Volumen (Últimos 7 Días)
             </div>
             {loading ? (
@@ -546,7 +546,7 @@ export const Analytics: React.FC = () => {
                 <div className="spinner" style={{ display: 'block', width: '30px', height: '30px' }} />
               </div>
             ) : Object.keys(weeklyMuscleGroupSeries).length === 0 ? (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '220px', color: 'rgba(255,255,255,0.4)', fontSize: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '220px', color: '#a4b0a8', fontSize: '12px' }}>
                 Sin series registradas esta semana.
               </div>
             ) : (
@@ -562,7 +562,7 @@ export const Analytics: React.FC = () => {
 
           {/* Tarjeta 2: Consistencia y Frecuencia Mensual (Bar Chart) */}
           <div className="chart-card" style={{ background: 'rgba(15, 23, 42, 0.45)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '16px', padding: '24px', display: 'flex', flexDirection: 'column' }}>
-            <div style={{ fontSize: '13px', color: 'white', fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.05em', textTransform: 'uppercase', marginBottom: '16px' }}>
+            <div style={{ fontSize: '13px', color: 'white', fontFamily: "'Inter', sans-serif", letterSpacing: '0.05em', textTransform: 'none', marginBottom: '16px' }}>
               Frecuencia Mensual (Entrenamientos)
             </div>
             {loading ? (
@@ -570,7 +570,7 @@ export const Analytics: React.FC = () => {
                 <div className="spinner" style={{ display: 'block', width: '30px', height: '30px' }} />
               </div>
             ) : monthlyFrequencies.labels.length === 0 ? (
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '220px', color: 'rgba(255,255,255,0.4)', fontSize: '12px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '220px', color: '#a4b0a8', fontSize: '12px' }}>
                 Sin sesiones registradas en el historial.
               </div>
             ) : (

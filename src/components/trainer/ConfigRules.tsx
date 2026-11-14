@@ -50,7 +50,7 @@ const NumberStepper: React.FC<NumberStepperProps> = ({ id, value, min, max, onCh
           touchAction: 'manipulation'
         }}
         onMouseEnter={(e) => {
-          if (value > min) e.currentTarget.style.background = 'rgba(0, 212, 255, 0.08)';
+          if (value > min) e.currentTarget.style.background = 'rgba(145, 182, 161, 0.08)';
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.background = 'rgba(255,255,255,0.01)';
@@ -78,7 +78,7 @@ const NumberStepper: React.FC<NumberStepperProps> = ({ id, value, min, max, onCh
           textAlign: 'center',
           fontSize: '15px',
           fontWeight: '700',
-          fontFamily: "'Orbitron', sans-serif",
+          fontFamily: "'Inter', sans-serif",
           width: '50px',
           height: '100%',
           outline: 'none',
@@ -108,7 +108,7 @@ const NumberStepper: React.FC<NumberStepperProps> = ({ id, value, min, max, onCh
           touchAction: 'manipulation'
         }}
         onMouseEnter={(e) => {
-          if (value < max) e.currentTarget.style.background = 'rgba(0, 212, 255, 0.08)';
+          if (value < max) e.currentTarget.style.background = 'rgba(145, 182, 161, 0.08)';
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.background = 'rgba(255,255,255,0.01)';
@@ -354,15 +354,15 @@ export const ConfigRules: React.FC = () => {
           <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
             <button
               onClick={() => navigate('/trainer')}
-              style={{ background: 'none', border: 'none', color: 'var(--theme-primary)', fontSize: '12px', cursor: 'pointer', fontFamily: "'Orbitron', sans-serif", padding: '8px 12px', borderRadius: '8px', borderStyle: 'solid', borderWidth: '1px', borderColor: 'var(--theme-border)' }}
+              style={{ background: 'none', border: 'none', color: 'var(--theme-primary)', fontSize: '12px', cursor: 'pointer', fontFamily: "'Inter', sans-serif", padding: '8px 12px', borderRadius: '8px', borderStyle: 'solid', borderWidth: '1px', borderColor: 'var(--theme-border)' }}
             >
               ← Volver al Panel
             </button>
             <div>
-              <h1 style={{ fontFamily: 'Orbitron, sans-serif', fontSize: '15px', fontWeight: 800, margin: 0, letterSpacing: '1px' }}>
+              <h1 style={{ fontFamily: 'Inter, sans-serif', fontSize: '15px', fontWeight: 800, margin: 0, letterSpacing: '0' }}>
                 MOTOR DE SOBRECARGA PROGRESIVA
               </h1>
-              <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', marginTop: '2px' }}>
+              <div style={{ fontSize: '12px', color: '#a4b0a8', marginTop: '2px' }}>
                 Ajustando umbrales y reglas científicas de análisis
               </div>
             </div>
@@ -384,7 +384,7 @@ export const ConfigRules: React.FC = () => {
             >
               {saving ? (
                 <>
-                  <span className="spinner-icon" style={{ width: '14px', height: '14px', borderRadius: '50%', border: '2px solid rgba(255,255,255,0.3)', borderTop: '2px solid var(--theme-primary)' }} />
+                  <span className="spinner-icon" style={{ width: '14px', height: '14px', borderRadius: '50%', border: '2px solid #a4b0a8', borderTop: '2px solid var(--theme-primary)' }} />
                   <span>GUARDANDO...</span>
                 </>
               ) : (
@@ -399,10 +399,10 @@ export const ConfigRules: React.FC = () => {
       <div className="container stagger-3" style={{ padding: '0 20px', maxWidth: '1200px', margin: '0 auto' }}>
         
         {/* SELECTOR DE ATLETA EN REGLAS */}
-        <div style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '16px', padding: '20px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
-          <label htmlFor="atleta-config" style={{ fontSize: '12px', fontWeight: 700, color: 'rgba(255,255,255,0.7)', fontFamily: "'Orbitron', sans-serif" }}>ATLETA PARA CONFIGURAR:</label>
+        <div style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '16px', padding: '20px', marginBottom: '24px', display: 'flex', alignItems: 'center', gap: '15px', flexWrap: 'wrap', backdropFilter: 'none', WebkitBackdropFilter: 'none' }}>
+          <label htmlFor="atleta-config" style={{ fontSize: '12px', fontWeight: 700, color: 'rgba(255,255,255,0.7)', fontFamily: "'Inter', sans-serif" }}>ATLETA PARA CONFIGURAR:</label>
           {loadingClientes ? (
-            <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', fontFamily: "'Orbitron', sans-serif" }}>Cargando atletas...</span>
+            <span style={{ fontSize: '12px', color: '#a4b0a8', fontFamily: "'Inter', sans-serif" }}>Cargando atletas...</span>
           ) : (
             <select
               id="atleta-config"
@@ -419,14 +419,14 @@ export const ConfigRules: React.FC = () => {
         </div>
 
         {loadingPlan ? (
-          <div style={{ textAlign: 'center', padding: '60px', color: 'var(--theme-primary)', fontFamily: 'Orbitron, sans-serif' }}>
+          <div style={{ textAlign: 'center', padding: '60px', color: 'var(--theme-primary)', fontFamily: 'Inter, sans-serif' }}>
             <span>Cargando parámetros de análisis...</span>
           </div>
         ) : (
           <>
             {/* SECCIÓN 1: PARAMETROS GENERALES */}
-            <div style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '16px', padding: '24px', marginBottom: '24px', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
-              <h3 style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '13px', color: 'var(--theme-primary)', letterSpacing: '0.5px', marginBottom: '20px', marginTop: 0 }}>
+            <div style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '16px', padding: '24px', marginBottom: '24px', backdropFilter: 'none', WebkitBackdropFilter: 'none' }}>
+              <h3 style={{ fontFamily: "'Inter', sans-serif", fontSize: '13px', color: 'var(--theme-primary)', letterSpacing: '0', marginBottom: '20px', marginTop: 0 }}>
                 📊 PARÁMETROS GENERALES DE ANÁLISIS
               </h3>
 
@@ -440,7 +440,7 @@ export const ConfigRules: React.FC = () => {
                     max={10}
                     onChange={(val) => handleConfigChange('minSesiones', val)}
                   />
-                  <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', lineHeight: 1.4 }}>No se generan alertas ni sugerencias de sobrecarga si el atleta tiene menos de estas sesiones registradas por ejercicio.</span>
+                  <span style={{ fontSize: '12px', color: '#a4b0a8', lineHeight: 1.4 }}>No se generan alertas ni sugerencias de sobrecarga si el atleta tiene menos de estas sesiones registradas por ejercicio.</span>
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -452,7 +452,7 @@ export const ConfigRules: React.FC = () => {
                     max={10}
                     onChange={(val) => handleConfigChange('ventana', val)}
                   />
-                  <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', lineHeight: 1.4 }}>Cuántas sesiones de entrenamiento recientes se consideran en la ventana deslizante para estimar las tendencias.</span>
+                  <span style={{ fontSize: '12px', color: '#a4b0a8', lineHeight: 1.4 }}>Cuántas sesiones de entrenamiento recientes se consideran en la ventana deslizante para estimar las tendencias.</span>
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -464,7 +464,7 @@ export const ConfigRules: React.FC = () => {
                     max={30}
                     onChange={(val) => handleConfigChange('diasDescansoExcesivo', val)}
                   />
-                  <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', lineHeight: 1.4 }}>Si el atleta pasa más de estos días seguidos sin registrar un ejercicio, se alertará de descanso excesivo y regresión.</span>
+                  <span style={{ fontSize: '12px', color: '#a4b0a8', lineHeight: 1.4 }}>Si el atleta pasa más de estos días seguidos sin registrar un ejercicio, se alertará de descanso excesivo y regresión.</span>
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -476,7 +476,7 @@ export const ConfigRules: React.FC = () => {
                     max={14}
                     onChange={(val) => handleConfigChange('diasOptimo', val)}
                   />
-                  <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', lineHeight: 1.4 }}>Rango máximo de días considerado óptimo y normal entre sesiones del mismo ejercicio para el progreso de fuerza.</span>
+                  <span style={{ fontSize: '12px', color: '#a4b0a8', lineHeight: 1.4 }}>Rango máximo de días considerado óptimo y normal entre sesiones del mismo ejercicio para el progreso de fuerza.</span>
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -488,7 +488,7 @@ export const ConfigRules: React.FC = () => {
                     max={6}
                     onChange={(val) => handleConfigChange('sesionesRegresionAlerta', val)}
                   />
-                  <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', lineHeight: 1.4 }}>Cantidad de sesiones consecutivas con caída acumulada de volumen que disparan la alerta visual de regresión.</span>
+                  <span style={{ fontSize: '12px', color: '#a4b0a8', lineHeight: 1.4 }}>Cantidad de sesiones consecutivas con caída acumulada de volumen que disparan la alerta visual de regresión.</span>
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -500,17 +500,17 @@ export const ConfigRules: React.FC = () => {
                     max={12}
                     onChange={(val) => handleConfigChange('semanasEstancamiento', val)}
                   />
-                  <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', lineHeight: 1.4 }}>Semanas sin mejoras en el 1RM estimado antes de sugerir variar o sustituir el ejercicio.</span>
+                  <span style={{ fontSize: '12px', color: '#a4b0a8', lineHeight: 1.4 }}>Semanas sin mejoras en el 1RM estimado antes de sugerir variar o sustituir el ejercicio.</span>
                 </div>
               </div>
             </div>
 
             {/* SECCIÓN 2: REGLAS Y MENSAJES INDIVIDUALES */}
-            <div style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '16px', padding: '24px', marginBottom: '24px', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
-              <h3 style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '13px', color: 'var(--theme-primary)', letterSpacing: '0.5px', marginBottom: '10px', marginTop: 0 }}>
+            <div style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '16px', padding: '24px', marginBottom: '24px', backdropFilter: 'none', WebkitBackdropFilter: 'none' }}>
+              <h3 style={{ fontFamily: "'Inter', sans-serif", fontSize: '13px', color: 'var(--theme-primary)', letterSpacing: '0', marginBottom: '10px', marginTop: 0 }}>
                 📋 REGLAS DE NOTIFICACIÓN DE SOBRECARGA
               </h3>
-              <p style={{ margin: '0 0 20px 0', fontSize: '11px', color: 'rgba(255,255,255,0.5)', lineHeight: 1.4 }}>
+              <p style={{ margin: '0 0 20px 0', fontSize: '12px', color: '#a4b0a8', lineHeight: 1.4 }}>
                 Activa o desactiva las reglas automáticas de análisis y personaliza los textos que leerá el atleta en su bitácora. Puedes usar las variables comodines <code style={{ background: 'rgba(255,255,255,0.06)', padding: '1px 5px', borderRadius: '4px' }}>{`{ejercicio}`}</code>, <code style={{ background: 'rgba(255,255,255,0.06)', padding: '1px 5px', borderRadius: '4px' }}>{`{valor}`}</code>, <code style={{ background: 'rgba(255,255,255,0.06)', padding: '1px 5px', borderRadius: '4px' }}>{`{peso}`}</code>, <code style={{ background: 'rgba(255,255,255,0.06)', padding: '1px 5px', borderRadius: '4px' }}>{`{porciento}`}</code> en tus textos.
               </p>
 
@@ -527,7 +527,7 @@ export const ConfigRules: React.FC = () => {
                     }}
                   >
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
-                      <h4 style={{ margin: 0, fontSize: '13px', fontWeight: 700, fontFamily: "'Orbitron', sans-serif", color: rule.activa ? 'white' : 'rgba(255,255,255,0.4)' }}>
+                      <h4 style={{ margin: 0, fontSize: '13px', fontWeight: 700, fontFamily: "'Inter', sans-serif", color: rule.activa ? 'white' : '#a4b0a8' }}>
                         {idx + 1}. {rule.titulo}
                       </h4>
                       <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '12px' }}>
@@ -543,7 +543,7 @@ export const ConfigRules: React.FC = () => {
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                       <div>
-                        <label htmlFor={`rule-mensaje-${rule.id}`} style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, marginBottom: '6px', cursor: 'pointer' }}>RECOMENDACIÓN AL ATLETA (Mensaje de Notificación)</label>
+                        <label htmlFor={`rule-mensaje-${rule.id}`} style={{ display: 'block', fontSize: '12px', color: '#a4b0a8', fontWeight: 600, marginBottom: '6px', cursor: 'pointer' }}>RECOMENDACIÓN AL ATLETA (Mensaje de Notificación)</label>
                         <textarea
                           id={`rule-mensaje-${rule.id}`}
                           rows={2}
@@ -559,7 +559,7 @@ export const ConfigRules: React.FC = () => {
                           {rule.id === 'subir_peso_reps' && (
                             <>
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                <label htmlFor={`rule-rir_umbral-${rule.id}`} style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, cursor: 'pointer' }}>RIR MÍNIMO PARA SUBIR</label>
+                                <label htmlFor={`rule-rir_umbral-${rule.id}`} style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 600, cursor: 'pointer' }}>RIR MÍNIMO PARA SUBIR</label>
                                 <input
                                   id={`rule-rir_umbral-${rule.id}`}
                                   type="number"
@@ -569,7 +569,7 @@ export const ConfigRules: React.FC = () => {
                                 />
                               </div>
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                <label htmlFor={`rule-sesiones_consecutivas-${rule.id}`} style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, cursor: 'pointer' }}>SESIONES CONSECUTIVAS</label>
+                                <label htmlFor={`rule-sesiones_consecutivas-${rule.id}`} style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 600, cursor: 'pointer' }}>SESIONES CONSECUTIVAS</label>
                                 <input
                                   id={`rule-sesiones_consecutivas-${rule.id}`}
                                   type="number"
@@ -579,7 +579,7 @@ export const ConfigRules: React.FC = () => {
                                 />
                               </div>
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                <label htmlFor={`rule-incremento_porciento-${rule.id}`} style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, cursor: 'pointer' }}>% DE INCREMENTO</label>
+                                <label htmlFor={`rule-incremento_porciento-${rule.id}`} style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 600, cursor: 'pointer' }}>% DE INCREMENTO</label>
                                 <input
                                   id={`rule-incremento_porciento-${rule.id}`}
                                   type="number"
@@ -589,7 +589,7 @@ export const ConfigRules: React.FC = () => {
                                 />
                               </div>
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                <label htmlFor={`rule-incremento_minimo_kg-${rule.id}`} style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, cursor: 'pointer' }}>MÍNIMO INCREMENTO (KG)</label>
+                                <label htmlFor={`rule-incremento_minimo_kg-${rule.id}`} style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 600, cursor: 'pointer' }}>MÍNIMO INCREMENTO (KG)</label>
                                 <input
                                   id={`rule-incremento_minimo_kg-${rule.id}`}
                                   type="number"
@@ -605,10 +605,10 @@ export const ConfigRules: React.FC = () => {
                           {rule.id === 'subir_peso_reps_objetivo' && (
                             <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: '15px' }}>
                               <div>
-                                <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 'bold', display: 'block', marginBottom: '8px' }}>OBJETIVOS ESPECÍFICOS / EXCEPCIONES</label>
+                                <label style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 'bold', display: 'block', marginBottom: '8px' }}>OBJETIVOS ESPECÍFICOS / EXCEPCIONES</label>
                                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '10px' }}>
                                   {Object.entries(rule.reps_por_ejercicio || {}).map(([ejName, reps]) => (
-                                    <div key={ejName} style={{ display: 'inline-flex', alignItems: 'center', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--theme-border)', borderRadius: '20px', padding: '5px 12px', fontSize: '11px', gap: '8px' }}>
+                                    <div key={ejName} style={{ display: 'inline-flex', alignItems: 'center', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--theme-border)', borderRadius: '20px', padding: '5px 12px', fontSize: '12px', gap: '8px' }}>
                                       <span>{ejName}</span>
                                       <span style={{ color: 'var(--theme-primary)', fontWeight: 600 }}>{reps as number} reps</span>
                                       <button
@@ -635,7 +635,7 @@ export const ConfigRules: React.FC = () => {
 
                               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '15px' }}>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                  <label htmlFor={`rule-series_minimas_pct-${rule.id}`} style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, cursor: 'pointer' }}>% MÍNIMO DE SERIES QUE DEBEN CUMPLIR</label>
+                                  <label htmlFor={`rule-series_minimas_pct-${rule.id}`} style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 600, cursor: 'pointer' }}>% MÍNIMO DE SERIES QUE DEBEN CUMPLIR</label>
                                   <input
                                     id={`rule-series_minimas_pct-${rule.id}`}
                                     type="number"
@@ -645,7 +645,7 @@ export const ConfigRules: React.FC = () => {
                                   />
                                 </div>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                  <label htmlFor={`rule-sesiones_consecutivas-${rule.id}`} style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, cursor: 'pointer' }}>SESIONES CONSECUTIVAS</label>
+                                  <label htmlFor={`rule-sesiones_consecutivas-${rule.id}`} style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 600, cursor: 'pointer' }}>SESIONES CONSECUTIVAS</label>
                                   <input
                                     id={`rule-sesiones_consecutivas-${rule.id}`}
                                     type="number"
@@ -655,7 +655,7 @@ export const ConfigRules: React.FC = () => {
                                   />
                                 </div>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                  <label htmlFor={`rule-incremento_porciento-${rule.id}`} style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, cursor: 'pointer' }}>% DE INCREMENTO</label>
+                                  <label htmlFor={`rule-incremento_porciento-${rule.id}`} style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 600, cursor: 'pointer' }}>% DE INCREMENTO</label>
                                   <input
                                     id={`rule-incremento_porciento-${rule.id}`}
                                     type="number"
@@ -665,7 +665,7 @@ export const ConfigRules: React.FC = () => {
                                   />
                                 </div>
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                  <label htmlFor={`rule-incremento_minimo_kg-${rule.id}`} style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, cursor: 'pointer' }}>MÍNIMO INCREMENTO (KG)</label>
+                                  <label htmlFor={`rule-incremento_minimo_kg-${rule.id}`} style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 600, cursor: 'pointer' }}>MÍNIMO INCREMENTO (KG)</label>
                                   <input
                                     id={`rule-incremento_minimo_kg-${rule.id}`}
                                     type="number"
@@ -682,7 +682,7 @@ export const ConfigRules: React.FC = () => {
                           {rule.id === 'subir_reps_antes_peso' && (
                             <>
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                <label htmlFor={`rule-umbral_crecimiento_vol-${rule.id}`} style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, cursor: 'pointer' }}>% CRECIMIENTO DE VOLUMEN</label>
+                                <label htmlFor={`rule-umbral_crecimiento_vol-${rule.id}`} style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 600, cursor: 'pointer' }}>% CRECIMIENTO DE VOLUMEN</label>
                                 <input
                                   id={`rule-umbral_crecimiento_vol-${rule.id}`}
                                   type="number"
@@ -692,7 +692,7 @@ export const ConfigRules: React.FC = () => {
                                 />
                               </div>
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                <label htmlFor={`rule-sesiones_consecutivas-${rule.id}`} style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, cursor: 'pointer' }}>SESIONES CONSECUTIVAS</label>
+                                <label htmlFor={`rule-sesiones_consecutivas-${rule.id}`} style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 600, cursor: 'pointer' }}>SESIONES CONSECUTIVAS</label>
                                 <input
                                   id={`rule-sesiones_consecutivas-${rule.id}`}
                                   type="number"
@@ -707,7 +707,7 @@ export const ConfigRules: React.FC = () => {
                           {rule.id === 'mantener_peso' && (
                             <>
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                <label htmlFor={`rule-umbral_estabilidad-${rule.id}`} style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, cursor: 'pointer' }}>±% PARA "ESTABLE"</label>
+                                <label htmlFor={`rule-umbral_estabilidad-${rule.id}`} style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 600, cursor: 'pointer' }}>±% PARA "ESTABLE"</label>
                                 <input
                                   id={`rule-umbral_estabilidad-${rule.id}`}
                                   type="number"
@@ -717,7 +717,7 @@ export const ConfigRules: React.FC = () => {
                                 />
                               </div>
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                <label htmlFor={`rule-sesiones_consecutivas-${rule.id}`} style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, cursor: 'pointer' }}>SESIONES CONSECUTIVAS</label>
+                                <label htmlFor={`rule-sesiones_consecutivas-${rule.id}`} style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 600, cursor: 'pointer' }}>SESIONES CONSECUTIVAS</label>
                                 <input
                                   id={`rule-sesiones_consecutivas-${rule.id}`}
                                   type="number"
@@ -732,7 +732,7 @@ export const ConfigRules: React.FC = () => {
                           {rule.id === 'bajar_peso_rir_alto' && (
                             <>
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                <label htmlFor={`rule-rir_umbral_bajo-${rule.id}`} style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, cursor: 'pointer' }}>RIR MÁXIMO (FALLO)</label>
+                                <label htmlFor={`rule-rir_umbral_bajo-${rule.id}`} style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 600, cursor: 'pointer' }}>RIR MÁXIMO (FALLO)</label>
                                 <input
                                   id={`rule-rir_umbral_bajo-${rule.id}`}
                                   type="number"
@@ -742,7 +742,7 @@ export const ConfigRules: React.FC = () => {
                                 />
                               </div>
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                <label htmlFor={`rule-reduccion_porciento-${rule.id}`} style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, cursor: 'pointer' }}>% DE REDUCCIÓN</label>
+                                <label htmlFor={`rule-reduccion_porciento-${rule.id}`} style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 600, cursor: 'pointer' }}>% DE REDUCCIÓN</label>
                                 <input
                                   id={`rule-reduccion_porciento-${rule.id}`}
                                   type="number"
@@ -752,7 +752,7 @@ export const ConfigRules: React.FC = () => {
                                 />
                               </div>
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                <label htmlFor={`rule-sesiones_consecutivas-${rule.id}`} style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, cursor: 'pointer' }}>SESIONES CON VOLUMEN CAYENDO</label>
+                                <label htmlFor={`rule-sesiones_consecutivas-${rule.id}`} style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 600, cursor: 'pointer' }}>SESIONES CON VOLUMEN CAYENDO</label>
                                 <input
                                   id={`rule-sesiones_consecutivas-${rule.id}`}
                                   type="number"
@@ -766,7 +766,7 @@ export const ConfigRules: React.FC = () => {
 
                           {rule.id === 'bajar_peso_regresion' && (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                              <label htmlFor={`rule-reduccion_porciento-${rule.id}`} style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, cursor: 'pointer' }}>% DE REDUCCIÓN</label>
+                              <label htmlFor={`rule-reduccion_porciento-${rule.id}`} style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 600, cursor: 'pointer' }}>% DE REDUCCIÓN</label>
                               <input
                                 id={`rule-reduccion_porciento-${rule.id}`}
                                 type="number"
@@ -779,7 +779,7 @@ export const ConfigRules: React.FC = () => {
 
                           {rule.id === 'descanso_excesivo' && (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                              <label htmlFor={`rule-reduccion_porciento-${rule.id}`} style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, cursor: 'pointer' }}>% DE REDUCCIÓN</label>
+                              <label htmlFor={`rule-reduccion_porciento-${rule.id}`} style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 600, cursor: 'pointer' }}>% DE REDUCCIÓN</label>
                               <input
                                 id={`rule-reduccion_porciento-${rule.id}`}
                                 type="number"
@@ -792,7 +792,7 @@ export const ConfigRules: React.FC = () => {
 
                           {rule.id === 'descanso_corto' && (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                              <label htmlFor={`rule-umbral_descanso_alto-${rule.id}`} style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, cursor: 'pointer' }}>DESCANSO ALTO (SEG)</label>
+                              <label htmlFor={`rule-umbral_descanso_alto-${rule.id}`} style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 600, cursor: 'pointer' }}>DESCANSO ALTO (SEG)</label>
                               <input
                                 id={`rule-umbral_descanso_alto-${rule.id}`}
                                 type="number"
@@ -805,7 +805,7 @@ export const ConfigRules: React.FC = () => {
 
                           {rule.id === 'estancamiento' && (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                              <label htmlFor={`rule-sesiones_sin_mejora_peso_reps-${rule.id}`} style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, cursor: 'pointer' }}>SESIONES SIN MEJORAR PESO/REPS</label>
+                              <label htmlFor={`rule-sesiones_sin_mejora_peso_reps-${rule.id}`} style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 600, cursor: 'pointer' }}>SESIONES SIN MEJORAR PESO/REPS</label>
                               <input
                                 id={`rule-sesiones_sin_mejora_peso_reps-${rule.id}`}
                                 type="number"
@@ -818,7 +818,7 @@ export const ConfigRules: React.FC = () => {
 
                           {rule.id === 'racha_positiva' && (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                              <label htmlFor={`rule-sesiones_racha-${rule.id}`} style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, cursor: 'pointer' }}>SESIONES EN RACHA</label>
+                              <label htmlFor={`rule-sesiones_racha-${rule.id}`} style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 600, cursor: 'pointer' }}>SESIONES EN RACHA</label>
                               <input
                                 id={`rule-sesiones_racha-${rule.id}`}
                                 type="number"
@@ -831,7 +831,7 @@ export const ConfigRules: React.FC = () => {
 
                           {rule.id === 'deload_sugerido' && (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                              <label htmlFor={`rule-semanas_consecutivas-${rule.id}`} style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, cursor: 'pointer' }}>SEMANAS CONSECUTIVAS</label>
+                              <label htmlFor={`rule-semanas_consecutivas-${rule.id}`} style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 600, cursor: 'pointer' }}>SEMANAS CONSECUTIVAS</label>
                               <input
                                 id={`rule-semanas_consecutivas-${rule.id}`}
                                 type="number"
@@ -845,7 +845,7 @@ export const ConfigRules: React.FC = () => {
                           {rule.id === 'autocarga_subir_reps' && (
                             <>
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                <label htmlFor={`rule-rir_umbral-${rule.id}`} style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, cursor: 'pointer' }}>RIR MÍNIMO PARA SUBIR</label>
+                                <label htmlFor={`rule-rir_umbral-${rule.id}`} style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 600, cursor: 'pointer' }}>RIR MÍNIMO PARA SUBIR</label>
                                 <input
                                   id={`rule-rir_umbral-${rule.id}`}
                                   type="number"
@@ -855,7 +855,7 @@ export const ConfigRules: React.FC = () => {
                                 />
                               </div>
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                <label htmlFor={`rule-sesiones_consecutivas-${rule.id}`} style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, cursor: 'pointer' }}>SESIONES CONSECUTIVAS</label>
+                                <label htmlFor={`rule-sesiones_consecutivas-${rule.id}`} style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 600, cursor: 'pointer' }}>SESIONES CONSECUTIVAS</label>
                                 <input
                                   id={`rule-sesiones_consecutivas-${rule.id}`}
                                   type="number"
@@ -869,7 +869,7 @@ export const ConfigRules: React.FC = () => {
 
                           {rule.id === 'autocarga_tut_tiempo' && (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                              <label htmlFor={`rule-sesiones_consecutivas-${rule.id}`} style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, cursor: 'pointer' }}>SESIONES CONSECUTIVAS</label>
+                              <label htmlFor={`rule-sesiones_consecutivas-${rule.id}`} style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 600, cursor: 'pointer' }}>SESIONES CONSECUTIVAS</label>
                               <input
                                 id={`rule-sesiones_consecutivas-${rule.id}`}
                                 type="number"
@@ -883,7 +883,7 @@ export const ConfigRules: React.FC = () => {
                           {rule.id === 'autocarga_descanso_densidad' && (
                             <>
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                <label htmlFor={`rule-umbral_descanso_alto-${rule.id}`} style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, cursor: 'pointer' }}>DESCANSO ALTO (SEG)</label>
+                                <label htmlFor={`rule-umbral_descanso_alto-${rule.id}`} style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 600, cursor: 'pointer' }}>DESCANSO ALTO (SEG)</label>
                                 <input
                                   id={`rule-umbral_descanso_alto-${rule.id}`}
                                   type="number"
@@ -893,7 +893,7 @@ export const ConfigRules: React.FC = () => {
                                 />
                               </div>
                               <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                <label htmlFor={`rule-sesiones_consecutivas-${rule.id}`} style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, cursor: 'pointer' }}>SESIONES CONSECUTIVAS</label>
+                                <label htmlFor={`rule-sesiones_consecutivas-${rule.id}`} style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 600, cursor: 'pointer' }}>SESIONES CONSECUTIVAS</label>
                                 <input
                                   id={`rule-sesiones_consecutivas-${rule.id}`}
                                   type="number"
@@ -907,7 +907,7 @@ export const ConfigRules: React.FC = () => {
 
                           {rule.id === 'autocarga_evolucion_mecanica' && (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                              <label htmlFor={`rule-sesiones_consecutivas-${rule.id}`} style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, cursor: 'pointer' }}>SESIONES CONSECUTIVAS</label>
+                              <label htmlFor={`rule-sesiones_consecutivas-${rule.id}`} style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 600, cursor: 'pointer' }}>SESIONES CONSECUTIVAS</label>
                               <input
                                 id={`rule-sesiones_consecutivas-${rule.id}`}
                                 type="number"
@@ -1034,14 +1034,14 @@ const AddExceptionForm: React.FC<AddExceptionFormProps> = ({ onAdd }) => {
             boxSizing: 'border-box'
           }}
         />
-        <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', fontWeight: 600 }}>Reps</span>
+        <span style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 600 }}>Reps</span>
         <button
           type="button"
           onClick={handleSubmit}
           className="btn btn-ghost"
           style={{
             padding: '0 16px',
-            fontSize: '11px',
+            fontSize: '12px',
             whiteSpace: 'nowrap',
             border: '1px solid rgba(255,255,255,0.1)',
             background: 'rgba(255,255,255,0.03)',

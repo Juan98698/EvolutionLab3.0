@@ -72,11 +72,11 @@ vi.mock('html2canvas', () => ({
 }));
 
 vi.mock('jspdf', () => {
-  const MockJsPDF = vi.fn().mockImplementation(() => ({
+  const MockJsPDF = vi.fn().mockImplementation(function () { return ({
     internal: { pageSize: { getWidth: () => 210, getHeight: () => 297 } },
     addImage: vi.fn(),
     save: vi.fn(),
-  }));
+  }); });
   return {
     default: MockJsPDF,
     jsPDF: MockJsPDF,

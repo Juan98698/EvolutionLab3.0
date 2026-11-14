@@ -224,19 +224,19 @@ export function ProtocolSelectorModal({
         aria-labelledby="protocol-selector-title"
         tabIndex={-1}
         style={{
-          background: '#0d1322', width: '100%', maxWidth: '880px', maxHeight: '90vh',
+          background: '#1a211e', width: '100%', maxWidth: '880px', maxHeight: '90vh',
           borderRadius: '16px', border: '1px solid rgba(255,255,255,0.12)', display: 'flex', flexDirection: 'column',
           overflow: 'hidden', color: '#fff', fontFamily: 'system-ui, sans-serif'
         }}>
         
         {/* Header & Tabs */}
-        <div style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', background: '#111827' }}>
+        <div style={{ borderBottom: '1px solid rgba(255,255,255,0.08)', background: '#1a211e' }}>
           <div style={{ padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
               <h2 id="protocol-selector-title" style={{ margin: 0, fontSize: '18px', color: '#fff' }}>
                 {activeTab === 'scientific' ? (isStrengthBlock ? '🏋️ Protocolos de Fuerza' : '🧪 Protocolos Científicos') : '⭐ Mis Plantillas Guardadas'}
               </h2>
-              <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#94a3b8' }}>
+              <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#a4b0a8' }}>
                 {activeTab === 'scientific' ? (
                   <>Mostrando para: <strong style={{ color: '#00F2FE', textTransform: 'capitalize' }}>{objective}</strong> • <strong style={{ color: '#00F2FE', textTransform: 'capitalize' }}>{level}</strong></>
                 ) : (
@@ -244,7 +244,7 @@ export function ProtocolSelectorModal({
                 )}
               </p>
             </div>
-            <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#94a3b8', cursor: 'pointer', fontSize: '24px' }}>&times;</button>
+            <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#a4b0a8', cursor: 'pointer', fontSize: '24px' }}>&times;</button>
           </div>
 
           {/* Navigation Bar Tabs */}
@@ -254,7 +254,7 @@ export function ProtocolSelectorModal({
               onClick={() => setActiveTab('scientific')}
               style={{
                 padding: '12px 18px', border: 'none', background: 'transparent',
-                color: activeTab === 'scientific' ? '#00F2FE' : '#94a3b8',
+                color: activeTab === 'scientific' ? '#00F2FE' : '#a4b0a8',
                 fontWeight: activeTab === 'scientific' ? 700 : 500, fontSize: '0.85rem',
                 borderBottom: activeTab === 'scientific' ? '2px solid #00F2FE' : '2px solid transparent',
                 cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px'
@@ -267,7 +267,7 @@ export function ProtocolSelectorModal({
               onClick={() => setActiveTab('custom')}
               style={{
                 padding: '12px 18px', border: 'none', background: 'transparent',
-                color: activeTab === 'custom' ? '#00F2FE' : '#94a3b8',
+                color: activeTab === 'custom' ? '#00F2FE' : '#a4b0a8',
                 fontWeight: activeTab === 'custom' ? 700 : 500, fontSize: '0.85rem',
                 borderBottom: activeTab === 'custom' ? '2px solid #00F2FE' : '2px solid transparent',
                 cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '6px'
@@ -286,7 +286,7 @@ export function ProtocolSelectorModal({
             <>
               {/* Sidebar: Lista de protocolos */}
               <div style={{ width: isMobile ? '100%' : '280px', borderRight: isMobile ? 'none' : '1px solid #1e293b', borderBottom: isMobile ? '1px solid #1e293b' : 'none', overflowY: isMobile ? 'visible' : 'auto', padding: '16px', boxSizing: 'border-box' }}>
-                <h3 style={{ fontSize: '11px', textTransform: 'uppercase', color: '#64748b', letterSpacing: '0.05em', marginBottom: '12px' }}>Plantillas Recomendadas</h3>
+                <h3 style={{ fontSize: '12px', textTransform: 'none', color: '#64748b', letterSpacing: '0.05em', marginBottom: '12px' }}>Plantillas Recomendadas</h3>
                 {protocols.map(p => (
                   <button
                     key={p.id}
@@ -304,10 +304,10 @@ export function ProtocolSelectorModal({
                     <div style={{ fontWeight: 600, fontSize: '13px', marginBottom: '4px', color: selectedProtocol?.id === p.id ? '#00F2FE' : '#fff' }}>
                       {p.name}
                     </div>
-                    <div style={{ fontSize: '11px', color: '#94a3b8', marginBottom: '6px' }}>
+                    <div style={{ fontSize: '12px', color: '#a4b0a8', marginBottom: '6px' }}>
                       {p.daysPerWeek} días/semana • Nivel: <span style={{ textTransform: 'capitalize' }}>{p.level}</span>
                     </div>
-                    <div style={{ fontSize: '11px', color: '#cbd5e1', lineHeight: 1.4 }}>
+                    <div style={{ fontSize: '12px', color: '#cbd5e1', lineHeight: 1.4 }}>
                       {p.description}
                     </div>
                   </button>
@@ -318,7 +318,7 @@ export function ProtocolSelectorModal({
               <div style={{ flex: 1, padding: isMobile ? '16px' : '24px', overflowY: isMobile ? 'visible' : 'auto', background: '#090d16', boxSizing: 'border-box' }}>
                 {selectedProtocol ? (
                   <div>
-                    <div style={{ display: 'inline-block', background: 'rgba(0, 242, 254, 0.15)', color: '#00F2FE', padding: '4px 8px', borderRadius: '4px', fontSize: '10px', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '12px' }}>
+                    <div style={{ display: 'inline-block', background: 'rgba(0, 242, 254, 0.15)', color: '#00F2FE', padding: '4px 8px', borderRadius: '4px', fontSize: '12px', fontWeight: 'bold', textTransform: 'none', letterSpacing: '0.05em', marginBottom: '12px' }}>
                       Guía del Mentor Científico
                     </div>
                     <h3 style={{ margin: '0 0 16px 0', fontSize: '20px' }}>¿Por qué este protocolo?</h3>
@@ -335,10 +335,10 @@ export function ProtocolSelectorModal({
                             {day.exercises.map((ex, eIdx) => {
                               const pattern = isStrengthBlock ? detectPatternFromExerciseName(ex.name) : null;
                               return (
-                                <span key={eIdx} style={{ fontSize: '11px', background: '#1c2842', padding: '4px 8px', borderRadius: '4px', color: '#cbd5e1', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                <span key={eIdx} style={{ fontSize: '12px', background: '#1c2842', padding: '4px 8px', borderRadius: '4px', color: '#cbd5e1', display: 'flex', flexDirection: 'column', gap: '2px' }}>
                                   <span>{ex.name} ({ex.sets}x{ex.reps})</span>
                                   {pattern && (
-                                    <span style={{ color: '#f59e0b', fontSize: '10px', opacity: 0.8 }}>
+                                    <span style={{ color: '#f59e0b', fontSize: '12px', opacity: 0.8 }}>
                                       {pattern.replace('_', ' ')}
                                     </span>
                                   )}
@@ -398,7 +398,7 @@ export function ProtocolSelectorModal({
                       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
                         <span style={{
                           fontSize: '0.65rem', fontWeight: 700, padding: '2px 6px', borderRadius: '4px',
-                          textTransform: 'uppercase', background: tpl.objetivo === 'fuerza' ? 'rgba(245, 158, 11, 0.2)' : 'rgba(0, 242, 254, 0.2)',
+                          textTransform: 'none', background: tpl.objetivo === 'fuerza' ? 'rgba(245, 158, 11, 0.2)' : 'rgba(0, 242, 254, 0.2)',
                           color: tpl.objetivo === 'fuerza' ? '#f59e0b' : '#00F2FE'
                         }}>
                           {tpl.objetivo}
@@ -409,7 +409,7 @@ export function ProtocolSelectorModal({
                         {tpl.nombre}
                       </div>
                       {tpl.descripcion && (
-                        <div style={{ fontSize: '11px', color: '#94a3b8', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                        <div style={{ fontSize: '12px', color: '#a4b0a8', overflow: 'hidden', textOverflow: 'ellipsis', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
                           {tpl.descripcion}
                         </div>
                       )}
@@ -453,7 +453,7 @@ export function ProtocolSelectorModal({
                         <div key={day.id || idx} style={{ background: '#131b2e', borderRadius: '10px', padding: '14px', border: '1px solid rgba(255,255,255,0.06)' }}>
                           <div style={{ fontWeight: 700, fontSize: '0.9rem', color: '#00F2FE', marginBottom: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                             <span>{day.name || `Día ${idx + 1}`}</span>
-                            <span style={{ fontSize: '0.75rem', color: '#94a3b8', fontWeight: 400 }}>{(day.exercises || []).length} ejercicios</span>
+                            <span style={{ fontSize: '0.75rem', color: '#a4b0a8', fontWeight: 400 }}>{(day.exercises || []).length} ejercicios</span>
                           </div>
 
                           <div style={{ display: 'grid', gap: '8px' }}>
@@ -471,7 +471,7 @@ export function ProtocolSelectorModal({
                                       </span>
                                     )}
                                   </div>
-                                  <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '2px' }}>
+                                  <div style={{ fontSize: '0.75rem', color: '#a4b0a8', marginTop: '2px' }}>
                                     {ex.grupo_muscular} • {ex.variables['series de trabajo'] || 3} series • {ex.variables['repeticiones'] || '10'} reps {ex.variables['rir'] ? `• RIR ${ex.variables['rir']}` : ''}
                                   </div>
                                 </div>
@@ -494,7 +494,7 @@ export function ProtocolSelectorModal({
         </div>
 
         {/* Footer */}
-        <div style={{ padding: '16px 24px', borderTop: '1px solid rgba(255,255,255,0.08)', background: '#111827', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+        <div style={{ padding: '16px 24px', borderTop: '1px solid rgba(255,255,255,0.08)', background: '#1a211e', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
           <button onClick={onClose} style={{ padding: '8px 16px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.1)', background: 'transparent', color: '#fff', cursor: 'pointer', fontSize: '14px' }}>
             Cancelar
           </button>

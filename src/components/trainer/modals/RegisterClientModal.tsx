@@ -118,30 +118,8 @@ const RegisterClientModal: React.FC<RegisterClientModalProps> = ({
     setLinkSearching(true);
     setLinkPreview(null);
     try {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('id, nombre, email, entrenador_id, rol')
-        .eq('email', linkEmail.trim().toLowerCase())
-        .maybeSingle();
-
-      if (error) throw error;
-      if (!data) {
-        showToast('No se encontró ningún usuario con ese correo.', 'error');
-        return;
-      }
-      if (data.rol === 'entrenador' || data.rol === 'admin') {
-        showToast('Ese usuario es un entrenador o admin, no puede ser vinculado como atleta.', 'error');
-        return;
-      }
-      if (data.entrenador_id && data.entrenador_id !== profile?.id) {
-        showToast('Ese atleta ya está vinculado a otro entrenador.', 'error');
-        return;
-      }
-      if (data.entrenador_id === profile?.id) {
-        showToast('Ese atleta ya está en tu lista.', 'info');
-        return;
-      }
-      setLinkPreview({ id: data.id, nombre: data.nombre, email: data.email });
+      if (!isRealEmailDomain(linkEmail.trim())) throw new Error('Ingresa un correo electrónico válido.');
+      setLinkPreview({ id: linkEmail.trim(), nombre: 'Invitación por correo', email: linkEmail.trim() });
     } catch (err: any) {
       showToast('Error al buscar: ' + err.message, 'error');
     } finally {
@@ -158,32 +136,9 @@ const RegisterClientModal: React.FC<RegisterClientModalProps> = ({
       if (!profile?.id) throw new Error('Sesión de entrenador no válida.');
       await validatePlanLimits();
 
-      const { error } = await supabase
-        .from('profiles')
-        .update({ entrenador_id: profile.id, rol: 'cliente', modalidad: linkModality })
-        .eq('id', linkPreview.id);
-
+      const { error } = await supabase.rpc('request_coach_invitation', { p_email: linkPreview.email, p_modality: linkModality });
       if (error) throw error;
-
-      // ── Notificación push al atleta ──────────────────────────────────────
-      const trainerName = profile.marca?.nombre_display || profile.nombre || 'Tu entrenador';
-      try {
-        await fetch('/api/send-push', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            userId: linkPreview.id,
-            title: '🏋️ ¡Tienes un nuevo entrenador!',
-            body: `${trainerName} te ha vinculado a su equipo en Evolution Lab. Ya puedes ver tu plan de entrenamiento.`,
-            icon: '/icon-192.png',
-            url: '/dashboard'
-          })
-        });
-      } catch {
-        // La notificación es opcional — si falla no bloquea el flujo
-      }
-
-      showToast(`🎉 ¡${linkPreview.nombre} vinculado a tu cuenta exitosamente!`, 'success');
+      showToast('Si el correo corresponde a un atleta disponible, verá tu invitación al entrar. Debe aceptarla para compartir sus datos.', 'success');
       resetAll();
       onClose();
       fetchClientes(true);
@@ -203,7 +158,7 @@ const RegisterClientModal: React.FC<RegisterClientModalProps> = ({
       if (!profile?.id) throw new Error('Sesión de entrenador no válida.');
       await validatePlanLimits();
 
-      const isBypass = profile?.rol === 'admin' || profile?.email === 'jmanuel8.5@outlook.com';
+      const isBypass = profile?.rol === 'admin';
       if (!isBypass && !isRealEmailDomain(newEmail)) {
         throw new Error('Por favor ingresa un correo electrónico real y válido (ej: usuario@gmail.com, usuario@hotmail.com). No se admiten correos temporales ni ficticios.');
       }
@@ -256,8 +211,8 @@ const RegisterClientModal: React.FC<RegisterClientModalProps> = ({
     fontFamily: 'Inter, sans-serif', outline: 'none', boxSizing: 'border-box'
   };
   const labelStyle: React.CSSProperties = {
-    display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.6)',
-    fontWeight: 700, marginBottom: '6px', letterSpacing: '0.5px'
+    display: 'block', fontSize: '12px', color: '#a4b0a8',
+    fontWeight: 700, marginBottom: '6px', letterSpacing: '0'
   };
 
   return (
@@ -265,7 +220,7 @@ const RegisterClientModal: React.FC<RegisterClientModalProps> = ({
       <div
         ref={dialogRef}
         className="modal-box modal-enter"
-        style={{ maxWidth: '460px', width: '90%', border: '1px solid var(--theme-border)', boxShadow: '0 20px 50px var(--theme-glow)' }}
+        style={{ maxWidth: '460px', width: '90%', border: '1px solid var(--theme-border)', boxShadow: 'none' }}
         role="dialog"
         aria-modal="true"
         aria-labelledby="register-client-title"
@@ -274,7 +229,7 @@ const RegisterClientModal: React.FC<RegisterClientModalProps> = ({
 
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '12px', marginBottom: '16px' }}>
-          <h3 id="register-client-title" style={{ margin: 0, fontFamily: "'Orbitron', sans-serif", color: 'var(--theme-primary)', fontSize: '1rem', letterSpacing: '0.5px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <h3 id="register-client-title" style={{ margin: 0, fontFamily: "'Inter', sans-serif", color: 'var(--theme-primary)', fontSize: '1rem', letterSpacing: '0', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
               <circle cx="8.5" cy="7" r="4" />
@@ -283,14 +238,14 @@ const RegisterClientModal: React.FC<RegisterClientModalProps> = ({
             </svg>
             AGREGAR ATLETA
           </h3>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '20px', cursor: 'pointer' }}>&times;</button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#a4b0a8', fontSize: '20px', cursor: 'pointer' }}>&times;</button>
         </div>
 
         {/* Botón compartir link de la app */}
         <div style={{ marginBottom: '16px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '10px', padding: '10px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
-          <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.55)', fontFamily: 'Inter, sans-serif', lineHeight: 1.4 }}>
+          <div style={{ fontSize: '12px', color: '#a4b0a8', fontFamily: 'Inter, sans-serif', lineHeight: 1.4 }}>
             <span style={{ color: 'rgba(255,255,255,0.85)', fontWeight: 600 }}>Link de la app</span><br />
-            <span style={{ fontSize: '10px' }}>{window.location.origin}</span>
+            <span style={{ fontSize: '12px' }}>{window.location.origin}</span>
           </div>
           <button
             type="button"
@@ -298,8 +253,8 @@ const RegisterClientModal: React.FC<RegisterClientModalProps> = ({
             style={{
               padding: '8px 14px', borderRadius: '8px', cursor: 'pointer',
               background: linkCopied ? 'rgba(0,255,136,0.15)' : 'rgba(255,255,255,0.07)',
-              color: linkCopied ? '#00ff88' : 'rgba(255,255,255,0.8)',
-              fontFamily: 'Inter, sans-serif', fontSize: '11px', fontWeight: 700,
+              color: linkCopied ? '#a2c8ae' : 'rgba(255,255,255,0.8)',
+              fontFamily: 'Inter, sans-serif', fontSize: '12px', fontWeight: 700,
               display: 'flex', alignItems: 'center', gap: '6px',
               transition: 'all 0.25s', whiteSpace: 'nowrap',
               border: linkCopied ? '1px solid rgba(0,255,136,0.3)' : '1px solid rgba(255,255,255,0.1)'
@@ -321,10 +276,10 @@ const RegisterClientModal: React.FC<RegisterClientModalProps> = ({
               onClick={() => { setMode(m); setLinkPreview(null); }}
               style={{
                 flex: 1, padding: '8px', borderRadius: '8px', border: 'none', cursor: 'pointer',
-                fontFamily: "'Orbitron', sans-serif", fontSize: '10px', fontWeight: 700, letterSpacing: '0.5px',
+                fontFamily: "'Inter', sans-serif", fontSize: '12px', fontWeight: 700, letterSpacing: '0',
                 transition: 'all 0.2s',
                 background: mode === m ? 'var(--theme-primary)' : 'transparent',
-                color: mode === m ? '#000' : 'rgba(255,255,255,0.5)',
+                color: mode === m ? '#000' : '#a4b0a8',
               }}
             >
               {m === 'crear' ? '➕ NUEVA CUENTA' : '🔗 VINCULAR EXISTENTE'}
@@ -374,7 +329,7 @@ const RegisterClientModal: React.FC<RegisterClientModalProps> = ({
         {/* ── MODO: VINCULAR EXISTENTE ── */}
         {mode === 'vincular' && (
           <form onSubmit={handleLinkClient} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            <div style={{ background: 'rgba(0,212,255,0.04)', border: '1px solid rgba(0,212,255,0.15)', borderRadius: '10px', padding: '12px', fontSize: '12px', color: 'rgba(255,255,255,0.7)', fontFamily: 'Inter, sans-serif', lineHeight: '1.5' }}>
+            <div style={{ background: 'rgba(145, 182, 161,0.04)', border: '1px solid rgba(145, 182, 161,0.15)', borderRadius: '10px', padding: '12px', fontSize: '12px', color: 'rgba(255,255,255,0.7)', fontFamily: 'Inter, sans-serif', lineHeight: '1.5' }}>
               💡 Usa esto cuando un atleta ya tiene cuenta en Evolution Lab (como atleta autónomo) y quiere contratarte como entrenador. Ingresa su correo registrado y vincúlalo a tu lista.
             </div>
 
@@ -408,13 +363,13 @@ const RegisterClientModal: React.FC<RegisterClientModalProps> = ({
             {/* Preview del atleta encontrado */}
             {linkPreview && (
               <div style={{ background: 'rgba(0,255,136,0.06)', border: '1px solid rgba(0,255,136,0.2)', borderRadius: '10px', padding: '14px', display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(0,255,136,0.15)', border: '1.5px solid rgba(0,255,136,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 800, color: '#00ff88', fontFamily: "'Orbitron', sans-serif", flexShrink: 0 }}>
+                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(0,255,136,0.15)', border: '1.5px solid rgba(0,255,136,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '14px', fontWeight: 800, color: '#a2c8ae', fontFamily: "'Inter', sans-serif", flexShrink: 0 }}>
                   {linkPreview.nombre.split(' ').map(w => w[0]).join('').substring(0, 2).toUpperCase()}
                 </div>
                 <div>
-                  <div style={{ fontSize: '13px', fontWeight: 700, color: 'white', fontFamily: "'Orbitron', sans-serif" }}>{linkPreview.nombre}</div>
-                  <div style={{ fontSize: '11px', color: 'rgba(0,255,136,0.8)', fontFamily: 'Inter, sans-serif', marginTop: '2px' }}>✓ Atleta encontrado — listo para vincular</div>
-                  <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', fontFamily: 'Inter, sans-serif', marginTop: '1px' }}>{linkPreview.email}</div>
+                  <div style={{ fontSize: '13px', fontWeight: 700, color: 'white', fontFamily: "'Inter', sans-serif" }}>{linkPreview.nombre}</div>
+                  <div style={{ fontSize: '12px', color: 'rgba(0,255,136,0.8)', fontFamily: 'Inter, sans-serif', marginTop: '2px' }}>El atleta deberá aceptar antes de compartir sus datos</div>
+                  <div style={{ fontSize: '12px', color: '#a4b0a8', fontFamily: 'Inter, sans-serif', marginTop: '1px' }}>{linkPreview.email}</div>
                 </div>
               </div>
             )}
@@ -435,7 +390,7 @@ const RegisterClientModal: React.FC<RegisterClientModalProps> = ({
               disabled={registerLoading || !linkPreview}
               style={{ marginTop: '4px', opacity: !linkPreview ? 0.4 : 1 }}
             >
-              <span>{registerLoading ? 'VINCULANDO...' : '🔗 Vincular Atleta'}</span>
+              <span>{registerLoading ? 'Enviando...' : 'Enviar invitación'}</span>
             </button>
           </form>
         )}

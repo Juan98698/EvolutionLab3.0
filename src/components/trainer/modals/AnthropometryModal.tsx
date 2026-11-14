@@ -293,7 +293,7 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
       <div
         ref={dialogRef}
         className="modal-box modal-enter"
-        style={{ maxWidth: '850px', width: '95%', maxHeight: '90vh', overflowY: 'auto', border: '1px solid var(--theme-border)', boxShadow: '0 20px 50px var(--theme-glow)', background: '#0b0f19' }}
+        style={{ maxWidth: '850px', width: '95%', maxHeight: '90vh', overflowY: 'auto', border: '1px solid var(--theme-border)', boxShadow: 'none', background: '#121716' }}
         role="dialog"
         aria-modal="true"
         aria-labelledby="anthropometry-title"
@@ -302,25 +302,25 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '14px', marginBottom: '16px' }}>
           <div>
-            <h3 id="anthropometry-title" style={{ margin: 0, fontFamily: "'Orbitron', sans-serif", color: 'var(--theme-primary)', fontSize: '1.1rem', letterSpacing: '0.5px' }}>
+            <h3 id="anthropometry-title" style={{ margin: 0, fontFamily: "'Inter', sans-serif", color: 'var(--theme-primary)', fontSize: '1.1rem', letterSpacing: '0' }}>
               📐 VALORACIÓN ANTROPOMÉTRICA & MACROS
             </h3>
-            <p style={{ margin: '4px 0 0', fontSize: '11px', color: 'rgba(255,255,255,0.6)' }}>
+            <p style={{ margin: '4px 0 0', fontSize: '12px', color: '#a4b0a8' }}>
               Atleta: <strong style={{ color: 'white' }}>{atleta.nombre}</strong> ({atleta.email})
             </p>
           </div>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '24px', cursor: 'pointer' }}>&times;</button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#a4b0a8', fontSize: '24px', cursor: 'pointer' }}>&times;</button>
         </div>
 
         {/* Desplegable de Método Antropométrico */}
         <div style={{ marginBottom: '16px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '10px', padding: '12px' }}>
-          <label style={{ display: 'block', fontSize: '11px', fontWeight: 800, fontFamily: 'Orbitron, sans-serif', color: '#00d4ff', marginBottom: '6px' }}>
+          <label style={{ display: 'block', fontSize: '12px', fontWeight: 800, fontFamily: 'Inter, sans-serif', color: '#91b6a1', marginBottom: '6px' }}>
             SELECCIONA EL MÉTODO DE EVALUACIÓN:
           </label>
           <select
             value={metodo}
             onChange={(e) => setMetodo(e.target.value as any)}
-            style={{ width: '100%', background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(0,212,255,0.3)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '13px', fontFamily: 'Inter, sans-serif' }}
+            style={{ width: '100%', background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(145, 182, 161,0.3)', borderRadius: '8px', color: 'white', padding: '10px', fontSize: '13px', fontFamily: 'Inter, sans-serif' }}
           >
             <option value="Yuhasz">Rose Guimares (YUHASZ) — 6 Pliegues (Estándar Deportivo)</option>
             <option value="Faulkner">Rose Guimares (FAULKNER) — 4 Pliegues</option>
@@ -332,19 +332,19 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
         <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '8px' }}>
           <button
             onClick={() => setActiveTab('medidas')}
-            style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', background: activeTab === 'medidas' ? 'var(--theme-primary)' : 'transparent', color: activeTab === 'medidas' ? '#000' : '#fff', fontWeight: 800, fontFamily: 'Orbitron, sans-serif', fontSize: '11px', cursor: 'pointer' }}
+            style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', background: activeTab === 'medidas' ? 'var(--theme-primary)' : 'transparent', color: activeTab === 'medidas' ? '#000' : '#fff', fontWeight: 800, fontFamily: 'Inter, sans-serif', fontSize: '12px', cursor: 'pointer' }}
           >
             1. MEDIDAS Y PLIEGUES
           </button>
           <button
             onClick={() => setActiveTab('macros')}
-            style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', background: activeTab === 'macros' ? 'var(--theme-primary)' : 'transparent', color: activeTab === 'macros' ? '#000' : '#fff', fontWeight: 800, fontFamily: 'Orbitron, sans-serif', fontSize: '11px', cursor: 'pointer' }}
+            style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', background: activeTab === 'macros' ? 'var(--theme-primary)' : 'transparent', color: activeTab === 'macros' ? '#000' : '#fff', fontWeight: 800, fontFamily: 'Inter, sans-serif', fontSize: '12px', cursor: 'pointer' }}
           >
             2. BALANCE Y MACROS
           </button>
           <button
             onClick={() => setActiveTab('resultados')}
-            style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', background: activeTab === 'resultados' ? 'var(--theme-primary)' : 'transparent', color: activeTab === 'resultados' ? '#000' : '#fff', fontWeight: 800, fontFamily: 'Orbitron, sans-serif', fontSize: '11px', cursor: 'pointer' }}
+            style={{ padding: '8px 16px', borderRadius: '8px', border: 'none', background: activeTab === 'resultados' ? 'var(--theme-primary)' : 'transparent', color: activeTab === 'resultados' ? '#000' : '#fff', fontWeight: 800, fontFamily: 'Inter, sans-serif', fontSize: '12px', cursor: 'pointer' }}
           >
             3. RESULTADOS & SOMATOCARTA
           </button>
@@ -355,26 +355,26 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px' }}>
               <div>
-                <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)', display: 'block', marginBottom: '4px' }}>PESO (KG)</label>
+                <label style={{ fontSize: '12px', color: '#a4b0a8', display: 'block', marginBottom: '4px' }}>PESO (KG)</label>
                 <input type="number" value={peso} onChange={(e) => handleNumInput(e.target.value, setPeso)} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '8px', boxSizing: 'border-box' }} />
               </div>
               <div>
-                <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)', display: 'block', marginBottom: '4px' }}>ESTATURA (CM)</label>
+                <label style={{ fontSize: '12px', color: '#a4b0a8', display: 'block', marginBottom: '4px' }}>ESTATURA (CM)</label>
                 <input type="number" value={estatura} onChange={(e) => handleNumInput(e.target.value, setEstatura)} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '8px', boxSizing: 'border-box' }} />
               </div>
               <div>
-                <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)', display: 'block', marginBottom: '4px' }}>EDAD</label>
+                <label style={{ fontSize: '12px', color: '#a4b0a8', display: 'block', marginBottom: '4px' }}>EDAD</label>
                 <input type="number" value={edad} onChange={(e) => handleNumInput(e.target.value, setEdad)} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '8px', boxSizing: 'border-box' }} />
               </div>
               <div>
-                <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)', display: 'block', marginBottom: '4px' }}>SEXO / GÉNERO</label>
+                <label style={{ fontSize: '12px', color: '#a4b0a8', display: 'block', marginBottom: '4px' }}>SEXO / GÉNERO</label>
                 <select value={genero} onChange={(e) => setGenero(e.target.value as any)} style={{ width: '100%', background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '8px', boxSizing: 'border-box' }}>
                   <option value="masculino">👨 Masculino</option>
                   <option value="femenino">👩 Femenino</option>
                 </select>
               </div>
               <div>
-                <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)', display: 'block', marginBottom: '4px' }}>FRECUENCIA DE ENTRENO</label>
+                <label style={{ fontSize: '12px', color: '#a4b0a8', display: 'block', marginBottom: '4px' }}>FRECUENCIA DE ENTRENO</label>
                 <select value={frecuenciaEntreno} onChange={(e) => setFrecuenciaEntreno(e.target.value)} style={{ width: '100%', background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '8px', boxSizing: 'border-box' }}>
                   <option value="1-2">1-2 días/sem (Baja x1.20)</option>
                   <option value="3-4">3-4 días/sem (Moderada x1.45)</option>
@@ -383,7 +383,7 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
                 </select>
               </div>
               <div>
-                <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)', display: 'block', marginBottom: '4px' }}>OBJETIVO DEL ATLETA</label>
+                <label style={{ fontSize: '12px', color: '#a4b0a8', display: 'block', marginBottom: '4px' }}>OBJETIVO DEL ATLETA</label>
                 <select value={objetivo} onChange={(e) => handleObjetivoChange(e.target.value)} style={{ width: '100%', background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '8px', boxSizing: 'border-box' }}>
                   <option value="Recomposición Corporal">Recomposición Corporal (0%)</option>
                   <option value="Pérdida de Grasa (Déficit)">Pérdida de Grasa (-15%)</option>
@@ -394,7 +394,7 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
               </div>
               {metodo === 'ISAK' && (
                 <div>
-                  <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)', display: 'block', marginBottom: '4px' }}>ESTATURA SENTADO (CM)</label>
+                  <label style={{ fontSize: '12px', color: '#a4b0a8', display: 'block', marginBottom: '4px' }}>ESTATURA SENTADO (CM)</label>
                   <input type="number" value={estaturaSentado} onChange={(e) => handleNumInput(e.target.value, setEstaturaSentado)} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '8px', boxSizing: 'border-box' }} />
                 </div>
               )}
@@ -402,40 +402,40 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
 
             {/* Pliegues Cutáneos */}
             <div>
-              <h4 style={{ fontSize: '11px', fontFamily: 'Orbitron, sans-serif', color: '#00d4ff', margin: '12px 0 8px' }}>PLIEGUES CUTÁNEOS (MM)</h4>
+              <h4 style={{ fontSize: '12px', fontFamily: 'Inter, sans-serif', color: '#91b6a1', margin: '12px 0 8px' }}>PLIEGUES CUTÁNEOS (MM)</h4>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px' }}>
                 <div>
-                  <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Tríceps</label>
+                  <label style={{ fontSize: '12px', color: '#a4b0a8' }}>Tríceps</label>
                   <input type="number" value={pliegues.triceps} onChange={(e) => handleNestedNumInput('triceps', e.target.value, pliegues, setPliegues)} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
                 </div>
                 <div>
-                  <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Subescapular</label>
+                  <label style={{ fontSize: '12px', color: '#a4b0a8' }}>Subescapular</label>
                   <input type="number" value={pliegues.subescapular} onChange={(e) => handleNestedNumInput('subescapular', e.target.value, pliegues, setPliegues)} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
                 </div>
                 <div>
-                  <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Suprailíaco</label>
+                  <label style={{ fontSize: '12px', color: '#a4b0a8' }}>Suprailíaco</label>
                   <input type="number" value={pliegues.suprailiaco} onChange={(e) => handleNestedNumInput('suprailiaco', e.target.value, pliegues, setPliegues)} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
                 </div>
                 <div>
-                  <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Abdominal</label>
+                  <label style={{ fontSize: '12px', color: '#a4b0a8' }}>Abdominal</label>
                   <input type="number" value={pliegues.abdominal} onChange={(e) => handleNestedNumInput('abdominal', e.target.value, pliegues, setPliegues)} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
                 </div>
                 <div>
-                  <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Muslo</label>
+                  <label style={{ fontSize: '12px', color: '#a4b0a8' }}>Muslo</label>
                   <input type="number" value={pliegues.muslo} onChange={(e) => handleNestedNumInput('muslo', e.target.value, pliegues, setPliegues)} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
                 </div>
                 <div>
-                  <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Pantorrilla</label>
+                  <label style={{ fontSize: '12px', color: '#a4b0a8' }}>Pantorrilla</label>
                   <input type="number" value={pliegues.pantorrilla} onChange={(e) => handleNestedNumInput('pantorrilla', e.target.value, pliegues, setPliegues)} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
                 </div>
                 {metodo === 'ISAK' && (
                   <>
                     <div>
-                      <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Antebrazo</label>
+                      <label style={{ fontSize: '12px', color: '#a4b0a8' }}>Antebrazo</label>
                       <input type="number" value={pliegues.antebrazo} onChange={(e) => handleNestedNumInput('antebrazo', e.target.value, pliegues, setPliegues)} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
                     </div>
                     <div>
-                      <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Supraespinal</label>
+                      <label style={{ fontSize: '12px', color: '#a4b0a8' }}>Supraespinal</label>
                       <input type="number" value={pliegues.supraespinal} onChange={(e) => handleNestedNumInput('supraespinal', e.target.value, pliegues, setPliegues)} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
                     </div>
                   </>
@@ -445,39 +445,39 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
 
             {/* Perímetros Corporales */}
             <div>
-              <h4 style={{ fontSize: '11px', fontFamily: 'Orbitron, sans-serif', color: '#00d4ff', margin: '12px 0 8px' }}>PERÍMETROS CORPORALES (CM)</h4>
+              <h4 style={{ fontSize: '12px', fontFamily: 'Inter, sans-serif', color: '#91b6a1', margin: '12px 0 8px' }}>PERÍMETROS CORPORALES (CM)</h4>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px' }}>
                 <div>
-                  <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Brazo</label>
+                  <label style={{ fontSize: '12px', color: '#a4b0a8' }}>Brazo</label>
                   <input type="number" value={perimetros.brazo} onChange={(e) => handleNestedNumInput('brazo', e.target.value, perimetros, setPerimetros)} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
                 </div>
                 <div>
-                  <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Brazo Contraído</label>
+                  <label style={{ fontSize: '12px', color: '#a4b0a8' }}>Brazo Contraído</label>
                   <input type="number" value={perimetros.brazo_contraido} onChange={(e) => handleNestedNumInput('brazo_contraido', e.target.value, perimetros, setPerimetros)} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
                 </div>
                 <div>
-                  <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Tórax</label>
+                  <label style={{ fontSize: '12px', color: '#a4b0a8' }}>Tórax</label>
                   <input type="number" value={perimetros.torax} onChange={(e) => handleNestedNumInput('torax', e.target.value, perimetros, setPerimetros)} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
                 </div>
                 <div>
-                  <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Cintura</label>
+                  <label style={{ fontSize: '12px', color: '#a4b0a8' }}>Cintura</label>
                   <input type="number" value={perimetros.cintura} onChange={(e) => handleNestedNumInput('cintura', e.target.value, perimetros, setPerimetros)} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
                 </div>
                 <div>
-                  <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Cadera</label>
+                  <label style={{ fontSize: '12px', color: '#a4b0a8' }}>Cadera</label>
                   <input type="number" value={perimetros.cadera} onChange={(e) => handleNestedNumInput('cadera', e.target.value, perimetros, setPerimetros)} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
                 </div>
                 <div>
-                  <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Muslo</label>
+                  <label style={{ fontSize: '12px', color: '#a4b0a8' }}>Muslo</label>
                   <input type="number" value={perimetros.muslo} onChange={(e) => handleNestedNumInput('muslo', e.target.value, perimetros, setPerimetros)} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
                 </div>
                 <div>
-                  <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Pantorrilla</label>
+                  <label style={{ fontSize: '12px', color: '#a4b0a8' }}>Pantorrilla</label>
                   <input type="number" value={perimetros.pantorrilla} onChange={(e) => handleNestedNumInput('pantorrilla', e.target.value, perimetros, setPerimetros)} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
                 </div>
                 {metodo === 'ISAK' && (
                   <div>
-                    <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Perímetro Cefálico</label>
+                    <label style={{ fontSize: '12px', color: '#a4b0a8' }}>Perímetro Cefálico</label>
                     <input type="number" value={perimetros.cefalico} onChange={(e) => handleNestedNumInput('cefalico', e.target.value, perimetros, setPerimetros)} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
                   </div>
                 )}
@@ -486,24 +486,24 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
 
             {/* Diámetros Óseos */}
             <div>
-              <h4 style={{ fontSize: '11px', fontFamily: 'Orbitron, sans-serif', color: '#00d4ff', margin: '12px 0 8px' }}>DIÁMETROS ÓSEOS (CM)</h4>
+              <h4 style={{ fontSize: '12px', fontFamily: 'Inter, sans-serif', color: '#91b6a1', margin: '12px 0 8px' }}>DIÁMETROS ÓSEOS (CM)</h4>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px' }}>
                 <div>
-                  <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Codo</label>
+                  <label style={{ fontSize: '12px', color: '#a4b0a8' }}>Codo</label>
                   <input type="number" step="0.1" value={diametros.codo} onChange={(e) => handleNestedNumInput('codo', e.target.value, diametros, setDiametros)} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
                 </div>
                 <div>
-                  <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Rodilla</label>
+                  <label style={{ fontSize: '12px', color: '#a4b0a8' }}>Rodilla</label>
                   <input type="number" step="0.1" value={diametros.rodilla} onChange={(e) => handleNestedNumInput('rodilla', e.target.value, diametros, setDiametros)} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
                 </div>
                 <div>
-                  <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Anteroposterior (Muñeca)</label>
+                  <label style={{ fontSize: '12px', color: '#a4b0a8' }}>Anteroposterior (Muñeca)</label>
                   <input type="number" step="0.1" value={diametros.anteroposterior} onChange={(e) => handleNestedNumInput('anteroposterior', e.target.value, diametros, setDiametros)} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
                 </div>
                 {metodo === 'ISAK' && (
                   <>
                     <div>
-                      <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Biiliocrestal</label>
+                      <label style={{ fontSize: '12px', color: '#a4b0a8' }}>Biiliocrestal</label>
                       <input type="number" step="0.1" value={diametros.biiliocrestal || diametros.biliocrestal} onChange={(e) => {
                         handleNestedNumInput('biiliocrestal', e.target.value, diametros, (newD) => {
                           setDiametros({ ...newD, biliocrestal: newD.biiliocrestal });
@@ -511,11 +511,11 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
                       }} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
                     </div>
                     <div>
-                      <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Biacromial</label>
+                      <label style={{ fontSize: '12px', color: '#a4b0a8' }}>Biacromial</label>
                       <input type="number" step="0.1" value={diametros.biacromial} onChange={(e) => handleNestedNumInput('biacromial', e.target.value, diametros, setDiametros)} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
                     </div>
                     <div>
-                      <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Transversal</label>
+                      <label style={{ fontSize: '12px', color: '#a4b0a8' }}>Transversal</label>
                       <input type="number" step="0.1" value={diametros.transversal} onChange={(e) => handleNestedNumInput('transversal', e.target.value, diametros, setDiametros)} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '6px' }} />
                     </div>
                   </>
@@ -530,15 +530,15 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
           <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '12px' }}>
               <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', padding: '10px', borderRadius: '8px' }}>
-                <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>BMR (Gasto Basal)</span>
-                <h4 style={{ margin: '4px 0 0', fontSize: '16px', color: '#00d4ff' }}>{computed.bmr} kcal</h4>
+                <span style={{ fontSize: '12px', color: '#a4b0a8' }}>BMR (Gasto Basal)</span>
+                <h4 style={{ margin: '4px 0 0', fontSize: '16px', color: '#91b6a1' }}>{computed.bmr} kcal</h4>
               </div>
               <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', padding: '10px', borderRadius: '8px' }}>
-                <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>TDEE (Mantenimiento)</span>
+                <span style={{ fontSize: '12px', color: '#a4b0a8' }}>TDEE (Mantenimiento)</span>
                 <h4 style={{ margin: '4px 0 0', fontSize: '16px', color: '#00ff99' }}>{computed.tdee} kcal</h4>
               </div>
               <div style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.08)', padding: '10px', borderRadius: '8px' }}>
-                <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.6)' }}>Ajuste Calórico (%)</span>
+                <span style={{ fontSize: '12px', color: '#a4b0a8' }}>Ajuste Calórico (%)</span>
                 <input
                   type="number"
                   value={ajusteCaloricoPct}
@@ -550,26 +550,26 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
               <div>
-                <label style={{ fontSize: '11px', color: '#3b82f6', fontWeight: 800 }}>PROTEÍNA (G / KG PESO)</label>
+                <label style={{ fontSize: '12px', color: '#3b82f6', fontWeight: 800 }}>PROTEÍNA (G / KG PESO)</label>
                 <input type="number" step="0.1" value={gProteinaKg} onChange={(e) => handleNumInput(e.target.value, setGProteinaKg)} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '8px' }} />
-                <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)' }}>Total: {computed.macros?.proteina.grams}g ({computed.macros?.proteina.calories} kcal)</span>
+                <span style={{ fontSize: '12px', color: '#a4b0a8' }}>Total: {computed.macros?.proteina.grams}g ({computed.macros?.proteina.calories} kcal)</span>
               </div>
               <div>
-                <label style={{ fontSize: '11px', color: '#f59e0b', fontWeight: 800 }}>GRASA (G / KG PESO)</label>
+                <label style={{ fontSize: '12px', color: '#f59e0b', fontWeight: 800 }}>GRASA (G / KG PESO)</label>
                 <input type="number" step="0.1" value={gGrasaKg} onChange={(e) => handleNumInput(e.target.value, setGGrasaKg)} style={{ width: '100%', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: 'white', padding: '8px' }} />
-                <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)' }}>Total: {computed.macros?.grasa.grams}g ({computed.macros?.grasa.calories} kcal)</span>
+                <span style={{ fontSize: '12px', color: '#a4b0a8' }}>Total: {computed.macros?.grasa.grams}g ({computed.macros?.grasa.calories} kcal)</span>
               </div>
               <div>
-                <label style={{ fontSize: '11px', color: '#10b981', fontWeight: 800 }}>CARBOHIDRATOS (RESTANTE)</label>
+                <label style={{ fontSize: '12px', color: '#10b981', fontWeight: 800 }}>CARBOHIDRATOS (RESTANTE)</label>
                 <div style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '6px', color: '#10b981', padding: '8px', fontWeight: 800 }}>
                   {computed.macros?.carbohidratos.gPerKg} g/kg ({computed.macros?.carbohidratos.grams}g)
                 </div>
-                <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)' }}>Total: {computed.macros?.carbohidratos.calories} kcal ({computed.macros?.carbohidratos.percentage}%)</span>
+                <span style={{ fontSize: '12px', color: '#a4b0a8' }}>Total: {computed.macros?.carbohidratos.calories} kcal ({computed.macros?.carbohidratos.percentage}%)</span>
               </div>
             </div>
 
-            <div style={{ background: 'rgba(0,212,255,0.08)', border: '1px solid rgba(0,212,255,0.2)', padding: '12px', borderRadius: '8px', textAlign: 'center', fontFamily: 'Orbitron, sans-serif' }}>
-              <span style={{ fontSize: '12px', color: '#00d4ff', fontWeight: 800 }}>OBJETIVO DE LA DIETA: {computed.target_calorias} KCAL / DÍA</span>
+            <div style={{ background: 'rgba(145, 182, 161,0.08)', border: '1px solid rgba(145, 182, 161,0.2)', padding: '12px', borderRadius: '8px', textAlign: 'center', fontFamily: 'Inter, sans-serif' }}>
+              <span style={{ fontSize: '12px', color: '#91b6a1', fontWeight: 800 }}>OBJETIVO DE LA DIETA: {computed.target_calorias} KCAL / DÍA</span>
             </div>
 
             {onOpenNutritionPlan && (
@@ -579,16 +579,16 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
                   onClick={() => onOpenNutritionPlan(atleta, computed)}
                   style={{
                     width: '100%',
-                    background: 'linear-gradient(135deg, rgba(0, 212, 255, 0.2) 0%, rgba(16, 185, 129, 0.2) 100%)',
-                    border: '1px solid #00d4ff',
+                    background: 'linear-gradient(135deg, rgba(145, 182, 161, 0.2) 0%, rgba(16, 185, 129, 0.2) 100%)',
+                    border: '1px solid #91b6a1',
                     borderRadius: '8px',
-                    color: '#00d4ff',
+                    color: '#91b6a1',
                     padding: '12px 18px',
                     fontSize: '12px',
                     fontWeight: 800,
-                    fontFamily: "'Orbitron', sans-serif",
+                    fontFamily: "'Inter', sans-serif",
                     cursor: 'pointer',
-                    boxShadow: '0 4px 14px rgba(0, 212, 255, 0.25)',
+                    boxShadow: 'none',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -633,8 +633,8 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
             </div>
 
             {/* Diagnóstico explicativo en el modal */}
-            <div style={{ background: 'rgba(0, 212, 255, 0.05)', border: '1px solid rgba(0, 212, 255, 0.2)', borderRadius: '12px', padding: '14px' }}>
-              <h4 style={{ margin: '0 0 6px', fontSize: '11px', fontWeight: 800, color: '#00d4ff', fontFamily: 'Orbitron, sans-serif' }}>
+            <div style={{ background: 'rgba(145, 182, 161, 0.05)', border: '1px solid rgba(145, 182, 161, 0.2)', borderRadius: '12px', padding: '14px' }}>
+              <h4 style={{ margin: '0 0 6px', fontSize: '12px', fontWeight: 800, color: '#91b6a1', fontFamily: 'Inter, sans-serif' }}>
                 💡 DIAGNÓSTICO DEL SOMATOTIPO PARA EL ATLETA:
               </h4>
               <p style={{ margin: 0, fontSize: '12px', color: 'rgba(255,255,255,0.85)', lineHeight: '1.5' }}>
@@ -650,10 +650,10 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
             {/* Previsualización del PDF de 3 páginas en vivo */}
             <div style={{ background: '#334155', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '12px', padding: '16px', overflow: 'hidden' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
-                <span style={{ fontSize: '11px', color: '#cbd5e1', fontWeight: 800, fontFamily: "'Orbitron', sans-serif" }}>
+                <span style={{ fontSize: '12px', color: '#cbd5e1', fontWeight: 800, fontFamily: "'Inter', sans-serif" }}>
                   📋 PREVISUALIZACIÓN EN VIVO DEL INFORME PDF (3 PÁGINAS)
                 </span>
-                <span style={{ fontSize: '10px', color: '#94a3b8', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <span style={{ fontSize: '12px', color: '#a4b0a8', fontStyle: 'italic', display: 'flex', alignItems: 'center', gap: '4px' }}>
                   👈 Desliza horizontalmente para ver el documento completo 👉
                 </span>
               </div>
@@ -676,19 +676,19 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
         {/* Acciones del Modal por Pestaña */}
         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '20px', borderTop: '1px solid rgba(255,255,255,0.08)', paddingTop: '16px' }}>
           {activeTab === 'medidas' && (
-            <button onClick={() => setActiveTab('macros')} style={{ padding: '10px 18px', borderRadius: '8px', border: '1px solid rgba(0,212,255,0.4)', background: 'rgba(0,212,255,0.1)', color: '#00d4ff', fontWeight: 800, cursor: 'pointer', fontFamily: 'Orbitron, sans-serif', fontSize: '11px' }}>
+            <button onClick={() => setActiveTab('macros')} style={{ padding: '10px 18px', borderRadius: '8px', border: '1px solid rgba(145, 182, 161,0.4)', background: 'rgba(145, 182, 161,0.1)', color: '#91b6a1', fontWeight: 800, cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontSize: '12px' }}>
               SIGUIENTE: BALANCE Y MACROS ➔
             </button>
           )}
 
           {activeTab === 'macros' && (
-            <button onClick={() => setActiveTab('resultados')} style={{ padding: '10px 18px', borderRadius: '8px', border: '1px solid rgba(0,212,255,0.4)', background: 'rgba(0,212,255,0.1)', color: '#00d4ff', fontWeight: 800, cursor: 'pointer', fontFamily: 'Orbitron, sans-serif', fontSize: '11px' }}>
+            <button onClick={() => setActiveTab('resultados')} style={{ padding: '10px 18px', borderRadius: '8px', border: '1px solid rgba(145, 182, 161,0.4)', background: 'rgba(145, 182, 161,0.1)', color: '#91b6a1', fontWeight: 800, cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontSize: '12px' }}>
               SIGUIENTE: RESULTADOS & SOMATOCARTA ➔
             </button>
           )}
 
           {activeTab === 'resultados' && (
-            <button onClick={handleDownloadPDF} disabled={downloadingPdf} style={{ padding: '10px 18px', borderRadius: '8px', border: '1px solid rgba(0,212,255,0.4)', background: 'rgba(0,212,255,0.1)', color: '#00d4ff', fontWeight: 800, cursor: 'pointer', fontFamily: 'Orbitron, sans-serif', fontSize: '11px' }}>
+            <button onClick={handleDownloadPDF} disabled={downloadingPdf} style={{ padding: '10px 18px', borderRadius: '8px', border: '1px solid rgba(145, 182, 161,0.4)', background: 'rgba(145, 182, 161,0.1)', color: '#91b6a1', fontWeight: 800, cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontSize: '12px' }}>
               {downloadingPdf ? 'GENERANDO PDF...' : '📄 DESCARGAR PDF MARCA BLANCA'}
             </button>
           )}
@@ -705,8 +705,8 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
                 color: '#34d399',
                 fontWeight: 800,
                 cursor: 'pointer',
-                fontFamily: 'Orbitron, sans-serif',
-                fontSize: '11px',
+                fontFamily: 'Inter, sans-serif',
+                fontSize: '12px',
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '6px'
@@ -716,7 +716,7 @@ export const AnthropometryModal: React.FC<AnthropometryModalProps> = ({
             </button>
           )}
 
-          <button onClick={handleSave} disabled={saving} style={{ padding: '10px 20px', borderRadius: '8px', border: 'none', background: 'var(--theme-primary)', color: '#000', fontWeight: 900, cursor: 'pointer', fontFamily: 'Orbitron, sans-serif', fontSize: '11px' }}>
+          <button onClick={handleSave} disabled={saving} style={{ padding: '10px 20px', borderRadius: '8px', border: 'none', background: 'var(--theme-primary)', color: '#000', fontWeight: 900, cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontSize: '12px' }}>
             {saving ? 'GUARDANDO...' : '💾 GUARDAR VALORACIÓN'}
           </button>
         </div>

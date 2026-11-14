@@ -1,3 +1,4 @@
+import { persistPlanSnapshot } from '../../lib/planCache';
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
@@ -51,7 +52,7 @@ const NumberStepper: React.FC<NumberStepperProps> = ({ value, min, max, onChange
           touchAction: 'manipulation'
         }}
         onMouseEnter={(e) => {
-          if (value > min) e.currentTarget.style.background = 'rgba(0, 212, 255, 0.08)';
+          if (value > min) e.currentTarget.style.background = 'rgba(145, 182, 161, 0.08)';
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.background = 'rgba(255,255,255,0.01)';
@@ -78,7 +79,7 @@ const NumberStepper: React.FC<NumberStepperProps> = ({ value, min, max, onChange
           textAlign: 'center',
           fontSize: '15px',
           fontWeight: '700',
-          fontFamily: "'Orbitron', sans-serif",
+          fontFamily: "'Inter', sans-serif",
           width: '50px',
           height: '100%',
           outline: 'none',
@@ -108,7 +109,7 @@ const NumberStepper: React.FC<NumberStepperProps> = ({ value, min, max, onChange
           touchAction: 'manipulation'
         }}
         onMouseEnter={(e) => {
-          if (value < max) e.currentTarget.style.background = 'rgba(0, 212, 255, 0.08)';
+          if (value < max) e.currentTarget.style.background = 'rgba(145, 182, 161, 0.08)';
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.background = 'rgba(255,255,255,0.01)';
@@ -177,14 +178,14 @@ const AddExceptionForm: React.FC<AddExceptionFormProps> = ({ onAdd }) => {
             boxSizing: 'border-box'
           }}
         />
-        <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', fontWeight: 600 }}>Reps</span>
+        <span style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 600 }}>Reps</span>
         <button
           type="button"
           onClick={handleSubmit}
           className="btn btn-ghost"
           style={{
             padding: '0 16px',
-            fontSize: '11px',
+            fontSize: '12px',
             whiteSpace: 'nowrap',
             border: '1px solid var(--theme-border)',
             background: 'var(--theme-badge-bg)',
@@ -238,8 +239,8 @@ const paramInputStyle: React.CSSProperties = {
 };
 
 const paramLabelStyle: React.CSSProperties = {
-  fontSize: '10px',
-  color: 'rgba(255,255,255,0.5)',
+  fontSize: '12px',
+  color: '#a4b0a8',
   fontWeight: 600
 };
 
@@ -404,7 +405,7 @@ export const SoloConfigRules: React.FC = () => {
       // Cache updated plan to localStorage
       try {
         const cachedPlan = { ...existingPlan, datos_plan: updatedDatosPlan };
-        localStorage.setItem('pwa_client_plan', JSON.stringify(cachedPlan));
+        persistPlanSnapshot(cachedPlan, user!.id);
       } catch (e) {
         console.warn('No se pudo cachear el plan:', e);
       }
@@ -436,7 +437,7 @@ export const SoloConfigRules: React.FC = () => {
                 color: 'var(--theme-primary)',
                 fontSize: '12px',
                 cursor: 'pointer',
-                fontFamily: "'Orbitron', sans-serif",
+                fontFamily: "'Inter', sans-serif",
                 padding: '8px 12px',
                 borderRadius: '8px'
               }}
@@ -444,10 +445,10 @@ export const SoloConfigRules: React.FC = () => {
               ← Volver
             </button>
             <div>
-              <h1 style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '15px', fontWeight: 800, margin: 0, letterSpacing: '1px', background: 'var(--theme-btn-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              <h1 style={{ fontFamily: "'Inter', sans-serif", fontSize: '15px', fontWeight: 800, margin: 0, letterSpacing: '0', background: 'var(--theme-btn-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
                 ⚙️ MOTOR DE SOBRECARGA
               </h1>
-              <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', marginTop: '2px' }}>
+              <div style={{ fontSize: '12px', color: '#a4b0a8', marginTop: '2px' }}>
                 Configura las reglas de tu progresión personal
               </div>
             </div>
@@ -464,22 +465,22 @@ export const SoloConfigRules: React.FC = () => {
                   gap: '6px',
                   padding: '10px 20px',
                   background: 'var(--theme-btn-gradient)',
-                  boxShadow: '0 0 15px var(--theme-btn-glow)',
+                  boxShadow: 'none',
                   border: 'none',
                   borderRadius: '30px',
                   color: 'white',
-                  fontFamily: "'Orbitron', sans-serif",
-                  fontSize: '11px',
+                  fontFamily: "'Inter', sans-serif",
+                  fontSize: '12px',
                   fontWeight: 700,
                   cursor: saving ? 'not-allowed' : 'pointer',
                   transition: 'all 0.3s ease',
                   opacity: saving ? 0.7 : 1,
-                  letterSpacing: '0.5px'
+                  letterSpacing: '0'
                 }}
               >
                 {saving ? (
                   <>
-                    <span style={{ width: '14px', height: '14px', borderRadius: '50%', border: '2px solid rgba(255,255,255,0.3)', borderTop: '2px solid var(--theme-primary)', animation: 'spin 1s linear infinite', display: 'inline-block' }} />
+                    <span style={{ width: '14px', height: '14px', borderRadius: '50%', border: '2px solid #a4b0a8', borderTop: '2px solid var(--theme-primary)', animation: 'spin 1s linear infinite', display: 'inline-block' }} />
                     <span>GUARDANDO...</span>
                   </>
                 ) : (
@@ -496,7 +497,7 @@ export const SoloConfigRules: React.FC = () => {
 
         {/* Loading state */}
         {loading && (
-          <div style={{ textAlign: 'center', padding: '60px', color: 'var(--theme-primary)', fontFamily: "'Orbitron', sans-serif" }}>
+          <div style={{ textAlign: 'center', padding: '60px', color: 'var(--theme-primary)', fontFamily: "'Inter', sans-serif" }}>
             <span>Cargando tu motor de progresión...</span>
           </div>
         )}
@@ -505,19 +506,19 @@ export const SoloConfigRules: React.FC = () => {
         {!loading && noPlan && (
           <div style={{
             background: 'var(--theme-card-bg)',
-            backdropFilter: 'blur(20px)',
-            WebkitBackdropFilter: 'blur(20px)',
+            backdropFilter: 'none',
+            WebkitBackdropFilter: 'none',
             border: '1px solid var(--theme-border)',
             borderRadius: '16px',
             padding: '40px 24px',
             textAlign: 'center',
-            boxShadow: '0 8px 32px 0 var(--theme-glow)'
+            boxShadow: 'none'
           }}>
             <div style={{ fontSize: '40px', marginBottom: '16px' }}>📋</div>
-            <h3 style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '14px', fontWeight: 700, marginBottom: '10px', color: 'white' }}>
+            <h3 style={{ fontFamily: "'Inter', sans-serif", fontSize: '14px', fontWeight: 700, marginBottom: '10px', color: 'white' }}>
               SIN PLAN ACTIVO
             </h3>
-            <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)', marginBottom: '20px', lineHeight: 1.6 }}>
+            <p style={{ fontSize: '13px', color: '#a4b0a8', marginBottom: '20px', lineHeight: 1.6 }}>
               Primero crea un plan en Quick Start para poder configurar tu motor de sobrecarga progresiva.
             </p>
             <button
@@ -528,16 +529,16 @@ export const SoloConfigRules: React.FC = () => {
                 gap: '6px',
                 padding: '12px 24px',
                 background: 'var(--theme-btn-gradient)',
-                boxShadow: '0 0 15px var(--theme-btn-glow)',
+                boxShadow: 'none',
                 border: 'none',
                 borderRadius: '30px',
                 color: 'white',
-                fontFamily: "'Orbitron', sans-serif",
-                fontSize: '11px',
+                fontFamily: "'Inter', sans-serif",
+                fontSize: '12px',
                 fontWeight: 700,
                 cursor: 'pointer',
                 transition: 'all 0.3s ease',
-                letterSpacing: '0.5px'
+                letterSpacing: '0'
               }}
             >
               🚀 IR A QUICK START
@@ -551,15 +552,15 @@ export const SoloConfigRules: React.FC = () => {
             {/* ═══ SECTION 1: GENERAL PARAMETERS ═══ */}
             <div style={{
               background: 'var(--theme-card-bg)',
-              backdropFilter: 'blur(20px)',
-              WebkitBackdropFilter: 'blur(20px)',
+              backdropFilter: 'none',
+              WebkitBackdropFilter: 'none',
               border: '1px solid var(--theme-border)',
               borderRadius: '16px',
               padding: '24px',
               marginBottom: '24px',
-              boxShadow: '0 8px 32px 0 var(--theme-glow)'
+              boxShadow: 'none'
             }}>
-              <h3 style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '13px', color: 'var(--theme-primary)', letterSpacing: '0.5px', marginBottom: '20px', marginTop: 0 }}>
+              <h3 style={{ fontFamily: "'Inter', sans-serif", fontSize: '13px', color: 'var(--theme-primary)', letterSpacing: '0', marginBottom: '20px', marginTop: 0 }}>
                 📊 PARÁMETROS GENERALES DE ANÁLISIS
               </h3>
 
@@ -573,7 +574,7 @@ export const SoloConfigRules: React.FC = () => {
                     max={10}
                     onChange={(val) => handleConfigChange('minSesiones', val)}
                   />
-                  <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', lineHeight: 1.4 }}>No se generan sugerencias si tenés menos de estas sesiones registradas por ejercicio.</span>
+                  <span style={{ fontSize: '12px', color: '#a4b0a8', lineHeight: 1.4 }}>No se generan sugerencias si tenés menos de estas sesiones registradas por ejercicio.</span>
                 </div>
 
                 {/* ventana */}
@@ -585,7 +586,7 @@ export const SoloConfigRules: React.FC = () => {
                     max={10}
                     onChange={(val) => handleConfigChange('ventana', val)}
                   />
-                  <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', lineHeight: 1.4 }}>Cuántas sesiones recientes se analizan para estimar tendencias.</span>
+                  <span style={{ fontSize: '12px', color: '#a4b0a8', lineHeight: 1.4 }}>Cuántas sesiones recientes se analizan para estimar tendencias.</span>
                 </div>
 
                 {/* diasDescansoExcesivo */}
@@ -597,7 +598,7 @@ export const SoloConfigRules: React.FC = () => {
                     max={30}
                     onChange={(val) => handleConfigChange('diasDescansoExcesivo', val)}
                   />
-                  <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', lineHeight: 1.4 }}>Si pasás más de estos días sin registrar un ejercicio, se alerta descanso excesivo.</span>
+                  <span style={{ fontSize: '12px', color: '#a4b0a8', lineHeight: 1.4 }}>Si pasás más de estos días sin registrar un ejercicio, se alerta descanso excesivo.</span>
                 </div>
 
                 {/* diasOptimo */}
@@ -609,7 +610,7 @@ export const SoloConfigRules: React.FC = () => {
                     max={14}
                     onChange={(val) => handleConfigChange('diasOptimo', val)}
                   />
-                  <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', lineHeight: 1.4 }}>Rango máximo de días considerado óptimo entre sesiones del mismo ejercicio.</span>
+                  <span style={{ fontSize: '12px', color: '#a4b0a8', lineHeight: 1.4 }}>Rango máximo de días considerado óptimo entre sesiones del mismo ejercicio.</span>
                 </div>
 
                 {/* sesionesRegresionAlerta */}
@@ -621,7 +622,7 @@ export const SoloConfigRules: React.FC = () => {
                     max={6}
                     onChange={(val) => handleConfigChange('sesionesRegresionAlerta', val)}
                   />
-                  <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', lineHeight: 1.4 }}>Sesiones consecutivas con caída de volumen que disparan alerta de regresión.</span>
+                  <span style={{ fontSize: '12px', color: '#a4b0a8', lineHeight: 1.4 }}>Sesiones consecutivas con caída de volumen que disparan alerta de regresión.</span>
                 </div>
 
                 {/* semanasEstancamiento */}
@@ -633,7 +634,7 @@ export const SoloConfigRules: React.FC = () => {
                     max={12}
                     onChange={(val) => handleConfigChange('semanasEstancamiento', val)}
                   />
-                  <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', lineHeight: 1.4 }}>Semanas sin mejoras en el 1RM estimado antes de sugerir variar el ejercicio.</span>
+                  <span style={{ fontSize: '12px', color: '#a4b0a8', lineHeight: 1.4 }}>Semanas sin mejoras en el 1RM estimado antes de sugerir variar el ejercicio.</span>
                 </div>
               </div>
             </div>
@@ -641,18 +642,18 @@ export const SoloConfigRules: React.FC = () => {
             {/* ═══ SECTION 2: INDIVIDUAL RULES ═══ */}
             <div style={{
               background: 'var(--theme-card-bg)',
-              backdropFilter: 'blur(20px)',
-              WebkitBackdropFilter: 'blur(20px)',
+              backdropFilter: 'none',
+              WebkitBackdropFilter: 'none',
               border: '1px solid var(--theme-border)',
               borderRadius: '16px',
               padding: '24px',
               marginBottom: '24px',
-              boxShadow: '0 8px 32px 0 var(--theme-glow)'
+              boxShadow: 'none'
             }}>
-              <h3 style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '13px', color: 'var(--theme-primary)', letterSpacing: '0.5px', marginBottom: '10px', marginTop: 0 }}>
+              <h3 style={{ fontFamily: "'Inter', sans-serif", fontSize: '13px', color: 'var(--theme-primary)', letterSpacing: '0', marginBottom: '10px', marginTop: 0 }}>
                 📋 REGLAS DE NOTIFICACIÓN
               </h3>
-              <p style={{ margin: '0 0 20px 0', fontSize: '11px', color: 'rgba(255,255,255,0.5)', lineHeight: 1.4 }}>
+              <p style={{ margin: '0 0 20px 0', fontSize: '12px', color: '#a4b0a8', lineHeight: 1.4 }}>
                 Activa o desactiva las reglas automáticas y personaliza los textos. Podés usar las variables{' '}
                 <code style={{ background: 'rgba(255,255,255,0.06)', padding: '1px 5px', borderRadius: '4px' }}>{`{ejercicio}`}</code>,{' '}
                 <code style={{ background: 'rgba(255,255,255,0.06)', padding: '1px 5px', borderRadius: '4px' }}>{`{valor}`}</code>,{' '}
@@ -680,16 +681,16 @@ export const SoloConfigRules: React.FC = () => {
                       {/* Rule header: title + badge + toggle */}
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                          <h4 style={{ margin: 0, fontSize: '13px', fontWeight: 700, fontFamily: "'Orbitron', sans-serif", color: rule.activa ? 'white' : 'rgba(255,255,255,0.4)' }}>
+                          <h4 style={{ margin: 0, fontSize: '13px', fontWeight: 700, fontFamily: "'Inter', sans-serif", color: rule.activa ? 'white' : '#a4b0a8' }}>
                             {idx + 1}. {rule.titulo}
                           </h4>
                           <span style={{
                             display: 'inline-block',
                             padding: '2px 8px',
                             borderRadius: '20px',
-                            fontSize: '9px',
+                            fontSize: '12px',
                             fontWeight: 700,
-                            letterSpacing: '0.5px',
+                            letterSpacing: '0',
                             background: `${tipoColor}20`,
                             color: tipoColor,
                             border: `1px solid ${tipoColor}40`
@@ -711,7 +712,7 @@ export const SoloConfigRules: React.FC = () => {
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                         {/* Editable message */}
                         <div>
-                          <label style={{ display: 'block', fontSize: '10px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>MENSAJE DE NOTIFICACIÓN</label>
+                          <label style={{ display: 'block', fontSize: '12px', color: '#a4b0a8', fontWeight: 600, marginBottom: '6px', textTransform: 'none', letterSpacing: '0' }}>MENSAJE DE NOTIFICACIÓN</label>
                           <textarea
                             rows={2}
                             value={rule.mensaje}
@@ -753,7 +754,7 @@ export const SoloConfigRules: React.FC = () => {
                                   <label style={{ ...paramLabelStyle, display: 'block', marginBottom: '8px' }}>OBJETIVOS ESPECÍFICOS / EXCEPCIONES</label>
                                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '10px' }}>
                                     {Object.entries(rule.reps_por_ejercicio || {}).map(([ejName, reps]) => (
-                                      <div key={ejName} style={{ display: 'inline-flex', alignItems: 'center', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--theme-border)', borderRadius: '20px', padding: '5px 12px', fontSize: '11px', gap: '8px' }}>
+                                      <div key={ejName} style={{ display: 'inline-flex', alignItems: 'center', background: 'rgba(255,255,255,0.04)', border: '1px solid var(--theme-border)', borderRadius: '20px', padding: '5px 12px', fontSize: '12px', gap: '8px' }}>
                                         <span>{ejName}</span>
                                         <span style={{ color: 'var(--theme-primary)', fontWeight: 600 }}>{reps as number} reps</span>
                                         <button
@@ -954,14 +955,14 @@ export const SoloConfigRules: React.FC = () => {
                   background: 'rgba(255,255,255,0.02)',
                   border: '1px solid rgba(255,255,255,0.06)',
                   borderRadius: '30px',
-                  color: 'rgba(255,255,255,0.6)',
+                  color: '#a4b0a8',
                   padding: '10px 20px',
-                  fontSize: '11px',
-                  fontFamily: "'Orbitron', sans-serif",
+                  fontSize: '12px',
+                  fontFamily: "'Inter', sans-serif",
                   cursor: 'pointer',
                   transition: 'all 0.3s ease',
                   fontWeight: 600,
-                  letterSpacing: '0.5px'
+                  letterSpacing: '0'
                 }}
               >
                 ↺ Restaurar Valores por Defecto
@@ -989,22 +990,22 @@ export const SoloConfigRules: React.FC = () => {
                   gap: '8px',
                   padding: '14px 20px',
                   background: 'var(--theme-btn-gradient)',
-                  boxShadow: '0 0 20px var(--theme-btn-glow), 0 4px 20px rgba(0,0,0,0.4)',
+                  boxShadow: 'none',
                   border: 'none',
                   borderRadius: '30px',
                   color: 'white',
-                  fontFamily: "'Orbitron', sans-serif",
+                  fontFamily: "'Inter', sans-serif",
                   fontSize: '12px',
                   fontWeight: 700,
                   cursor: saving ? 'not-allowed' : 'pointer',
                   transition: 'all 0.3s ease',
                   opacity: saving ? 0.7 : 1,
-                  letterSpacing: '0.5px'
+                  letterSpacing: '0'
                 }}
               >
                 {saving ? (
                   <>
-                    <span style={{ width: '14px', height: '14px', borderRadius: '50%', border: '2px solid rgba(255,255,255,0.3)', borderTop: '2px solid white', animation: 'spin 1s linear infinite', display: 'inline-block' }} />
+                    <span style={{ width: '14px', height: '14px', borderRadius: '50%', border: '2px solid #a4b0a8', borderTop: '2px solid white', animation: 'spin 1s linear infinite', display: 'inline-block' }} />
                     <span>GUARDANDO...</span>
                   </>
                 ) : (

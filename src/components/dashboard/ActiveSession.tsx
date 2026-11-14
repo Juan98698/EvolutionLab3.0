@@ -1,8 +1,9 @@
+import { persistPlanSnapshot } from '../../lib/planCache';
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { supabase } from '../../lib/supabaseClient';
 import { PlanData, ExpressBlockAudit } from '../../types/database.types';
-import { writeSessionsToCache, readSessionsFromCache } from '../../lib/sessions';
+import { writeSessionsToCache, readSessionsFromCache, syncOfflineSessions } from '../../lib/sessions';
 import { autoRegulatePlanForNextWeek } from '../../lib/periodizationEngine';
 import { ErrorBoundary } from '../common/ErrorBoundary';
 import { useModalA11y } from '../../hooks/useModalA11y';
@@ -209,7 +210,7 @@ const ActiveSession: React.FC = () => {
 
               if (plansList && plansList.length > 0 && plansList[0].datos_plan) {
                 parsed = plansList[0].datos_plan as PlanData;
-                localStorage.setItem('pwa_client_plan', JSON.stringify(parsed));
+                persistPlanSnapshot(parsed, session.user.id);
               }
             }
           } catch (err) {
@@ -390,7 +391,7 @@ const ActiveSession: React.FC = () => {
     if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
       try {
         navigator.vibrate(type === 'transition' ? [60] : [150, 80, 150]);
-      } catch (e) {}
+      } catch {}
     }
 
     if (type === 'transition') {
@@ -426,7 +427,7 @@ const ActiveSession: React.FC = () => {
       if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
         try {
           navigator.vibrate([80]);
-        } catch (e) {}
+        } catch {}
       }
       return;
     }
@@ -435,7 +436,7 @@ const ActiveSession: React.FC = () => {
     if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
       try {
         navigator.vibrate([300, 120, 300, 120, 450]);
-      } catch (e) {}
+      } catch {}
     }
 
     // 2. Sonido audible deportivo LOUD sintetizado con Web Audio API (100% nativo)
@@ -903,7 +904,7 @@ const ActiveSession: React.FC = () => {
         });
 
       // ── Offline-first: save to local cache ──
-      const sesiones = readSessionsFromCache();
+      const sesiones = readSessionsFromCache(currentUser.id);
       const nextSesionId = sesiones.length > 0
         ? Math.max(...sesiones.map((s: any) => (typeof s.id === 'number' ? s.id : 0))) + 1
         : 1;
@@ -914,6 +915,7 @@ const ActiveSession: React.FC = () => {
 
       const nuevaSesion = {
         id: nextSesionId,
+        operation_id: crypto.randomUUID(),
         fecha,
         notas_sesion: finalNotes,
         ejercicios: ejerciciosGuardar,
@@ -921,54 +923,9 @@ const ActiveSession: React.FC = () => {
         express_blocks: expressBlocksAudit.length > 0 ? expressBlocksAudit : undefined,
       };
       sesiones.push(nuevaSesion);
-      writeSessionsToCache(sesiones);
+      writeSessionsToCache(sesiones, currentUser.id);
 
-      // ── Online: sync to Supabase ──
-      if (navigator.onLine) {
-        const { data: histData, error: histError } = await supabase
-          .from('sesiones_historial')
-          .insert({
-            cliente_id: currentUser.id,
-            fecha,
-            notas_generales: finalNotes,
-            express_mode: expressModeActive || false,
-            express_blocks: expressBlocksAudit.length > 0 ? expressBlocksAudit : []
-          })
-          .select('id')
-          .single();
-
-        if (histError) throw histError;
-
-        const sesionId = histData.id;
-        nuevaSesion.id = sesionId;
-
-        const ejerciciosInsert = ejerciciosGuardar.map(ej => {
-          const isFunc = isFunctionalExercise(ej);
-          const totalReps = ej.repsArray.reduce((a, b) => a + b, 0);
-          const vol = isFunc || ej.peso == null ? null : ej.peso * totalReps;
-          const lastSetReps = ej.repsArray.length > 0 ? ej.repsArray[ej.repsArray.length - 1] : 0;
-          const epley = isFunc || ej.peso == null ? null : ej.peso * (1 + lastSetReps / 30);
-          const brzyckiDenominator = 1.0278 - 0.0278 * lastSetReps;
-          const brzycki = isFunc || ej.peso == null ? null : (brzyckiDenominator > 0.01 ? ej.peso / brzyckiDenominator : ej.peso);
-          const rmEst = (epley != null && brzycki != null) ? Math.round(((epley + brzycki) / 2) * 10) / 10 : null;
-          return {
-            sesion_id: sesionId,
-            nombre_ejercicio: ej.nombre,
-            grupo_muscular: ej.grupo,
-            series_reps: ej.repsArray,
-            peso: isFunc ? null : ej.peso,
-            rpe_rir: isFunc ? null : ej.rpe,
-            descanso: ej.descanso,
-            volumen: vol,
-            rm_estimado: rmEst,
-            feedback_estimulo: ej.feedback_estimulo || null,
-            feedback_recuperacion: ej.feedback_recuperacion || null,
-          };
-        });
-
-        await supabase.from('sesiones_ejercicios').insert(ejerciciosInsert);
-        writeSessionsToCache(sesiones);
-      }
+      const syncResult = await syncOfflineSessions(currentUser.id);
 
       // ── Auto-regulation ──
       if (plan.periodizationConfig?.enabled) {
@@ -987,7 +944,7 @@ const ActiveSession: React.FC = () => {
             }))
           );
           if (updatedPlan) {
-            localStorage.setItem('pwa_client_plan', JSON.stringify(updatedPlan));
+            persistPlanSnapshot(updatedPlan, currentUser.id);
             if (navigator.onLine) {
               const { data: activePlan } = await supabase
                 .from('planes')
@@ -1025,7 +982,7 @@ const ActiveSession: React.FC = () => {
               targetRIR:             ex.targetRIR,
             })),
           fecha,
-          savedOnline: navigator.onLine,
+          savedOnline: syncResult.failedCount === 0 && syncResult.syncedCount > 0,
         },
       });
     } catch (err: any) {
@@ -1040,16 +997,16 @@ const ActiveSession: React.FC = () => {
   if (!plan || exercises.length === 0) {
     return (
       <div style={{
-        minHeight: '100vh', background: '#0b0f19', display: 'flex',
+        minHeight: '100vh', background: '#121716', display: 'flex',
         alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: '16px'
       }}>
         <div style={{ fontSize: '32px' }}>🏋️</div>
-        <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: '14px' }}>Cargando sesión...</p>
+        <p style={{ color: '#a4b0a8', fontSize: '14px' }}>Cargando sesión...</p>
         <button
           onClick={() => navigate('/dashboard')}
           style={{
             background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)',
-            borderRadius: '10px', color: 'rgba(255,255,255,0.6)', padding: '10px 20px',
+            borderRadius: '10px', color: '#a4b0a8', padding: '10px 20px',
             fontSize: '12px', cursor: 'pointer'
           }}
         >
@@ -1077,7 +1034,7 @@ const ActiveSession: React.FC = () => {
             <h3 style={{ margin: '0 0 8px', fontSize: '16px', color: 'white' }}>
               ¿Salir de la sesión?
             </h3>
-            <p style={{ margin: '0 0 20px', fontSize: '13px', color: 'rgba(255,255,255,0.5)', lineHeight: 1.5 }}>
+            <p style={{ margin: '0 0 20px', fontSize: '13px', color: '#a4b0a8', lineHeight: 1.5 }}>
               El progreso no guardado se perderá.
             </p>
             <div style={{ display: 'flex', gap: '10px' }}>
@@ -1119,7 +1076,7 @@ const ActiveSession: React.FC = () => {
             color: expressModeActive ? '#fbbf24' : 'rgba(255, 255, 255, 0.7)',
             borderRadius: '8px',
             padding: '4px 10px',
-            fontSize: '11px',
+            fontSize: '12px',
             fontWeight: 700,
             cursor: 'pointer',
             display: 'inline-flex',
@@ -1167,7 +1124,7 @@ const ActiveSession: React.FC = () => {
       <div className="active-session-exercise-header">
         <div style={{ display: 'flex', gap: '6px', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap', marginBottom: '6px' }}>
           {currentExercise.isFunctional && (
-            <span style={{ fontSize: '10px', color: '#60a5fa', background: 'rgba(59, 130, 246, 0.15)', border: '1px solid rgba(59, 130, 246, 0.35)', padding: '2px 10px', borderRadius: '6px', fontFamily: "'Orbitron', sans-serif", fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <span style={{ fontSize: '12px', color: '#60a5fa', background: 'rgba(59, 130, 246, 0.15)', border: '1px solid rgba(59, 130, 246, 0.35)', padding: '2px 10px', borderRadius: '6px', fontFamily: "'Inter', sans-serif", fontWeight: 800, textTransform: 'none', letterSpacing: '0' }}>
               ⚡ EJERCICIO FUNCIONAL / WOD
             </span>
           )}
@@ -1176,15 +1133,15 @@ const ActiveSession: React.FC = () => {
               type="button"
               onClick={() => setShowExpressModal(true)}
               style={{
-                fontSize: '11px',
+                fontSize: '12px',
                 color: '#f59e0b',
                 background: 'rgba(245, 158, 11, 0.15)',
                 border: '1px solid rgba(245, 158, 11, 0.4)',
                 padding: '2px 10px',
                 borderRadius: '6px',
                 fontWeight: 800,
-                fontFamily: "'Orbitron', sans-serif",
-                letterSpacing: '0.5px',
+                fontFamily: "'Inter', sans-serif",
+                letterSpacing: '0',
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '4px',
@@ -1238,10 +1195,10 @@ const ActiveSession: React.FC = () => {
                   onClick={() => handleToggleWeightUnit('kg')}
                   style={{
                     border: 'none',
-                    background: weightUnit === 'kg' ? '#00d4ff' : 'transparent',
-                    color: weightUnit === 'kg' ? '#000000' : 'rgba(255,255,255,0.6)',
+                    background: weightUnit === 'kg' ? '#91b6a1' : 'transparent',
+                    color: weightUnit === 'kg' ? '#000000' : '#a4b0a8',
                     fontWeight: 800,
-                    fontSize: '8px',
+                    fontSize: '12px',
                     padding: '2px 5px',
                     borderRadius: '4px',
                     cursor: 'pointer',
@@ -1258,10 +1215,10 @@ const ActiveSession: React.FC = () => {
                   onClick={() => handleToggleWeightUnit('lbs')}
                   style={{
                     border: 'none',
-                    background: weightUnit === 'lbs' ? '#00d4ff' : 'transparent',
-                    color: weightUnit === 'lbs' ? '#000000' : 'rgba(255,255,255,0.6)',
+                    background: weightUnit === 'lbs' ? '#91b6a1' : 'transparent',
+                    color: weightUnit === 'lbs' ? '#000000' : '#a4b0a8',
                     fontWeight: 800,
-                    fontSize: '8px',
+                    fontSize: '12px',
                     padding: '2px 5px',
                     borderRadius: '4px',
                     cursor: 'pointer',
@@ -1318,7 +1275,7 @@ const ActiveSession: React.FC = () => {
                     alignItems: 'center',
                     justifyContent: 'center',
                     fontWeight: 'bold',
-                    fontSize: '10px',
+                    fontSize: '12px',
                     transition: 'all 0.15s ease',
                     flexShrink: 0
                   }}
@@ -1371,7 +1328,7 @@ const ActiveSession: React.FC = () => {
                     alignItems: 'center',
                     justifyContent: 'center',
                     fontWeight: 'bold',
-                    fontSize: '10px',
+                    fontSize: '12px',
                     transition: 'all 0.15s ease',
                     flexShrink: 0
                   }}
@@ -1381,7 +1338,7 @@ const ActiveSession: React.FC = () => {
                 </button>
               </div>
               {weightUnit === 'lbs' && s.peso && !isNaN(parseFloat(s.peso)) && parseFloat(s.peso) > 0 && (
-                <span style={{ fontSize: '9px', color: '#00d4ff', marginTop: '2px', fontWeight: 600 }}>
+                <span style={{ fontSize: '12px', color: '#91b6a1', marginTop: '2px', fontWeight: 600 }}>
                   ≈ {lbsToKg(s.peso)} kg
                 </span>
               )}
@@ -1513,8 +1470,8 @@ const ActiveSession: React.FC = () => {
                         setShowFullImage(true);
                       }}
                       style={{
-                        background: 'rgba(0, 212, 255, 0.1)',
-                        border: '1px solid rgba(0, 212, 255, 0.25)',
+                        background: 'rgba(145, 182, 161, 0.1)',
+                        border: '1px solid rgba(145, 182, 161, 0.25)',
                         color: 'var(--theme-primary)'
                       }}
                     >
@@ -1584,13 +1541,13 @@ const ActiveSession: React.FC = () => {
                 ? {
                     background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.22) 0%, rgba(217, 119, 6, 0.28) 100%)',
                     border: '1.5px solid #f59e0b',
-                    boxShadow: '0 0 22px rgba(245, 158, 11, 0.35)',
+                    boxShadow: 'none',
                   }
                 : isRound
                 ? {
-                    background: 'linear-gradient(135deg, rgba(0, 212, 255, 0.16) 0%, rgba(59, 130, 246, 0.22) 100%)',
-                    border: '1.5px solid rgba(0, 212, 255, 0.5)',
-                    boxShadow: '0 0 22px rgba(0, 212, 255, 0.25)',
+                    background: 'linear-gradient(135deg, rgba(145, 182, 161, 0.16) 0%, rgba(59, 130, 246, 0.22) 100%)',
+                    border: '1.5px solid rgba(145, 182, 161, 0.5)',
+                    boxShadow: 'none',
                   }
                 : undefined
             }
@@ -1603,13 +1560,13 @@ const ActiveSession: React.FC = () => {
                   ...(isTransition
                     ? {
                         background: 'linear-gradient(90deg, #f59e0b, #fbbf24)',
-                        boxShadow: '0 0 10px rgba(245, 158, 11, 0.6)',
+                        boxShadow: 'none',
                         transition: 'width 0.2s linear',
                       }
                     : isRound
                     ? {
-                        background: 'linear-gradient(90deg, #00d4ff, #3b82f6)',
-                        boxShadow: '0 0 10px rgba(0, 212, 255, 0.6)',
+                        background: 'linear-gradient(90deg, #91b6a1, #3b82f6)',
+                        boxShadow: 'none',
                       }
                     : {}),
                 }}
@@ -1619,9 +1576,9 @@ const ActiveSession: React.FC = () => {
               className="active-session-rest-label"
               style={
                 isTransition
-                  ? { color: '#fbbf24', textShadow: '0 0 15px rgba(245, 158, 11, 0.6)' }
+                  ? { color: '#fbbf24', textShadow: 'none' }
                   : isRound
-                  ? { color: '#00d4ff', textShadow: '0 0 15px rgba(0, 212, 255, 0.6)' }
+                  ? { color: '#91b6a1', textShadow: 'none' }
                   : undefined
               }
             >
@@ -1634,16 +1591,16 @@ const ActiveSession: React.FC = () => {
                   isTransition
                     ? {
                         background: '#fbbf24',
-                        color: '#0f172a',
+                        color: '#1a211e',
                         border: '1px solid #f59e0b',
                         fontWeight: 900,
-                        boxShadow: '0 0 12px rgba(251, 191, 36, 0.4)',
+                        boxShadow: 'none',
                       }
                     : isRound
                     ? {
-                        background: 'rgba(0, 212, 255, 0.18)',
-                        color: '#00d4ff',
-                        border: '1px solid rgba(0, 212, 255, 0.5)',
+                        background: 'rgba(145, 182, 161, 0.18)',
+                        color: '#91b6a1',
+                        border: '1px solid rgba(145, 182, 161, 0.5)',
                       }
                     : undefined
                 }
@@ -1669,8 +1626,8 @@ const ActiveSession: React.FC = () => {
               style={{
                 background: showFeedbackGuide ? 'rgba(0, 242, 254, 0.15)' : 'rgba(255,255,255,0.05)',
                 border: `1px solid ${showFeedbackGuide ? 'rgba(0, 242, 254, 0.4)' : 'rgba(255,255,255,0.1)'}`,
-                color: showFeedbackGuide ? '#00f2fe' : 'rgba(255,255,255,0.5)',
-                borderRadius: '6px', padding: '3px 8px', fontSize: '10px', fontWeight: 600, cursor: 'pointer',
+                color: showFeedbackGuide ? '#91b6a1' : '#a4b0a8',
+                borderRadius: '6px', padding: '3px 8px', fontSize: '12px', fontWeight: 600, cursor: 'pointer',
                 display: 'inline-flex', alignItems: 'center', gap: '4px', transition: 'all 0.2s'
               }}
             >
@@ -1683,10 +1640,10 @@ const ActiveSession: React.FC = () => {
             <div style={{
               background: 'rgba(5, 8, 16, 0.95)', border: '1px solid rgba(0, 242, 254, 0.25)',
               borderRadius: '10px', padding: '12px', marginBottom: '14px', textAlign: 'left',
-              fontSize: '11px', lineHeight: 1.45, color: '#e2e8f0', boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
+              fontSize: '12px', lineHeight: 1.45, color: '#e2e8f0', boxShadow: 'none',
               fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
             }}>
-              <strong style={{ color: '#00f2fe', display: 'block', marginBottom: '6px', fontSize: '12px' }}>
+              <strong style={{ color: '#91b6a1', display: 'block', marginBottom: '6px', fontSize: '12px' }}>
                 ¿Cómo responder según la ciencia de Evolution Lab?
               </strong>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -1700,7 +1657,7 @@ const ActiveSession: React.FC = () => {
                 </div>
                 <div style={{ borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '6px' }}>
                   <span style={{ color: '#a5b4fc', fontWeight: 'bold' }}>Recuperación (Al llegar hoy):</span>
-                  <p style={{ margin: '4px 0', fontSize: '10.5px', color: 'rgba(255,255,255,0.5)' }}>
+                  <p style={{ margin: '4px 0', fontSize: '10.5px', color: '#a4b0a8' }}>
                     Evalúa cómo se sentía el músculo objetivo <strong>antes de iniciar la primera serie hoy</strong> (para aislarlo de la fatiga que sientes justo ahora al terminar). <em>(Nota: Si es tu primera sesión o vienes de un descanso, marca "Llegué Recuperado")</em>.
                   </p>
                   <ul style={{ margin: '4px 0 0 12px', padding: 0, color: 'rgba(255,255,255,0.75)' }}>
@@ -1787,8 +1744,8 @@ const ActiveSession: React.FC = () => {
                 onClick={() => setPendingFeedbackIndices(prev => prev.filter(i => i !== idx))}
                 style={{
                   background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)',
-                  color: 'rgba(255,255,255,0.6)', borderRadius: '6px', padding: '3px 10px',
-                  fontSize: '10px', fontWeight: 600, cursor: 'pointer',
+                  color: '#a4b0a8', borderRadius: '6px', padding: '3px 10px',
+                  fontSize: '12px', fontWeight: 600, cursor: 'pointer',
                 }}
               >
                 ✓ Listo
@@ -1890,7 +1847,7 @@ const ActiveSession: React.FC = () => {
       {/* ── Session Notes (inline, bottom) ── */}
       {isLast && (
         <div className="active-session-notes">
-          <label style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', fontWeight: 700, display: 'block', marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          <label style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700, display: 'block', marginBottom: '6px', textTransform: 'none', letterSpacing: '0.05em' }}>
             Nota de sesión (opcional)
           </label>
           <textarea
@@ -2046,7 +2003,7 @@ const ActiveSession: React.FC = () => {
 
                       return currentBlockPartners.length > 1 ? (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                          <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>
+                          <div style={{ fontSize: '12px', color: '#a4b0a8', textTransform: 'none', fontWeight: 700, letterSpacing: '0' }}>
                             ¿A cuál compañero reemplazas?
                           </div>
                           <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
@@ -2060,7 +2017,7 @@ const ActiveSession: React.FC = () => {
                                   style={{
                                     padding: '5px 10px',
                                     borderRadius: '999px',
-                                    fontSize: '11px',
+                                    fontSize: '12px',
                                     fontWeight: 600,
                                     cursor: 'pointer',
                                     border: isSelected ? '1px solid #fbbf24' : '1px solid rgba(255,255,255,0.15)',
@@ -2084,7 +2041,7 @@ const ActiveSession: React.FC = () => {
                       const effectivePartner = currentBlockPartners.find(p => p.id === effectivePartnerId);
                       return (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '4px' }}>
-                          <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>
+                          <div style={{ fontSize: '12px', color: '#a4b0a8', textTransform: 'none', fontWeight: 700, letterSpacing: '0' }}>
                             Sustituir por otra máquina / ejercicio disponible:
                           </div>
                           <div style={{ maxHeight: '130px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '4px' }}>
@@ -2112,11 +2069,11 @@ const ActiveSession: React.FC = () => {
                               >
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                   <span style={{ fontWeight: 600, fontSize: '12px' }}>{otherEx.nombre}</span>
-                                  <span style={{ fontSize: '9px', color: '#60a5fa', background: 'rgba(59, 130, 246, 0.15)', padding: '1px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>
+                                  <span style={{ fontSize: '12px', color: '#60a5fa', background: 'rgba(59, 130, 246, 0.15)', padding: '1px 6px', borderRadius: '4px', textTransform: 'none' }}>
                                     {otherEx.grupo || 'General'}
                                   </span>
                                 </div>
-                                <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', marginTop: '2px' }}>
+                                <div style={{ fontSize: '12px', color: '#a4b0a8', marginTop: '2px' }}>
                                   ⇄ Intercambiar por {effectivePartner?.nombre || 'compañero'}
                                 </div>
                               </button>
@@ -2134,7 +2091,7 @@ const ActiveSession: React.FC = () => {
                         borderRadius: '8px',
                         padding: '6px 10px',
                         color: '#f87171',
-                        fontSize: '11px',
+                        fontSize: '12px',
                         fontWeight: 600,
                         cursor: 'pointer',
                         marginTop: '4px',
@@ -2147,12 +2104,12 @@ const ActiveSession: React.FC = () => {
                 )}
 
                 {/* 2. Custom Súper Serie Builder (Selección flexible de 2, 3, 4, 5... ejercicios) */}
-                <div style={{ background: 'rgba(0, 212, 255, 0.06)', border: '1px solid rgba(0, 212, 255, 0.25)', borderRadius: '12px', padding: '14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div style={{ background: 'rgba(145, 182, 161, 0.06)', border: '1px solid rgba(145, 182, 161, 0.25)', borderRadius: '12px', padding: '14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   <div style={{ fontWeight: 700, fontSize: '13px', color: '#38bdf8', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px' }}>
                     <span style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <span>🔗</span> Encadenar en Súper Serie
                     </span>
-                    <span style={{ fontSize: '10px', color: selectedChainIds.length >= 2 ? '#34d399' : '#fbbf24', background: 'rgba(0,0,0,0.35)', padding: '2px 8px', borderRadius: '6px', fontFamily: "'Orbitron', sans-serif" }}>
+                    <span style={{ fontSize: '12px', color: selectedChainIds.length >= 2 ? '#34d399' : '#fbbf24', background: 'rgba(0,0,0,0.35)', padding: '2px 8px', borderRadius: '6px', fontFamily: "'Inter', sans-serif" }}>
                       {selectedChainIds.length} {selectedChainIds.length === 1 ? 'ejercicio' : 'ejercicios'}
                       {selectedChainIds.length === 2 ? ' (Súper Serie)' : selectedChainIds.length === 3 ? ' (Tri-serie)' : selectedChainIds.length >= 4 ? ' (Circuito)' : ''}
                     </span>
@@ -2163,7 +2120,7 @@ const ActiveSession: React.FC = () => {
                   </p>
 
                   {candidateExercises.length < 2 && (
-                    <div style={{ fontSize: '11px', color: '#fbbf24', background: 'rgba(245, 158, 11, 0.12)', border: '1px solid rgba(245, 158, 11, 0.25)', padding: '8px 10px', borderRadius: '6px' }}>
+                    <div style={{ fontSize: '12px', color: '#fbbf24', background: 'rgba(245, 158, 11, 0.12)', border: '1px solid rgba(245, 158, 11, 0.25)', padding: '8px 10px', borderRadius: '6px' }}>
                       ℹ️ No hay otros ejercicios pendientes en esta sesión para formar una Súper Serie (los demás ejercicios ya están 100% completados).
                     </div>
                   )}
@@ -2179,8 +2136,8 @@ const ActiveSession: React.FC = () => {
                             display: 'flex',
                             alignItems: 'center',
                             gap: '10px',
-                            background: isSelected ? 'rgba(0, 212, 255, 0.12)' : 'rgba(255, 255, 255, 0.03)',
-                            border: `1px solid ${isSelected ? 'rgba(0, 212, 255, 0.4)' : 'rgba(255, 255, 255, 0.08)'}`,
+                            background: isSelected ? 'rgba(145, 182, 161, 0.12)' : 'rgba(255, 255, 255, 0.03)',
+                            border: `1px solid ${isSelected ? 'rgba(145, 182, 161, 0.4)' : 'rgba(255, 255, 255, 0.08)'}`,
                             borderRadius: '8px',
                             padding: '8px 10px',
                             cursor: 'pointer',
@@ -2195,7 +2152,7 @@ const ActiveSession: React.FC = () => {
                                 prev.includes(ex.id) ? prev.filter(id => id !== ex.id) : [...prev, ex.id]
                               );
                             }}
-                            style={{ width: '16px', height: '16px', accentColor: '#00d4ff', cursor: 'pointer' }}
+                            style={{ width: '16px', height: '16px', accentColor: '#91b6a1', cursor: 'pointer' }}
                           />
                           <div style={{ flex: 1, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <div>
@@ -2203,17 +2160,17 @@ const ActiveSession: React.FC = () => {
                                 {ex.nombre}
                               </span>
                               {isCurrent && (
-                                <span style={{ marginLeft: '6px', fontSize: '9px', color: '#fbbf24', background: 'rgba(245, 158, 11, 0.15)', padding: '1px 5px', borderRadius: '4px', fontWeight: 700 }}>
+                                <span style={{ marginLeft: '6px', fontSize: '12px', color: '#fbbf24', background: 'rgba(245, 158, 11, 0.15)', padding: '1px 5px', borderRadius: '4px', fontWeight: 700 }}>
                                   ACTUAL
                                 </span>
                               )}
                               {ex.block_tag && (
-                                <span style={{ marginLeft: '6px', fontSize: '9px', color: '#00d4ff', background: 'rgba(0, 212, 255, 0.15)', padding: '1px 5px', borderRadius: '4px', fontWeight: 700 }}>
+                                <span style={{ marginLeft: '6px', fontSize: '12px', color: '#91b6a1', background: 'rgba(145, 182, 161, 0.15)', padding: '1px 5px', borderRadius: '4px', fontWeight: 700 }}>
                                   ⚡ {ex.block_tag}
                                 </span>
                               )}
                             </div>
-                            <span style={{ fontSize: '9px', color: '#60a5fa', background: 'rgba(59, 130, 246, 0.15)', padding: '1px 6px', borderRadius: '4px', textTransform: 'uppercase' }}>
+                            <span style={{ fontSize: '12px', color: '#60a5fa', background: 'rgba(59, 130, 246, 0.15)', padding: '1px 6px', borderRadius: '4px', textTransform: 'none' }}>
                               {ex.grupo || 'General'}
                             </span>
                           </div>
@@ -2224,7 +2181,7 @@ const ActiveSession: React.FC = () => {
 
                   {/* Configuración de descansos para la Súper Serie */}
                   <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', background: 'rgba(0,0,0,0.25)', padding: '8px 12px', borderRadius: '8px' }}>
-                    <label style={{ fontSize: '11px', color: 'rgba(255,255,255,0.75)', display: 'flex', alignItems: 'center', gap: '6px', flex: 1, minWidth: '130px' }}>
+                    <label style={{ fontSize: '12px', color: 'rgba(255,255,255,0.75)', display: 'flex', alignItems: 'center', gap: '6px', flex: 1, minWidth: '130px' }}>
                       ⚡ Transición:
                       <input
                         type="number"
@@ -2232,11 +2189,11 @@ const ActiveSession: React.FC = () => {
                         max={120}
                         value={customTransitionRest}
                         onChange={e => setCustomTransitionRest(Math.max(0, parseInt(e.target.value, 10) || 0))}
-                        style={{ width: '50px', padding: '3px 6px', background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(0,212,255,0.3)', borderRadius: '6px', color: '#38bdf8', fontWeight: 700, textAlign: 'center' }}
+                        style={{ width: '50px', padding: '3px 6px', background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(145, 182, 161,0.3)', borderRadius: '6px', color: '#38bdf8', fontWeight: 700, textAlign: 'center' }}
                       />
                       s
                     </label>
-                    <label style={{ fontSize: '11px', color: 'rgba(255,255,255,0.75)', display: 'flex', alignItems: 'center', gap: '6px', flex: 1, minWidth: '130px' }}>
+                    <label style={{ fontSize: '12px', color: 'rgba(255,255,255,0.75)', display: 'flex', alignItems: 'center', gap: '6px', flex: 1, minWidth: '130px' }}>
                       ⏱️ Descanso ronda:
                       <input
                         type="number"
@@ -2244,7 +2201,7 @@ const ActiveSession: React.FC = () => {
                         max={300}
                         value={customBlockRest}
                         onChange={e => setCustomBlockRest(Math.max(0, parseInt(e.target.value, 10) || 0))}
-                        style={{ width: '55px', padding: '3px 6px', background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(0,212,255,0.3)', borderRadius: '6px', color: '#38bdf8', fontWeight: 700, textAlign: 'center' }}
+                        style={{ width: '55px', padding: '3px 6px', background: 'rgba(0,0,0,0.5)', border: '1px solid rgba(145, 182, 161,0.3)', borderRadius: '6px', color: '#38bdf8', fontWeight: 700, textAlign: 'center' }}
                       />
                       s
                     </label>
@@ -2258,11 +2215,11 @@ const ActiveSession: React.FC = () => {
                     style={{
                       background: selectedChainIds.length >= 2 ? 'var(--theme-btn-gradient)' : 'rgba(255, 255, 255, 0.06)',
                       border: 'none',
-                      color: selectedChainIds.length >= 2 ? 'white' : 'rgba(255, 255, 255, 0.35)',
+                      color: selectedChainIds.length >= 2 ? 'white' : '#a4b0a8',
                       borderRadius: '8px',
                       padding: '10px 14px',
                       fontSize: '12px',
-                      fontFamily: "'Orbitron', sans-serif",
+                      fontFamily: "'Inter', sans-serif",
                       fontWeight: 700,
                       cursor: selectedChainIds.length >= 2 ? 'pointer' : 'not-allowed',
                       boxShadow: selectedChainIds.length >= 2 ? '0 0 12px var(--theme-btn-glow)' : 'none',
@@ -2282,7 +2239,7 @@ const ActiveSession: React.FC = () => {
 
                 {/* 3. Mass Quick Actions */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '2px' }}>
-                  <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.5)', textTransform: 'uppercase', fontWeight: 700, letterSpacing: '0.5px' }}>
+                  <div style={{ fontSize: '12px', color: '#a4b0a8', textTransform: 'none', fontWeight: 700, letterSpacing: '0' }}>
                     Acciones rápidas para toda la sesión:
                   </div>
 
@@ -2303,7 +2260,7 @@ const ActiveSession: React.FC = () => {
                     <div style={{ fontWeight: 700, fontSize: '12.5px', color: '#fbbf24', marginBottom: '2px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <span>⚡</span> Súper Series automáticas por parejas (Toda la sesión)
                     </div>
-                    <div style={{ fontSize: '10.5px', color: 'rgba(255,255,255,0.65)', lineHeight: 1.3 }}>
+                    <div style={{ fontSize: '10.5px', color: '#a4b0a8', lineHeight: 1.3 }}>
                       Agrupa todos los ejercicios de 2 en 2 (A1+A2, B1+B2) con descanso de 10s y 90s de ronda.
                     </div>
                   </button>
@@ -2325,7 +2282,7 @@ const ActiveSession: React.FC = () => {
                     <div style={{ fontWeight: 700, fontSize: '12.5px', color: '#60a5fa', marginBottom: '2px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <span>🔄</span> Circuito Completo (Todos en 1 bloque)
                     </div>
-                    <div style={{ fontSize: '10.5px', color: 'rgba(255,255,255,0.65)', lineHeight: 1.3 }}>
+                    <div style={{ fontSize: '10.5px', color: '#a4b0a8', lineHeight: 1.3 }}>
                       Agrupa todos los ejercicios en un solo circuito continuo con descanso de 10s y 120s de vuelta.
                     </div>
                   </button>

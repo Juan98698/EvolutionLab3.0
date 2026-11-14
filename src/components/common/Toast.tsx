@@ -18,21 +18,21 @@ export const Toast: React.FC<ToastProps> = ({ message, type, visible }) => {
       ? '#10b981'
       : type === 'error'
       ? '#ef4444'
-      : '#00d4ff';
+      : '#91b6a1';
 
   const borderColor =
     type === 'success'
       ? 'rgba(16, 185, 129, 0.35)'
       : type === 'error'
       ? 'rgba(239, 68, 68, 0.35)'
-      : 'rgba(0, 212, 255, 0.35)';
+      : 'rgba(145, 182, 161, 0.35)';
 
   const shadowGlow =
     type === 'success'
       ? '0 8px 24px rgba(16, 185, 129, 0.22), 0 2px 10px rgba(0, 0, 0, 0.5)'
       : type === 'error'
       ? '0 8px 24px rgba(239, 68, 68, 0.22), 0 2px 10px rgba(0, 0, 0, 0.5)'
-      : '0 8px 24px rgba(0, 212, 255, 0.22), 0 2px 10px rgba(0, 0, 0, 0.5)';
+      : '0 8px 24px rgba(145, 182, 161, 0.22), 0 2px 10px rgba(0, 0, 0, 0.5)';
 
   const icon =
     type === 'success'
@@ -57,8 +57,8 @@ export const Toast: React.FC<ToastProps> = ({ message, type, visible }) => {
         maxHeight: 'none',
         transform: 'translateX(-50%)',
         zIndex: 9999999,
-        background: 'rgba(11, 15, 25, 0.94)',
-        color: '#f8fafc',
+        background: 'rgba(18, 23, 22, 0.94)',
+        color: '#edf2ee',
         padding: '10px 18px',
         borderRadius: '30px',
         boxShadow: shadowGlow,
@@ -70,9 +70,9 @@ export const Toast: React.FC<ToastProps> = ({ message, type, visible }) => {
         maxWidth: 'min(90vw, 420px)',
         width: 'max-content',
         lineHeight: 1.4,
-        letterSpacing: '0.2px',
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
+        letterSpacing: '0',
+        backdropFilter: 'none',
+        WebkitBackdropFilter: 'none',
         pointerEvents: 'none',
         display: 'inline-flex',
         alignItems: 'center',
@@ -92,7 +92,7 @@ export const Toast: React.FC<ToastProps> = ({ message, type, visible }) => {
           borderRadius: '50%',
           background: `rgba(${type === 'success' ? '16, 185, 129' : type === 'error' ? '239, 68, 68' : '0, 212, 255'}, 0.18)`,
           color: accentColor,
-          fontSize: '11px',
+          fontSize: '12px',
           fontWeight: 800,
           flexShrink: 0,
         }}

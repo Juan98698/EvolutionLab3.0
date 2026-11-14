@@ -69,7 +69,7 @@ const STATUS_CONFIG: Record<string, { dot: string; label: string; dotChar: strin
   warning:  { dot: '#f97316', label: '⚡ Volumen Alto',   dotChar: '●' },
   optimal:  { dot: '#10b981', label: '🚀 Óptimo',        dotChar: '●' },
   building: { dot: '#facc15', label: '🔨 Construyendo',  dotChar: '◉' },
-  low:      { dot: '#94a3b8', label: '💤 Mantenimiento', dotChar: '○' },
+  low:      { dot: '#a4b0a8', label: '💤 Mantenimiento', dotChar: '○' },
 };
 
 export const VolumeTracker: React.FC<VolumeTrackerProps> = ({
@@ -327,7 +327,7 @@ export const VolumeTracker: React.FC<VolumeTrackerProps> = ({
       }}>
         <h3 style={{
           margin: 0, fontSize: '13px', color: 'var(--theme-primary)',
-          textTransform: 'uppercase', letterSpacing: '0.05em',
+          textTransform: 'none', letterSpacing: '0.05em',
           display: 'flex', alignItems: 'center', gap: '8px'
         }}>
           <span>📊</span>
@@ -339,8 +339,8 @@ export const VolumeTracker: React.FC<VolumeTrackerProps> = ({
             background: 'rgba(255,255,255,0.04)',
             border: '1px solid rgba(255,255,255,0.08)',
             borderRadius: '8px', padding: '4px 10px',
-            color: 'rgba(255,255,255,0.4)',
-            fontSize: '10px', fontWeight: 600, cursor: 'pointer',
+            color: '#a4b0a8',
+            fontSize: '12px', fontWeight: 600, cursor: 'pointer',
             transition: 'all 0.2s ease', letterSpacing: '0.03em',
             fontFamily: "inherit"
           }}
@@ -352,7 +352,7 @@ export const VolumeTracker: React.FC<VolumeTrackerProps> = ({
       {/* Leyenda para modo fuerza (siempre arriba del contenido) */}
       {isStrength && expandedItemsList.length > 0 && languageMode === 'tecnico' && (
         <div style={{
-          fontSize: '10px', color: '#6b7280', marginBottom: '10px',
+          fontSize: '12px', color: '#6b7280', marginBottom: '10px',
           display: 'flex', alignItems: 'center', gap: '6px'
         }}>
           <span style={{ color: '#f59e0b' }}>★</span>
@@ -391,13 +391,13 @@ export const VolumeTracker: React.FC<VolumeTrackerProps> = ({
               <span style={{ fontSize: '7px', color: item.dotColor, lineHeight: 1, flexShrink: 0 }}>
                 {item.dotChar}
               </span>
-              <span style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(255,255,255,0.75)', whiteSpace: 'nowrap' }}>
+              <span style={{ fontSize: '12px', fontWeight: 700, color: 'rgba(255,255,255,0.75)', whiteSpace: 'nowrap' }}>
                 {item.label}
               </span>
-              <span style={{ fontSize: '10px', fontWeight: 700, color: item.dotColor }}>
+              <span style={{ fontSize: '12px', fontWeight: 700, color: item.dotColor }}>
                 {item.current}
               </span>
-              <span style={{ fontSize: '8px', color: 'rgba(255,255,255,0.2)', marginLeft: '2px' }}>
+              <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.2)', marginLeft: '2px' }}>
                 ▼
               </span>
             </button>
@@ -428,20 +428,20 @@ export const VolumeTracker: React.FC<VolumeTrackerProps> = ({
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px', width: '100%', justifyContent: 'center' }}>
-                <span style={{ fontSize: '11px', fontWeight: 'bold', color: '#ffffff', textAlign: 'center', whiteSpace: 'nowrap' }}>
+                <span style={{ fontSize: '12px', fontWeight: 'bold', color: '#ffffff', textAlign: 'center', whiteSpace: 'nowrap' }}>
                   {item.label}
                 </span>
-                <span style={{ fontSize: '8px', color: 'rgba(255,255,255,0.3)' }}>▲</span>
+                <span style={{ fontSize: '12px', color: '#a4b0a8' }}>▲</span>
               </div>
 
               {/* Status label */}
-              <span style={{ fontSize: '9px', color: item.textColor, fontWeight: 700, letterSpacing: '0.02em' }}>
+              <span style={{ fontSize: '12px', color: item.textColor, fontWeight: 700, letterSpacing: '0.02em' }}>
                 {item.statusLabel}
               </span>
 
               <span style={{ fontSize: '18px', fontWeight: '900', color: item.textColor, lineHeight: 1, margin: '2px 0' }}>
                 {item.current}
-                <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', fontWeight: 'normal' }}>
+                <span style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 'normal' }}>
                   {' '}/ {item.target} {item.unit}
                 </span>
               </span>
@@ -457,7 +457,7 @@ export const VolumeTracker: React.FC<VolumeTrackerProps> = ({
                   left: `${item.targetPct}%`,
                   transform: 'translateX(-50%)',
                   width: '2px', height: '10px',
-                  background: 'rgba(255,255,255,0.35)',
+                  background: 'var(--studio-raised)',
                   borderRadius: '1px'
                 }} />
                 {/* Progreso */}
@@ -471,7 +471,7 @@ export const VolumeTracker: React.FC<VolumeTrackerProps> = ({
               </div>
 
               {languageMode === 'tecnico' && (
-                <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', fontSize: '9px', color: 'rgba(255,255,255,0.3)', marginTop: '2px' }}>
+                <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: '#a4b0a8', marginTop: '2px' }}>
                   <span>Obj: {item.target}</span>
                   <span>MRV {item.mrv}</span>
                 </div>
@@ -480,7 +480,7 @@ export const VolumeTracker: React.FC<VolumeTrackerProps> = ({
               {/* Mensaje humanizado — consecuencia en lenguaje natural */}
               {(item as any).humanizedMessage && (
                 <div style={{
-                  width: '100%', fontSize: '10px', color: 'rgba(255,255,255,0.5)',
+                  width: '100%', fontSize: '12px', color: '#a4b0a8',
                   lineHeight: 1.4, marginTop: '6px', textAlign: 'left',
                   borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '6px',
                 }}>
@@ -491,9 +491,9 @@ export const VolumeTracker: React.FC<VolumeTrackerProps> = ({
               {item.isOver && (
                 <div style={{
                   position: 'absolute', top: '-6px', right: '-6px',
-                  background: '#ef4444', color: '#fff', fontSize: '9px',
+                  background: '#ef4444', color: '#fff', fontSize: '12px',
                   padding: '2px 5px', borderRadius: '12px', fontWeight: 'bold',
-                  boxShadow: '0 2px 4px rgba(0,0,0,0.5)'
+                  boxShadow: 'none'
                 }}>
                   Excedido
                 </div>

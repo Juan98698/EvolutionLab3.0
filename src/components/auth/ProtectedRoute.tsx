@@ -31,6 +31,8 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   // Si hay roles permitidos definidos y el perfil aún no ha cargado,
   // permitir el acceso en lugar de redirigir (el perfil se cargará en segundo plano).
   // Esto previene el flash a pantalla vacía cuando el perfil llega un instante después.
+  if (allowedRoles && !profile) return <BootSplash />;
+
   if (allowedRoles && profile && !allowedRoles.includes(profile.rol)) {
     console.warn(`Acceso denegado a la ruta para el rol: ${profile.rol}`);
     // Redirigir a la raíz para que el despachador de App.tsx determine su panel correcto

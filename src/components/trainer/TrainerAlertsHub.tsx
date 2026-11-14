@@ -229,7 +229,7 @@ export const TrainerAlertsHub: React.FC<TrainerAlertsHubProps> = ({ visible, onC
       className="modal-overlay modal-overlay-enter open"
       style={{
         display: 'flex', justifyContent: 'center', alignItems: 'flex-start',
-        zIndex: 99999, backdropFilter: 'blur(8px)', paddingTop: '40px',
+        zIndex: 99999, backdropFilter: 'none', paddingTop: '40px',
       }}
     >
       <div
@@ -237,9 +237,9 @@ export const TrainerAlertsHub: React.FC<TrainerAlertsHubProps> = ({ visible, onC
         style={{
           maxWidth: '700px', width: '95%', maxHeight: '85vh',
           overflowY: 'auto', border: '1px solid var(--theme-border)',
-          boxShadow: '0 25px 60px rgba(0,0,0,0.5)',
+          boxShadow: 'none',
           background: 'var(--theme-card-bg)',
-          backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+          backdropFilter: 'none', WebkitBackdropFilter: 'none',
           borderRadius: '18px', padding: '0',
         }}
       >
@@ -249,7 +249,7 @@ export const TrainerAlertsHub: React.FC<TrainerAlertsHubProps> = ({ visible, onC
             padding: '20px 24px', borderBottom: '1px solid var(--theme-border)',
             display: 'flex', justifyContent: 'space-between', alignItems: 'center',
             position: 'sticky', top: 0, background: 'var(--theme-card-bg)', zIndex: 1,
-            backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+            backdropFilter: 'none', WebkitBackdropFilter: 'none',
             borderRadius: '18px 18px 0 0',
           }}
         >
@@ -259,16 +259,16 @@ export const TrainerAlertsHub: React.FC<TrainerAlertsHubProps> = ({ visible, onC
                 width: '36px', height: '36px', borderRadius: '10px',
                 background: 'linear-gradient(135deg, #ef4444, #f97316)',
                 display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: '0 4px 16px rgba(239, 68, 68, 0.25)',
+                boxShadow: 'none',
               }}
             >
               <span style={{ fontSize: '18px' }}>📊</span>
             </div>
             <div>
-              <h3 style={{ margin: 0, fontFamily: "'Orbitron', sans-serif", fontSize: '13px', fontWeight: 800, letterSpacing: '0.5px', color: 'white' }}>
+              <h3 style={{ margin: 0, fontFamily: "'Inter', sans-serif", fontSize: '13px', fontWeight: 800, letterSpacing: '0', color: 'white' }}>
                 HUB DE ALERTAS
               </h3>
-              <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', marginTop: '1px' }}>
+              <div style={{ fontSize: '12px', color: '#a4b0a8', marginTop: '1px' }}>
                 Estado de sobrecarga de todos tus atletas
               </div>
             </div>
@@ -277,7 +277,7 @@ export const TrainerAlertsHub: React.FC<TrainerAlertsHubProps> = ({ visible, onC
             onClick={onClose}
             style={{
               background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.1)',
-              borderRadius: '8px', color: 'rgba(255,255,255,0.5)', padding: '6px 10px',
+              borderRadius: '8px', color: '#a4b0a8', padding: '6px 10px',
               cursor: 'pointer', fontSize: '14px',
             }}
           >
@@ -288,7 +288,7 @@ export const TrainerAlertsHub: React.FC<TrainerAlertsHubProps> = ({ visible, onC
         {/* Stats Summary */}
         <div style={{ padding: '16px 24px', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '10px' }}>
           {[
-            { label: 'Total', value: stats.total, color: '#94a3b8', bg: 'rgba(148,163,184,0.08)' },
+            { label: 'Total', value: stats.total, color: '#a4b0a8', bg: 'rgba(148,163,184,0.08)' },
             { label: 'Cr\u00edticos', value: stats.criticos, color: '#f87171', bg: 'rgba(239,68,68,0.08)' },
             { label: 'Inactivos', value: stats.inactivos, color: '#fbbf24', bg: 'rgba(245,158,11,0.08)' },
             { label: 'En racha', value: stats.enRacha, color: '#34d399', bg: 'rgba(16,185,129,0.08)' },
@@ -300,10 +300,10 @@ export const TrainerAlertsHub: React.FC<TrainerAlertsHubProps> = ({ visible, onC
                 border: `1px solid ${s.color}20`,
               }}
             >
-              <div style={{ fontSize: '20px', fontWeight: 800, fontFamily: "'Orbitron', sans-serif", color: s.color }}>
+              <div style={{ fontSize: '20px', fontWeight: 800, fontFamily: "'Inter', sans-serif", color: s.color }}>
                 {s.value}
               </div>
-              <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.4)', fontWeight: 600, letterSpacing: '0.5px', marginTop: '2px' }}>
+              <div style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 600, letterSpacing: '0', marginTop: '2px' }}>
                 {s.label}
               </div>
             </div>
@@ -322,11 +322,11 @@ export const TrainerAlertsHub: React.FC<TrainerAlertsHubProps> = ({ visible, onC
               key={f.key}
               onClick={() => setFilterType(f.key)}
               style={{
-                fontSize: '10px', padding: '6px 12px', borderRadius: '6px',
-                border: 'none', cursor: 'pointer', fontFamily: "'Orbitron', sans-serif",
+                fontSize: '12px', padding: '6px 12px', borderRadius: '6px',
+                border: 'none', cursor: 'pointer', fontFamily: "'Inter', sans-serif",
                 fontWeight: filterType === f.key ? 700 : 500,
                 background: filterType === f.key ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.03)',
-                color: filterType === f.key ? 'white' : 'rgba(255,255,255,0.4)',
+                color: filterType === f.key ? 'white' : '#a4b0a8',
                 transition: 'all 0.2s',
               }}
             >
@@ -338,11 +338,11 @@ export const TrainerAlertsHub: React.FC<TrainerAlertsHubProps> = ({ visible, onC
         {/* Content */}
         <div style={{ padding: '0 24px 24px' }}>
           {loading ? (
-            <div style={{ textAlign: 'center', padding: '40px', color: 'rgba(255,255,255,0.4)', fontFamily: "'Orbitron', sans-serif", fontSize: '12px' }}>
+            <div style={{ textAlign: 'center', padding: '40px', color: '#a4b0a8', fontFamily: "'Inter', sans-serif", fontSize: '12px' }}>
               Analizando atletas...
             </div>
           ) : filteredAlerts.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '40px', color: 'rgba(255,255,255,0.3)', fontSize: '12px' }}>
+            <div style={{ textAlign: 'center', padding: '40px', color: '#a4b0a8', fontSize: '12px' }}>
               No hay alertas con el filtro actual.
             </div>
           ) : (
@@ -360,7 +360,7 @@ export const TrainerAlertsHub: React.FC<TrainerAlertsHubProps> = ({ visible, onC
                       background: 'var(--theme-card-bg)',
                       border: `1px solid ${criticalCount > 0 ? 'rgba(239, 68, 68, 0.35)' : isInactive ? 'rgba(245, 158, 11, 0.3)' : 'var(--theme-border)'}`,
                       borderRadius: '12px', padding: '16px', transition: 'all 0.2s',
-                      backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+                      backdropFilter: 'none', WebkitBackdropFilter: 'none',
                     }}
                   >
                     {/* Client header */}
@@ -372,7 +372,7 @@ export const TrainerAlertsHub: React.FC<TrainerAlertsHubProps> = ({ visible, onC
                             background: criticalCount > 0 ? 'rgba(239,68,68,0.15)' : positiveCount > 0 ? 'rgba(16,185,129,0.15)' : 'rgba(148,163,184,0.1)',
                             display: 'flex', alignItems: 'center', justifyContent: 'center',
                             fontSize: '12px', fontWeight: 700,
-                            color: criticalCount > 0 ? '#f87171' : positiveCount > 0 ? '#34d399' : '#94a3b8',
+                            color: criticalCount > 0 ? '#f87171' : positiveCount > 0 ? '#34d399' : '#a4b0a8',
                             border: `1px solid ${criticalCount > 0 ? 'rgba(239,68,68,0.3)' : positiveCount > 0 ? 'rgba(16,185,129,0.3)' : 'rgba(148,163,184,0.15)'}`,
                           }}
                         >
@@ -380,7 +380,7 @@ export const TrainerAlertsHub: React.FC<TrainerAlertsHubProps> = ({ visible, onC
                         </div>
                         <div>
                           <div style={{ fontSize: '12px', fontWeight: 700, color: 'white' }}>{client.clienteNombre}</div>
-                          <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.35)', marginTop: '1px' }}>
+                          <div style={{ fontSize: '12px', color: '#a4b0a8', marginTop: '1px' }}>
                             {hasNoSessions
                               ? 'Sin sesiones registradas'
                               : `${client.totalSesiones} sesiones | ${client.diasInactivo === 0 ? 'Activo hoy' : `Hace ${client.diasInactivo}d`}`}
@@ -391,17 +391,17 @@ export const TrainerAlertsHub: React.FC<TrainerAlertsHubProps> = ({ visible, onC
                       {/* Status badges */}
                       <div style={{ display: 'flex', gap: '4px' }}>
                         {criticalCount > 0 && (
-                          <span style={{ fontSize: '9px', padding: '3px 8px', borderRadius: '10px', background: 'rgba(239,68,68,0.12)', color: '#f87171', fontWeight: 700 }}>
+                          <span style={{ fontSize: '12px', padding: '3px 8px', borderRadius: '10px', background: 'rgba(239,68,68,0.12)', color: '#f87171', fontWeight: 700 }}>
                             {criticalCount} alerta{criticalCount > 1 ? 's' : ''}
                           </span>
                         )}
                         {isInactive && (
-                          <span style={{ fontSize: '9px', padding: '3px 8px', borderRadius: '10px', background: 'rgba(245,158,11,0.12)', color: '#fbbf24', fontWeight: 700 }}>
+                          <span style={{ fontSize: '12px', padding: '3px 8px', borderRadius: '10px', background: 'rgba(245,158,11,0.12)', color: '#fbbf24', fontWeight: 700 }}>
                             Inactivo
                           </span>
                         )}
                         {positiveCount > 0 && !criticalCount && (
-                          <span style={{ fontSize: '9px', padding: '3px 8px', borderRadius: '10px', background: 'rgba(16,185,129,0.12)', color: '#34d399', fontWeight: 700 }}>
+                          <span style={{ fontSize: '12px', padding: '3px 8px', borderRadius: '10px', background: 'rgba(16,185,129,0.12)', color: '#34d399', fontWeight: 700 }}>
                             En racha
                           </span>
                         )}
@@ -422,17 +422,17 @@ export const TrainerAlertsHub: React.FC<TrainerAlertsHubProps> = ({ visible, onC
                                 style={{
                                   display: 'flex', alignItems: 'center', gap: '8px',
                                   padding: '6px 10px', borderRadius: '8px',
-                                  background: style.bg, fontSize: '10px',
+                                  background: style.bg, fontSize: '12px',
                                 }}
                               >
-                                <span style={{ fontSize: '10px' }}>{style.icon}</span>
+                                <span style={{ fontSize: '12px' }}>{style.icon}</span>
                                 <span style={{ color: style.text, fontWeight: 600 }}>{alerta.ejercicio}:</span>
-                                <span style={{ color: 'rgba(255,255,255,0.6)', flex: 1 }}>{alerta.mensaje.substring(0, 80)}{alerta.mensaje.length > 80 ? '...' : ''}</span>
+                                <span style={{ color: '#a4b0a8', flex: 1 }}>{alerta.mensaje.substring(0, 80)}{alerta.mensaje.length > 80 ? '...' : ''}</span>
                               </div>
                             );
                           })}
                         {client.alertas.length > 3 && (
-                          <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.3)', textAlign: 'right', paddingRight: '10px' }}>
+                          <div style={{ fontSize: '12px', color: '#a4b0a8', textAlign: 'right', paddingRight: '10px' }}>
                             +{client.alertas.length - 3} alertas m{'\u00e1'}s
                           </div>
                         )}

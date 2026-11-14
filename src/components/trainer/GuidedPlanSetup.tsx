@@ -15,6 +15,7 @@
  */
 
 import React, { useState } from 'react';
+import { useModalA11y } from '../../hooks/useModalA11y';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -51,11 +52,12 @@ const LEVELS: { value: GuidedLevel; label: string; hint: string }[] = [
 const DAYS_OPTIONS   = [3, 4, 5, 6];
 const WEEKS_OPTIONS  = [4, 6, 8, 12];
 
-const ACCENT = '#c2ff00'; // acid green — color primario de Evolution Lab
+const ACCENT = '#91b6a1'; // Acento salvia del sistema Estudio
 
 // ─── Componente ───────────────────────────────────────────────────────────────
 
 export const GuidedPlanSetup: React.FC<Props> = ({ onComplete, onSkip }) => {
+  const dialogRef = useModalA11y({ isOpen: true, onClose: onSkip });
   const [step,     setStep]     = useState(1);
   const [objetivo, setObjetivo] = useState<GuidedObjective | null>(null);
   const [nivel,    setNivel]    = useState<GuidedLevel | null>(null);
@@ -81,30 +83,21 @@ export const GuidedPlanSetup: React.FC<Props> = ({ onComplete, onSkip }) => {
   };
 
   return (
-    <div style={{
+    <div className="studio-setup-overlay" style={{
       position: 'fixed', inset: 0, zIndex: 9000,
-      background: 'rgba(5, 8, 16, 0.97)',
-      backdropFilter: 'blur(16px)',
+      background: 'rgba(6, 12, 8, 0.9)',
+      backdropFilter: 'none',
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       padding: '20px', fontFamily: "'Inter', 'Roboto', sans-serif",
     }}>
-      <div style={{
+      <div ref={dialogRef} className="studio-setup-dialog" role="dialog" aria-modal="true" aria-label="Configuración guiada del plan" tabIndex={-1} style={{
         width: '100%', maxWidth: '520px',
-        background: 'rgba(15, 23, 42, 0.9)',
+        background: '#1a211e',
         border: `1px solid ${ACCENT}22`,
         borderRadius: '24px', padding: '36px 32px',
-        boxShadow: `0 24px 64px rgba(0,0,0,0.6), 0 0 0 1px ${ACCENT}11`,
+        boxShadow: 'none',
         position: 'relative', overflow: 'hidden',
       }}>
-
-        {/* Glow de fondo */}
-        <div style={{
-          position: 'absolute', top: '-60px', left: '50%',
-          transform: 'translateX(-50%)',
-          width: '200px', height: '200px',
-          background: ACCENT, filter: 'blur(80px)',
-          opacity: 0.06, pointerEvents: 'none', borderRadius: '50%',
-        }} />
 
         {/* ── Indicador de pasos ── */}
         <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginBottom: '32px' }}>
@@ -122,13 +115,13 @@ export const GuidedPlanSetup: React.FC<Props> = ({ onComplete, onSkip }) => {
         {/* ── PASO 1 — Objetivo ── */}
         {step === 1 && (
           <div>
-            <p style={{ fontSize: '12px', color: ACCENT, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '8px' }}>
+            <p style={{ fontSize: '12px', color: ACCENT, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'none', marginBottom: '8px' }}>
               Paso 1 de 3
             </p>
             <h2 style={{ fontSize: '22px', fontWeight: 800, color: '#fff', marginBottom: '6px', lineHeight: 1.3 }}>
               ¿Qué quieres lograr en este bloque?
             </h2>
-            <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.45)', marginBottom: '24px' }}>
+            <p style={{ fontSize: '13px', color: '#a4b0a8', marginBottom: '24px' }}>
               El sistema elegirá el protocolo y la forma de medir el volumen más adecuados.
             </p>
 
@@ -150,7 +143,7 @@ export const GuidedPlanSetup: React.FC<Props> = ({ onComplete, onSkip }) => {
                     <div style={{ fontSize: '15px', fontWeight: 700, color: objetivo === opt.value ? ACCENT : '#e5e7eb', marginBottom: '2px' }}>
                       {opt.label}
                     </div>
-                    <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)' }}>
+                    <div style={{ fontSize: '12px', color: '#a4b0a8' }}>
                       {opt.description}
                     </div>
                   </div>
@@ -166,19 +159,19 @@ export const GuidedPlanSetup: React.FC<Props> = ({ onComplete, onSkip }) => {
         {/* ── PASO 2 — Nivel y estructura ── */}
         {step === 2 && (
           <div>
-            <p style={{ fontSize: '12px', color: ACCENT, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '8px' }}>
+            <p style={{ fontSize: '12px', color: ACCENT, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'none', marginBottom: '8px' }}>
               Paso 2 de 3
             </p>
             <h2 style={{ fontSize: '22px', fontWeight: 800, color: '#fff', marginBottom: '6px', lineHeight: 1.3 }}>
               ¿Cuál es el nivel y la disponibilidad del atleta?
             </h2>
-            <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.45)', marginBottom: '24px' }}>
+            <p style={{ fontSize: '13px', color: '#a4b0a8', marginBottom: '24px' }}>
               Esto calibra los rangos de volumen seguros y el protocolo más adecuado.
             </p>
 
             {/* Nivel */}
             <div style={{ marginBottom: '24px' }}>
-              <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              <p style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 600, marginBottom: '10px', textTransform: 'none', letterSpacing: '0.06em' }}>
                 Nivel del atleta
               </p>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
@@ -198,7 +191,7 @@ export const GuidedPlanSetup: React.FC<Props> = ({ onComplete, onSkip }) => {
                       <div style={{ fontSize: '14px', fontWeight: 600, color: nivel === l.value ? ACCENT : '#e5e7eb' }}>
                         {l.label}
                       </div>
-                      <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)', marginTop: '2px' }}>
+                      <div style={{ fontSize: '12px', color: '#a4b0a8', marginTop: '2px' }}>
                         {l.hint}
                       </div>
                     </div>
@@ -210,7 +203,7 @@ export const GuidedPlanSetup: React.FC<Props> = ({ onComplete, onSkip }) => {
 
             {/* Días por semana */}
             <div style={{ marginBottom: '20px' }}>
-              <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              <p style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 600, marginBottom: '10px', textTransform: 'none', letterSpacing: '0.06em' }}>
                 Días de entrenamiento por semana
               </p>
               <div style={{ display: 'flex', gap: '8px' }}>
@@ -234,7 +227,7 @@ export const GuidedPlanSetup: React.FC<Props> = ({ onComplete, onSkip }) => {
 
             {/* Semanas del bloque */}
             <div>
-              <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', fontWeight: 600, marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              <p style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 600, marginBottom: '10px', textTransform: 'none', letterSpacing: '0.06em' }}>
                 Duración del bloque
               </p>
               <div style={{ display: 'flex', gap: '8px' }}>
@@ -262,7 +255,7 @@ export const GuidedPlanSetup: React.FC<Props> = ({ onComplete, onSkip }) => {
         {step === 3 && objetivo && nivel && (
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: '48px', marginBottom: '16px' }}>🚀</div>
-            <p style={{ fontSize: '12px', color: ACCENT, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', marginBottom: '8px' }}>
+            <p style={{ fontSize: '12px', color: ACCENT, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'none', marginBottom: '8px' }}>
               Paso 3 de 3
             </p>
             <h2 style={{ fontSize: '22px', fontWeight: 800, color: '#fff', marginBottom: '12px', lineHeight: 1.3 }}>
@@ -281,18 +274,18 @@ export const GuidedPlanSetup: React.FC<Props> = ({ onComplete, onSkip }) => {
                 { label: 'Duración', value: `${semanas} semanas` },
               ].map(row => (
                 <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                  <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.45)' }}>{row.label}</span>
+                  <span style={{ fontSize: '13px', color: '#a4b0a8' }}>{row.label}</span>
                   <span style={{ fontSize: '13px', fontWeight: 600, color: '#e5e7eb' }}>{row.value}</span>
                 </div>
               ))}
             </div>
 
-            <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.5)', marginBottom: '20px' }}>
+            <p style={{ fontSize: '13px', color: '#a4b0a8', marginBottom: '20px' }}>
               El sistema creará un punto de partida basado en evidencia. Puedes modificar cualquier cosa después.
             </p>
 
             {/* ¿Tour? */}
-            <p style={{ fontSize: '13px', color: 'rgba(255,255,255,0.6)', marginBottom: '12px', fontWeight: 600 }}>
+            <p style={{ fontSize: '13px', color: '#a4b0a8', marginBottom: '12px', fontWeight: 600 }}>
               ¿Quieres el tour rápido de 30 segundos?
             </p>
             <div style={{ display: 'flex', gap: '10px' }}>
@@ -303,7 +296,7 @@ export const GuidedPlanSetup: React.FC<Props> = ({ onComplete, onSkip }) => {
                   background: `linear-gradient(135deg, ${ACCENT}, ${ACCENT}cc)`,
                   border: 'none', color: '#000', fontWeight: 800,
                   fontSize: '14px', cursor: 'pointer',
-                  boxShadow: `0 4px 20px ${ACCENT}40`,
+                  boxShadow: 'none',
                   transition: 'all 0.2s',
                 }}
               >

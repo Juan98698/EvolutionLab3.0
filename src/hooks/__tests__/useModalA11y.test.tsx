@@ -31,6 +31,37 @@ function TestHarness({ onClose }: { onClose?: () => void }) {
 }
 
 describe('useModalA11y', () => {
+  it('conserva el foco al actualizar el contenido del diálogo', async () => {
+    function EditableDialog() {
+      const [value, setValue] = useState('');
+      const close = vi.fn();
+      const ref = useModalA11y({ isOpen: true, onClose: close });
+      return <div ref={ref} role="dialog"><button>inicio</button><input aria-label="editar" value={value} onChange={e => setValue(e.target.value)} /></div>;
+    }
+    render(<EditableDialog />);
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByText('inicio')));
+    const input = screen.getByLabelText('editar');
+    input.focus();
+    fireEvent.change(input, { target: { value: 'Actualizado' } });
+    await new Promise(resolve => setTimeout(resolve, 5));
+    expect(document.activeElement).toBe(input);
+  });
+
+  it('Escape cierra solamente el diálogo superior', async () => {
+    const closeParent = vi.fn();
+    const closeChild = vi.fn();
+    function NestedDialogs() {
+      const parent = useModalA11y({ isOpen: true, onClose: closeParent });
+      const child = useModalA11y({ isOpen: true, onClose: closeChild });
+      return <><div ref={parent} role="dialog"><button>padre</button></div><div ref={child} role="dialog"><button>hijo</button></div></>;
+    }
+    render(<NestedDialogs />);
+    await waitFor(() => expect(document.activeElement).toBe(screen.getByText('hijo')));
+    fireEvent.keyDown(document, { key: 'Escape' });
+    expect(closeChild).toHaveBeenCalledOnce();
+    expect(closeParent).not.toHaveBeenCalled();
+  });
+
   it('mueve el foco al primer elemento enfocable del modal al abrirse', async () => {
     render(<TestHarness />);
     fireEvent.click(screen.getByText('abrir trigger'));

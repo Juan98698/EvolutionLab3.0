@@ -1,17 +1,13 @@
 <!DOCTYPE html>
-<html lang="es">
+<html lang="es" data-design="studio" data-theme="studio">
   <head>
     <meta charset="UTF-8" />
     <meta name="google-site-verification" content="FfCz8KjEj2a375e0CGoWma3BfA298PttSlMrlrthRC0" />
     <link rel="icon" type="image/png" href="/icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes, viewport-fit=cover" />
     <title>Evolution Lab</title>
-    <!-- Google Fonts: solo las 2 familias usadas en toda la app (Orbitron, Inter).
-         Las 6 familias del branding personalizado del entrenador se cargan
-         bajo demanda vía src/lib/dynamicFonts.ts, solo donde hacen falta. -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500;700;800;900&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+    <!-- Inter se sirve con la app (studio.css), también disponible sin conexión.
+         Las fuentes opcionales de marca se cargan bajo demanda. -->
     <!-- Splash de arranque: transparente sobre el fondo de la app. Compartido con
          src/components/common/BootSplash.tsx para que no haya salto visual cuando
          React reemplaza este contenido. -->
@@ -22,14 +18,14 @@
         align-items: center;
         justify-content: center;
         min-height: 100vh;
-        color: #fff;
-        font-family: 'Orbitron', sans-serif;
+        color: #edf2ee;
+        font-family: 'Inter', sans-serif;
       }
       .evolab-boot__spinner {
         width: 40px;
         height: 40px;
         border: 3px solid rgba(255, 255, 255, 0.08);
-        border-top-color: #00d4ff;
+        border-top-color: #91b6a1;
         border-radius: 50%;
         animation: evolab-boot-spin 1s linear infinite;
         margin-bottom: 15px;

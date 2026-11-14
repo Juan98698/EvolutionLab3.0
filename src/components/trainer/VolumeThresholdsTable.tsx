@@ -62,7 +62,7 @@ export function VolumeThresholdsTable({ onClose, defaultMode = 'hipertrofia' }: 
       zIndex: 9999,
       display: 'flex', alignItems: 'center', justifyContent: 'center',
       background: 'rgba(0, 0, 0, 0.85)',
-      backdropFilter: 'blur(5px)',
+      backdropFilter: 'none',
       padding: '10px',
       fontFamily: "'Inter', 'Roboto', sans-serif",
       color: '#fff'
@@ -82,7 +82,7 @@ export function VolumeThresholdsTable({ onClose, defaultMode = 'hipertrofia' }: 
         background: '#1A1A1A', border: '1px solid #333', borderRadius: '16px',
         maxWidth: '1000px', maxHeight: '90vh',
         display: 'flex', flexDirection: 'column',
-        boxShadow: '0 20px 50px rgba(0,0,0,0.5)'
+        boxShadow: 'none'
       }}>
 
         {/* ── Header ── */}
@@ -160,7 +160,7 @@ export function VolumeThresholdsTable({ onClose, defaultMode = 'hipertrofia' }: 
                     borderRadius: '8px 8px 0 0',
                     fontWeight: isActive ? 'bold' : '500',
                     fontSize: '14px',
-                    textTransform: 'uppercase',
+                    textTransform: 'none',
                     letterSpacing: '0.05em',
                     cursor: 'pointer',
                     boxShadow: isActive ? `0 -4px 10px -4px ${shadow}` : 'none',
@@ -195,7 +195,7 @@ export function VolumeThresholdsTable({ onClose, defaultMode = 'hipertrofia' }: 
               <span style={{ background: '#FFE4E1', color: '#8B0000', padding: '2px 10px', borderRadius: '4px', fontWeight: 'bold', fontSize: '12px' }}>MRV</span>
               <span style={{ color: '#d1d5db' }}>Máximo recuperable</span>
             </div>
-            <div style={{ marginLeft: 'auto', color: '#9ca3af', fontSize: '12px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <div style={{ marginLeft: 'auto', color: '#9ca3af', fontSize: '12px', textTransform: 'none', letterSpacing: '0.05em' }}>
               {mode === 'hipertrofia' ? 'Series directas / semana' : 'NL (reps × series) / semana  ·  ≥ 80% 1RM'}
             </div>
           </div>
@@ -295,7 +295,7 @@ export function VolumeThresholdsTable({ onClose, defaultMode = 'hipertrofia' }: 
                             >
                               <div>
                                 <div style={{ fontWeight: 'bold', color: '#e5e7eb', fontSize: '14px' }}>{data.label}</div>
-                                <div style={{ fontSize: '11px', color: '#6b7280', marginTop: '3px' }}>
+                                <div style={{ fontSize: '12px', color: '#6b7280', marginTop: '3px' }}>
                                   {data.exampleExercises.slice(0, 2).join(' · ')}
                                 </div>
                               </div>
@@ -318,7 +318,7 @@ export function VolumeThresholdsTable({ onClose, defaultMode = 'hipertrofia' }: 
                                 <span style={{
                                   background: '#1a1a2e', color: '#f59e0b',
                                   padding: '4px 8px', borderRadius: '6px',
-                                  fontSize: '11px', fontWeight: '500', whiteSpace: 'nowrap'
+                                  fontSize: '12px', fontWeight: '500', whiteSpace: 'nowrap'
                                 }}>
                                   {data.intensityZone}
                                 </span>
@@ -331,7 +331,7 @@ export function VolumeThresholdsTable({ onClose, defaultMode = 'hipertrofia' }: 
                               borderBottom: '1px solid #333',
                               background: '#1a1a1a'
                             }}>
-                              <div style={{ fontSize: '11px', color: '#6b7280', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                              <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px', textTransform: 'none', letterSpacing: '0.08em' }}>
                                 Señales de MRV
                               </div>
                               {data.mrvSignals.map((signal, i) => (

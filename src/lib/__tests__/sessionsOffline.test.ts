@@ -24,6 +24,13 @@ let mockServerSessionsRows: any[] = [];
 vi.mock('../supabaseClient', () => {
   return {
     supabase: {
+      rpc: vi.fn(async (_name, args) => {
+        const s = args.p_session;
+        mockHistorialInsert({ cliente_id: args.p_cliente_id, fecha: s.fecha, notas_generales: s.notas_sesion, express_mode: s.express_mode || false, express_blocks: s.express_blocks || [] });
+        mockEjerciciosInsert(s.ejercicios);
+        const result = mockEjerciciosInsertResult();
+        return { data: result.error ? null : { id: 'uuid-server-id', ejercicios: [] }, error: result.error };
+      }),
       from: vi.fn((table) => {
         const chain: any = {};
         chain.select = vi.fn().mockReturnValue(chain);
@@ -71,8 +78,8 @@ vi.mock('../supabaseClient', () => {
  * es el helper de testing que la setea directamente, sin depender de que
  * la hidratación asíncrona desde IndexedDB haya terminado.
  */
-function seedCache(sessions: any[]) {
-  __resetSessionsCacheForTests(sessions);
+function seedCache(sessions: any[], owner = 'test-user') {
+  __resetSessionsCacheForTests(sessions, owner);
 }
 
 beforeEach(async () => {
@@ -192,7 +199,7 @@ describe('Offline Session Synchronization and Cache Preservation', () => {
         }
       ]
     };
-    seedCache([mockExpressSession]);
+    seedCache([mockExpressSession], 'test-user-2');
 
     await syncOfflineSessions('test-user-2');
 
@@ -404,12 +411,12 @@ describe('Persistencia real en IndexedDB (Fase 4)', () => {
     // La escritura a IndexedDB es fire-and-forget: se espera un tick.
     await new Promise((r) => setTimeout(r, 0));
 
-    const stored = await idbGet<any[]>(SESSIONS_CACHE_KEY);
+    const stored = await idbGet<any[]>('evolution:sessions:v6:test-user');
     expect(stored).toHaveLength(1);
     expect(stored?.[0].notas_sesion).toBe('sesion sincronizada');
   });
 
-  it('migra datos existentes de localStorage a IndexedDB la primera vez que corre', async () => {
+  it('conserva los datos antiguos sin asignarlos automáticamente a otra cuenta', async () => {
     // Simula un usuario que ya tenía datos en localStorage de antes de la migración.
     const legacySession = { id: 'legacy-1', fecha: '2026-01-01', notas_sesion: 'dato viejo en localStorage', ejercicios: [] };
     localStorage.setItem(SESSIONS_CACHE_KEY, JSON.stringify([legacySession]));
@@ -422,15 +429,14 @@ describe('Persistencia real en IndexedDB (Fase 4)', () => {
     await __resetIndexedDbConnectionForTests();
     const sessionsModule = await import('../sessions');
 
-    // Lectura síncrona inmediata: debe ver el dato de localStorage sin esperar nada.
-    expect(sessionsModule.readSessionsFromCache()[0].notas_sesion).toBe('dato viejo en localStorage');
+    await sessionsModule.activateSessionCache('another-user');
+    expect(sessionsModule.readSessionsFromCache()).toEqual([]);
 
     // Tras la hidratación asíncrona, ese dato debe haber quedado migrado a IndexedDB.
     // Se usa 100ms en lugar de setTimeout(0) porque en los runners de CI (Node 24 / Linux)
     // la apertura de la conexión IDB de fake-indexeddb toma más de un tick.
     await new Promise((r) => setTimeout(r, 100));
-    const stored = await idbGet<any[]>(SESSIONS_CACHE_KEY);
-    expect(stored).toHaveLength(1);
-    expect(stored?.[0].notas_sesion).toBe('dato viejo en localStorage');
+    expect(localStorage.getItem(SESSIONS_CACHE_KEY)).toContain('dato viejo en localStorage');
+    expect(await idbGet('evolution:sessions:v6:another-user')).toBeUndefined();
   });
 });

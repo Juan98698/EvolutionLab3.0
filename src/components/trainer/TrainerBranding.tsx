@@ -30,7 +30,7 @@ const FONT_PREVIEW: Record<string, string> = {
 };
 
 const COLOR_PRESETS = [
-  { primary: '#00d4ff', secondary: '#0070a0', name: 'Cyan Ice' },
+  { primary: '#91b6a1', secondary: '#a4b0a8', name: 'Estudio' },
   { primary: '#a855f7', secondary: '#7c3aed', name: 'Purple Haze' },
   { primary: '#f97316', secondary: '#ea580c', name: 'Lava Core' },
   { primary: '#10b981', secondary: '#059669', name: 'Forest Bio' },
@@ -38,17 +38,17 @@ const COLOR_PRESETS = [
   { primary: '#eab308', secondary: '#ca8a04', name: 'Gold Royal' },
   { primary: '#ec4899', secondary: '#db2777', name: 'Neon Pink' },
   { primary: '#6366f1', secondary: '#4f46e5', name: 'Indigo Night' },
-  { primary: '#94a3b8', secondary: '#475569', name: 'Steel Grey' },
-  { primary: '#ffffff', secondary: '#94a3b8', name: 'Pure White' },
-  { primary: '#334155', secondary: '#0f172a', name: 'Obsidian Black' },
+  { primary: '#a4b0a8', secondary: '#475569', name: 'Steel Grey' },
+  { primary: '#ffffff', secondary: '#a4b0a8', name: 'Pure White' },
+  { primary: '#334155', secondary: '#1a211e', name: 'Obsidian Black' },
 ];
 
 const EMOJI_ICONS = ['⚡', '🔥', '💪', '🎯', '🧠', '🏋️', '📊', '🫀', '🛡️', '⏱️', '🔬', '🧬', '🌟', '♻️', '🚀', '🏆', '🥇', '👑', '🤸', '🥊', '🥋'];
 
 const DEFAULT_MARCA: MarcaConfig = {
   nombre_display: '',
-  color_primario: '#00d4ff',
-  color_secundario: '#0070a0',
+  color_primario: '#91b6a1',
+  color_secundario: '#a4b0a8',
   tipografia: 'Inter',
   eslogan: '',
   whatsapp: '',
@@ -276,10 +276,10 @@ export const TrainerBranding: React.FC = () => {
       <div style={{
         background: 'var(--theme-card-bg)', borderRadius: '16px', padding: '32px',
         border: '1px solid var(--theme-border)', textAlign: 'center',
-        backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)',
+        backdropFilter: 'none', WebkitBackdropFilter: 'none',
         display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '16px'
       }}>
-        <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.35)', fontFamily: "'Orbitron', sans-serif", letterSpacing: '2px', textTransform: 'uppercase' }}>
+        <div style={{ fontSize: '12px', color: '#a4b0a8', fontFamily: "'Inter', sans-serif", letterSpacing: '0', textTransform: 'none' }}>
           Vista Previa del Logo
         </div>
 
@@ -297,15 +297,15 @@ export const TrainerBranding: React.FC = () => {
           ) : (
             <span style={{
               fontFamily: FONT_PREVIEW[marca.tipografia] || "'Inter', sans-serif",
-              fontSize: '32px', fontWeight: 800, color: 'white', letterSpacing: '2px',
-              textShadow: '0 2px 8px rgba(0,0,0,0.3)'
+              fontSize: '32px', fontWeight: 800, color: 'white', letterSpacing: '0',
+              textShadow: 'none'
             }}>
               {initials}
             </span>
           )}
         </div>
 
-        <div style={{ fontFamily: FONT_PREVIEW[marca.tipografia], color: 'white', fontSize: '18px', fontWeight: 700, letterSpacing: '1px' }}>
+        <div style={{ fontFamily: FONT_PREVIEW[marca.tipografia], color: 'white', fontSize: '18px', fontWeight: 700, letterSpacing: '0' }}>
           {displayName}
         </div>
 
@@ -321,7 +321,7 @@ export const TrainerBranding: React.FC = () => {
           border: `1px solid ${marca.color_primario}30`,
           width: '100%', maxWidth: '320px'
         }}>
-          <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.4)', letterSpacing: '1.5px', fontFamily: "'Orbitron', sans-serif", textTransform: 'uppercase', marginBottom: '8px' }}>
+          <div style={{ fontSize: '12px', color: '#a4b0a8', letterSpacing: '0', fontFamily: "'Inter', sans-serif", textTransform: 'none', marginBottom: '8px' }}>
             Sistema de Entrenamiento por
           </div>
           <div style={{ fontFamily: FONT_PREVIEW[marca.tipografia], fontSize: '16px', fontWeight: 700, color: marca.color_primario }}>
@@ -343,19 +343,19 @@ export const TrainerBranding: React.FC = () => {
               style={{
                 background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
                 borderRadius: '8px', color: 'white', padding: '8px 12px', cursor: 'pointer',
-                display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px',
-                fontFamily: "'Orbitron', sans-serif", fontWeight: 600
+                display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px',
+                fontFamily: "'Inter', sans-serif", fontWeight: 600
               }}
             >
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5"/><polyline points="12 19 5 12 12 5"/></svg>
               Volver
             </button>
             <div>
-              <h1 style={{ fontFamily: 'Orbitron, sans-serif', fontSize: '14px', fontWeight: 800, margin: 0, letterSpacing: '1px' }}>
+              <h1 style={{ fontFamily: 'Inter, sans-serif', fontSize: '14px', fontWeight: 800, margin: 0, letterSpacing: '0' }}>
                 <span style={{ color: '#ffffff' }}>IDENTIDAD DE</span>{' '}
                 <span className="theme-text-gradient">MARCA</span>
               </h1>
-              <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.45)', marginTop: '2px' }}>
+              <div style={{ fontSize: '12px', color: '#a4b0a8', marginTop: '2px' }}>
                 Personaliza tu logo, colores, filosofía y logros interactivos
               </div>
             </div>
@@ -367,7 +367,7 @@ export const TrainerBranding: React.FC = () => {
             className="btn btn-primary"
             style={{
               display: 'inline-flex', alignItems: 'center', gap: '6px',
-              fontFamily: "'Orbitron', sans-serif", fontSize: '11px', fontWeight: 700,
+              fontFamily: "'Inter', sans-serif", fontSize: '12px', fontWeight: 700,
               opacity: saving ? 0.6 : 1, padding: '10px 18px'
             }}
           >
@@ -389,11 +389,11 @@ export const TrainerBranding: React.FC = () => {
               key={tab.key}
               onClick={() => setActiveTab(tab.key)}
               style={{
-                flex: 1, fontSize: '11px', padding: '10px 12px', borderRadius: '8px',
-                border: 'none', cursor: 'pointer', fontFamily: "'Orbitron', sans-serif",
+                flex: 1, fontSize: '12px', padding: '10px 12px', borderRadius: '8px',
+                border: 'none', cursor: 'pointer', fontFamily: "'Inter', sans-serif",
                 fontWeight: activeTab === tab.key ? 700 : 500,
                 background: activeTab === tab.key ? 'rgba(255,255,255,0.1)' : 'transparent',
-                color: activeTab === tab.key ? 'white' : 'rgba(255,255,255,0.5)',
+                color: activeTab === tab.key ? 'white' : '#a4b0a8',
                 transition: 'all 0.2s'
               }}
             >
@@ -407,8 +407,8 @@ export const TrainerBranding: React.FC = () => {
           <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '24px' }}>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
               {/* Logo de Marca */}
-              <div style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '14px', padding: '20px', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
-                <label style={{ display: 'block', fontSize: '9px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '8px', letterSpacing: '1px', fontFamily: "'Orbitron', sans-serif", textTransform: 'uppercase' }}>
+              <div style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '14px', padding: '20px', backdropFilter: 'none', WebkitBackdropFilter: 'none' }}>
+                <label style={{ display: 'block', fontSize: '12px', color: '#a4b0a8', fontWeight: 700, marginBottom: '8px', letterSpacing: '0', fontFamily: "'Inter', sans-serif", textTransform: 'none' }}>
                   Logo Personal (Imagen)
                 </label>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
@@ -427,9 +427,9 @@ export const TrainerBranding: React.FC = () => {
                         style={{
                           background: `linear-gradient(135deg, ${marca.color_primario}, ${marca.color_secundario})`,
                           border: 'none', borderRadius: '8px', padding: '8px 14px', cursor: uploadingLogo ? 'default' : 'pointer',
-                          fontSize: '11px', fontFamily: "'Orbitron', sans-serif", fontWeight: 700, color: 'white',
+                          fontSize: '12px', fontFamily: "'Inter', sans-serif", fontWeight: 700, color: 'white',
                           display: 'inline-block', textAlign: 'center', opacity: uploadingLogo ? 0.6 : 1,
-                          boxShadow: `0 4px 12px ${marca.color_primario}30`
+                          boxShadow: 'none'
                         }}
                       >
                         {uploadingLogo ? 'Subiendo...' : 'Subir Logo'}
@@ -450,14 +450,14 @@ export const TrainerBranding: React.FC = () => {
                           style={{
                             background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)',
                             borderRadius: '8px', color: '#f87171', padding: '8px 14px', cursor: 'pointer',
-                            fontSize: '11px', fontFamily: "'Orbitron', sans-serif", fontWeight: 600
+                            fontSize: '12px', fontFamily: "'Inter', sans-serif", fontWeight: 600
                           }}
                         >
                           Eliminar
                         </button>
                       )}
                     </div>
-                    <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)', lineHeight: '1.4' }}>
+                    <div style={{ fontSize: '12px', color: '#a4b0a8', lineHeight: '1.4' }}>
                       Carga una imagen cuadrada (.png, .jpg o .svg) para que aparezca en la portada y cabeceras de tus clientes.
                     </div>
                   </div>
@@ -465,8 +465,8 @@ export const TrainerBranding: React.FC = () => {
               </div>
 
               {/* Display Name */}
-              <div style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '14px', padding: '20px', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
-                <label htmlFor="brand-name" style={{ display: 'block', fontSize: '9px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '8px', letterSpacing: '1px', fontFamily: "'Orbitron', sans-serif", textTransform: 'uppercase' }}>
+              <div style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '14px', padding: '20px', backdropFilter: 'none', WebkitBackdropFilter: 'none' }}>
+                <label htmlFor="brand-name" style={{ display: 'block', fontSize: '12px', color: '#a4b0a8', fontWeight: 700, marginBottom: '8px', letterSpacing: '0', fontFamily: "'Inter', sans-serif", textTransform: 'none' }}>
                   Nombre / Alias / Seudónimo
                 </label>
                 <input
@@ -480,14 +480,14 @@ export const TrainerBranding: React.FC = () => {
                     borderRadius: '8px', color: 'white', padding: '12px', fontSize: '14px'
                   }}
                 />
-                <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)', marginTop: '6px' }}>
+                <div style={{ fontSize: '12px', color: '#a4b0a8', marginTop: '6px' }}>
                   Así aparecerá en los planes de tus clientes: "Sistema de Entrenamiento por <strong style={{ color: marca.color_primario }}>{marca.nombre_display || 'Tu Nombre'}</strong>"
                 </div>
               </div>
 
               {/* Eslogan */}
-              <div style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '14px', padding: '20px', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
-                <label htmlFor="brand-eslogan" style={{ display: 'block', fontSize: '9px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '8px', letterSpacing: '1px', fontFamily: "'Orbitron', sans-serif", textTransform: 'uppercase' }}>
+              <div style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '14px', padding: '20px', backdropFilter: 'none', WebkitBackdropFilter: 'none' }}>
+                <label htmlFor="brand-eslogan" style={{ display: 'block', fontSize: '12px', color: '#a4b0a8', fontWeight: 700, marginBottom: '8px', letterSpacing: '0', fontFamily: "'Inter', sans-serif", textTransform: 'none' }}>
                   Eslogan
                 </label>
                 <input
@@ -505,8 +505,8 @@ export const TrainerBranding: React.FC = () => {
 
               {/* Info redes de contacto */}
               <div style={{
-                background: 'rgba(0, 212, 255, 0.08)',
-                border: '1px solid rgba(0, 212, 255, 0.2)',
+                background: 'rgba(145, 182, 161, 0.08)',
+                border: '1px solid rgba(145, 182, 161, 0.2)',
                 borderRadius: '14px',
                 padding: '14px 16px',
                 display: 'flex',
@@ -515,15 +515,15 @@ export const TrainerBranding: React.FC = () => {
                 marginBottom: '4px'
               }}>
                 <span style={{ fontSize: '16px', marginTop: '-2px' }}>ℹ️</span>
-                <div style={{ fontSize: '11px', color: 'rgba(255, 255, 255, 0.75)', lineHeight: '1.5', fontFamily: 'Inter, sans-serif' }}>
-                  <strong style={{ color: '#00d4ff', fontFamily: 'Orbitron, sans-serif', fontSize: '10px', display: 'block', marginBottom: '4px' }}>DIRECTORIO PÚBLICO DE ENTRENADORES</strong>
+                <div style={{ fontSize: '12px', color: 'rgba(255, 255, 255, 0.75)', lineHeight: '1.5', fontFamily: 'Inter, sans-serif' }}>
+                  <strong style={{ color: '#91b6a1', fontFamily: 'Inter, sans-serif', fontSize: '12px', display: 'block', marginBottom: '4px' }}>DIRECTORIO PÚBLICO DE ENTRENADORES</strong>
                   El número de WhatsApp y tu usuario de Instagram serán visibles para los atletas independientes dentro de la aplicación que estén interesados en ponerse en contacto contigo para solicitarte un plan de entrenamiento.
                 </div>
               </div>
 
               {/* WhatsApp */}
-              <div style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '14px', padding: '20px', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
-                <label htmlFor="brand-whatsapp" style={{ display: 'block', fontSize: '9px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '8px', letterSpacing: '1px', fontFamily: "'Orbitron', sans-serif", textTransform: 'uppercase' }}>
+              <div style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '14px', padding: '20px', backdropFilter: 'none', WebkitBackdropFilter: 'none' }}>
+                <label htmlFor="brand-whatsapp" style={{ display: 'block', fontSize: '12px', color: '#a4b0a8', fontWeight: 700, marginBottom: '8px', letterSpacing: '0', fontFamily: "'Inter', sans-serif", textTransform: 'none' }}>
                   Número de WhatsApp / Contacto
                 </label>
                 <input
@@ -540,8 +540,8 @@ export const TrainerBranding: React.FC = () => {
               </div>
 
               {/* Instagram */}
-              <div style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '14px', padding: '20px', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
-                <label htmlFor="brand-instagram" style={{ display: 'block', fontSize: '9px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '8px', letterSpacing: '1px', fontFamily: "'Orbitron', sans-serif", textTransform: 'uppercase' }}>
+              <div style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '14px', padding: '20px', backdropFilter: 'none', WebkitBackdropFilter: 'none' }}>
+                <label htmlFor="brand-instagram" style={{ display: 'block', fontSize: '12px', color: '#a4b0a8', fontWeight: 700, marginBottom: '8px', letterSpacing: '0', fontFamily: "'Inter', sans-serif", textTransform: 'none' }}>
                   Usuario de Instagram
                 </label>
                 <input
@@ -558,8 +558,8 @@ export const TrainerBranding: React.FC = () => {
               </div>
 
               {/* Color Palette */}
-              <div style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '14px', padding: '20px', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
-                <label style={{ display: 'block', fontSize: '9px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '12px', letterSpacing: '1px', fontFamily: "'Orbitron', sans-serif", textTransform: 'uppercase' }}>
+              <div style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '14px', padding: '20px', backdropFilter: 'none', WebkitBackdropFilter: 'none' }}>
+                <label style={{ display: 'block', fontSize: '12px', color: '#a4b0a8', fontWeight: 700, marginBottom: '12px', letterSpacing: '0', fontFamily: "'Inter', sans-serif", textTransform: 'none' }}>
                   Paleta de Colores
                 </label>
                 <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(3, 1fr)' : 'repeat(4, 1fr)', gap: '8px', marginBottom: '16px' }}>
@@ -579,7 +579,7 @@ export const TrainerBranding: React.FC = () => {
                           transform: isSelected ? 'scale(1.05)' : 'scale(1)'
                         }}
                       >
-                        <span style={{ fontSize: '8px', fontWeight: 700, color: 'white', fontFamily: "'Orbitron', sans-serif", textShadow: '0 1px 4px rgba(0,0,0,0.5)' }}>
+                        <span style={{ fontSize: '12px', fontWeight: 700, color: 'white', fontFamily: "'Inter', sans-serif", textShadow: 'none' }}>
                           {preset.name}
                         </span>
                       </button>
@@ -589,25 +589,25 @@ export const TrainerBranding: React.FC = () => {
 
                 <div style={{ display: 'flex', gap: '12px' }}>
                   <div style={{ flex: 1 }}>
-                    <label htmlFor="color-primario" style={{ fontSize: '9px', color: 'rgba(255,255,255,0.4)', display: 'block', marginBottom: '4px' }}>Primario</label>
+                    <label htmlFor="color-primario" style={{ fontSize: '12px', color: '#a4b0a8', display: 'block', marginBottom: '4px' }}>Primario</label>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <input id="color-primario" type="color" value={marca.color_primario} onChange={(e) => setMarca((prev) => ({ ...prev, color_primario: e.target.value }))} style={{ width: '32px', height: '32px', border: 'none', borderRadius: '6px', cursor: 'pointer', background: 'none' }} />
-                      <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', fontFamily: 'monospace' }}>{marca.color_primario}</span>
+                      <span style={{ fontSize: '12px', color: '#a4b0a8', fontFamily: 'monospace' }}>{marca.color_primario}</span>
                     </div>
                   </div>
                   <div style={{ flex: 1 }}>
-                    <label htmlFor="color-secundario" style={{ fontSize: '9px', color: 'rgba(255,255,255,0.4)', display: 'block', marginBottom: '4px' }}>Secundario</label>
+                    <label htmlFor="color-secundario" style={{ fontSize: '12px', color: '#a4b0a8', display: 'block', marginBottom: '4px' }}>Secundario</label>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                       <input id="color-secundario" type="color" value={marca.color_secundario} onChange={(e) => setMarca((prev) => ({ ...prev, color_secundario: e.target.value }))} style={{ width: '32px', height: '32px', border: 'none', borderRadius: '6px', cursor: 'pointer', background: 'none' }} />
-                      <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)', fontFamily: 'monospace' }}>{marca.color_secundario}</span>
+                      <span style={{ fontSize: '12px', color: '#a4b0a8', fontFamily: 'monospace' }}>{marca.color_secundario}</span>
                     </div>
                   </div>
                 </div>
               </div>
 
               {/* Typography */}
-              <div style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '14px', padding: '20px', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
-                <label style={{ display: 'block', fontSize: '9px', color: 'rgba(255,255,255,0.5)', fontWeight: 700, marginBottom: '12px', letterSpacing: '1px', fontFamily: "'Orbitron', sans-serif", textTransform: 'uppercase' }}>
+              <div style={{ background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)', borderRadius: '14px', padding: '20px', backdropFilter: 'none', WebkitBackdropFilter: 'none' }}>
+                <label style={{ display: 'block', fontSize: '12px', color: '#a4b0a8', fontWeight: 700, marginBottom: '12px', letterSpacing: '0', fontFamily: "'Inter', sans-serif", textTransform: 'none' }}>
                   Tipografía
                 </label>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
@@ -623,10 +623,10 @@ export const TrainerBranding: React.FC = () => {
                         transition: 'all 0.2s'
                       }}
                     >
-                      <span style={{ fontFamily: FONT_PREVIEW[font], fontSize: '15px', color: marca.tipografia === font ? 'white' : 'rgba(255,255,255,0.6)', fontWeight: 600 }}>
+                      <span style={{ fontFamily: FONT_PREVIEW[font], fontSize: '15px', color: marca.tipografia === font ? 'white' : '#a4b0a8', fontWeight: 600 }}>
                         {font}
                       </span>
-                      <span style={{ fontFamily: FONT_PREVIEW[font], fontSize: '11px', color: 'rgba(255,255,255,0.3)' }}>
+                      <span style={{ fontFamily: FONT_PREVIEW[font], fontSize: '12px', color: '#a4b0a8' }}>
                         AaBbCcDd 123
                       </span>
                     </button>
@@ -649,14 +649,14 @@ export const TrainerBranding: React.FC = () => {
               border: '1px solid var(--theme-border)',
               borderRadius: '14px', padding: '16px 20px',
               display: 'flex', alignItems: 'center', gap: '12px',
-              backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)'
+              backdropFilter: 'none', WebkitBackdropFilter: 'none'
             }}>
               <span style={{ fontSize: '20px' }}>💡</span>
               <div>
                 <div style={{ fontSize: '12px', fontWeight: 600, color: 'white', marginBottom: '2px' }}>
                   Filosofía Personalizable
                 </div>
-                <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)' }}>
+                <div style={{ fontSize: '12px', color: '#a4b0a8' }}>
                   Agrega tantos pilares como necesites. Estos se mostrarán a tus clientes en la portada de su plan de entrenamiento.
                 </div>
               </div>
@@ -668,27 +668,27 @@ export const TrainerBranding: React.FC = () => {
                 style={{
                   background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)',
                   borderRadius: '14px', padding: '20px', position: 'relative',
-                  backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)'
+                  backdropFilter: 'none', WebkitBackdropFilter: 'none'
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <span style={{
-                      fontSize: '9px', fontWeight: 700, fontFamily: "'Orbitron', sans-serif",
-                      color: marca.color_primario, letterSpacing: '1px'
+                      fontSize: '12px', fontWeight: 700, fontFamily: "'Inter', sans-serif",
+                      color: marca.color_primario, letterSpacing: '0'
                     }}>
                       PILAR {String(index + 1).padStart(2, '0')}
                     </span>
                   </div>
                   <div style={{ display: 'flex', gap: '4px' }}>
-                    <button onClick={() => movePilar(index, 'up')} disabled={index === 0} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '6px', color: index === 0 ? 'rgba(255,255,255,0.15)' : 'white', padding: '4px 8px', cursor: index === 0 ? 'default' : 'pointer', fontSize: '11px' }}>↑</button>
-                    <button onClick={() => movePilar(index, 'down')} disabled={index === filosofia.length - 1} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '6px', color: index === filosofia.length - 1 ? 'rgba(255,255,255,0.15)' : 'white', padding: '4px 8px', cursor: index === filosofia.length - 1 ? 'default' : 'pointer', fontSize: '11px' }}>↓</button>
-                    <button onClick={() => removePilar(pilar.id)} style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '6px', color: '#f87171', padding: '4px 8px', cursor: 'pointer', fontSize: '11px' }}>✕</button>
+                    <button onClick={() => movePilar(index, 'up')} disabled={index === 0} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '6px', color: index === 0 ? 'rgba(255,255,255,0.15)' : 'white', padding: '4px 8px', cursor: index === 0 ? 'default' : 'pointer', fontSize: '12px' }}>↑</button>
+                    <button onClick={() => movePilar(index, 'down')} disabled={index === filosofia.length - 1} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '6px', color: index === filosofia.length - 1 ? 'rgba(255,255,255,0.15)' : 'white', padding: '4px 8px', cursor: index === filosofia.length - 1 ? 'default' : 'pointer', fontSize: '12px' }}>↓</button>
+                    <button onClick={() => removePilar(pilar.id)} style={{ background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '6px', color: '#f87171', padding: '4px 8px', cursor: 'pointer', fontSize: '12px' }}>✕</button>
                   </div>
                 </div>
 
                 <div style={{ marginBottom: '12px' }}>
-                  <label style={{ display: 'block', fontSize: '9px', color: 'rgba(255,255,255,0.4)', fontWeight: 700, marginBottom: '6px', letterSpacing: '0.5px' }}>ICONO</label>
+                  <label style={{ display: 'block', fontSize: '12px', color: '#a4b0a8', fontWeight: 700, marginBottom: '6px', letterSpacing: '0' }}>ICONO</label>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
                     {EMOJI_ICONS.map((emoji) => (
                       <button
@@ -709,7 +709,7 @@ export const TrainerBranding: React.FC = () => {
                 </div>
 
                 <div style={{ marginBottom: '12px' }}>
-                  <label htmlFor={`pilar-titulo-${pilar.id}`} style={{ display: 'block', fontSize: '9px', color: 'rgba(255,255,255,0.4)', fontWeight: 700, marginBottom: '6px', letterSpacing: '0.5px', cursor: 'pointer' }}>TÍTULO DEL PILAR</label>
+                  <label htmlFor={`pilar-titulo-${pilar.id}`} style={{ display: 'block', fontSize: '12px', color: '#a4b0a8', fontWeight: 700, marginBottom: '6px', letterSpacing: '0', cursor: 'pointer' }}>TÍTULO DEL PILAR</label>
                   <input
                     id={`pilar-titulo-${pilar.id}`}
                     type="text"
@@ -721,7 +721,7 @@ export const TrainerBranding: React.FC = () => {
                 </div>
 
                 <div>
-                  <label htmlFor={`pilar-desc-${pilar.id}`} style={{ display: 'block', fontSize: '9px', color: 'rgba(255,255,255,0.4)', fontWeight: 700, marginBottom: '6px', letterSpacing: '0.5px', cursor: 'pointer' }}>DESCRIPCIÓN</label>
+                  <label htmlFor={`pilar-desc-${pilar.id}`} style={{ display: 'block', fontSize: '12px', color: '#a4b0a8', fontWeight: 700, marginBottom: '6px', letterSpacing: '0', cursor: 'pointer' }}>DESCRIPCIÓN</label>
                   <textarea
                     id={`pilar-desc-${pilar.id}`}
                     value={pilar.descripcion}
@@ -740,7 +740,7 @@ export const TrainerBranding: React.FC = () => {
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
                 padding: '16px', borderRadius: '14px', cursor: 'pointer',
                 background: 'rgba(255,255,255,0.02)', border: '2px dashed rgba(255,255,255,0.1)',
-                color: 'rgba(255,255,255,0.5)', fontSize: '12px', fontFamily: "'Orbitron', sans-serif",
+                color: '#a4b0a8', fontSize: '12px', fontFamily: "'Inter', sans-serif",
                 fontWeight: 600, transition: 'all 0.2s'
               }}
             >
@@ -758,14 +758,14 @@ export const TrainerBranding: React.FC = () => {
               border: '1px solid var(--theme-border)',
               borderRadius: '14px', padding: '16px 20px',
               display: 'flex', alignItems: 'center', gap: '12px',
-              backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)'
+              backdropFilter: 'none', WebkitBackdropFilter: 'none'
             }}>
               <span style={{ fontSize: '20px' }}>🏆</span>
               <div>
                 <div style={{ fontSize: '12px', fontWeight: 600, color: 'white', marginBottom: '2px' }}>
                   Logros & Insignias Personalizadas para tus Clientes
                 </div>
-                <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)' }}>
+                <div style={{ fontSize: '12px', color: '#a4b0a8' }}>
                   Configura insignias gamificadas que tus atletas vinculados desbloquearán automáticamente al cumplir las condiciones de entrenamiento. Se suman a los 9 logros que la app ya trae por defecto — no los reemplazan.
                 </div>
               </div>
@@ -777,13 +777,13 @@ export const TrainerBranding: React.FC = () => {
                 style={{
                   background: 'var(--theme-card-bg)', border: '1px solid var(--theme-border)',
                   borderRadius: '14px', padding: '20px', position: 'relative',
-                  backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)'
+                  backdropFilter: 'none', WebkitBackdropFilter: 'none'
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
                   <span style={{
-                    fontSize: '9px', fontWeight: 700, fontFamily: "'Orbitron', sans-serif",
-                    color: marca.color_primario, letterSpacing: '1.2px'
+                    fontSize: '12px', fontWeight: 700, fontFamily: "'Inter', sans-serif",
+                    color: marca.color_primario, letterSpacing: '0'
                   }}>
                     LOGRO PERSONALIZADO {String(index + 1).padStart(2, '0')}
                   </span>
@@ -792,7 +792,7 @@ export const TrainerBranding: React.FC = () => {
                     style={{
                       background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)',
                       borderRadius: '6px', color: '#f87171', padding: '6px 12px', cursor: 'pointer',
-                      fontSize: '10px', fontFamily: "'Orbitron', sans-serif", fontWeight: 700
+                      fontSize: '12px', fontFamily: "'Inter', sans-serif", fontWeight: 700
                     }}
                   >
                     ✕ ELIMINAR
@@ -801,7 +801,7 @@ export const TrainerBranding: React.FC = () => {
 
                 {/* Emoji Selector */}
                 <div style={{ marginBottom: '12px' }}>
-                  <label style={{ display: 'block', fontSize: '9px', color: 'rgba(255,255,255,0.4)', fontWeight: 700, marginBottom: '6px', letterSpacing: '0.5px' }}>ÍCONO / EMOJI</label>
+                  <label style={{ display: 'block', fontSize: '12px', color: '#a4b0a8', fontWeight: 700, marginBottom: '6px', letterSpacing: '0' }}>ÍCONO / EMOJI</label>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
                     {EMOJI_ICONS.map((emoji) => (
                       <button
@@ -824,7 +824,7 @@ export const TrainerBranding: React.FC = () => {
                 <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: '16px', marginBottom: '12px' }}>
                   {/* Title */}
                   <div>
-                    <label htmlFor={`badge-titulo-${badge.id}`} style={{ display: 'block', fontSize: '9px', color: 'rgba(255,255,255,0.4)', fontWeight: 700, marginBottom: '6px', letterSpacing: '0.5px', cursor: 'pointer' }}>TÍTULO DE LA INSIGNIA</label>
+                    <label htmlFor={`badge-titulo-${badge.id}`} style={{ display: 'block', fontSize: '12px', color: '#a4b0a8', fontWeight: 700, marginBottom: '6px', letterSpacing: '0', cursor: 'pointer' }}>TÍTULO DE LA INSIGNIA</label>
                     <input
                       id={`badge-titulo-${badge.id}`}
                       type="text"
@@ -837,7 +837,7 @@ export const TrainerBranding: React.FC = () => {
 
                   {/* Type */}
                   <div>
-                    <label htmlFor={`badge-tipo-${badge.id}`} style={{ display: 'block', fontSize: '9px', color: 'rgba(255,255,255,0.4)', fontWeight: 700, marginBottom: '6px', letterSpacing: '0.5px', cursor: 'pointer' }}>CATEGORÍA DE INSIGNIA</label>
+                    <label htmlFor={`badge-tipo-${badge.id}`} style={{ display: 'block', fontSize: '12px', color: '#a4b0a8', fontWeight: 700, marginBottom: '6px', letterSpacing: '0', cursor: 'pointer' }}>CATEGORÍA DE INSIGNIA</label>
                     <select
                       id={`badge-tipo-${badge.id}`}
                       value={badge.tipo}
@@ -854,7 +854,7 @@ export const TrainerBranding: React.FC = () => {
                 <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1.5fr 1fr', gap: '16px', marginBottom: '12px' }}>
                   {/* Condition */}
                   <div>
-                    <label htmlFor={`badge-condicion-${badge.id}`} style={{ display: 'block', fontSize: '9px', color: 'rgba(255,255,255,0.4)', fontWeight: 700, marginBottom: '6px', letterSpacing: '0.5px', cursor: 'pointer' }}>CONDICIÓN PARA GANAR</label>
+                    <label htmlFor={`badge-condicion-${badge.id}`} style={{ display: 'block', fontSize: '12px', color: '#a4b0a8', fontWeight: 700, marginBottom: '6px', letterSpacing: '0', cursor: 'pointer' }}>CONDICIÓN PARA GANAR</label>
                     <select
                       id={`badge-condicion-${badge.id}`}
                       value={badge.condicion}
@@ -870,7 +870,7 @@ export const TrainerBranding: React.FC = () => {
 
                   {/* Target value */}
                   <div>
-                    <label htmlFor={`badge-objetivo-${badge.id}`} style={{ display: 'block', fontSize: '9px', color: 'rgba(255,255,255,0.4)', fontWeight: 700, marginBottom: '6px', letterSpacing: '0.5px', cursor: 'pointer' }}>VALOR OBJETIVO (UMBRAL)</label>
+                    <label htmlFor={`badge-objetivo-${badge.id}`} style={{ display: 'block', fontSize: '12px', color: '#a4b0a8', fontWeight: 700, marginBottom: '6px', letterSpacing: '0', cursor: 'pointer' }}>VALOR OBJETIVO (UMBRAL)</label>
                     <input
                       id={`badge-objetivo-${badge.id}`}
                       type="number"
@@ -884,7 +884,7 @@ export const TrainerBranding: React.FC = () => {
 
                 {/* Description */}
                 <div>
-                  <label htmlFor={`badge-desc-${badge.id}`} style={{ display: 'block', fontSize: '9px', color: 'rgba(255,255,255,0.4)', fontWeight: 700, marginBottom: '6px', letterSpacing: '0.5px', cursor: 'pointer' }}>DESCRIPCIÓN DE CELEBRACIÓN</label>
+                  <label htmlFor={`badge-desc-${badge.id}`} style={{ display: 'block', fontSize: '12px', color: '#a4b0a8', fontWeight: 700, marginBottom: '6px', letterSpacing: '0', cursor: 'pointer' }}>DESCRIPCIÓN DE CELEBRACIÓN</label>
                   <textarea
                     id={`badge-desc-${badge.id}`}
                     value={badge.descripcion}
@@ -903,7 +903,7 @@ export const TrainerBranding: React.FC = () => {
                 display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px',
                 padding: '16px', borderRadius: '14px', cursor: 'pointer',
                 background: 'rgba(255,255,255,0.02)', border: '2px dashed rgba(255,255,255,0.1)',
-                color: 'rgba(255,255,255,0.5)', fontSize: '12px', fontFamily: "'Orbitron', sans-serif",
+                color: '#a4b0a8', fontSize: '12px', fontFamily: "'Inter', sans-serif",
                 fontWeight: 600, transition: 'all 0.2s'
               }}
             >

@@ -52,8 +52,8 @@ export const NotificationCard: React.FC<NotificationCardProps> = ({ notif, onDis
         borderRadius: '12px',
         padding: '12px 16px',
         margin: '10px 0',
-        backdropFilter: 'blur(12px)',
-        fontFamily: "'Orbitron', sans-serif",
+        backdropFilter: 'none',
+        fontFamily: "'Inter', sans-serif",
       }}
     >
       <div
@@ -74,7 +74,7 @@ export const NotificationCard: React.FC<NotificationCardProps> = ({ notif, onDis
               fontWeight: 700,
               fontSize: '12px',
               color: titleColor,
-              letterSpacing: '0.3px',
+              letterSpacing: '0',
             }}
           >
             <span>{icon}</span>
@@ -89,7 +89,7 @@ export const NotificationCard: React.FC<NotificationCardProps> = ({ notif, onDis
             style={{
               background: 'transparent',
               border: 'none',
-              color: 'rgba(255, 255, 255, 0.45)',
+              color: '#a4b0a8',
               cursor: 'pointer',
               fontSize: '16px',
               lineHeight: 1,

@@ -1,3 +1,4 @@
+import { persistPlanSnapshot } from '../../lib/planCache';
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { useSupabase } from '../../context/SupabaseContext';
@@ -812,7 +813,7 @@ export const QuickStartPlanner: React.FC = () => {
       }
 
       // Cache to localStorage
-      localStorage.setItem('pwa_client_plan', JSON.stringify(planData));
+      persistPlanSnapshot(planData, user!.id);
 
       showToast('✅ Plan guardado con éxito', 'success');
       setTimeout(() => navigate('/dashboard'), 1200);
@@ -847,20 +848,20 @@ export const QuickStartPlanner: React.FC = () => {
       background: 'rgba(255,255,255,0.04)',
       border: '1px solid rgba(255,255,255,0.08)',
       borderRadius: '10px',
-      color: 'rgba(255,255,255,0.6)',
+      color: '#a4b0a8',
       padding: '8px 14px',
-      fontSize: '11px',
-      fontFamily: "'Orbitron', sans-serif",
+      fontSize: '12px',
+      fontFamily: "'Inter', sans-serif",
       fontWeight: 600,
       cursor: 'pointer',
       transition: 'all 0.3s ease',
       marginBottom: '20px',
     } as React.CSSProperties,
     title: {
-      fontFamily: "'Orbitron', sans-serif",
+      fontFamily: "'Inter', sans-serif",
       fontSize: '20px',
       fontWeight: 800,
-      letterSpacing: '1.5px',
+      letterSpacing: '0',
       margin: '0 0 6px 0',
       background: 'var(--theme-btn-gradient)',
       WebkitBackgroundClip: 'text',
@@ -869,27 +870,27 @@ export const QuickStartPlanner: React.FC = () => {
     } as React.CSSProperties,
     subtitle: {
       fontSize: '13px',
-      color: 'rgba(255,255,255,0.5)',
+      color: '#a4b0a8',
       margin: 0,
     } as React.CSSProperties,
     card: {
       background: 'var(--theme-card-bg)',
-      backdropFilter: 'blur(20px)',
-      WebkitBackdropFilter: 'blur(20px)',
+      backdropFilter: 'none',
+      WebkitBackdropFilter: 'none',
       border: '1px solid var(--theme-border)',
       borderRadius: '16px',
       padding: '20px',
       marginBottom: '16px',
       transition: 'all 0.3s ease',
-      boxShadow: '0 8px 32px 0 var(--theme-glow)',
+      boxShadow: 'none',
     } as React.CSSProperties,
     sectionLabel: {
-      fontSize: '10px',
+      fontSize: '12px',
       fontWeight: 700,
-      letterSpacing: '0.5px',
-      textTransform: 'uppercase' as const,
+      letterSpacing: '0',
+      textTransform: 'none' as const,
       color: 'var(--theme-primary)',
-      fontFamily: "'Orbitron', sans-serif",
+      fontFamily: "'Inter', sans-serif",
       marginBottom: '14px',
       display: 'flex',
       alignItems: 'center',
@@ -903,11 +904,11 @@ export const QuickStartPlanner: React.FC = () => {
       userSelect: 'none' as const,
     } as React.CSSProperties,
     label: {
-      fontSize: '10px',
+      fontSize: '12px',
       fontWeight: 700,
-      letterSpacing: '0.5px',
-      textTransform: 'uppercase' as const,
-      color: 'rgba(255,255,255,0.5)',
+      letterSpacing: '0',
+      textTransform: 'none' as const,
+      color: '#a4b0a8',
       marginBottom: '6px',
       display: 'block',
     } as React.CSSProperties,
@@ -955,14 +956,14 @@ export const QuickStartPlanner: React.FC = () => {
     } as React.CSSProperties,
     dayCard: {
       background: 'var(--theme-card-bg)',
-      backdropFilter: 'blur(20px)',
-      WebkitBackdropFilter: 'blur(20px)',
+      backdropFilter: 'none',
+      WebkitBackdropFilter: 'none',
       border: '1px solid var(--theme-border)',
       borderRadius: '16px',
       padding: '18px',
       marginBottom: '14px',
       transition: 'all 0.3s ease',
-      boxShadow: '0 8px 32px 0 var(--theme-glow)',
+      boxShadow: 'none',
     } as React.CSSProperties,
     exerciseRow: {
       display: 'flex',
@@ -984,10 +985,10 @@ export const QuickStartPlanner: React.FC = () => {
       color: '#4ade80',
       fontSize: '12px',
       fontWeight: 700,
-      fontFamily: "'Orbitron', sans-serif",
+      fontFamily: "'Inter', sans-serif",
       cursor: 'pointer',
       transition: 'all 0.3s ease',
-      letterSpacing: '0.5px',
+      letterSpacing: '0',
     } as React.CSSProperties,
     removeDayBtn: {
       display: 'inline-flex',
@@ -998,7 +999,7 @@ export const QuickStartPlanner: React.FC = () => {
       border: '1px solid rgba(239, 68, 68, 0.3)',
       background: 'rgba(239, 68, 68, 0.1)',
       color: '#fca5a5',
-      fontSize: '10px',
+      fontSize: '12px',
       fontWeight: 700,
       cursor: 'pointer',
       transition: 'all 0.3s ease',
@@ -1012,8 +1013,8 @@ export const QuickStartPlanner: React.FC = () => {
       borderRadius: '8px',
       border: '1px solid rgba(255,255,255,0.08)',
       background: 'rgba(255,255,255,0.04)',
-      color: 'rgba(255,255,255,0.6)',
-      fontSize: '11px',
+      color: '#a4b0a8',
+      fontSize: '12px',
       fontWeight: 600,
       cursor: 'pointer',
       transition: 'all 0.3s ease',
@@ -1043,15 +1044,15 @@ export const QuickStartPlanner: React.FC = () => {
       borderRadius: '30px',
       border: 'none',
       background: 'var(--theme-btn-gradient)',
-      boxShadow: '0 0 15px var(--theme-btn-glow)',
+      boxShadow: 'none',
       color: 'white',
       fontSize: '14px',
       fontWeight: 800,
-      fontFamily: "'Orbitron', sans-serif",
+      fontFamily: "'Inter', sans-serif",
       cursor: 'pointer',
       transition: 'all 0.3s ease',
-      letterSpacing: '1px',
-      textTransform: 'uppercase' as const,
+      letterSpacing: '0',
+      textTransform: 'none' as const,
       marginTop: '20px',
     } as React.CSSProperties,
     globalVarRow: {
@@ -1062,7 +1063,7 @@ export const QuickStartPlanner: React.FC = () => {
     } as React.CSSProperties,
     globalVarLabel: {
       fontSize: '12px',
-      color: 'rgba(255,255,255,0.6)',
+      color: '#a4b0a8',
       minWidth: '130px',
       fontWeight: 600,
     } as React.CSSProperties,
@@ -1096,9 +1097,9 @@ export const QuickStartPlanner: React.FC = () => {
       borderRadius: '50%',
       background: 'var(--theme-btn-gradient)',
       color: 'white',
-      fontSize: '10px',
+      fontSize: '12px',
       fontWeight: 800,
-      fontFamily: "'Orbitron', sans-serif",
+      fontFamily: "'Inter', sans-serif",
     } as React.CSSProperties,
   };
 
@@ -1119,7 +1120,7 @@ export const QuickStartPlanner: React.FC = () => {
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
-              e.currentTarget.style.color = 'rgba(255,255,255,0.6)';
+              e.currentTarget.style.color = '#a4b0a8';
             }}
           >
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -1209,7 +1210,7 @@ export const QuickStartPlanner: React.FC = () => {
             </span>
             Configuración de Días de la Semana
           </div>
-          <p className="desc-text" style={{ margin: '0 0 16px 0', fontSize: '11px', color: 'rgba(255,255,255,0.35)', lineHeight: '1.4' }}>
+          <p className="desc-text" style={{ margin: '0 0 16px 0', fontSize: '12px', color: '#a4b0a8', lineHeight: '1.4' }}>
             Asigna qué día de tu rutina le corresponde a cada día calendario de la semana para activar el banner dinámico en tu Dashboard.
           </p>
 
@@ -1232,12 +1233,12 @@ export const QuickStartPlanner: React.FC = () => {
                   }}
                 >
                   <div style={{
-                    fontSize: '10px',
+                    fontSize: '12px',
                     fontWeight: 700,
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.5px',
+                    textTransform: 'none',
+                    letterSpacing: '0',
                     color: '#ff7e2e',
-                    fontFamily: "'Orbitron', sans-serif"
+                    fontFamily: "'Inter', sans-serif"
                   }}>
                     {dayName}
                   </div>
@@ -1245,10 +1246,10 @@ export const QuickStartPlanner: React.FC = () => {
                     value={currentVal}
                     onChange={(e) => handleWeekdayMap(String(idx), parseInt(e.target.value, 10))}
                     style={{
-                      background: 'rgba(15, 23, 42, 0.6)',
+                      background: '#1a211e',
                       border: '1px solid rgba(255, 255, 255, 0.08)',
                       color: 'white',
-                      fontSize: '11px',
+                      fontSize: '12px',
                       padding: '4px',
                       width: '100%',
                       borderRadius: '6px',
@@ -1257,9 +1258,9 @@ export const QuickStartPlanner: React.FC = () => {
                       boxSizing: 'border-box',
                     }}
                   >
-                    <option value={-1} style={{ background: '#0b0f19', color: 'white' }}>Descanso</option>
+                    <option value={-1} style={{ background: '#121716', color: 'white' }}>Descanso</option>
                     {days.map((day, dIdx) => (
-                      <option key={day.id} value={dIdx} style={{ background: '#0b0f19', color: 'white' }}>
+                      <option key={day.id} value={dIdx} style={{ background: '#121716', color: 'white' }}>
                         {day.name || `Día ${dIdx + 1}`}
                       </option>
                     ))}
@@ -1275,7 +1276,7 @@ export const QuickStartPlanner: React.FC = () => {
           <div style={styles.sectionLabel}>
             <span style={styles.stepBadge}>2</span>
             Días de Entrenamiento
-            <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)', fontWeight: 500, fontFamily: 'inherit', marginLeft: 'auto' }}>
+            <span style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 500, fontFamily: 'inherit', marginLeft: 'auto' }}>
               {days.length}/7 días
             </span>
           </div>
@@ -1290,12 +1291,12 @@ export const QuickStartPlanner: React.FC = () => {
           }}>
             <span style={{
               display: 'block',
-              fontSize: '10px',
+              fontSize: '12px',
               fontWeight: 700,
               color: 'var(--theme-primary)',
-              textTransform: 'uppercase',
-              fontFamily: "'Orbitron', sans-serif",
-              letterSpacing: '0.5px',
+              textTransform: 'none',
+              fontFamily: "'Inter', sans-serif",
+              letterSpacing: '0',
               marginBottom: '10px'
             }}>
               Cargar Rutina Preestablecida (Bases)
@@ -1312,9 +1313,9 @@ export const QuickStartPlanner: React.FC = () => {
                     borderRadius: '8px',
                     color: 'rgba(255, 255, 255, 0.8)',
                     padding: '8px 14px',
-                    fontSize: '11px',
+                    fontSize: '12px',
                     fontWeight: 600,
-                    fontFamily: "'Orbitron', sans-serif",
+                    fontFamily: "'Inter', sans-serif",
                     cursor: 'pointer',
                     transition: 'all 0.3s ease',
                   }}
@@ -1343,12 +1344,12 @@ export const QuickStartPlanner: React.FC = () => {
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
               <span style={{
-                fontSize: '10px',
+                fontSize: '12px',
                 fontWeight: 700,
                 color: '#38bdf8',
-                textTransform: 'uppercase',
-                fontFamily: "'Orbitron', sans-serif",
-                letterSpacing: '0.5px'
+                textTransform: 'none',
+                fontFamily: "'Inter', sans-serif",
+                letterSpacing: '0'
               }}>
                 Mis Plantillas Personales ({athleteTemplates.length})
               </span>
@@ -1361,9 +1362,9 @@ export const QuickStartPlanner: React.FC = () => {
                   borderRadius: '6px',
                   color: '#38bdf8',
                   padding: '4px 10px',
-                  fontSize: '10px',
+                  fontSize: '12px',
                   fontWeight: 700,
-                  fontFamily: "'Orbitron', sans-serif",
+                  fontFamily: "'Inter', sans-serif",
                   cursor: 'pointer'
                 }}
               >
@@ -1372,7 +1373,7 @@ export const QuickStartPlanner: React.FC = () => {
             </div>
 
             {athleteTemplates.length === 0 ? (
-              <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', margin: 0 }}>
+              <p style={{ fontSize: '12px', color: '#a4b0a8', margin: 0 }}>
                 No tienes plantillas personales guardadas aún. Puedes guardar tu rutina actual usando el botón superior.
               </p>
             ) : (
@@ -1384,7 +1385,7 @@ export const QuickStartPlanner: React.FC = () => {
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: '6px',
-                      background: 'rgba(15, 23, 42, 0.8)',
+                      background: '#1a211e',
                       border: '1px solid rgba(56, 189, 248, 0.3)',
                       borderRadius: '8px',
                       padding: '4px 8px 4px 12px'
@@ -1397,9 +1398,9 @@ export const QuickStartPlanner: React.FC = () => {
                         background: 'none',
                         border: 'none',
                         color: 'white',
-                        fontSize: '11px',
+                        fontSize: '12px',
                         fontWeight: 600,
-                        fontFamily: "'Orbitron', sans-serif",
+                        fontFamily: "'Inter', sans-serif",
                         cursor: 'pointer',
                         padding: 0
                       }}
@@ -1433,7 +1434,7 @@ export const QuickStartPlanner: React.FC = () => {
               <div style={styles.skeleton} />
               <div style={{ ...styles.skeleton, width: '70%' }} />
               <div style={{ ...styles.skeleton, width: '50%' }} />
-              <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)', textAlign: 'center', marginTop: '8px' }}>
+              <p style={{ fontSize: '12px', color: '#a4b0a8', textAlign: 'center', marginTop: '8px' }}>
                 Cargando catálogo de ejercicios...
               </p>
             </div>
@@ -1457,7 +1458,7 @@ export const QuickStartPlanner: React.FC = () => {
                   display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
                   width: '28px', height: '28px', borderRadius: '8px',
                   background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)',
-                  fontSize: '12px', fontWeight: 800, fontFamily: "'Orbitron', sans-serif",
+                  fontSize: '12px', fontWeight: 800, fontFamily: "'Inter', sans-serif",
                   color: 'var(--theme-primary)',
                 }}>
                   {dayIndex + 1}
@@ -1472,7 +1473,7 @@ export const QuickStartPlanner: React.FC = () => {
                     flex: 1,
                     fontWeight: 700,
                     fontSize: '14px',
-                    fontFamily: "'Orbitron', sans-serif",
+                    fontFamily: "'Inter', sans-serif",
                     height: '40px',
                   }}
                   onFocus={(e) => { e.currentTarget.style.borderColor = 'var(--theme-primary)'; }}
@@ -1529,9 +1530,9 @@ export const QuickStartPlanner: React.FC = () => {
                             onChange={(e) => updateExerciseGroup(day.id, ex.id, e.target.value)}
                             className="exercise-group-select"
                           >
-                            <option value="" style={{ background: '#0f172a' }}>Grupo</option>
+                            <option value="" style={{ background: '#1a211e' }}>Grupo</option>
                             {MUSCLE_GROUPS.map((g) => (
-                              <option key={g} value={g} style={{ background: '#0f172a' }}>{g}</option>
+                              <option key={g} value={g} style={{ background: '#1a211e' }}>{g}</option>
                             ))}
                           </select>
 
@@ -1582,7 +1583,7 @@ export const QuickStartPlanner: React.FC = () => {
                               varKey === 'carga';
                             return (
                               <div key={gv.id} style={{ display: 'flex', flexDirection: 'column' }}>
-                                <label style={{ fontSize: '9px', color: 'rgba(255,255,255,0.4)', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
+                                <label style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
                                   {gv.label.toUpperCase()}
                                 </label>
                                 <div style={{ display: 'flex', gap: '4px', width: '100%' }}>
@@ -1591,7 +1592,7 @@ export const QuickStartPlanner: React.FC = () => {
                                     placeholder={gv.defaultValue || 'A definir'}
                                     value={ex.variables?.[varKey] ?? ''}
                                     onChange={(e) => updateExerciseVariable(day.id, ex.id, varKey, e.target.value)}
-                                    style={{ ...styles.input, flex: 1, height: '34px', fontSize: '11px', padding: '6px' }}
+                                    style={{ ...styles.input, flex: 1, height: '34px', fontSize: '12px', padding: '6px' }}
                                   />
                                   {isPeso && (
                                     <button
@@ -1642,7 +1643,7 @@ export const QuickStartPlanner: React.FC = () => {
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
-                  e.currentTarget.style.color = 'rgba(255,255,255,0.6)';
+                  e.currentTarget.style.color = '#a4b0a8';
                 }}
               >
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -1682,7 +1683,7 @@ export const QuickStartPlanner: React.FC = () => {
             <span style={styles.stepBadge}>3</span>
             Variables del Plan
           </div>
-          <p style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)', margin: '0 0 14px 0', lineHeight: '1.4' }}>
+          <p style={{ fontSize: '12px', color: '#a4b0a8', margin: '0 0 14px 0', lineHeight: '1.4' }}>
             Define qué variables quieres medir en tus ejercicios. Los valores por defecto se usarán como plantilla para cada ejercicio nuevo, y puedes eliminarlos o añadir campos personalizados (ej: Tempo, Notas).
           </p>
 
@@ -1738,9 +1739,9 @@ export const QuickStartPlanner: React.FC = () => {
                 background: 'var(--theme-badge-bg)',
                 border: '1px solid var(--theme-border)',
                 color: 'var(--theme-primary)',
-                fontSize: '11px',
+                fontSize: '12px',
                 fontWeight: 700,
-                fontFamily: "'Orbitron', sans-serif",
+                fontFamily: "'Inter', sans-serif",
                 cursor: 'pointer',
                 transition: 'all 0.3s ease',
               }}
@@ -1767,14 +1768,14 @@ export const QuickStartPlanner: React.FC = () => {
                   color: 'white',
                   fontWeight: 600,
                   flex: 1,
-                  fontFamily: "'Orbitron', sans-serif",
+                  fontFamily: "'Inter', sans-serif",
                   minWidth: '130px'
                 }}>
                   {gv.label}
                 </span>
 
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', fontWeight: 600 }}>DEF:</span>
+                  <span style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 600 }}>DEF:</span>
                   <input
                     type="text"
                     value={gv.defaultValue}
@@ -1794,7 +1795,7 @@ export const QuickStartPlanner: React.FC = () => {
                     }}
                   />
 
-                  <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', fontWeight: 600, marginLeft: '6px' }}>GUÍA:</span>
+                  <span style={{ fontSize: '12px', color: '#a4b0a8', fontWeight: 600, marginLeft: '6px' }}>GUÍA:</span>
                   <input
                     type="text"
                     value={varDefinitions[gv.id] ?? ''}
@@ -1887,7 +1888,7 @@ export const QuickStartPlanner: React.FC = () => {
         {/* Summary line */}
         <p style={{
           textAlign: 'center',
-          fontSize: '11px',
+          fontSize: '12px',
           color: 'rgba(255,255,255,0.25)',
           marginTop: '14px',
         }}>
@@ -1913,7 +1914,7 @@ export const QuickStartPlanner: React.FC = () => {
           justifyContent: 'center',
           color: 'white',
           cursor: 'pointer',
-          boxShadow: '0 4px 20px var(--theme-btn-glow)',
+          boxShadow: 'none',
           zIndex: 1000,
           transition: 'all 0.2s'
         }}
@@ -1960,7 +1961,7 @@ export const QuickStartPlanner: React.FC = () => {
             <form onSubmit={handleCalculate1RM} className="modal-1rm-form">
               {/* Unit Switcher */}
               <div className="modal-1rm-group full-width" style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '15px' }}>
-                <label style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.5)', fontFamily: "'Orbitron', sans-serif" }}>UNIDAD DE MEDIDA</label>
+                <label style={{ fontSize: '12px', fontWeight: 700, color: '#a4b0a8', fontFamily: "'Inter', sans-serif" }}>UNIDAD DE MEDIDA</label>
                 <div style={{ display: 'flex', gap: '8px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--theme-border)', borderRadius: '10px', padding: '4px', maxWidth: '160px' }}>
                   <button
                     type="button"
@@ -1970,12 +1971,12 @@ export const QuickStartPlanner: React.FC = () => {
                       border: 'none',
                       borderRadius: '6px',
                       padding: '6px 12px',
-                      fontSize: '11px',
-                      fontFamily: "'Orbitron', sans-serif",
+                      fontSize: '12px',
+                      fontFamily: "'Inter', sans-serif",
                       fontWeight: 700,
                       cursor: 'pointer',
                       background: calcUnit === 'kg' ? 'var(--theme-btn-gradient)' : 'transparent',
-                      color: calcUnit === 'kg' ? 'white' : 'rgba(255,255,255,0.6)',
+                      color: calcUnit === 'kg' ? 'white' : '#a4b0a8',
                       boxShadow: calcUnit === 'kg' ? '0 0 10px var(--theme-btn-glow)' : 'none',
                       transition: 'all 0.2s'
                     }}
@@ -1990,12 +1991,12 @@ export const QuickStartPlanner: React.FC = () => {
                       border: 'none',
                       borderRadius: '6px',
                       padding: '6px 12px',
-                      fontSize: '11px',
-                      fontFamily: "'Orbitron', sans-serif",
+                      fontSize: '12px',
+                      fontFamily: "'Inter', sans-serif",
                       fontWeight: 700,
                       cursor: 'pointer',
                       background: calcUnit === 'lbs' ? 'var(--theme-btn-gradient)' : 'transparent',
-                      color: calcUnit === 'lbs' ? 'white' : 'rgba(255,255,255,0.6)',
+                      color: calcUnit === 'lbs' ? 'white' : '#a4b0a8',
                       boxShadow: calcUnit === 'lbs' ? '0 0 10px var(--theme-btn-glow)' : 'none',
                       transition: 'all 0.2s'
                     }}
@@ -2009,7 +2010,7 @@ export const QuickStartPlanner: React.FC = () => {
                 <label htmlFor="input1RMPeso" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%' }}>
                   <span>PESO LEVANTADO ({calcUnit.toUpperCase()})</span>
                   {calcPeso && !isNaN(parseFloat(calcPeso)) && parseFloat(calcPeso) > 0 && (
-                    <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', fontFamily: "'Orbitron', sans-serif" }}>
+                    <span style={{ fontSize: '12px', color: '#a4b0a8', fontFamily: "'Inter', sans-serif" }}>
                       ≈ {(calcUnit === 'kg' ? parseFloat(calcPeso) * 2.20462 : parseFloat(calcPeso) / 2.20462).toFixed(1)} {calcUnit === 'kg' ? 'lbs' : 'kg'}
                     </span>
                   )}
@@ -2072,9 +2073,9 @@ export const QuickStartPlanner: React.FC = () => {
                     cursor: 'pointer'
                   }}
                 >
-                  <option value="promedio" style={{ background: '#0f172a' }}>Promedio Automático (Recomendado)</option>
-                  <option value="brzycki" style={{ background: '#0f172a' }}>Brzycki</option>
-                  <option value="epley" style={{ background: '#0f172a' }}>Epley</option>
+                  <option value="promedio" style={{ background: '#1a211e' }}>Promedio Automático (Recomendado)</option>
+                  <option value="brzycki" style={{ background: '#1a211e' }}>Brzycki</option>
+                  <option value="epley" style={{ background: '#1a211e' }}>Epley</option>
                 </select>
               </div>
               <button type="submit" className="modal-1rm-btn-calc full-width">Calcular 1RM</button>
@@ -2088,24 +2089,24 @@ export const QuickStartPlanner: React.FC = () => {
                     <span style={{ fontSize: '2.2rem', fontWeight: 800 }}>{rmResult.toFixed(1)}</span>
                     <span style={{ fontSize: '1.1rem', color: 'var(--theme-primary)', fontWeight: 700 }}>{calcUnit}</span>
                   </div>
-                  <div style={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.5)', fontFamily: "'Orbitron', sans-serif" }}>
+                  <div style={{ fontSize: '0.85rem', color: '#a4b0a8', fontFamily: "'Inter', sans-serif" }}>
                     ≈ {(calcUnit === 'kg' ? rmResult * 2.20462 : rmResult / 2.20462).toFixed(1)} {calcUnit === 'kg' ? 'lbs' : 'kg'}
                   </div>
                 </div>
                 {calcTargetEx && (
                   <div style={{
-                    fontSize: '11px',
+                    fontSize: '12px',
                     color: 'var(--theme-primary)',
                     fontWeight: 700,
                     textAlign: 'center',
                     marginBottom: '10px',
-                    fontFamily: "'Orbitron', sans-serif",
+                    fontFamily: "'Inter', sans-serif",
                     animation: 'pulse 1.5s infinite'
                   }}>
                     👉 HAZ CLIC EN UNA FILA PARA APLICAR EL PESO AL EJERCICIO
                   </div>
                 )}
-                <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginBottom: '8px', textAlign: 'center' }}>Tabla de Porcentajes de Carga</div>
+                <div style={{ fontSize: '0.75rem', color: '#a4b0a8', marginBottom: '8px', textAlign: 'center' }}>Tabla de Porcentajes de Carga</div>
                 <div className="modal-1rm-table-container">
                   <table className="modal-1rm-table">
                     <thead>
@@ -2163,7 +2164,7 @@ export const QuickStartPlanner: React.FC = () => {
                           >
                             <td style={{ fontWeight: 600, color: 'var(--theme-primary)' }}>{row.pct}%</td>
                             <td style={{ fontWeight: 700, color: '#7EC94A' }}>{row.carga.toFixed(1)} {calcUnit}</td>
-                            <td style={{ color: 'rgba(255,255,255,0.5)', fontSize: '11px' }}>{equiv.toFixed(1)} {calcUnit === 'kg' ? 'lbs' : 'kg'}</td>
+                            <td style={{ color: '#a4b0a8', fontSize: '12px' }}>{equiv.toFixed(1)} {calcUnit === 'kg' ? 'lbs' : 'kg'}</td>
                             <td>{row.reps} {row.reps === 1 ? 'rep' : 'reps'}</td>
                           </tr>
                         );
@@ -2253,7 +2254,7 @@ export const QuickStartPlanner: React.FC = () => {
           border-radius: 8px;
           border: 1px solid rgba(255,255,255,0.1);
           background: rgba(255,255,255,0.04);
-          color: rgba(255,255,255,0.6);
+          color: #a4b0a8;
           cursor: pointer;
           transition: all 0.3s ease;
           padding: 0;
@@ -2317,7 +2318,7 @@ export const QuickStartPlanner: React.FC = () => {
           right: 0,
           bottom: 0,
           background: 'rgba(0,0,0,0.8)',
-          backdropFilter: 'blur(8px)',
+          backdropFilter: 'none',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -2325,7 +2326,7 @@ export const QuickStartPlanner: React.FC = () => {
           padding: '20px'
         }}>
           <div style={{
-            background: '#0f172a',
+            background: '#1a211e',
             border: '1px solid var(--theme-border)',
             borderRadius: '16px',
             padding: '24px',
@@ -2333,10 +2334,10 @@ export const QuickStartPlanner: React.FC = () => {
             width: '100%',
             color: 'white'
           }}>
-            <h3 style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '16px', margin: '0 0 12px 0', color: '#38bdf8' }}>
+            <h3 style={{ fontFamily: "'Inter', sans-serif", fontSize: '16px', margin: '0 0 12px 0', color: '#38bdf8' }}>
               ⭐ Guardar como Plantilla Personal
             </h3>
-            <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)', margin: '0 0 16px 0' }}>
+            <p style={{ fontSize: '12px', color: '#a4b0a8', margin: '0 0 16px 0' }}>
               Guarda tus días y ejercicios actuales como una plantilla reutilizable para futuros planes.
             </p>
             <div style={{ marginBottom: '12px' }}>
@@ -2408,7 +2409,7 @@ export const QuickStartPlanner: React.FC = () => {
             position: 'fixed',
             top: 0, left: 0, right: 0, bottom: 0,
             background: 'rgba(0,0,0,0.8)',
-            backdropFilter: 'blur(8px)',
+            backdropFilter: 'none',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
@@ -2424,7 +2425,7 @@ export const QuickStartPlanner: React.FC = () => {
             aria-describedby="pending-load-message"
             tabIndex={-1}
             style={{
-              background: '#0f172a',
+              background: '#1a211e',
               border: '1px solid var(--theme-border)',
               borderRadius: '16px',
               padding: '24px',
@@ -2433,7 +2434,7 @@ export const QuickStartPlanner: React.FC = () => {
               color: 'white'
             }}
           >
-            <h3 id="pending-load-title" style={{ fontFamily: "'Orbitron', sans-serif", fontSize: '16px', margin: '0 0 12px 0', color: '#38bdf8' }}>
+            <h3 id="pending-load-title" style={{ fontFamily: "'Inter', sans-serif", fontSize: '16px', margin: '0 0 12px 0', color: '#38bdf8' }}>
               Ya tenés un plan en progreso
             </h3>
             <p id="pending-load-message" style={{ fontSize: '13px', color: 'rgba(255,255,255,0.75)', lineHeight: 1.5, margin: '0 0 20px 0' }}>
@@ -2451,7 +2452,7 @@ export const QuickStartPlanner: React.FC = () => {
                 }}
               >
                 ⚡ Fusionar Inteligente
-                <div style={{ fontSize: '11px', fontWeight: 400, opacity: 0.85, marginTop: '2px' }}>
+                <div style={{ fontSize: '12px', fontWeight: 400, opacity: 0.85, marginTop: '2px' }}>
                   Conserva la configuración de series de tu plan actual por grupo muscular.
                 </div>
               </button>
@@ -2466,7 +2467,7 @@ export const QuickStartPlanner: React.FC = () => {
                 }}
               >
                 🔄 Reemplazar Plan
-                <div style={{ fontSize: '11px', fontWeight: 400, opacity: 0.85, marginTop: '2px' }}>
+                <div style={{ fontSize: '12px', fontWeight: 400, opacity: 0.85, marginTop: '2px' }}>
                   Descarta tu plan actual por completo y empieza desde la plantilla.
                 </div>
               </button>
@@ -2475,7 +2476,7 @@ export const QuickStartPlanner: React.FC = () => {
                 onClick={() => setPendingLoad(null)}
                 style={{
                   background: 'transparent',
-                  border: '1px solid var(--theme-border)', color: 'rgba(255,255,255,0.6)', borderRadius: '10px',
+                  border: '1px solid var(--theme-border)', color: '#a4b0a8', borderRadius: '10px',
                   padding: '10px 16px', fontSize: '12px', fontWeight: 600, cursor: 'pointer',
                   marginTop: '4px'
                 }}

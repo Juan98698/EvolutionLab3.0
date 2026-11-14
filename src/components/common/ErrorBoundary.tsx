@@ -93,14 +93,14 @@ const DefaultFallback: React.FC<{ error: Error; onRetry: () => void; label?: str
     <div style={{ fontWeight: 700, fontSize: '14px', marginBottom: '4px' }}>
       {label ? `Esta sección (${label}) tuvo un problema` : 'Algo salió mal en esta sección'}
     </div>
-    <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.55)', marginBottom: '14px' }}>
+    <div style={{ fontSize: '12px', color: '#a4b0a8', marginBottom: '14px' }}>
       El resto de la app sigue funcionando. Podés intentar de nuevo.
     </div>
     {import.meta.env.DEV && (
       <pre
         style={{
-          fontSize: '10px',
-          color: 'rgba(255,255,255,0.4)',
+          fontSize: '12px',
+          color: '#a4b0a8',
           textAlign: 'left',
           background: 'rgba(0,0,0,0.3)',
           padding: '8px',

@@ -1,4 +1,5 @@
 import type { VercelRequest, VercelResponse } from './_lib/types';
+import { BILLING_PLANS, isBillingPlan } from './_lib/billing';
 import { createClient } from '@supabase/supabase-js';
 
 // Allowlist de orígenes autorizados a hacer requests con credenciales.
@@ -7,16 +8,14 @@ import { createClient } from '@supabase/supabase-js';
 // requests credenciales desde cualquier dominio. Ahora: solo se permite el
 // dominio de producción, los previews de Vercel del propio proyecto y
 // localhost en desarrollo.
-// ⚠️ AJUSTAR: confirmar el/los dominio(s) real(es) de producción (p.ej. si
-// usan un dominio propio como evolutionlab.fit además de vercel.app) y
-// agregarlos acá o vía la env var EXTRA_ALLOWED_ORIGINS (coma-separado).
-const PRODUCTION_ORIGIN = process.env.APP_PRODUCTION_ORIGIN || 'https://evolution-lab.vercel.app';
+const PRODUCTION_ORIGIN = process.env.APP_PRODUCTION_ORIGIN || 'https://evolutionlab.fit';
 
 function isAllowedOrigin(origin: string | undefined): boolean {
   if (!origin) return false;
   if (origin === PRODUCTION_ORIGIN) return true;
-  // Previews y dominios de Vercel del proyecto (p.ej. evolution-lab3-0.vercel.app o evolution-lab3-0-<hash>.vercel.app)
-  if (/^https:\/\/(evolutionlab3-0|evolution-lab|evolution-lab-3)(-[a-z0-9-]+)?\.vercel\.app$/i.test(origin)) return true;
+  // Match exact deployment hosts. A project-name prefix is not proof of
+  // ownership: another Vercel project can use a similar public hostname.
+  if ([process.env.VERCEL_URL, process.env.VERCEL_BRANCH_URL].some(host => host && origin === `https://${host}`)) return true;
   if (process.env.NODE_ENV !== 'production' && /^https?:\/\/localhost(:\d+)?$/i.test(origin)) return true;
   const extra = (process.env.EXTRA_ALLOWED_ORIGINS || '').split(',').map((s) => s.trim()).filter(Boolean);
   return extra.includes(origin);
@@ -85,34 +84,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       return res.status(500).json({ error: 'MercadoPago integration is not configured on the server.' });
     }
 
-    let amount = 0;
-    let planName = '';
-    let planDescription = '';
-
-    switch (plan) {
-      case 'premium':
-        amount = 19900;
-        planName = 'Solo Lifter Pro';
-        planDescription = 'Sugerencias de Smart Coach y reglas avanzadas para atletas autónomos.';
-        break;
-      case 'iniciacion':
-        amount = 17900;
-        planName = 'Plan Iniciación (Coach)';
-        planDescription = 'Gestión de hasta 2 atletas vinculados.';
-        break;
-      case 'intermedio':
-        amount = 59900;
-        planName = 'Plan Intermedio (Coach)';
-        planDescription = 'Gestión de hasta 10 atletas vinculados.';
-        break;
-      case 'profesional':
-        amount = 299000;
-        planName = 'Plan Profesional (Coach)';
-        planDescription = 'Gestión de atletas ilimitados.';
-        break;
-      default:
-        return res.status(400).json({ error: 'Invalid plan selected' });
+    if (!isBillingPlan(plan)) return res.status(400).json({ error: 'Invalid plan selected' });
+    if (typeof redirectPath !== 'string' || !/^\/(dashboard|trainer)(?:\/[a-zA-Z0-9-]+)*$/.test(redirectPath)) {
+      return res.status(400).json({ error: 'Invalid redirect path' });
     }
+    const { amount, name: planName, description: planDescription } = BILLING_PLANS[plan];
 
     const host = req.headers.host || '';
     const isLocal = host.includes('localhost') || host.includes('127.0.0.1') || host.includes('[::1]');
@@ -151,7 +127,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       notificationUrl = `https://${host}/api/mercadopago-webhook`;
     }
 
-    const testBuyerEmail = process.env.MERCADOPAGO_TEST_BUYER_EMAIL || 'TESTUSER3169499133033229626@testuser.com';
+    const testBuyerEmail = process.env.MERCADOPAGO_TEST_BUYER_EMAIL;
     const payerEmail = isSandbox
       ? testBuyerEmail
       : userEmail;
@@ -168,9 +144,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           unit_price: amount,
         },
       ],
-      payer: {
-        email: payerEmail,
-      },
+      ...(payerEmail ? { payer: { email: payerEmail } } : {}),
       back_urls: {
         success: `${baseRedirectUrl}?payment_success=true&plan=${plan}`,
         failure: `${baseRedirectUrl}?payment_cancel=true`,
@@ -188,8 +162,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       preferenceBody.notification_url = notificationUrl;
     }
 
-    console.log(`Creating MercadoPago preference for authenticated user ${verifiedUserId}, plan: ${plan}, notify: ${notificationUrl}`);
-
     const mpResponse = await fetch('https://api.mercadopago.com/checkout/preferences', {
       method: 'POST',
       headers: {
@@ -197,11 +169,11 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(preferenceBody),
+      signal: AbortSignal.timeout(15000),
     });
 
     if (!mpResponse.ok) {
-      const errorText = await mpResponse.text();
-      throw new Error(`MercadoPago API Error: ${mpResponse.status} - ${errorText}`);
+      throw new Error(`MercadoPago API Error: ${mpResponse.status}`);
     }
 
     const preference = await mpResponse.json();
@@ -210,6 +182,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json({ id: preference.id, url: redirectUrl });
   } catch (error: any) {
     console.error('Error creating MercadoPago preference:', error);
-    return res.status(500).json({ error: error.message });
+    return res.status(500).json({ error: 'No se pudo iniciar el pago. Inténtalo nuevamente.' });
   }
 }

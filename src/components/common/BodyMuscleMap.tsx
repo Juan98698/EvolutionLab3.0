@@ -29,16 +29,16 @@ export const BodyMuscleMap: React.FC<BodyMuscleMapProps> = ({
       flexDirection: 'column',
       alignItems: 'center',
       background: 'linear-gradient(135deg, rgba(10, 15, 30, 0.8) 0%, rgba(16, 24, 48, 0.7) 100%)',
-      backdropFilter: 'blur(16px)',
-      WebkitBackdropFilter: 'blur(16px)',
-      border: '1px solid rgba(0, 212, 255, 0.15)',
+      backdropFilter: 'none',
+      WebkitBackdropFilter: 'none',
+      border: '1px solid rgba(145, 182, 161, 0.15)',
       borderRadius: '20px',
       padding: '24px 20px',
       width: '100%',
       maxWidth: '360px',
       margin: '0 auto',
       position: 'relative',
-      boxShadow: '0 20px 40px rgba(0, 0, 0, 0.4), inset 0 1px 2px rgba(255, 255, 255, 0.05)',
+      boxShadow: 'none',
       overflow: 'hidden'
     }}>
       {/* Estilos CSS globales inyectados para efectos interactivos fluidos */}
@@ -51,35 +51,35 @@ export const BodyMuscleMap: React.FC<BodyMuscleMapProps> = ({
           transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .hud-muscle-path:hover {
-          fill: rgba(0, 212, 255, 0.18) !important;
-          stroke: rgba(0, 212, 255, 0.6) !important;
-          filter: drop-shadow(0 0 6px rgba(0, 212, 255, 0.5));
+          fill: rgba(145, 182, 161, 0.18) !important;
+          stroke: rgba(145, 182, 161, 0.6) !important;
+          filter: drop-shadow(0 0 6px rgba(145, 182, 161, 0.5));
         }
         .hud-muscle-path.active {
-          fill: var(--theme-primary, #00d4ff) !important;
-          stroke: var(--theme-primary, #00d4ff) !important;
+          fill: var(--theme-primary, #91b6a1) !important;
+          stroke: var(--theme-primary, #91b6a1) !important;
           stroke-width: 1.5px !important;
-          filter: drop-shadow(0 0 10px var(--theme-primary, #00d4ff)) !important;
+          filter: drop-shadow(0 0 10px var(--theme-primary, #91b6a1)) !important;
         }
       ` }} />
 
       {/* Sci-Fi Decorative Corner Brackets */}
-      <div style={{ position: 'absolute', top: '10px', left: '10px', width: '12px', height: '12px', borderTop: '2px solid rgba(0, 212, 255, 0.4)', borderLeft: '2px solid rgba(0, 212, 255, 0.4)' }} />
-      <div style={{ position: 'absolute', top: '10px', right: '10px', width: '12px', height: '12px', borderTop: '2px solid rgba(0, 212, 255, 0.4)', borderRight: '2px solid rgba(0, 212, 255, 0.4)' }} />
-      <div style={{ position: 'absolute', bottom: '10px', left: '10px', width: '12px', height: '12px', borderBottom: '2px solid rgba(0, 212, 255, 0.4)', borderLeft: '2px solid rgba(0, 212, 255, 0.4)' }} />
-      <div style={{ position: 'absolute', bottom: '10px', right: '10px', width: '12px', height: '12px', borderBottom: '2px solid rgba(0, 212, 255, 0.4)', borderRight: '2px solid rgba(0, 212, 255, 0.4)' }} />
+      <div style={{ position: 'absolute', top: '10px', left: '10px', width: '12px', height: '12px', borderTop: '2px solid rgba(145, 182, 161, 0.4)', borderLeft: '2px solid rgba(145, 182, 161, 0.4)' }} />
+      <div style={{ position: 'absolute', top: '10px', right: '10px', width: '12px', height: '12px', borderTop: '2px solid rgba(145, 182, 161, 0.4)', borderRight: '2px solid rgba(145, 182, 161, 0.4)' }} />
+      <div style={{ position: 'absolute', bottom: '10px', left: '10px', width: '12px', height: '12px', borderBottom: '2px solid rgba(145, 182, 161, 0.4)', borderLeft: '2px solid rgba(145, 182, 161, 0.4)' }} />
+      <div style={{ position: 'absolute', bottom: '10px', right: '10px', width: '12px', height: '12px', borderBottom: '2px solid rgba(145, 182, 161, 0.4)', borderRight: '2px solid rgba(145, 182, 161, 0.4)' }} />
 
       {/* HUD Header Status */}
       <div style={{
         display: 'flex',
         justifyContent: 'space-between',
         width: '100%',
-        fontSize: '9px',
-        fontFamily: "'Orbitron', sans-serif",
-        color: 'rgba(0, 212, 255, 0.4)',
-        letterSpacing: '1.5px',
+        fontSize: '12px',
+        fontFamily: "'Inter', sans-serif",
+        color: 'rgba(145, 182, 161, 0.4)',
+        letterSpacing: '0',
         marginBottom: '16px',
-        borderBottom: '1px dashed rgba(0, 212, 255, 0.15)',
+        borderBottom: '1px dashed rgba(145, 182, 161, 0.15)',
         paddingBottom: '8px'
       }}>
         <span>ANATOMICAL_SCAN: OK</span>
@@ -91,28 +91,28 @@ export const BodyMuscleMap: React.FC<BodyMuscleMapProps> = ({
         display: 'flex',
         gap: '4px',
         marginBottom: '20px',
-        background: 'rgba(0, 212, 255, 0.03)',
+        background: 'rgba(145, 182, 161, 0.03)',
         padding: '3px',
         borderRadius: '12px',
-        border: '1px solid rgba(0, 212, 255, 0.1)',
-        boxShadow: '0 4px 10px rgba(0,0,0,0.2)',
+        border: '1px solid rgba(145, 182, 161, 0.1)',
+        boxShadow: 'none',
         zIndex: 2
       }}>
         <button
           onClick={() => setView('front')}
           style={{
-            background: view === 'front' ? 'var(--theme-primary, #00d4ff)' : 'transparent',
-            color: view === 'front' ? '#000' : 'rgba(255, 255, 255, 0.6)',
+            background: view === 'front' ? 'var(--theme-primary, #91b6a1)' : 'transparent',
+            color: view === 'front' ? '#000' : '#a4b0a8',
             border: 'none',
             borderRadius: '9px',
             padding: '8px 18px',
-            fontSize: '11px',
+            fontSize: '12px',
             fontWeight: 800,
-            fontFamily: "'Orbitron', sans-serif",
-            letterSpacing: '1px',
+            fontFamily: "'Inter', sans-serif",
+            letterSpacing: '0',
             cursor: 'pointer',
             transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            boxShadow: view === 'front' ? '0 0 10px rgba(0, 212, 255, 0.5)' : 'none'
+            boxShadow: view === 'front' ? '0 0 10px rgba(145, 182, 161, 0.5)' : 'none'
           }}
         >
           ANTERIOR
@@ -120,18 +120,18 @@ export const BodyMuscleMap: React.FC<BodyMuscleMapProps> = ({
         <button
           onClick={() => setView('back')}
           style={{
-            background: view === 'back' ? 'var(--theme-primary, #00d4ff)' : 'transparent',
-            color: view === 'back' ? '#000' : 'rgba(255, 255, 255, 0.6)',
+            background: view === 'back' ? 'var(--theme-primary, #91b6a1)' : 'transparent',
+            color: view === 'back' ? '#000' : '#a4b0a8',
             border: 'none',
             borderRadius: '9px',
             padding: '8px 18px',
-            fontSize: '11px',
+            fontSize: '12px',
             fontWeight: 800,
-            fontFamily: "'Orbitron', sans-serif",
-            letterSpacing: '1px',
+            fontFamily: "'Inter', sans-serif",
+            letterSpacing: '0',
             cursor: 'pointer',
             transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            boxShadow: view === 'back' ? '0 0 10px rgba(0, 212, 255, 0.5)' : 'none'
+            boxShadow: view === 'back' ? '0 0 10px rgba(145, 182, 161, 0.5)' : 'none'
           }}
         >
           POSTERIOR
@@ -147,11 +147,11 @@ export const BodyMuscleMap: React.FC<BodyMuscleMapProps> = ({
       >
         <defs>
           <linearGradient id="bodyGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stopColor="rgba(0, 212, 255, 0.02)" />
-            <stop offset="100%" stopColor="rgba(0, 212, 255, 0.08)" />
+            <stop offset="0%" stopColor="rgba(145, 182, 161, 0.02)" />
+            <stop offset="100%" stopColor="rgba(145, 182, 161, 0.08)" />
           </linearGradient>
           <pattern id="hudGrid" width="16" height="16" patternUnits="userSpaceOnUse">
-            <path d="M 16 0 L 0 0 0 16" fill="none" stroke="rgba(0, 212, 255, 0.02)" strokeWidth="0.5"/>
+            <path d="M 16 0 L 0 0 0 16" fill="none" stroke="rgba(145, 182, 161, 0.02)" strokeWidth="0.5"/>
           </pattern>
         </defs>
 
@@ -159,17 +159,17 @@ export const BodyMuscleMap: React.FC<BodyMuscleMapProps> = ({
         <rect width="100%" height="100%" fill="url(#hudGrid)" rx="10" />
 
         {/* Holographic Radar Concentric Circles */}
-        <circle cx="100" cy="180" r="140" fill="none" stroke="rgba(0, 212, 255, 0.03)" strokeWidth="1" strokeDasharray="5 5" />
-        <circle cx="100" cy="180" r="110" fill="none" stroke="rgba(0, 212, 255, 0.05)" strokeWidth="1" />
-        <circle cx="100" cy="180" r="80" fill="none" stroke="rgba(0, 212, 255, 0.02)" strokeWidth="1" strokeDasharray="3 3" />
-        <line x1="100" y1="10" x2="100" y2="390" stroke="rgba(0, 212, 255, 0.04)" strokeWidth="1" strokeDasharray="2 4" />
+        <circle cx="100" cy="180" r="140" fill="none" stroke="rgba(145, 182, 161, 0.03)" strokeWidth="1" strokeDasharray="5 5" />
+        <circle cx="100" cy="180" r="110" fill="none" stroke="rgba(145, 182, 161, 0.05)" strokeWidth="1" />
+        <circle cx="100" cy="180" r="80" fill="none" stroke="rgba(145, 182, 161, 0.02)" strokeWidth="1" strokeDasharray="3 3" />
+        <line x1="100" y1="10" x2="100" y2="390" stroke="rgba(145, 182, 161, 0.04)" strokeWidth="1" strokeDasharray="2 4" />
 
         {/* Body Base Silhouette */}
         <path
           d="M100 30 C85 30, 80 45, 80 55 C80 65, 88 75, 100 75 C112 75, 120 65, 120 55 C120 45, 115 30, 100 30 Z 
              M80 75 C60 80, 50 90, 48 115 C45 130, 40 180, 40 210 C40 220, 50 220, 52 210 C55 190, 60 140, 64 125 L65 180 C65 210, 60 250, 58 290 C55 330, 55 370, 62 385 C65 390, 75 390, 78 385 C84 370, 88 340, 92 300 L95 210 L100 210 L105 210 L108 300 C112 340, 116 370, 122 385 C125 390, 135 390, 138 385 C145 370, 145 330, 142 290 C140 250, 135 210, 135 180 L136 125 C140 140, 145 190, 148 210 C150 220, 160 220, 160 210 C160 180, 155 130, 152 115 C150 90, 140 80, 120 75 Z"
           fill="url(#bodyGrad)"
-          stroke="rgba(0, 212, 255, 0.15)"
+          stroke="rgba(145, 182, 161, 0.15)"
           strokeWidth="1px"
         />
 
@@ -177,8 +177,8 @@ export const BodyMuscleMap: React.FC<BodyMuscleMapProps> = ({
         {view === 'front' && (
           <g>
             {/* Cabeza */}
-            <circle cx="100" cy="53" r="20" fill="none" stroke="rgba(0,212,255,0.2)" strokeWidth="1" />
-            <path d="M90 70 L82 82 M110 70 L118 82" stroke="rgba(0,212,255,0.2)" strokeWidth="1" />
+            <circle cx="100" cy="53" r="20" fill="none" stroke="rgba(145, 182, 161,0.2)" strokeWidth="1" />
+            <path d="M90 70 L82 82 M110 70 L118 82" stroke="rgba(145, 182, 161,0.2)" strokeWidth="1" />
 
             {/* Pecho (Pectoral) */}
             <path
@@ -380,21 +380,21 @@ export const BodyMuscleMap: React.FC<BodyMuscleMapProps> = ({
       {selectedMuscle && (
         <div style={{
           marginTop: '16px',
-          fontSize: '10px',
+          fontSize: '12px',
           color: 'rgba(255, 255, 255, 0.7)',
           display: 'flex',
           alignItems: 'center',
           gap: '8px',
-          background: 'rgba(0, 212, 255, 0.05)',
+          background: 'rgba(145, 182, 161, 0.05)',
           padding: '6px 14px',
           borderRadius: '20px',
-          border: '1px solid rgba(0, 212, 255, 0.2)',
-          fontFamily: "'Orbitron', sans-serif",
-          boxShadow: '0 0 10px rgba(0, 212, 255, 0.1)',
+          border: '1px solid rgba(145, 182, 161, 0.2)',
+          fontFamily: "'Inter', sans-serif",
+          boxShadow: 'none',
           zIndex: 2
         }}>
           FILTRADO: {' '}
-          <span style={{ color: 'var(--theme-primary, #00d4ff)', fontWeight: 800 }}>
+          <span style={{ color: 'var(--theme-primary, #91b6a1)', fontWeight: 800 }}>
             {selectedMuscle.toUpperCase()}
           </span>
           <button
@@ -402,7 +402,7 @@ export const BodyMuscleMap: React.FC<BodyMuscleMapProps> = ({
             style={{
               background: 'none',
               border: 'none',
-              color: 'var(--theme-primary, #00d4ff)',
+              color: 'var(--theme-primary, #91b6a1)',
               cursor: 'pointer',
               fontWeight: 800,
               fontSize: '12px',

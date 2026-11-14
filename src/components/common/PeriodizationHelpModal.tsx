@@ -16,7 +16,7 @@ export const PeriodizationHelpModal: React.FC<PeriodizationHelpModalProps> = ({ 
 
   if (!isOpen) return null;
 
-  const themeColor = 'var(--theme-primary, #00d4ff)';
+  const themeColor = 'var(--theme-primary, #91b6a1)';
 
   const faqs = [
     {
@@ -58,7 +58,7 @@ export const PeriodizationHelpModal: React.FC<PeriodizationHelpModalProps> = ({ 
       position: 'fixed',
       top: 0, left: 0, width: '100vw', height: '100vh',
       display: 'flex', justifyContent: 'center', alignItems: 'center',
-      background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)',
+      background: 'rgba(0,0,0,0.85)', backdropFilter: 'none',
       zIndex: 999999, padding: '10px', boxSizing: 'border-box'
     }}>
       <style>{`
@@ -80,14 +80,14 @@ export const PeriodizationHelpModal: React.FC<PeriodizationHelpModalProps> = ({ 
       `}</style>
       <div className="help-modal-box" ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="periodization-help-title" tabIndex={-1} style={{
         background: 'rgba(10, 15, 30, 0.96)',
-        border: '1px solid rgba(0, 212, 255, 0.15)',
+        border: '1px solid rgba(145, 182, 161, 0.15)',
         borderRadius: '20px',
         maxWidth: '680px',
         width: '100%',
         maxHeight: '85vh',
         display: 'flex',
         flexDirection: 'column',
-        boxShadow: '0 24px 60px rgba(0, 0, 0, 0.6)',
+        boxShadow: 'none',
         color: 'white',
         fontFamily: 'sans-serif',
         overflow: 'hidden'
@@ -101,8 +101,8 @@ export const PeriodizationHelpModal: React.FC<PeriodizationHelpModalProps> = ({ 
           alignItems: 'center'
         }}>
           <div>
-            <span style={{ fontSize: '9px', fontFamily: "'Orbitron', sans-serif", color: themeColor, letterSpacing: '2px', textTransform: 'uppercase' }}>🧬 CIENCIA APLICADA</span>
-            <h2 id="periodization-help-title" style={{ margin: '4px 0 0 0', fontSize: '18px', fontWeight: 800, fontFamily: "'Orbitron', sans-serif", letterSpacing: '1px' }}>GUÍA DE PERIODIZACIÓN RIR</h2>
+            <span style={{ fontSize: '12px', fontFamily: "'Inter', sans-serif", color: themeColor, letterSpacing: '0', textTransform: 'none' }}>🧬 CIENCIA APLICADA</span>
+            <h2 id="periodization-help-title" style={{ margin: '4px 0 0 0', fontSize: '18px', fontWeight: 800, fontFamily: "'Inter', sans-serif", letterSpacing: '0' }}>GUÍA DE PERIODIZACIÓN RIR</h2>
           </div>
           <button
             onClick={onClose}
@@ -146,14 +146,14 @@ export const PeriodizationHelpModal: React.FC<PeriodizationHelpModalProps> = ({ 
                 background: 'none',
                 border: 'none',
                 borderBottom: `2px solid ${activeTab === tab.id ? themeColor : 'transparent'}`,
-                color: activeTab === tab.id ? 'white' : 'rgba(255, 255, 255, 0.4)',
+                color: activeTab === tab.id ? 'white' : '#a4b0a8',
                 padding: '14px',
-                fontSize: '11px',
+                fontSize: '12px',
                 fontWeight: 700,
-                fontFamily: "'Orbitron', sans-serif",
+                fontFamily: "'Inter', sans-serif",
                 cursor: 'pointer',
                 transition: 'all 0.2s',
-                letterSpacing: '0.5px'
+                letterSpacing: '0'
               }}
             >
               {tab.label}
@@ -178,15 +178,15 @@ export const PeriodizationHelpModal: React.FC<PeriodizationHelpModalProps> = ({ 
               </p>
               
               <div style={{
-                background: 'rgba(0, 212, 255, 0.02)',
-                border: '1px solid rgba(0, 212, 255, 0.08)',
+                background: 'rgba(145, 182, 161, 0.02)',
+                border: '1px solid rgba(145, 182, 161, 0.08)',
                 borderRadius: '12px',
                 padding: '16px',
                 display: 'flex',
                 flexDirection: 'column',
                 gap: '12px'
               }}>
-                <strong style={{ color: 'white', fontFamily: "'Orbitron', sans-serif", fontSize: '12px' }}>EL CICLO DE AUTOREGULACIÓN:</strong>
+                <strong style={{ color: 'white', fontFamily: "'Inter', sans-serif", fontSize: '12px' }}>EL CICLO DE AUTOREGULACIÓN:</strong>
                 <ol style={{ margin: 0, paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   <li><strong>Entrenamiento Inteligente:</strong> El sistema lee tus 1RMs y prescribe la carga recomendada exacta para el RIR objetivo de la semana.</li>
                   <li><strong>Cuestionario de Biofeedback:</strong> Al final del ejercicio, reportas tu RIR real y calificas tu bombeo muscular (Estímulo) y dolor residual (Recuperación).</li>
@@ -214,7 +214,7 @@ export const PeriodizationHelpModal: React.FC<PeriodizationHelpModalProps> = ({ 
                   borderRadius: '10px',
                   padding: '12px'
                 }}>
-                  <strong style={{ display: 'block', fontSize: '12px', color: themeColor, fontFamily: "'Orbitron', sans-serif", marginBottom: '4px' }}>{item.term}</strong>
+                  <strong style={{ display: 'block', fontSize: '12px', color: themeColor, fontFamily: "'Inter', sans-serif", marginBottom: '4px' }}>{item.term}</strong>
                   <p style={{ margin: 0, fontSize: '13px', color: 'rgba(255,255,255,0.7)', lineHeight: '1.5' }}>{item.desc}</p>
                 </div>
               ))}
@@ -238,7 +238,7 @@ export const PeriodizationHelpModal: React.FC<PeriodizationHelpModalProps> = ({ 
                   <p style={{
                     margin: 0,
                     fontSize: '12.5px',
-                    color: 'rgba(255,255,255,0.65)',
+                    color: '#a4b0a8',
                     lineHeight: '1.5',
                     whiteSpace: 'pre-line',
                     borderLeft: `2px solid ${themeColor}`,
@@ -269,13 +269,13 @@ export const PeriodizationHelpModal: React.FC<PeriodizationHelpModalProps> = ({ 
               borderRadius: '8px',
               color: '#000',
               padding: '10px 24px',
-              fontSize: '11px',
+              fontSize: '12px',
               fontWeight: 800,
-              fontFamily: "'Orbitron', sans-serif",
+              fontFamily: "'Inter', sans-serif",
               cursor: 'pointer',
-              letterSpacing: '1px',
+              letterSpacing: '0',
               transition: 'all 0.2s',
-              boxShadow: '0 4px 12px rgba(0, 212, 255, 0.2)'
+              boxShadow: 'none'
             }}
             onMouseEnter={(e) => e.currentTarget.style.filter = 'brightness(1.1)'}
             onMouseLeave={(e) => e.currentTarget.style.filter = 'none'}

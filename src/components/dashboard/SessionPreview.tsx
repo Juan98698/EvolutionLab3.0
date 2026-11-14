@@ -41,7 +41,7 @@ const SessionPreview: React.FC = () => {
           <h2 style={{ margin: '0 0 8px', color: 'white', fontSize: '18px' }}>
             Sin plan activo
           </h2>
-          <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '13px', lineHeight: 1.5 }}>
+          <p style={{ color: '#a4b0a8', fontSize: '13px', lineHeight: 1.5 }}>
             Tu entrenador aún no ha publicado un plan. Vuelve más tarde o contacta con él.
           </p>
           <button
@@ -123,12 +123,12 @@ const SessionPreview: React.FC = () => {
                       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                         {bTag && (
                           <span style={{
-                            fontSize: '10px',
+                            fontSize: '12px',
                             fontWeight: 800,
-                            fontFamily: "'Orbitron', sans-serif",
-                            color: '#00d4ff',
-                            background: 'rgba(0, 212, 255, 0.15)',
-                            border: '1px solid rgba(0, 212, 255, 0.4)',
+                            fontFamily: "'Inter', sans-serif",
+                            color: '#91b6a1',
+                            background: 'rgba(145, 182, 161, 0.15)',
+                            border: '1px solid rgba(145, 182, 161, 0.4)',
                             padding: '1px 6px',
                             borderRadius: '6px',
                           }}>
@@ -154,7 +154,7 @@ const SessionPreview: React.FC = () => {
       ) : (
         <div className="session-preview-rest-day">
           <div style={{ fontSize: '36px' }}>😴</div>
-          <p style={{ color: 'rgba(255,255,255,0.45)', fontSize: '14px', margin: '8px 0 0' }}>
+          <p style={{ color: '#a4b0a8', fontSize: '14px', margin: '8px 0 0' }}>
             Día de descanso
           </p>
         </div>

@@ -55,7 +55,7 @@ export const ShareableProgressCard: React.FC<ShareableProgressCardProps> = ({
     }
   }, []);
 
-  // Esperar a que las fuentes estén cargadas para que el canvas use Orbitron/Inter
+  // Esperar a que las fuentes estén cargadas para que el canvas use Inter/Inter
   useEffect(() => {
     if (typeof document !== 'undefined' && document.fonts) {
       document.fonts.ready.then(() => {
@@ -180,8 +180,8 @@ export const ShareableProgressCard: React.FC<ShareableProgressCardProps> = ({
     canvas.height = H;
 
     // A. Resolver colores reales para evitar fallos de CSS variables en Canvas
-    const primaryHex = resolveColor(themeColor, '#00d4ff');
-    const secondaryHex = resolveColor(themeSecondaryColor, '#7b2ff7');
+    const primaryHex = resolveColor(themeColor, '#91b6a1');
+    const secondaryHex = resolveColor(themeSecondaryColor, '#769888');
 
     // B. Fondo Oscuro profundo con gradiente
     const bgGrad = ctx.createLinearGradient(0, 0, W, H);
@@ -251,19 +251,19 @@ export const ShareableProgressCard: React.FC<ShareableProgressCardProps> = ({
 
     // Logo texto
     ctx.fillStyle = primaryHex;
-    ctx.font = "bold 28px 'Orbitron', sans-serif";
+    ctx.font = "bold 28px 'Inter', sans-serif";
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
     ctx.fillText('EVOLUTION LAB 3.0', W / 2, badgeY + badgeH / 2 + 2);
 
     // Título de la tarjeta
     ctx.fillStyle = '#ffffff';
-    ctx.font = "900 60px 'Orbitron', sans-serif";
+    ctx.font = "900 60px 'Inter', sans-serif";
     ctx.fillText('RENDIMIENTO ATLETA', W / 2, 310);
 
     // Nombre del Atleta
     ctx.fillStyle = '#ffffff';
-    ctx.font = "bold 56px 'Orbitron', sans-serif";
+    ctx.font = "bold 56px 'Inter', sans-serif";
     ctx.fillText(athleteName.toUpperCase(), W / 2, 420);
 
     // Rótulo de Plan actual (Free o Pro)
@@ -274,7 +274,7 @@ export const ShareableProgressCard: React.FC<ShareableProgressCardProps> = ({
     })();
 
     ctx.fillStyle = secondaryHex;
-    ctx.font = "900 24px 'Orbitron', sans-serif";
+    ctx.font = "900 24px 'Inter', sans-serif";
     ctx.fillText(planLabel, W / 2, 475);
 
     // G. Anillo de Nivel / XP Radial (Stunning neon glow ring)
@@ -292,7 +292,7 @@ export const ShareableProgressCard: React.FC<ShareableProgressCardProps> = ({
     // Relleno interior difuso
     ctx.beginPath();
     ctx.arc(ringX, ringY, ringRadius - 8, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(15, 23, 42, 0.6)';
+    ctx.fillStyle = '#1a211e';
     ctx.fill();
 
     // Arco de progreso
@@ -317,11 +317,11 @@ export const ShareableProgressCard: React.FC<ShareableProgressCardProps> = ({
 
     // Textos internos del anillo
     ctx.fillStyle = '#ffffff';
-    ctx.font = "900 68px 'Orbitron', sans-serif";
+    ctx.font = "900 68px 'Inter', sans-serif";
     ctx.fillText(`LVL ${metrics.currentLevel}`, ringX, ringY - 15);
 
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
-    ctx.font = "bold 22px 'Orbitron', sans-serif";
+    ctx.fillStyle = '#a4b0a8';
+    ctx.font = "bold 22px 'Inter', sans-serif";
     ctx.fillText(`${metrics.totalPoints} XP`, ringX, ringY + 45);
 
     // H. Rejilla 2x2 de Estadísticas (Stats Grid)
@@ -345,7 +345,7 @@ export const ShareableProgressCard: React.FC<ShareableProgressCardProps> = ({
 
     cards.forEach((c) => {
       // 1. Fondo de la tarjeta glassmorphic
-      ctx.fillStyle = 'rgba(15, 23, 42, 0.8)';
+      ctx.fillStyle = '#1a211e';
       ctx.beginPath();
       ctx.roundRect(c.x, c.y, cardW, cardH, 24);
       ctx.fill();
@@ -368,13 +368,13 @@ export const ShareableProgressCard: React.FC<ShareableProgressCardProps> = ({
 
       // 3. Valor principal gigante centrado verticalmente
       ctx.fillStyle = '#ffffff';
-      ctx.font = "900 68px 'Orbitron', sans-serif";
+      ctx.font = "900 68px 'Inter', sans-serif";
       ctx.textAlign = 'left';
       ctx.fillText(c.val, c.x + 35, c.y + 140);
 
       // 4. Etiquetas inferiores
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
-      ctx.font = "900 20px 'Orbitron', sans-serif";
+      ctx.fillStyle = '#a4b0a8';
+      ctx.font = "900 20px 'Inter', sans-serif";
       ctx.fillText(c.label, c.x + 35, c.y + 215);
 
       ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
@@ -384,12 +384,12 @@ export const ShareableProgressCard: React.FC<ShareableProgressCardProps> = ({
 
     // I. Pie de Página (Branding / Motivación)
     ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
-    ctx.font = "bold 20px 'Orbitron', sans-serif";
+    ctx.font = "bold 20px 'Inter', sans-serif";
     ctx.textAlign = 'center';
     ctx.fillText('PLANIFICACIÓN INTELIGENTE  🧬  EJECUCIÓN IMPECABLE', W / 2, H - 200);
 
     ctx.fillStyle = primaryHex + 'b3';
-    ctx.font = "900 22px 'Orbitron', sans-serif";
+    ctx.font = "900 22px 'Inter', sans-serif";
     ctx.fillText('EVOLUTIONLAB.FIT', W / 2, H - 150);
 
     // Guardar URL de descarga final
@@ -451,8 +451,8 @@ export const ShareableProgressCard: React.FC<ShareableProgressCardProps> = ({
       position: 'fixed',
       inset: 0,
       background: 'rgba(5, 8, 16, 0.95)',
-      backdropFilter: 'blur(12px)',
-      WebkitBackdropFilter: 'blur(12px)',
+      backdropFilter: 'none',
+      WebkitBackdropFilter: 'none',
       zIndex: 99999,
       display: 'flex',
       alignItems: 'center',
@@ -460,14 +460,14 @@ export const ShareableProgressCard: React.FC<ShareableProgressCardProps> = ({
       padding: '20px'
     }}>
       <div style={{
-        background: 'rgba(15, 23, 42, 0.85)',
+        background: '#1a211e',
         border: '1px solid var(--theme-border)',
         borderRadius: '24px',
         maxWidth: '440px',
         width: '100%',
         padding: '28px',
         textAlign: 'center',
-        boxShadow: '0 20px 50px var(--theme-glow)',
+        boxShadow: 'none',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -475,10 +475,10 @@ export const ShareableProgressCard: React.FC<ShareableProgressCardProps> = ({
       }}>
         {/* Header */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', borderBottom: '1px solid rgba(255,255,255,0.06)', paddingBottom: '12px' }}>
-          <h3 style={{ margin: 0, fontFamily: "'Orbitron', sans-serif", color: 'var(--theme-primary)', fontSize: '13px', letterSpacing: '1px', textTransform: 'uppercase' }}>
+          <h3 style={{ margin: 0, fontFamily: "'Inter', sans-serif", color: 'var(--theme-primary)', fontSize: '13px', letterSpacing: '0', textTransform: 'none' }}>
             Compartir Progreso 📸
           </h3>
-          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', fontSize: '24px', cursor: 'pointer', lineHeight: 1 }}>&times;</button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: '#a4b0a8', fontSize: '24px', cursor: 'pointer', lineHeight: 1 }}>&times;</button>
         </div>
 
         {/* Canvas preview */}
@@ -489,11 +489,11 @@ export const ShareableProgressCard: React.FC<ShareableProgressCardProps> = ({
           borderRadius: '16px',
           overflow: 'hidden',
           border: '1px solid rgba(255,255,255,0.1)',
-          background: '#0b0f19',
-          boxShadow: '0 10px 30px rgba(0,0,0,0.5)'
+          background: '#121716',
+          boxShadow: 'none'
         }}>
           {!fontsLoaded ? (
-            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'rgba(255,255,255,0.5)', fontFamily: "'Orbitron', sans-serif", fontSize: '11px' }}>
+            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#a4b0a8', fontFamily: "'Inter', sans-serif", fontSize: '12px' }}>
               CARGANDO FUENTES...
             </div>
           ) : (
@@ -508,7 +508,7 @@ export const ShareableProgressCard: React.FC<ShareableProgressCardProps> = ({
           )}
         </div>
 
-        <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', lineHeight: '1.5', margin: 0 }}>
+        <p style={{ fontSize: '12px', color: '#a4b0a8', lineHeight: '1.5', margin: 0 }}>
           {canShareFiles 
             ? 'Comparte esta tarjeta directamente en tus Instagram Stories o WhatsApp.'
             : 'Descarga esta tarjeta en alta definición (1080x1920) y compártela en tus Instagram o WhatsApp Stories.'}
@@ -523,11 +523,11 @@ export const ShareableProgressCard: React.FC<ShareableProgressCardProps> = ({
                 flex: 1,
                 background: 'transparent',
                 border: '1px solid rgba(255,255,255,0.1)',
-                color: 'rgba(255,255,255,0.6)',
+                color: '#a4b0a8',
                 borderRadius: '12px',
                 padding: '12px',
-                fontSize: '11px',
-                fontFamily: "'Orbitron', sans-serif",
+                fontSize: '12px',
+                fontFamily: "'Inter', sans-serif",
                 fontWeight: 700,
                 cursor: 'pointer',
                 transition: 'all 0.2s'
@@ -545,11 +545,11 @@ export const ShareableProgressCard: React.FC<ShareableProgressCardProps> = ({
                   color: 'white',
                   borderRadius: '12px',
                   padding: '12px',
-                  fontSize: '11px',
-                  fontFamily: "'Orbitron', sans-serif",
+                  fontSize: '12px',
+                  fontFamily: "'Inter', sans-serif",
                   fontWeight: 700,
                   border: 'none',
-                  boxShadow: '0 4px 15px var(--theme-btn-glow)',
+                  boxShadow: 'none',
                   cursor: 'pointer',
                   display: 'inline-flex',
                   alignItems: 'center',
@@ -572,14 +572,14 @@ export const ShareableProgressCard: React.FC<ShareableProgressCardProps> = ({
                   color: 'white',
                   borderRadius: '12px',
                   padding: '12px',
-                  fontSize: '11px',
-                  fontFamily: "'Orbitron', sans-serif",
+                  fontSize: '12px',
+                  fontFamily: "'Inter', sans-serif",
                   fontWeight: 700,
                   textDecoration: 'none',
                   display: 'inline-flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  boxShadow: '0 4px 15px var(--theme-btn-glow)',
+                  boxShadow: 'none',
                   cursor: 'pointer',
                   transition: 'all 0.2s',
                   pointerEvents: downloadUrl ? 'auto' : 'none',
@@ -595,8 +595,8 @@ export const ShareableProgressCard: React.FC<ShareableProgressCardProps> = ({
               href={downloadUrl}
               download={`EvolutionLab_Progreso_${athleteName}.png`}
               style={{
-                fontSize: '11px',
-                color: 'rgba(255, 255, 255, 0.4)',
+                fontSize: '12px',
+                color: '#a4b0a8',
                 textDecoration: 'underline',
                 cursor: 'pointer',
                 marginTop: '4px'
