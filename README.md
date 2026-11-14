@@ -77,7 +77,12 @@ anterior (setup inicial y migraciones v2–v15) y se conservan como referencia.
 
 `.github/workflows/ci.yml` corre en cada push y PR a `main`: `tsc`, lint,
 tests unitarios, build y, después, Playwright dentro de la imagen oficial
-(las capturas de referencia deben generarse con esa misma imagen; ver
-`update-snapshots.yml`).
+`mcr.microsoft.com/playwright:v1.65.1-noble`. Los runners usan Ubuntu 24.04.
+Las referencias visuales se separan por sistema en
+`e2e/visual-regression.spec.ts-snapshots/linux/` y `win32/`;
+las de Linux se generan con esa misma imagen (ver `update-snapshots.yml`).
+Antes de aceptar referencias nuevas, revisa las capturas y vuelve a ejecutar
+la suite sin `--update-snapshots`. La actualización de capturas es manual;
+el CI normal solo compara y conserva la tolerancia existente.
 
 Los informes de auditoría de junio de 2026 son históricos; el estado de esta entrega está en `docs/finding-closure.md`.

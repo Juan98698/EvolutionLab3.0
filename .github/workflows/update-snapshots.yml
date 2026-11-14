@@ -9,7 +9,7 @@ on:
 jobs:
   update-snapshots:
     name: Regenerar baselines con Playwright y commitear
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     permissions:
       contents: write
 
@@ -24,7 +24,7 @@ jobs:
 
     steps:
       - name: Checkout código
-        uses: actions/checkout@v4
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1, Node 24
         with:
           # Se necesita un token con permiso de push para que el commit automático funcione.
           # Usa el token por defecto del workflow (GITHUB_TOKEN) — ya tiene permiso
