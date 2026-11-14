@@ -33,6 +33,7 @@ La integración posterior con los cambios remotos se detalla en [verificación d
 - Suite Vitest tras la fusión: 93 archivos y 906 pruebas aprobadas; incluye PostgreSQL real con PGlite, aislamiento de cuentas, pagos, caché, autenticación y nutrición.
 - Navegador: 73 casos aprobados; 8 casos visuales omitidos intencionadamente en WebKit porque sus cuatro escenarios se comparan en Chromium. Los flujos funcionales sí se prueban en los tres proyectos.
 - Ocho imágenes de referencia Estudio revisadas, generadas y comparadas sin regeneración en la ejecución de verificación.
+- CI Linux aprobado sobre `a713961`: tipos, lint, 906 pruebas, auditoría sin vulnerabilidades, build, 73 casos de navegador y rendimiento móvil. Las referencias Linux y Windows se conservan por separado, con la tolerancia visual original. La muestra móvil del runner registró LCP 1620 ms y CLS 0,000050. Evidencia y enlaces en `ci-visual-verification.md`.
 - Build de producción aprobado con verificación del bundle y generación del service worker.
 - Medición final de portada compilada tras la fusión: LCP 3.056 ms, CLS 0, DOM listo 1.823 ms y 251.349 bytes de recursos. Perfil simulado Pixel 5, CPU ×4, 1,6 Mbps y 150 ms de latencia. Es una medición de laboratorio, no una medición de usuarios reales.
 - Supabase remoto: seis comprobaciones aprobadas, incluidos aislamiento, columnas protegidas, sesión atómica/idempotente, consentimiento e imposibilidad de escribir pagos desde el cliente. Limpieza de cuentas y datos desechables completada.
@@ -49,9 +50,8 @@ Para otra instalación, `node scripts/prepare-db-release.mjs` genera el paquete 
 
 ## Comprobaciones de publicación que siguen pendientes
 
-1. Ejecutar CI después del commit y revisar la comparación Linux de las referencias generadas en Windows. La comprobación local de Docker no pudo ejecutarse porque el motor no estaba iniciado.
-2. Desplegar el código revisado y comprobar Google OAuth, recuperación por correo y acceso con una cuenta de cada rol en el dominio final. Los proveedores externos no se sustituyen por los mocks E2E.
-3. Enviar una notificación auténtica firmada de Mercado Pago al código nuevo y comprobar aprobación, repetición, renovación y devolución contra el ledger. Las transacciones y la firma están cubiertas automáticamente, pero la prueba de preferencia no certifica el circuito completo del proveedor.
-4. Conservar un respaldo y ensayar su restauración antes de una publicación importante. Las migraciones nuevas se validaron, pero no se ha ejecutado una restauración de respaldo.
+1. Comprobar Google OAuth, recuperación por correo y acceso con una cuenta de cada rol en el despliegue del dominio final. Los proveedores externos no se sustituyen por los mocks E2E.
+2. Enviar una notificación auténtica firmada de Mercado Pago al código nuevo y comprobar aprobación, repetición, renovación y devolución contra el ledger. Las transacciones y la firma están cubiertas automáticamente, pero la prueba de preferencia no certifica el circuito completo del proveedor.
+3. Conservar un respaldo y ensayar su restauración antes de una publicación importante. Las migraciones nuevas se validaron, pero no se ha ejecutado una restauración de respaldo.
 
 Estas comprobaciones dependen del despliegue o de los proveedores; no deben presentarse como ejecutadas. La evaluación con profesionales y usuarios reales, y las métricas de dispositivos físicos, forman parte del seguimiento del producto. Los grandes editores conservan código heredado: se separaron las responsabilidades críticas de esta entrega, sin afirmar que desapareció toda la deuda técnica.

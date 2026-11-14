@@ -44,4 +44,4 @@ Inter se sirve desde el paquete de la aplicación. Los tokens están en `src/sty
 
 Las capturas de revisión se guardan en `previews/studio-desktop.jpg` y `previews/studio-mobile.jpg`. Las referencias automáticas están en `e2e/visual-regression.spec.ts-snapshots/`.
 
-La comparación final en Linux se ejecutará en CI tras el commit. Las comprobaciones del despliegue y los límites de la verificación están recogidos en `finding-closure.md`.
+Las referencias se separan en `linux/` y `win32/`. La comparación de Linux quedó aprobada en GitHub Actions con la misma imagen oficial usada para generar sus ocho capturas; la comparación de Windows también pasó sin regeneración. Evidencia en `ci-visual-verification.md`. Las comprobaciones del despliegue y los límites de la verificación están recogidos en `finding-closure.md`.

@@ -50,8 +50,8 @@ jobs:
         run: |
           git add e2e/visual-regression.spec.ts-snapshots/
           # Si no hay cambios (nada nuevo) el commit falla suavemente
-          # Sin [skip ci]: en la rama de un PR el CI tiene que validar las capturas
-          # nuevas; si no, el último commit del PR queda sin comprobar.
+          # GITHUB_TOKEN no dispara otro workflow con su push. Tras revisar las
+          # imágenes, ejecutar manualmente CI sobre el commit nuevo antes de integrarlo.
           git diff --cached --quiet && echo "Sin cambios en snapshots." || \
             git commit -m "ci: actualizar snapshots de regresión visual"
 

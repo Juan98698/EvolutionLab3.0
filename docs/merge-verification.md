@@ -36,4 +36,4 @@ npm audit --audit-level=low
 
 Los chequeos remotos están separados: `node scripts/verify-remote.mjs` solo lee el esquema; `node scripts/verify-checkout.mjs` exige vendedor de pruebas, crea una preferencia sin cargo y elimina su cuenta desechable. La fusión no añade migraciones nuevas.
 
-El CI de GitHub y el despliegue público no se ejecutan al crear el commit local. Las comprobaciones de publicación de `finding-closure.md` siguen siendo aplicables.
+Tras publicar la fusión se detectaron diferencias entre las capturas de Windows y el renderizado de Linux. La corrección conserva referencias por plataforma y quedó validada en un CI independiente: 906 pruebas unitarias, 73 casos de navegador, build, auditoría y rendimiento aprobados. Detalle en `ci-visual-verification.md`. Las comprobaciones de proveedores y restauración de respaldo de `finding-closure.md` siguen siendo aplicables.

@@ -83,6 +83,8 @@ Las referencias visuales se separan por sistema en
 las de Linux se generan con esa misma imagen (ver `update-snapshots.yml`).
 Antes de aceptar referencias nuevas, revisa las capturas y vuelve a ejecutar
 la suite sin `--update-snapshots`. La actualización de capturas es manual;
-el CI normal solo compara y conserva la tolerancia existente.
+el CI normal solo compara y conserva la tolerancia existente. El commit del bot
+de capturas no inicia otro workflow: ejecuta manualmente **CI → Run workflow**
+sobre esa rama antes de integrarla.
 
 Los informes de auditoría de junio de 2026 son históricos; el estado de esta entrega está en `docs/finding-closure.md`.
