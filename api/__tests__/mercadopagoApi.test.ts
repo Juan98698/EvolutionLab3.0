@@ -123,6 +123,14 @@ describe('MercadoPago API Security & Webhook Tests', () => {
       expect(resAllowed.headers['Access-Control-Allow-Origin']).toBe('https://evolutionlab.fit');
       expect(resAllowed.headers['Access-Control-Allow-Credentials']).toBe('true');
 
+      // Dominio del proyecto en Vercel
+      const { req: reqProject, res: resProject } = mockReqRes(
+        'OPTIONS',
+        { origin: 'https://evolution-lab3-0.vercel.app' }
+      );
+      await preferenceHandler(reqProject, resProject);
+      expect(resProject.headers['Access-Control-Allow-Origin']).toBe('https://evolution-lab3-0.vercel.app');
+
       // Origen no autorizado
       const { req: reqDenied, res: resDenied } = mockReqRes(
         'OPTIONS',
@@ -143,6 +151,13 @@ describe('MercadoPago API Security & Webhook Tests', () => {
       process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-role-mock';
     });
 
+    it('rechaza un ID del cuerpo diferente del ID firmado en la URL', async () => {
+      const request = mockReqRes('POST', signWebhook('signed-id', 'test-webhook-secret'),
+        { type: 'payment', data: { id: 'other-id' } }, { 'data.id': 'signed-id', type: 'payment' });
+      await webhookHandler(request.req, request.res);
+      expect(request.res.statusCode).toBe(400);
+    });
+
     it('calcula la expiración a partir de payment.date_approved para evitar extensión en reintentos', async () => {
       const approvalDateStr = '2026-08-01T10:00:00.000Z';
       const globalFetch = global.fetch;
@@ -152,6 +167,8 @@ describe('MercadoPago API Security & Webhook Tests', () => {
           status: 'approved',
           currency_id: 'COP', transaction_amount: 19900,
           date_approved: approvalDateStr,
+          transaction_amount: 19900,
+          currency_id: 'COP',
           metadata: { user_id: 'u123', plan: 'premium' }
         })
       }) as any;
@@ -163,6 +180,80 @@ describe('MercadoPago API Security & Webhook Tests', () => {
       expect(res.statusCode).toBe(200);
       expect(res.responseData.updated).toBe(true);
 
+      global.fetch = globalFetch;
+    });
+
+    it('no activa el plan si el monto pagado no coincide con el precio del plan', async () => {
+      const globalFetch = global.fetch;
+      global.fetch = vi.fn().mockResolvedValue({
+        ok: true,
+        json: () => Promise.resolve({
+          status: 'approved',
+          date_approved: '2026-08-01T10:00:00.000Z',
+          transaction_amount: 100,
+          currency_id: 'COP',
+          metadata: { user_id: 'u123', plan: 'profesional' }
+        })
+      }) as any;
+
+      const headers = signWebhook('pay_1000', 'test-webhook-secret');
+      const { req, res } = mockReqRes('POST', headers, { type: 'payment', data: { id: 'pay_1000' } });
+      await webhookHandler(req, res);
+
+      expect(res.statusCode).toBe(422);
+      expect(res.responseData.updated).toBeUndefined();
+      expect(res.responseData.error).toMatch(/does not match/i);
+
+      global.fetch = globalFetch;
+    });
+
+    it('acepta la notificación de prueba de MercadoPago (data.id en la URL) y luego consulta el pago', async () => {
+      const globalFetch = global.fetch;
+      // El pago 123456 de la simulación no existe: MercadoPago responde 404.
+      global.fetch = vi.fn().mockResolvedValue({ ok: false, status: 404 }) as any;
+
+      const headers = signWebhook('123456', 'test-webhook-secret');
+      const { req, res } = mockReqRes(
+        'POST',
+        headers,
+        { action: 'payment.updated', api_version: 'v1', data: { id: '123456' }, type: 'payment', live_mode: false },
+        { 'data.id': '123456', type: 'payment' }
+      );
+      await webhookHandler(req, res);
+
+      expect(res.statusCode).toBe(200);
+      expect(global.fetch).toHaveBeenCalledWith(
+        'https://api.mercadopago.com/v1/payments/123456',
+        expect.anything()
+      );
+      global.fetch = globalFetch;
+    });
+
+    it('ignora espacios o saltos de línea pegados junto a la clave secreta', async () => {
+      process.env.MERCADOPAGO_WEBHOOK_SECRET = '  test-webhook-secret\n';
+      const globalFetch = global.fetch;
+      global.fetch = vi.fn().mockResolvedValue({ ok: false, status: 404 }) as any;
+
+      const headers = signWebhook('123456', 'test-webhook-secret');
+      const { req, res } = mockReqRes('POST', headers, { type: 'payment', data: { id: '123456' } });
+      await webhookHandler(req, res);
+
+      expect(res.statusCode).toBe(503);
+      expect(global.fetch).toHaveBeenCalled();
+      global.fetch = globalFetch;
+    });
+
+    it('omite request-id de la firma cuando MercadoPago no envía x-request-id', async () => {
+      const globalFetch = global.fetch;
+      global.fetch = vi.fn().mockResolvedValue({ ok: false, status: 404 }) as any;
+
+      const ts = Math.floor(Date.now() / 1000).toString();
+      const v1 = crypto.createHmac('sha256', 'test-webhook-secret').update(`id:123456;ts:${ts};`).digest('hex');
+      const { req, res } = mockReqRes('POST', { 'x-signature': `ts=${ts},v1=${v1}` }, { type: 'payment', data: { id: '123456' } });
+      await webhookHandler(req, res);
+
+      expect(res.statusCode).toBe(503);
+      expect(global.fetch).toHaveBeenCalled();
       global.fetch = globalFetch;
     });
 

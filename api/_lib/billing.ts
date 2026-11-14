@@ -1,4 +1,5 @@
 /** The same server-owned catalog is used for checkout and payment verification. */
+export const PLAN_CURRENCY = 'COP';
 export const BILLING_PLANS = {
   premium: { amount: 19900, name: 'Solo Lifter Pro', description: 'Sugerencias de progresión para atletas autónomos.' },
   iniciacion: { amount: 17900, name: 'Plan Iniciación (Coach)', description: 'Gestión de hasta 2 atletas vinculados.' },

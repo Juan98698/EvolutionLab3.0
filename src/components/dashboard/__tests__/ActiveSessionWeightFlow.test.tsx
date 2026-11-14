@@ -3,7 +3,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, cleanup, waitFor } from '@testing-library/react';
 import ActiveSession from '../ActiveSession';
 import { lbsToKg, kgToLbs } from '../../../lib/exerciseUtils';
-import { readSessionsFromCache } from '../../../lib/sessions';
+import { readSessionsFromCache, __resetSessionsCacheForTests } from '../../../lib/sessions';
+import { supabase } from '../../../lib/supabaseClient';
 
 // Mock react-router-dom
 const mockNavigate = vi.fn();
@@ -19,6 +20,7 @@ const mockUpdate = vi.fn().mockReturnValue({
 });
 vi.mock('../../../lib/supabaseClient', () => ({
   supabase: {
+    rpc: vi.fn().mockResolvedValue({ data: { id: 'test-server-session-id', ejercicios: [] }, error: null }),
     auth: {
       getSession: vi.fn().mockResolvedValue({
         data: {
@@ -66,6 +68,7 @@ describe('ActiveSession - Weight Stepper & KG/LBS Capture Unit Tests', () => {
   afterEach(cleanup);
 
   beforeEach(() => {
+    __resetSessionsCacheForTests([], 'test-user-id');
     localStorage.clear();
     mockNavigate.mockClear();
     mockInsert.mockClear();
@@ -236,5 +239,41 @@ describe('ActiveSession - Weight Stepper & KG/LBS Capture Unit Tests', () => {
         expect(savedEx.peso).toBe(86.2); // Prevalencia canónica en KG
       });
     });
+
+    it('convierte los pesos ya escritos al cambiar de unidad a mitad de la sesión', async () => {
+      render(<ActiveSession />);
+
+      // Empieza en KG y escribe 100 kg en la serie 1
+      const pesoInput = screen.getByRole('textbox', { name: /Peso serie 1/i }) as HTMLInputElement;
+      fireEvent.change(pesoInput, { target: { value: '100' } });
+
+      // Cambia a LBS: el valor escrito se convierte en vez de reinterpretarse
+      fireEvent.click(screen.getByRole('button', { name: /Seleccionar Libras/i }));
+      expect((screen.getByRole('textbox', { name: /Peso serie 1/i }) as HTMLInputElement).value).toBe('220.5');
+
+      fireEvent.click(screen.getByRole('button', { name: /Marcar serie 1 como completada/i }));
+      fireEvent.click(screen.getByRole('button', { name: /Finalizar sesión/i }));
+
+      await waitFor(() => {
+        const cachedSessions = readSessionsFromCache();
+        expect(cachedSessions.length).toBeGreaterThan(0);
+        expect(cachedSessions[cachedSessions.length - 1].ejercicios[0].peso).toBe(100);
+      });
+    });
+  });
+
+  it('confirma la sesión actual aunque una sesión anterior siga pendiente', async () => {
+    __resetSessionsCacheForTests([{
+      id: 101, operation_id: 'old-pending', fecha: '2026-11-13', notas_sesion: '',
+      ejercicios: [{ id_ej: 1, nombre: 'Sentadilla', grupo: 'Piernas', peso: 60, repsArray: [8], rpe: 2, descanso: 90 }],
+    }], 'test-user-id');
+    vi.mocked(supabase.rpc).mockResolvedValueOnce({ data: null, error: { message: 'Previous session unavailable' } } as any);
+    render(<ActiveSession />);
+    fireEvent.click(screen.getByRole('button', { name: /Marcar serie 1 como completada/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Finalizar sesión/i }));
+    await waitFor(() => expect(mockNavigate).toHaveBeenCalledWith('/session/complete', expect.objectContaining({
+      state: expect.objectContaining({ savedOnline: true }),
+    })));
+    expect(readSessionsFromCache().some(s => s.id === 101)).toBe(true);
   });
 });

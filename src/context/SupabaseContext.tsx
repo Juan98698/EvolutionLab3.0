@@ -66,7 +66,17 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     }
   }, [loading, user]);
 
+  // Reinicia la animación de entrada (stagger) sin dejar el body sin `auth-ready`.
+  // Antes se quitaba la clase y se esperaba que el useEffect de arriba la repusiera,
+  // pero si `user` ya era null (logout manual seguido del evento SIGNED_OUT, o
+  // sesión expirada al abrir la app) no hay re-render y la clase no volvía nunca.
+  const restartEntryAnimation = () => {
+    document.body.classList.remove('auth-ready');
+    requestAnimationFrame(() => document.body.classList.add('auth-ready'));
+  };
+
   const fetchProfile = async (userId: string, _currentUser?: User | null): Promise<Profile | null> => {
+
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -185,7 +195,7 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     setUser(null);
     setProfile(null);
     setNeedsRoleSelection(false);
-    document.body.classList.remove('auth-ready');
+    restartEntryAnimation();
 
     try {
       for (let i = localStorage.length - 1; i >= 0; i--) {
@@ -250,7 +260,7 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
           setProfile(null);
           setNeedsRoleSelection(false);
           if (event === 'SIGNED_OUT') {
-            document.body.classList.remove('auth-ready');
+            restartEntryAnimation();
           }
           try {
             localStorage.removeItem('pwa_user_profile');

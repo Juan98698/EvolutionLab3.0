@@ -16,6 +16,7 @@ export interface Profile {
   suscripcion_plan?: 'free' | 'iniciacion' | 'intermedio' | 'profesional' | 'premium';
   suscripcion_estado?: 'activo' | 'expirado' | 'cancelado';
   suscripcion_expira_at?: string | null;
+  billing_payment_id?: string | null;
   insignias_custom?: any[] | null;
   modalidad?: 'remoto' | 'presencial';
   sexo?: 'masculino' | 'femenino';

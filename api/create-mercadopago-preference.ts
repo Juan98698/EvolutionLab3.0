@@ -1,5 +1,5 @@
 import type { VercelRequest, VercelResponse } from './_lib/types';
-import { BILLING_PLANS, isBillingPlan } from './_lib/billing';
+import { BILLING_PLANS, isBillingPlan, PLAN_CURRENCY } from './_lib/billing.js';
 import { createClient } from '@supabase/supabase-js';
 
 // Allowlist de orígenes autorizados a hacer requests con credenciales.
@@ -8,14 +8,17 @@ import { createClient } from '@supabase/supabase-js';
 // requests credenciales desde cualquier dominio. Ahora: solo se permite el
 // dominio de producción, los previews de Vercel del propio proyecto y
 // localhost en desarrollo.
+
 const PRODUCTION_ORIGIN = process.env.APP_PRODUCTION_ORIGIN || 'https://evolutionlab.fit';
 
 function isAllowedOrigin(origin: string | undefined): boolean {
   if (!origin) return false;
   if (origin === PRODUCTION_ORIGIN) return true;
+  if (origin === 'https://evolution-lab3-0.vercel.app') return true;
   // Match exact deployment hosts. A project-name prefix is not proof of
   // ownership: another Vercel project can use a similar public hostname.
   if ([process.env.VERCEL_URL, process.env.VERCEL_BRANCH_URL].some(host => host && origin === `https://${host}`)) return true;
+
   if (process.env.NODE_ENV !== 'production' && /^https?:\/\/localhost(:\d+)?$/i.test(origin)) return true;
   const extra = (process.env.EXTRA_ALLOWED_ORIGINS || '').split(',').map((s) => s.trim()).filter(Boolean);
   return extra.includes(origin);
@@ -90,6 +93,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     }
     const { amount, name: planName, description: planDescription } = BILLING_PLANS[plan];
 
+
     const host = req.headers.host || '';
     const isLocal = host.includes('localhost') || host.includes('127.0.0.1') || host.includes('[::1]');
     const protocol = req.headers['x-forwarded-proto'] || (isLocal ? 'http' : 'https');
@@ -140,7 +144,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
           title: planName,
           description: planDescription,
           quantity: 1,
-          currency_id: 'COP',
+          currency_id: PLAN_CURRENCY,
           unit_price: amount,
         },
       ],
@@ -183,5 +187,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   } catch (error: any) {
     console.error('Error creating MercadoPago preference:', error);
     return res.status(500).json({ error: 'No se pudo iniciar el pago. Inténtalo nuevamente.' });
+
   }
 }

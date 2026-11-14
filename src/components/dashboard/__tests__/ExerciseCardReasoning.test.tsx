@@ -36,6 +36,28 @@ describe('ExerciseCard & WorkoutCard Robot Reasoning Tooltip Tests', () => {
     }
   };
 
+  it('muestra los valores tal cual, sin escapar dos veces (React ya escapa el texto)', () => {
+    const exercise: Exercise = {
+      id: 'ex-esc',
+      nombre: 'Press banca',
+      variables: { 'repeticiones': '8 & 6', 'rir': '>2' },
+    };
+    const { container } = render(
+      <ExerciseCard
+        exercise={exercise}
+        dayId="day-1"
+        globalVariables={mockGlobalVariables}
+        variableDefinitions={mockVariableDefinitions}
+        isChecked={false}
+        onToggleCheck={vi.fn()}
+      />
+    );
+    expect(container.textContent).toContain('8 & 6');
+    expect(container.textContent).toContain('>2');
+    expect(container.textContent).not.toContain('&amp;');
+    expect(container.textContent).not.toContain('&gt;');
+  });
+
   /* ─────────────────────────────────────────────────────────────────────────
    * 1. PRUEBAS A CORTO PLAZO: Interacción Directa con el Robot 🤖
    * ───────────────────────────────────────────────────────────────────────── */

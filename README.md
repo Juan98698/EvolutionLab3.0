@@ -1,13 +1,83 @@
 # Evolution Lab 3.0
 
-Plataforma de planificación y seguimiento de entrenamiento para entrenadores y atletas independientes. React, TypeScript, Vite y Supabase.
+PWA de entrenamiento y nutrición para atletas y entrenadores: planes periodizados,
+registro de sesiones offline-first, progresión automática, antropometría,
+planes nutricionales con PDF y suscripciones con MercadoPago.
 
-Requiere Node 22.12 o superior. Instalar con `npm ci`, configurar las variables de `.env.example` en `.env.local` y ejecutar `npm run dev`.
+**Stack:** React 18 + TypeScript + Vite, Supabase (Auth + Postgres + RLS),
+funciones serverless de Vercel (`api/`), Sentry, Vitest y Playwright.
 
-Consultar [arquitectura, migraciones y comprobaciones](docs/implementation-foundation.md) antes de desplegar. El frontend actualizado requiere las migraciones nuevas; estas no se aplican automáticamente sobre la base remota.
+Requiere Node 22.12 o superior. La interfaz utiliza el diseño Estudio responsive.
 
-El [cierre de hallazgos](docs/finding-closure.md) recoge las correcciones, las verificaciones remotas y las comprobaciones que deben realizarse al publicar. La dirección visual y las capturas están en [diseño Estudio](docs/studio-design.md).
+Consultar [arquitectura y migraciones](docs/implementation-foundation.md), [cierre de hallazgos](docs/finding-closure.md) y [diseño Estudio](docs/studio-design.md) antes de desplegar. Las migraciones no se ejecutan automáticamente.
 
-Comprobaciones: `npm run typecheck`, `npm run lint`, `npm run test:run` y `npm run build`. Los flujos del navegador se ejecutan con `npm run test:e2e` y usan un servidor exclusivo con datos simulados.
+## Puesta en marcha
 
-Los informes de auditoría de junio de 2026 son históricos y no representan la cobertura ni las funciones actuales.
+```bash
+npm ci
+cp .env.example .env.local   # o crea .env.local con las variables de abajo
+npm run dev
+```
+
+| Script | Qué hace |
+|---|---|
+| `npm run dev` | Servidor de desarrollo de Vite |
+| `npm run build` | `tsc` + build de producción en `dist/` |
+| `npm run lint` | ESLint con 0 warnings permitidos |
+| `npm run typecheck` | Tipos del frontend y de las API |
+| `npm run test:run` | Suite unitarias y PostgreSQL |
+| `npm run test:performance` | Portada compilada bajo CPU y red limitadas |
+| `npm run test:e2e` | Tests E2E y de regresión visual con Playwright |
+| `npm run build:analyze` | Build + reporte de tamaño de bundles en `dist/stats.html` |
+
+## Variables de entorno
+
+**Frontend** (prefijo `VITE_`, quedan públicas en el bundle):
+
+| Variable | Uso |
+|---|---|
+| `VITE_SUPABASE_URL` | URL del proyecto de Supabase |
+| `VITE_SUPABASE_ANON_KEY` | Clave anónima de Supabase |
+| `VITE_VAPID_PUBLIC_KEY` | Clave pública para notificaciones push |
+| `VITE_SENTRY_DSN` | Opcional: reporte de errores en Sentry (sin ella solo se registra en consola) |
+
+**Servidor** (`api/`, configurarlas en Vercel; nunca en el frontend):
+
+| Variable | Uso |
+|---|---|
+| `SUPABASE_SERVICE_ROLE_KEY` | Webhook de pagos y push (salta RLS) |
+| `MERCADOPAGO_ACCESS_TOKEN` | Crear preferencias y consultar pagos |
+| `MERCADOPAGO_WEBHOOK_SECRET` | Validar la firma `x-signature` del webhook (obligatoria) |
+| `MERCADOPAGO_WEBHOOK_URL` | Opcional: URL del webhook si no es `https://<host>/api/mercadopago-webhook` |
+| `MERCADOPAGO_SANDBOX` / `MERCADOPAGO_TEST_BUYER_EMAIL` | Opcional: modo pruebas |
+| `APP_PRODUCTION_ORIGIN` | Dominio de producción (p. ej. `https://evolutionlab.fit`). Es a donde MercadoPago devuelve al usuario |
+| `EXTRA_ALLOWED_ORIGINS` | Opcional: otros dominios permitidos, separados por coma |
+| `VAPID_PRIVATE_KEY` | Clave privada para enviar notificaciones push |
+
+## Estructura
+
+```
+api/                 Funciones serverless (pagos, push, búsqueda de alimentos)
+  _lib/              Utilidades compartidas (auth, planes y precios)
+public/              Estáticos, service worker de push y boot-guard.js
+src/components/      UI por área: auth, dashboard, trainer, nutrition, admin…
+src/lib/             Lógica de dominio: sesiones offline, periodización, nutrición…
+src/context/         Contextos de React (sesión de Supabase, diálogos)
+supabase/migrations/ Migraciones de base de datos (fechadas)
+e2e/                 Tests de Playwright y capturas de referencia
+```
+
+## Base de datos
+
+Las migraciones nuevas van en `supabase/migrations/` con prefijo de fecha
+(`YYYYMMDD_descripcion.sql`). Los `supabase_*.sql` de la raíz son el historial
+anterior (setup inicial y migraciones v2–v15) y se conservan como referencia.
+
+## CI
+
+`.github/workflows/ci.yml` corre en cada push y PR a `main`: `tsc`, lint,
+tests unitarios, build y, después, Playwright dentro de la imagen oficial
+(las capturas de referencia deben generarse con esa misma imagen; ver
+`update-snapshots.yml`).
+
+Los informes de auditoría de junio de 2026 son históricos; el estado de esta entrega está en `docs/finding-closure.md`.

@@ -32,7 +32,15 @@ self.addEventListener('push', (event) => {
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
 
-  const url = event.notification.data?.url || '/dashboard';
+  // Solo se abren rutas de la propia app: una URL externa en el payload
+  // (o "//otro-dominio") se reemplaza por el dashboard.
+  let url = '/dashboard';
+  try {
+    const target = new URL(event.notification.data?.url || '/dashboard', self.location.origin);
+    if (target.origin === self.location.origin) url = target.pathname + target.search + target.hash;
+  } catch (e) {
+    // URL malformada: se usa el dashboard.
+  }
 
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {

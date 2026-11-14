@@ -88,20 +88,26 @@ export async function fetchAthleteSessions(userId: string): Promise<LocalSesion[
   return formatSessions((data as RawSesionRow[]) || []);
 }
 
+/** Same maximum-repetition formula and rounding for every upload path. */
+export function estimateOneRepMax(peso: number | null, repsArray: number[]): number | null {
+  if (peso == null || !Number.isFinite(peso) || peso < 0 || repsArray.length === 0) return null;
+  const maxReps = Math.max(0, ...repsArray);
+  const epley = peso * (1 + maxReps / 30);
+  const denominator = 1.0278 - 0.0278 * maxReps;
+  const brzycki = denominator > 0.01 ? peso / denominator : peso;
+  return Math.round(((epley + brzycki) / 2) * 10) / 10;
+}
+
 function sessionPayload(session: LocalSesion) {
   return {
     ...session,
     ejercicios: session.ejercicios.map(ej => {
-      const hasWeight = ej.peso != null && ej.peso > 0;
-      const maxReps = Math.max(0, ...ej.repsArray);
-      const epley = hasWeight ? ej.peso! * (1 + maxReps / 30) : null;
-      const denominator = 1.0278 - 0.0278 * maxReps;
-      const brzycki = hasWeight ? (denominator > 0.01 ? ej.peso! / denominator : ej.peso!) : null;
+      const repsArray = ej.repsArray || [];
       return {
-        nombre_ejercicio: ej.nombre, grupo_muscular: ej.grupo, series_reps: ej.repsArray,
+        nombre_ejercicio: ej.nombre, grupo_muscular: ej.grupo || 'General', series_reps: repsArray,
         peso: ej.peso, rpe_rir: ej.rpe, descanso: ej.descanso,
-        volumen: hasWeight ? ej.peso! * ej.repsArray.reduce((a, b) => a + b, 0) : null,
-        rm_estimado: epley != null && brzycki != null ? (epley + brzycki) / 2 : null,
+        volumen: ej.peso == null ? null : ej.peso * repsArray.reduce((a, b) => a + b, 0),
+        rm_estimado: estimateOneRepMax(ej.peso, repsArray),
         feedback_estimulo: ej.feedback_estimulo || null,
         feedback_recuperacion: ej.feedback_recuperacion || null,
       };
@@ -124,6 +130,7 @@ async function syncPending(userId: string): Promise<SyncResult> {
   await activateSessionCache(userId);
   const pending = readSessionsFromCache(userId).filter(s => typeof s.id === 'number');
   let syncedCount = 0;
+
   let failedCount = 0;
   for (const session of pending) {
     try {
@@ -149,6 +156,7 @@ async function syncPending(userId: string): Promise<SyncResult> {
   }
   if (failedCount) window.dispatchEvent(new CustomEvent(SESSIONS_SYNC_FAILED_EVENT, { detail: { failedCount } }));
   return { syncedCount, failedCount };
+
 }
 
 /** Descarga de Supabase con fallback a caché local (offline-first). */

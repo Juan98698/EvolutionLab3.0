@@ -1,6 +1,7 @@
 import React, { useState, useEffect, Suspense, useRef, useCallback } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useSupabase } from '../../context/SupabaseContext';
+import { usePaymentReturn } from '../../hooks/usePaymentReturn';
 import { supabase } from '../../lib/supabaseClient';
 import { lazyWithRetry } from '../../lib/lazyWithRetry';
 import { Profile, ValoracionAntropometrica } from '../../types/database.types';
@@ -178,17 +179,11 @@ export const TrainerDashboard: React.FC = () => {
     }
   }, [activeSubTab, actividades.length, loadingAuditoria, fetchAuditoria]);
 
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    if (params.get('payment_success') === 'true') {
-      showToast('🎉 ¡Tu membresía ha sido renovada/actualizada!', 'success');
-      refreshProfile();
-      navigate(location.pathname, { replace: true });
-    } else if (params.get('payment_cancel') === 'true') {
-      showToast('Pago cancelado.', 'info');
-      navigate(location.pathname, { replace: true });
-    }
-  }, [location, navigate, refreshProfile, showToast]);
+  usePaymentReturn(showToast, {
+    success: 'Tu membresía ha sido renovada/actualizada.',
+    cancel: 'Pago cancelado.',
+  });
+
 
   useEffect(() => {
     if (profile?.id) {

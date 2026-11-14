@@ -149,6 +149,20 @@ const ActiveSession: React.FC = () => {
   });
 
   const handleToggleWeightUnit = (unit: 'kg' | 'lbs') => {
+    if (unit === weightUnit) return;
+    // Los pesos ya escritos están en la unidad anterior. Al guardar todo se
+    // convierte con la unidad activa, así que hay que pasarlos a la nueva
+    // unidad aquí; si no, 100 kg escritos se guardarían como 100 lbs (45 kg).
+    const convert = unit === 'lbs' ? kgToLbs : lbsToKg;
+    setExercises(prev => prev.map(ex => ({
+      ...ex,
+      series: ex.series.map(s => {
+        const raw = String(s.peso ?? '').trim();
+        return /^\d+([.,]\d+)?$/.test(raw) && parseFloat(raw.replace(',', '.')) > 0
+          ? { ...s, peso: String(convert(raw.replace(',', '.'))) }
+          : s;
+      }),
+    })));
     setWeightUnit(unit);
     try {
       localStorage.setItem('active_session_weight_unit', unit);
@@ -925,7 +939,9 @@ const ActiveSession: React.FC = () => {
       sesiones.push(nuevaSesion);
       writeSessionsToCache(sesiones, currentUser.id);
 
-      const syncResult = await syncOfflineSessions(currentUser.id);
+      await syncOfflineSessions(currentUser.id);
+      const savedOnline = navigator.onLine && !readSessionsFromCache(currentUser.id).some(s => s.operation_id === nuevaSesion.operation_id && typeof s.id === 'number');
+
 
       // ── Auto-regulation ──
       if (plan.periodizationConfig?.enabled) {
@@ -982,7 +998,8 @@ const ActiveSession: React.FC = () => {
               targetRIR:             ex.targetRIR,
             })),
           fecha,
-          savedOnline: syncResult.failedCount === 0 && syncResult.syncedCount > 0,
+          savedOnline,
+
         },
       });
     } catch (err: any) {

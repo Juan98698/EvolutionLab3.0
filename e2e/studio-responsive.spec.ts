@@ -102,7 +102,9 @@ for (const width of [320, 768, 1440]) {
     await page.getByLabel('Buscar atleta').fill('Valeria');
     await page.getByText('Seguimiento y herramientas', { exact: true }).click();
     await page.getByRole('button', { name: 'Antropometría y macros', exact: true }).click();
-    await expect(page.getByRole('dialog')).toBeVisible();
+    // The modal loads the PDF/chart modules on demand. Allow the same cold
+    // startup budget as the boot guard, independently of layout assertions.
+    await expect(page.getByRole('dialog')).toBeVisible({ timeout: 15000 });
     await expectViewportFit(page);
     await page.keyboard.press('Escape');
     await expect(page.getByRole('dialog')).toBeHidden();
@@ -131,7 +133,7 @@ for (const width of [320, 768, 1440]) {
       await expectViewportFit(page);
     }
     await page.goto('/dashboard?preview=coached');
-    await expect(page.locator('#start-session-btn')).toBeVisible();
+    await expect(page.locator('#start-session-btn')).toBeVisible({ timeout: 15000 });
     await expectViewportFit(page);
   });
 }

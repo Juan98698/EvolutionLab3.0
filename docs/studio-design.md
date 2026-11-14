@@ -37,7 +37,7 @@ Inter se sirve desde el paquete de la aplicación. Los tokens están en `src/sty
 - 73 casos de navegador aprobados en Chromium, WebKit de escritorio y WebKit móvil. Cubren acceso, registro, entrenador, atleta independiente y vinculado, administración, nutrición, seguimiento, configuración, biblioteca y entrenamiento activo.
 - Anchos de 320, 390, 768 y 1440 px; pantallas bajas de 320×568, 390×667 y 1440×720. El modal de nutrición ya no tiene desbordamiento interno a 320 px.
 - Ocho referencias visuales Estudio generadas y comparadas en Chromium. En WebKit se comprueban los flujos y el tamaño, sin comparar píxeles contra Chromium.
-- Portada compilada bajo CPU ×4 y red limitada: LCP 2,60 segundos, CLS 0. Detalle y límites en `performance-mobile.json` y `finding-closure.md`.
+- Portada compilada tras la fusión bajo CPU ×4 y red limitada: LCP 3,06 segundos, CLS 0. Detalle y límites en `performance-mobile.json` y `finding-closure.md`.
 - Revisión manual en navegador de la portada, salida con confirmación, calculadora en móvil y foco de diálogos.
 
 ## Capturas

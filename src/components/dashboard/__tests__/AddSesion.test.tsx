@@ -5,7 +5,7 @@ import AddSesion from '../AddSesion';
 
 // ── Mocks ──────────────────────────────────────────────────────────────────
 
-const { mockSync } = vi.hoisted(() => ({ mockSync: vi.fn().mockResolvedValue({ syncedCount: 1, failedCount: 0 }) }));
+import { syncOfflineSessions as mockSync } from '../../../lib/sessions';
 const mockHistorialInsert = vi.fn();
 const mockEjerciciosInsert = vi.fn();
 
@@ -20,6 +20,7 @@ vi.mock('../../../lib/supabaseClient', () => {
 
   return {
     supabase: {
+      rpc: vi.fn().mockResolvedValue({ data: { id: 'sess-1', ejercicios: [] }, error: null }),
       auth: {
         getSession: vi.fn().mockResolvedValue({
           data: { session: { user: { id: 'u1', email: 'test@test.com' } } },
@@ -65,11 +66,16 @@ vi.mock('../../../lib/supabaseClient', () => {
   };
 });
 
-vi.mock('../../../lib/sessions', () => ({
-  syncOfflineSessions: mockSync,
-  readSessionsFromCache: vi.fn().mockReturnValue([]),
-  writeSessionsToCache: vi.fn(),
-}));
+vi.mock('../../../lib/sessions', async (importOriginal) => {
+  const actual = await importOriginal<typeof import('../../../lib/sessions')>();
+  return {
+    ...actual,
+    syncOfflineSessions: vi.fn(actual.syncOfflineSessions),
+    readSessionsFromCache: vi.fn(actual.readSessionsFromCache),
+    writeSessionsToCache: vi.fn(actual.writeSessionsToCache),
+  };
+});
+
 
 vi.mock('../../../lib/periodizationEngine', () => ({
   autoRegulatePlanForNextWeek: vi.fn().mockReturnValue(null),
@@ -116,8 +122,10 @@ async function fillExercise(idx: number, nombre = 'Sentadilla', peso = '60', rir
   });
 }
 
-beforeEach(() => {
+beforeEach(async () => {
   localStorage.clear();
+  const { __resetSessionsCacheForTests } = await import('../../../lib/sessions');
+  __resetSessionsCacheForTests([], 'u1');
   vi.clearAllMocks();
   // Default: online
   Object.defineProperty(navigator, 'onLine', { value: true, writable: true, configurable: true });

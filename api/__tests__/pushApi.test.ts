@@ -166,3 +166,16 @@ describe('API de notificaciones push — auth y autorización', () => {
     });
   });
 });
+
+describe('isInternalPath (url de la notificación push)', () => {
+  it('acepta solo rutas internas de la app', async () => {
+    const { isInternalPath } = await import('../_lib/isInternalPath');
+    expect(isInternalPath('/dashboard')).toBe(true);
+    expect(isInternalPath('/session/complete?x=1')).toBe(true);
+    expect(isInternalPath('https://phishing.example')).toBe(false);
+    expect(isInternalPath('//phishing.example')).toBe(false);
+    expect(isInternalPath('/\\phishing.example')).toBe(false);
+    expect(isInternalPath('javascript:alert(1)')).toBe(false);
+    expect(isInternalPath(undefined)).toBe(false);
+  });
+});

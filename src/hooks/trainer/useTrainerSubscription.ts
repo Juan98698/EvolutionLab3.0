@@ -1,15 +1,12 @@
-import { useState, useEffect, useMemo } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useState, useMemo } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { Profile } from '../../types/database.types';
 
 export const useTrainerSubscription = (
   profile: Profile | null, 
-  refreshProfile: () => void, 
+  _refreshProfile: () => void,
   showToast: (msg: string, type: 'success' | 'error' | 'info') => void
 ) => {
-  const location = useLocation();
-  const navigate = useNavigate();
 
   const [paymentLoading, setPaymentLoading] = useState<boolean>(false);
   const [trainerSubscription, setTrainerSubscription] = useState<{
@@ -18,20 +15,8 @@ export const useTrainerSubscription = (
     expira_at: string | null;
   } | null>(null);
 
-  useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const paymentSuccess = params.get('payment_success');
-    const paymentCancel = params.get('payment_cancel');
-
-    if (paymentSuccess === 'true') {
-      showToast('🎉 ¡Tu membresía de entrenador ha sido renovada/actualizada con éxito!', 'success');
-      refreshProfile();
-      navigate(location.pathname, { replace: true });
-    } else if (paymentCancel === 'true') {
-      showToast('Pago cancelado. Si tienes dudas, ponte en contacto con soporte.', 'info');
-      navigate(location.pathname, { replace: true });
-    }
-  }, [location.search, navigate, location.pathname, refreshProfile, showToast]);
+  // Checkout creation lives here; the shared usePaymentReturn hook owns
+  // confirmation after the server has reconciled the payment.
 
   const handleMercadoPagoCheckout = async (plan: string, redirectPath: string) => {
     setPaymentLoading(true);

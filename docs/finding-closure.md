@@ -2,6 +2,8 @@
 
 Esta entrega reúne las correcciones de seguridad, fiabilidad, arquitectura y el diseño Estudio elegido por el usuario. Las verificaciones de esta revisión se detallan a continuación. La publicación requiere completar las comprobaciones indicadas al final del documento.
 
+La integración posterior con los cambios remotos se detalla en [verificación de la fusión](merge-verification.md).
+
 ## Correcciones y evidencia
 
 | Hallazgo | Corrección | Evidencia |
@@ -28,11 +30,11 @@ Esta entrega reúne las correcciones de seguridad, fiabilidad, arquitectura y el
 ## Validación ejecutada
 
 - TypeScript y ESLint aprobados.
-- Suite Vitest: 89 archivos y 871 pruebas aprobadas; incluye PostgreSQL real con PGlite, aislamiento de cuentas, pagos, caché, autenticación y nutrición.
+- Suite Vitest tras la fusión: 93 archivos y 906 pruebas aprobadas; incluye PostgreSQL real con PGlite, aislamiento de cuentas, pagos, caché, autenticación y nutrición.
 - Navegador: 73 casos aprobados; 8 casos visuales omitidos intencionadamente en WebKit porque sus cuatro escenarios se comparan en Chromium. Los flujos funcionales sí se prueban en los tres proyectos.
 - Ocho imágenes de referencia Estudio revisadas, generadas y comparadas sin regeneración en la ejecución de verificación.
 - Build de producción aprobado con verificación del bundle y generación del service worker.
-- Medición final de portada compilada: LCP 2.596 ms, CLS 0, DOM listo 1.902 ms y 249.271 bytes de recursos. Perfil simulado Pixel 5, CPU ×4, 1,6 Mbps y 150 ms de latencia. Es una medición de laboratorio, no una medición de usuarios reales.
+- Medición final de portada compilada tras la fusión: LCP 3.056 ms, CLS 0, DOM listo 1.823 ms y 251.349 bytes de recursos. Perfil simulado Pixel 5, CPU ×4, 1,6 Mbps y 150 ms de latencia. Es una medición de laboratorio, no una medición de usuarios reales.
 - Supabase remoto: seis comprobaciones aprobadas, incluidos aislamiento, columnas protegidas, sesión atómica/idempotente, consentimiento e imposibilidad de escribir pagos desde el cliente. Limpieza de cuentas y datos desechables completada.
 - Mercado Pago: vendedor confirmado como `test_user`; checkout actual crea preferencia sandbox por 19.900 COP, usa la identidad verificada y conserva importe, moneda, retorno y URL de webhook. Cero pagos creados; tarifas intactas.
 - API pública existente: acceso sin JWT y notificación de pago sin firma responden 401. La clave del webhook en Vercel fue confirmada por el usuario.

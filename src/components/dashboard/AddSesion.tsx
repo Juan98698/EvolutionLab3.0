@@ -304,10 +304,12 @@ export const AddSesion: React.FC<AddSesionProps> = ({
       sesiones.push(nuevaSesion);
       writeSessionsToCache(sesiones, currentUser.id);
 
-      const result = await syncOfflineSessions(currentUser.id);
-      showToast(result.failedCount || !navigator.onLine
-        ? 'Sesión guardada en este dispositivo. Pendiente de sincronizar.'
-        : 'Sesión guardada y sincronizada.', result.failedCount ? 'info' : 'success');
+      await syncOfflineSessions(currentUser.id);
+      const savedOnline = navigator.onLine && !readSessionsFromCache(currentUser.id).some(s => s.operation_id === nuevaSesion.operation_id && typeof s.id === 'number');
+      showToast(savedOnline
+        ? 'Sesión guardada y sincronizada.'
+        : 'Sesión guardada en este dispositivo. Pendiente de sincronizar.', savedOnline ? 'success' : 'info');
+
 
       // BUG-01 fix: Auto-regulación SIEMPRE se ejecuta (online u offline).
       // El plan actualizado se guarda localmente siempre, y se sincroniza a Supabase solo si hay conexión.
