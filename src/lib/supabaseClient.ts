@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { observePasswordRecovery } from './passwordRecovery';
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://placeholder-project.supabase.co';
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'placeholder-anon-key';
@@ -22,4 +23,10 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
       'Pragma': 'no-cache'
     }
   }
+});
+
+// Subscribe at client creation, rather than in a lazy React screen: the SDK
+// removes the recovery hash during initialization and can emit before it mounts.
+supabase.auth.onAuthStateChange((event, session) => {
+  observePasswordRecovery(event, session?.user.id || null);
 });

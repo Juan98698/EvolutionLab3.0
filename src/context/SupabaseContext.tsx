@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabaseClient';
 import { activateSessionCache } from '../lib/sessionCache';
 import { bindPlanSnapshot } from '../lib/planCache';
 import { Profile } from '../types/database.types';
+import { clearPasswordRecovery } from '../lib/passwordRecovery';
 
 interface SupabaseContextType {
   user: User | null;
@@ -189,6 +190,7 @@ export const SupabaseProvider: React.FC<{ children: React.ReactNode }> = ({ chil
   };
 
   const signOut = async () => {
+    clearPasswordRecovery();
     // 1. Limpieza de estado local y almacenamiento instantánea (0ms)
     // Esto previene que la interfaz se congele esperando la red
     bindAccount(null);

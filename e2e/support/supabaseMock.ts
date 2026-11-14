@@ -24,6 +24,7 @@ export function installSupabaseMock(supabase: SupabaseClient) {
   });
 
   const isE2E = true;
+  const authListeners = new Set<(...args: any[]) => void>();
   supabase.rpc = ((_name: string) => Promise.resolve({ data: [], error: null })) as any;
 
   let mockPlanObj: any = null;
@@ -116,6 +117,7 @@ export function installSupabaseMock(supabase: SupabaseClient) {
         return Promise.resolve({ data: { session: mockSession }, error: null });
       },
       onAuthStateChange: (callback: any) => {
+        authListeners.add(callback);
         setTimeout(() => {
           const activeProfile = window.localStorage.getItem('pwa_user_profile');
           if (!activeProfile) {
@@ -138,8 +140,19 @@ export function installSupabaseMock(supabase: SupabaseClient) {
           };
           callback('INITIAL_SESSION', mockSession);
         }, 10);
-        return { data: { subscription: { unsubscribe: () => {} } } };
+        return { data: { subscription: { unsubscribe: () => { authListeners.delete(callback); } } } };
       },
+      resetPasswordForEmail: () => Promise.resolve({ error: null }),
+      verifyOtp: ({ email, token, type }: { email: string; token: string; type: string }) => {
+        if (token !== '123456' || type !== 'recovery') return Promise.resolve({ data: { session: null }, error: { message: 'Invalid token' } });
+        const profile = fixtureProfile('test-client-id');
+        localStorage.setItem('pwa_user_profile', JSON.stringify(profile));
+        const session = { access_token: 'mock-jwt', user: { id: profile.id, email } };
+        authListeners.forEach(callback => callback('PASSWORD_RECOVERY', session));
+        return Promise.resolve({ data: { session }, error: null });
+      },
+      updateUser: () => Promise.resolve({ error: localStorage.getItem('pwa_user_profile') ? null : { message: 'Auth session missing!' } }),
+      getUser: () => Promise.resolve({ data: { user: localStorage.getItem('pwa_user_profile') ? { id: 'test-client-id' } : null }, error: null }),
       signOut: () => Promise.resolve({ error: null })
     } as any;
   }

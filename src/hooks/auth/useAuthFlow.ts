@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useSupabase } from '../../context/SupabaseContext';
 import { supabase } from '../../lib/supabaseClient';
 import { isRealEmailDomain } from '../../lib/validations';
 import { isInAppBrowser } from '../../lib/inAppBrowser';
+import { beginPasswordRecovery, clearPasswordRecovery, getPasswordRecovery, hasPasswordRecoverySession, subscribePasswordRecovery, verifyPasswordRecovery } from '../../lib/passwordRecovery';
 
 export function useAuthFlow() {
   const navigate = useNavigate();
@@ -14,8 +15,13 @@ export function useAuthFlow() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [infoMsg, setInfoMsg] = useState<string | null>(null);
-  const [isForgotMode, setIsForgotMode] = useState(false);
-  const [isRecoveryMode] = useState(() => typeof window !== 'undefined' && window.location.hash.includes('type=recovery'));
+  const recovery = useSyncExternalStore(subscribePasswordRecovery, getPasswordRecovery);
+  const isForgotMode = recovery.step === 'request';
+  const isCodeMode = recovery.step === 'code';
+  const isRecoveryMode = recovery.step === 'verified';
+  const isCheckingRecovery = recovery.step === 'checking';
+  const [recoveryCode, setRecoveryCode] = useState('');
+  const setIsForgotMode = (enabled: boolean) => { if (enabled) beginPasswordRecovery(); else clearPasswordRecovery(); };
   const [confirmNewPassword, setConfirmNewPassword] = useState('');
   const [isRegisterMode, setIsRegisterMode] = useState(false);
   const [registerName, setRegisterName] = useState('');
@@ -40,10 +46,10 @@ export function useAuthFlow() {
     return () => { cancelled = true; };
   }, [location.search]);
   useEffect(() => {
-    if (!authLoading && isAuthenticated && !skipAutoRedirect.current && !isRecoveryMode && !needsRoleSelection) {
+    if (!authLoading && isAuthenticated && !skipAutoRedirect.current && recovery.step === 'idle' && !needsRoleSelection) {
       navigate(isAdmin ? '/admin' : isTrainer ? '/trainer' : '/dashboard', { replace: true });
     }
-  }, [isAuthenticated, isTrainer, isAdmin, authLoading, navigate, isRecoveryMode, needsRoleSelection]);
+  }, [isAuthenticated, isTrainer, isAdmin, authLoading, navigate, recovery.step, needsRoleSelection]);
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
@@ -98,11 +104,37 @@ export function useAuthFlow() {
         redirectTo: `${window.location.origin}/login`,
       });
       if (error) throw error;
-      setInfoMsg('Listo. Revisá tu correo (y la carpeta de spam) para restablecer tu contraseña.');
+      beginPasswordRecovery('code');
+      setRecoveryCode('');
+      setInfoMsg('Si el correo tiene una cuenta, recibirás un código de recuperación. Revisa también la carpeta de spam y usa el mensaje más reciente.');
     } catch (err: unknown) {
-      console.error('Error al solicitar recuperación de contraseña:', err);
       setErrorMsg(err instanceof Error ? err.message : 'No pudimos enviar el correo de recuperación. Intentá nuevamente.');
     } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleVerifyRecoveryCode = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg(null);
+    setInfoMsg(null);
+    if (!email.trim() || !/^\d{6,10}$/.test(recoveryCode.trim())) {
+      setErrorMsg('Ingresa tu correo y el código que recibiste.');
+      return;
+    }
+    setLoading(true);
+    skipAutoRedirect.current = true;
+    try {
+      const { data, error } = await supabase.auth.verifyOtp({ email: email.trim(), token: recoveryCode.trim(), type: 'recovery' });
+      if (error || !data.session?.user.id) throw Error('El código no es válido o venció. Revisa el mensaje más reciente o solicita otro código.');
+      verifyPasswordRecovery(data.session.user.id);
+      setRecoveryCode('');
+      setPassword('');
+      setConfirmNewPassword('');
+    } catch (err: unknown) {
+      setErrorMsg(err instanceof Error ? err.message : 'No pudimos verificar el código. Solicita uno nuevo.');
+    } finally {
+      skipAutoRedirect.current = false;
       setLoading(false);
     }
   };
@@ -123,6 +155,13 @@ export function useAuthFlow() {
 
     setLoading(true);
     try {
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      if (sessionError || !hasPasswordRecoverySession(session?.user.id)) {
+        beginPasswordRecovery('code');
+        setPassword('');
+        setConfirmNewPassword('');
+        throw Error('Tu sesión de recuperación venció. Ingresa un código nuevo para continuar.');
+      }
       const { error } = await supabase.auth.updateUser({ password });
       if (error) throw error;
 
@@ -140,10 +179,18 @@ export function useAuthFlow() {
         if (profile?.rol === 'admin') target = '/admin';
       }
 
+      skipAutoRedirect.current = true;
+      clearPasswordRecovery();
+      setPassword('');
+      setConfirmNewPassword('');
       navigate(target, { replace: true });
     } catch (err: unknown) {
-      console.error('Error al actualizar contraseña:', err);
-      setErrorMsg(err instanceof Error ? err.message : 'No pudimos actualizar tu contraseña. Probá solicitando un nuevo enlace.');
+      if (err instanceof Error && /session missing|refresh token|session expired/i.test(err.message)) {
+        beginPasswordRecovery('code');
+        setPassword('');
+        setConfirmNewPassword('');
+        setErrorMsg('Tu sesión de recuperación venció. Solicita un código nuevo para continuar.');
+      } else setErrorMsg(err instanceof Error ? err.message : 'No pudimos actualizar tu contraseña. Solicita un código nuevo.');
       setLoading(false);
     }
   };
@@ -245,7 +292,7 @@ export function useAuthFlow() {
   };
 
   return { email, setEmail, password, setPassword, loading, authLoading, errorMsg, infoMsg,
-    isForgotMode, setIsForgotMode, isRecoveryMode, confirmNewPassword, setConfirmNewPassword,
+    isForgotMode, setIsForgotMode, isRecoveryMode, isCodeMode, isCheckingRecovery, recoveryCode, setRecoveryCode, handleVerifyRecoveryCode, confirmNewPassword, setConfirmNewPassword,
     isRegisterMode, setIsRegisterMode, registerName, setRegisterName, registerRole, setRegisterRole,
     registerWhatsapp, setRegisterWhatsapp, registerInstagram, setRegisterInstagram, trainerName, trainerParam,
     emailTouched, setEmailTouched, confirmRegisterPassword, setConfirmRegisterPassword,
