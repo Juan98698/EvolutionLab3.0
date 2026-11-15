@@ -20,4 +20,4 @@ SMTP usa Resend con el dominio verificado `auth.evolutionlab.fit` y el remitente
 - Pruebas de interfaz: código inválido, formulario bloqueado antes de verificar, sesión ausente o de otra cuenta, evento anterior a la carga de Login y conservación tras recarga.
 - `node scripts/verify-password-recovery.mjs`: comprobación real con una cuenta desechable. Genera un código por la API administrativa sin enviar correo, lo verifica con la clave pública, cambia la contraseña, cierra sesión, vuelve a entrar y rechaza reutilizar el código. Elimina la cuenta al terminar y no imprime credenciales.
 - El 14 de noviembre de 2026 pasaron esas operaciones remotas. La entrega real del correo se comprobó aparte en Resend y fue confirmada por el usuario.
-- Sigue siendo necesaria la comprobación final del usuario desde su correo, con el despliegue y la plantilla actualizados. Las contraseñas y los códigos los introduce directamente en la plataforma.
+- El usuario confirmó la comprobación final desde su correo: verificó el código, guardó una contraseña nueva y volvió a entrar. Las contraseñas y códigos los introdujo directamente en la plataforma.

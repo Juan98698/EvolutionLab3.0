@@ -40,6 +40,9 @@ scratch/
 *.sw?
 
 .vercel
+supabase/.temp/
+# Local proof from account settings; never publish credential metadata.
+/docs/previews/smtp-key-handoff.jpg
 
 # Archivos temporales y backups de trabajo — nunca commitear al historial
 # (ver Hallazgo #4 del informe de refactorización 2026-06-30)

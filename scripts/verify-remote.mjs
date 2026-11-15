@@ -6,9 +6,15 @@ import { createClient } from '@supabase/supabase-js';
 
 // Credentials stay in memory; reports contain pass/fail checks, never tokens.
 const env = Object.assign({}, ...['.env', '.env.local'].filter(existsSync).map(file => parseEnv(readFileSync(file, 'utf8'))), process.env);
-const url = env.VITE_SUPABASE_URL || env.SUPABASE_URL;
-const anon = env.VITE_SUPABASE_ANON_KEY || env.SUPABASE_ANON_KEY;
-const service = env.SUPABASE_SERVICE_ROLE_KEY;
+const restoring = process.argv.includes('--restore');
+const url = restoring ? env.RESTORE_SUPABASE_URL : env.VITE_SUPABASE_URL || env.SUPABASE_URL;
+const service = restoring ? env.RESTORE_SUPABASE_SERVICE_ROLE_KEY : env.SUPABASE_SERVICE_ROLE_KEY;
+// This maintenance CLI never bundles keys for a browser. On a restore project,
+// the gateway key may be a server key, but every user client signs in first;
+// its Authorization header is then the user's JWT and must obey RLS. The
+// cross-account and billing assertions below fail if RLS is being bypassed.
+const anon = restoring ? env.RESTORE_SUPABASE_ANON_KEY || service : env.VITE_SUPABASE_ANON_KEY || env.SUPABASE_ANON_KEY;
+if (restoring) assert(url && new URL(url).hostname !== new URL(env.VITE_SUPABASE_URL || env.SUPABASE_URL).hostname, 'El proyecto de restauración debe ser distinto de producción.');
 if (!url || !anon || !service) throw Error('Configura URL, anon key y service role de Supabase en el entorno local.');
 const admin = createClient(url, service, { auth: { persistSession: false, autoRefreshToken: false } });
 const client = () => createClient(url, anon, { auth: { persistSession: false, autoRefreshToken: false } });
@@ -19,7 +25,7 @@ const response = await fetch(`${url}/rest/v1/`, { headers: { apikey: service, Au
 if (!response.ok) throw Error(`Supabase no disponible (${response.status}).`);
 const schema = await response.json();
 for (const name of ['record_training_session', 'apply_verified_payment', 'request_coach_invitation', 'respond_coach_invitation', 'pending_coach_invitations']) {
-  assert(schema.paths?.[`/rpc/${name}`], `Falta ${name}: aplica supabase/release/20261113_security_and_reliability.sql.`);
+  assert(schema.paths?.[`/rpc/${name}`], `Falta ${name}: aplica supabase/release/20261114_security_and_reliability.sql.`);
 }
 pass('Esquema remoto y funciones disponibles');
 if (!process.argv.includes('--integration')) process.exit(0);
@@ -36,7 +42,9 @@ async function user(role, suffix) {
   const id = data.user.id;
   const session = client();
   created.push({ id });
-  ok(await session.auth.signInWithPassword({ email, password }));
+  const signedIn = ok(await session.auth.signInWithPassword({ email, password }));
+  assert.equal(signedIn.session.user.role, 'authenticated', 'La prueba requiere el JWT de un usuario autenticado.');
+  assert.notEqual(signedIn.session.access_token, service, 'La prueba no debe ejecutarse con el JWT del servidor.');
   return { id, email, client: session };
 }
 try {
@@ -57,6 +65,12 @@ try {
   assert.equal(protectedProfile.rol, 'cliente');
   assert.notEqual(protectedProfile.suscripcion_plan, 'profesional');
   pass('Bloqueo de escalado de rol y manipulación de suscripción');
+
+  for (const account of [athleteA, coachA]) {
+    const catalog = ok(await account.client.from('ejercicios_globales').select('id').limit(1));
+    assert(catalog.length > 0, 'El catálogo de ejercicios no es visible para una cuenta autenticada.');
+  }
+  pass('Catálogo disponible para atleta y entrenador con JWT de usuario');
 
   const payload = { fecha: new Date().toISOString().slice(0, 10), notas_sesion: 'Prueba desechable', ejercicios: [{ nombre_ejercicio: 'Press de prueba', grupo_muscular: 'pecho', series_reps: [8, 8], peso: 20, rpe_rir: 2, descanso: 90, volumen: 320, rm_estimado: 25 }] };
   const args = { p_cliente_id: athleteA.id, p_operation_id: run, p_session: payload };
