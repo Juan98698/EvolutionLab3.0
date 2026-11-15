@@ -11,6 +11,14 @@ Se restauró una copia de Evolution Lab en el proyecto separado `evolutionlab-re
 
 El respaldo de base de datos verificado corresponde a `2026-11-14T20:54:56Z`. La comparación terminó a las `21:09:47Z` y la verificación de archivos a las `21:13:09Z`. Es una restauración a un punto en el tiempo; no afirma incluir cambios posteriores en producción.
 
+## Uso posterior del proyecto de pruebas
+
+Después de completar y registrar ese ensayo, el usuario autorizó convertir el clon en un sandbox de pagos. Se verificó de nuevo la integridad de los cinco artefactos cifrados y que los datos de aplicación y usuarios del clon todavía coincidieran con el respaldo. Una transacción eliminó las 35 cuentas copiadas y los datos privados de sus tablas, conservando los catálogos y archivos. No escribió en producción.
+
+La comprobación posterior encontró cero usuarios, perfiles y pagos; 155 ejercicios y 320 archivos conservados; ninguna tabla pública con RLS desactivada y ninguna fila privada visible para el cliente anónimo. Se retiraron los identificadores de propietario de los archivos copiados y los enlaces del catálogo apuntan al Storage del destino. Una imagen pública del destino respondió HTTP 200.
+
+Por tanto, el proyecto de pruebas ya no conserva una réplica de los datos originales: el punto de recuperación queda en el respaldo cifrado y su comprobante fechado. Para repetir la comparación completa debe restaurarse ese respaldo en otro destino vacío. La preparación del circuito de pagos se detalla en [sandbox de Mercado Pago](payment-sandbox.md).
+
 ## Diferencias del proyecto nuevo
 
 Un proyecto nuevo puede tener permisos por defecto más amplios que el origen. El exportador revoca los permisos existentes de cada objeto de aplicación antes de reproducir los originales. También conserva los estados ENABLE/FORCE de RLS: el evento automático de un proyecto nuevo puede activar RLS al importar tablas.
